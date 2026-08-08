@@ -26,15 +26,15 @@
 
 ```bash
 cd revguard
-python3 scripts/run_demo.py            # 跑通 3 个 Golden Case，产出审计报告与 Trace
-python3 -m unittest discover -s tests  # 运行全部单元 / 集成测试（38 个，API 测试自动跳过）
+python3 scripts/run_demo.py            # 跑通 7 个 Golden Case，产出审计报告与 Trace
+python3 -m unittest discover -s tests  # 运行全部单元 / 集成测试（42 个，API 测试自动跳过）
 ```
 
 完整测试（含 8 个 API 冒烟测试，需 fastapi + httpx）：
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt httpx
-.venv/bin/python -m unittest discover -s tests   # 46/46 通过
+.venv/bin/python -m unittest discover -s tests   # 50/50 通过
 ```
 
 运行产物（自动沉淀）：

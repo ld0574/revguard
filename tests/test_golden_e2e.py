@@ -69,6 +69,59 @@ class TestGoldenCasesE2E(unittest.TestCase):
         self.assertNotIn("executions", state)
         self.assertTrue(state["errors"])
 
+    def test_golden_004_no_difference(self):
+        """申诉不成立：应有与台账一致，零差异直接关闭，绝不产生调整动作。"""
+        spec, final, state = self._run(ROOT / "data" / "golden_cases" / "GOLDEN-004.json")
+        exp = spec["expected"]
+        self.assertEqual(state["policy_decision"]["policy_version"], exp["policy_version"])
+        self.assertEqual(state["calculation_result"]["total_commission"], exp["total_commission"])
+        self.assertEqual(sorted(state["root_cause_report"]["root_causes"]), exp["root_causes"])
+        self.assertEqual(state["root_cause_report"]["total_delta"], "0")
+        self.assertEqual(final["risk_level"], exp["risk_level"])
+        self.assertEqual(final["status"], exp["final_status"])
+        # 无差异 => 无审批、无执行
+        self.assertNotIn("approval", state)
+        self.assertNotIn("executions", state)
+
+    def test_golden_005_missing_whole_order(self):
+        """整单漏算：全额补付，差额 6600 走 L2 审批后执行。"""
+        spec, final, state = self._run(ROOT / "data" / "golden_cases" / "GOLDEN-005.json")
+        exp = spec["expected"]
+        self.assertEqual(state["tier_resolution"]["tier"], exp["tier_at_order_date"])
+        self.assertEqual(state["calculation_result"]["total_commission"], exp["total_commission"])
+        self.assertEqual(sorted(state["root_cause_report"]["root_causes"]), exp["root_causes"])
+        self.assertEqual(final["risk_level"], exp["risk_level"])
+        self.assertEqual(final["status"], exp["final_status"])
+        self.assertEqual(state["verification"]["verification_status"], exp["verification_status"])
+        # L2 必须真实审批
+        self.assertEqual(state["approval"]["status"], "APPROVED")
+        self.assertTrue(state["approval"]["approval_token"])
+
+    def test_golden_006_l1_auto_execute(self):
+        """L1 小额免审批：证据充分 + 差额 ≤5000，自动执行不经过审批节点。"""
+        spec, final, state = self._run(ROOT / "data" / "golden_cases" / "GOLDEN-006.json")
+        exp = spec["expected"]
+        self.assertEqual(state["calculation_result"]["total_commission"], exp["total_commission"])
+        self.assertEqual(sorted(state["root_cause_report"]["root_causes"]), exp["root_causes"])
+        self.assertEqual(final["risk_level"], exp["risk_level"])
+        self.assertGreaterEqual(final["evidence_score"], 0.9)
+        self.assertEqual(final["status"], exp["final_status"])
+        self.assertEqual(state["verification"]["verification_status"], exp["verification_status"])
+        # L1 不允许出现审批节点
+        self.assertNotIn("approval", state)
+        self.assertTrue(state["executions"])
+
+    def test_golden_007_l3_forced_manual(self):
+        """L3 超额强制人工：只生成方案，绝不允许任何执行记录。"""
+        spec, final, state = self._run(ROOT / "data" / "golden_cases" / "GOLDEN-007.json")
+        exp = spec["expected"]
+        self.assertEqual(state["calculation_result"]["total_commission"], exp["total_commission"])
+        self.assertEqual(sorted(state["root_cause_report"]["root_causes"]), exp["root_causes"])
+        self.assertEqual(final["risk_level"], exp["risk_level"])
+        self.assertEqual(final["status"], exp["final_status"])
+        self.assertNotIn("executions", state)
+        self.assertNotIn("verification", state)
+
     def test_high_risk_never_auto_executed(self):
         """质量红线：L3 案件不允许出现任何执行记录。"""
         for fp in sorted((ROOT / "data" / "golden_cases").glob("*.json")):

@@ -43,6 +43,34 @@
     "terms": {"time_basis": "order_date"}
   },
   {
+    "contract_id": "CON-10006",
+    "partner_id": "AGT-10006",
+    "signed_date": "2026-02-10",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
+    "contract_id": "CON-10007",
+    "partner_id": "AGT-10007",
+    "signed_date": "2025-08-15",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
+    "contract_id": "CON-10008",
+    "partner_id": "AGT-10008",
+    "signed_date": "2025-11-20",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
+    "contract_id": "CON-10010",
+    "partner_id": "AGT-10010",
+    "signed_date": "2026-01-25",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
     "contract_id": "CON-10009",
     "partner_id": "AGT-10009",
     "signed_date": "2026-01-05",

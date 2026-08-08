@@ -351,6 +351,15 @@ class Orchestrator:
         approval = state.get("approval") or {}
         risk = _to_risk(state["risk_decision"])
 
+        # L1 免人工审批：由系统签发自动授权凭证（设计文档 14.2 低风险自动处理），
+        # 与人工审批凭证同等留痕，保证"任何写操作必须携带有效凭证"的底线不被突破
+        system_token = ""
+        if not approval.get("approval_token") and not risk.approval_required:
+            system_token = f"AUTO-{risk.risk_level}:{case['case_id']}"
+            self.store.audit(case["case_id"], "revguard-executor", "AUTO_AUTH_ISSUED",
+                             {"token": system_token, "risk_level": risk.risk_level,
+                              "note": "低风险免人工审批，系统签发自动授权凭证"})
+
         self._transition(case, CaseStatus.EXECUTING, "开始受控执行")
         executions: list[dict] = []
         with tracer.span("AGENT", "revguard-executor", actor="revguard-executor"):
@@ -383,7 +392,7 @@ class Orchestrator:
                     submitted = skills.ledger_adjust(
                         self.gateway, tracer, case_id=case["case_id"],
                         action_id=draft["action_id"],
-                        approval_token=approval.get("approval_token", ""),
+                        approval_token=approval.get("approval_token", "") or system_token,
                         policy_version=state["policy_decision"]["policy_version"],
                         idempotency_key=idem_key)
                     span["outputs"] = {"status": submitted["status"],

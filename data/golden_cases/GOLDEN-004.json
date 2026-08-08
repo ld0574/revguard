@@ -1,0 +1,21 @@
+{
+  "case_id": "CASE-2026-0004",
+  "title": "申诉不成立：台账与政策复算完全一致，无需调整",
+  "input": {
+    "case_id": "CASE-2026-0004",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "EMAIL",
+    "partner_id": "AGT-10005",
+    "order_id": "EZ202607301",
+    "description": "代理商质疑订单 EZ202607301 佣金 37,800 KES 偏低，认为按 GOLD 等级应该超过 40,000 KES，请核查。",
+    "claim": {"actual_amount": 37800, "expected_amount": 40000, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "total_commission": "37800.00",
+    "root_causes": [],
+    "risk_level": "L0",
+    "final_status": "CLOSED",
+    "no_adjustment": true
+  }
+}

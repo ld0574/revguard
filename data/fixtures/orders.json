@@ -99,6 +99,17 @@
     "sales_owner": "s.maina"
   },
   {
+    "order_id": "EZ202607501",
+    "partner_id": "AGT-10005",
+    "product_id": "SHS-1000",
+    "order_amount": 400000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-08",
+    "completed_date": "2026-07-09",
+    "sales_owner": "d.kimani"
+  },
+  {
     "order_id": "EZ202605501",
     "partner_id": "AGT-10009",
     "product_id": "SHS-500",

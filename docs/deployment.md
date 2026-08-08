@@ -24,8 +24,8 @@
 
 ```bash
 cd /root/revguard
-docker compose up -d --build        # 构建并启动（启动时自动 seed 3 个 Golden Case）
-curl http://localhost:19000/api/v1/health   # {"status":"ok","cases":3}
+docker compose up -d --build        # 构建并启动（启动时自动 seed 7 个 Golden Case）
+curl http://localhost:19000/api/v1/health   # {"status":"ok","cases":7}
 ```
 
 AgentTeams 联调（Worker + Team 一键创建，幂等）：
@@ -38,7 +38,7 @@ bash /root/revguard/scripts/agentteams_setup.sh
 
 | 步骤 | 命令 | 结果 |
 |---|---|---|
-| 健康检查 | `GET /api/v1/health` | `{"status":"ok","cases":3}` |
+| 健康检查 | `GET /api/v1/health` | `{"status":"ok","cases":7}`（扩充后重建容器 + 重置 DB 实测） |
 | 运行案件 | `POST /api/v1/cases/CASE-2026-0001/run` | `WAITING_FOR_APPROVAL`（L2 挂起） |
 | 人工审批续跑 | `POST /api/v1/cases/CASE-2026-0001/approval` | `CLOSED` + 独立验证 `PASSED` |
 | Worker 创建 | `agt apply worker × 10` | 全部 created（copaw / kimi-k3） |

@@ -1,0 +1,22 @@
+{
+  "case_id": "CASE-2026-0006",
+  "title": "L1 小额免审批：证据充分且差额 ≤5000，自动建草稿执行",
+  "input": {
+    "case_id": "CASE-2026-0006",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "TICKET",
+    "partner_id": "AGT-10007",
+    "order_id": "EZ202607401",
+    "description": "订单 EZ202607401（38,000 KES，8 月 1 日回款完成）至今未收到佣金，金额不大，请尽快处理。",
+    "claim": {"actual_amount": 0, "expected_amount": null, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "total_commission": "4180.00",
+    "root_causes": ["MISSING_COMPONENT"],
+    "risk_level": "L1",
+    "final_status": "CLOSED",
+    "verification_status": "PASSED",
+    "no_approval": true
+  }
+}
