@@ -1,0 +1,66 @@
+[
+  {
+    "payment_id": "PAY-98765",
+    "order_id": "EZ202608001",
+    "payment_amount": 180000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-07-28"
+  },
+  {
+    "payment_id": "PAY-98770",
+    "order_id": "EZ202607002",
+    "payment_amount": 100000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-07-28"
+  },
+  {
+    "payment_id": "PAY-98801",
+    "order_id": "EZ202607101",
+    "payment_amount": 60000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-07-20"
+  },
+  {
+    "payment_id": "PAY-98802",
+    "order_id": "EZ202607102",
+    "payment_amount": 85000,
+    "currency": "KES",
+    "payment_status": "PENDING",
+    "payment_date": "2026-08-02"
+  },
+  {
+    "payment_id": "PAY-98810",
+    "order_id": "EZ202606201",
+    "payment_amount": 45000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-07-05"
+  },
+  {
+    "payment_id": "PAY-98820",
+    "order_id": "EZ202607301",
+    "payment_amount": 210000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-07-25"
+  },
+  {
+    "payment_id": "PAY-98830",
+    "order_id": "EZ202607401",
+    "payment_amount": 38000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-08-01"
+  },
+  {
+    "payment_id": "PAY-98840",
+    "order_id": "EZ202605501",
+    "payment_amount": 56000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-06-01"
+  }
+]

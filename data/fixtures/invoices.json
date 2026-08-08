@@ -1,0 +1,8 @@
+[
+  {"invoice_id": "INV-98765", "order_id": "EZ202608001", "invoice_amount": 180000, "currency": "KES", "invoice_status": "ISSUED", "invoice_date": "2026-07-12"},
+  {"invoice_id": "INV-98770", "order_id": "EZ202607002", "invoice_amount": 100000, "currency": "KES", "invoice_status": "ISSUED", "invoice_date": "2026-07-11"},
+  {"invoice_id": "INV-98801", "order_id": "EZ202607101", "invoice_amount": 60000, "currency": "KES", "invoice_status": "ISSUED", "invoice_date": "2026-07-06"},
+  {"invoice_id": "INV-98810", "order_id": "EZ202606201", "invoice_amount": 45000, "currency": "KES", "invoice_status": "ISSUED", "invoice_date": "2026-06-16"},
+  {"invoice_id": "INV-98820", "order_id": "EZ202607301", "invoice_amount": 210000, "currency": "KES", "invoice_status": "ISSUED", "invoice_date": "2026-07-03"},
+  {"invoice_id": "INV-98840", "order_id": "EZ202605501", "invoice_amount": 56000, "currency": "KES", "invoice_status": "ISSUED", "invoice_date": "2026-05-13"}
+]

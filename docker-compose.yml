@@ -1,0 +1,21 @@
+# RevGuard 本地编排：API 服务 + 演示数据持久化
+# 与 AgentTeams 同机部署时，把 revguard-api 接入 AgentTeams 的 docker 网络即可
+services:
+  revguard-api:
+    build: .
+    container_name: revguard-api
+    ports:
+      - "19000:9000"   # 宿主 19000 → 容器 9000（避开 VM 上已占用的 9000）
+    volumes:
+      - revguard-outputs:/app/data/outputs   # Trace / 案例记忆沉淀
+      - revguard-reports:/app/docs/reports   # 审计报告沉淀
+      - revguard-db:/app/runtime             # SQLite 案件库（与 fixtures 目录隔离）
+    environment:
+      REVGUARD_APPROVAL_MODE: wait           # 服务端默认人工审批（演示真实人工节点）
+      REVGUARD_FINANCE_FAIL_TIMES: "1"       # 财务接口故障注入，演示重试
+    restart: unless-stopped
+
+volumes:
+  revguard-outputs:
+  revguard-reports:
+  revguard-db:

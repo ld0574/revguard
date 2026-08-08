@@ -1,0 +1,61 @@
+{
+  "entries": [
+    {
+      "ledger_id": "LED-50001",
+      "order_id": "EZ202608001",
+      "component": "SALES_COMMISSION",
+      "amount": "18000.00",
+      "currency": "KES",
+      "policy_version": "2026-Q2",
+      "status": "POSTED",
+      "source": "BATCH-CALC-2026-07",
+      "posted_at": "2026-08-01T02:00:00Z",
+      "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+    },
+    {
+      "ledger_id": "LED-50002",
+      "order_id": "EZ202607002",
+      "component": "SALES_COMMISSION",
+      "amount": "15000.00",
+      "currency": "KES",
+      "policy_version": "2026-Q3",
+      "status": "POSTED",
+      "source": "BATCH-CALC-2026-07",
+      "posted_at": "2026-08-01T02:00:00Z",
+      "comment": "7月佣金批处理（误用当前 GOLD 等级，未按订单时点回溯）"
+    },
+    {
+      "ledger_id": "LED-50010",
+      "order_id": "EZ202607301",
+      "component": "SALES_COMMISSION",
+      "amount": "31500.00",
+      "currency": "KES",
+      "policy_version": "2026-Q3",
+      "status": "POSTED",
+      "source": "BATCH-CALC-2026-07",
+      "posted_at": "2026-08-01T02:00:00Z"
+    },
+    {
+      "ledger_id": "LED-50011",
+      "order_id": "EZ202607301",
+      "component": "COLLECTION_COMMISSION",
+      "amount": "6300.00",
+      "currency": "KES",
+      "policy_version": "2026-Q3",
+      "status": "POSTED",
+      "source": "BATCH-CALC-2026-07",
+      "posted_at": "2026-08-01T02:00:00Z"
+    },
+    {
+      "ledger_id": "LED-50020",
+      "order_id": "EZ202605501",
+      "component": "SALES_COMMISSION",
+      "amount": "3360.00",
+      "currency": "KES",
+      "policy_version": "2026-Q2",
+      "status": "POSTED",
+      "source": "BATCH-CALC-2026-05",
+      "posted_at": "2026-06-01T02:00:00Z"
+    }
+  ]
+}

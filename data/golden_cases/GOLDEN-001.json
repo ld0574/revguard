@@ -1,0 +1,21 @@
+{
+  "case_id": "CASE-2026-0001",
+  "title": "佣金少算：误用旧政策版本 + 回款佣金漏算",
+  "input": {
+    "case_id": "CASE-2026-0001",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "EMAIL",
+    "partner_id": "AGT-10001",
+    "order_id": "EZ202608001",
+    "description": "订单 EZ202608001 已完成回款，本月佣金只有 18,000 KES。按照签署政策，应该是 27,000 KES，请核查。",
+    "claim": {"actual_amount": 18000, "expected_amount": 27000, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "total_commission": "32400.00",
+    "root_causes": ["MISSING_COMPONENT", "WRONG_POLICY_VERSION"],
+    "risk_level": "L2",
+    "final_status": "CLOSED",
+    "verification_status": "PASSED"
+  }
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "contract_id": "CON-10001",
+    "partner_id": "AGT-10001",
+    "signed_date": "2026-01-15",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {
+      "time_basis": "order_date",
+      "clause_tier": "代理商等级以订单创建时点为准",
+      "clause_payment": "回款佣金以回款完成时间计算天数"
+    }
+  },
+  {
+    "contract_id": "CON-10002",
+    "partner_id": "AGT-10002",
+    "signed_date": "2026-03-20",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {
+      "time_basis": "order_date",
+      "clause_tier": "代理商等级以订单创建时点为准",
+      "clause_tier_upgrade": "GOLD 等级自 2026-07-15 起生效，此前订单仍按 SILVER 计算"
+    }
+  },
+  {
+    "contract_id": "CON-10003",
+    "partner_id": "AGT-10003",
+    "signed_date": "2026-04-01",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
+    "contract_id": "CON-10004",
+    "partner_id": "AGT-10004",
+    "signed_date": "2025-10-08",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
+    "contract_id": "CON-10005",
+    "partner_id": "AGT-10005",
+    "signed_date": "2025-12-01",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  },
+  {
+    "contract_id": "CON-10009",
+    "partner_id": "AGT-10009",
+    "signed_date": "2026-01-05",
+    "policy_id": "KE-COMMISSION-2026",
+    "terms": {"time_basis": "order_date"}
+  }
+]

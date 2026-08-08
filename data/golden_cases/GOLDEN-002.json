@@ -1,0 +1,22 @@
+{
+  "case_id": "CASE-2026-0002",
+  "title": "等级生效时间冲突：当前 GOLD 但订单时点为 SILVER",
+  "input": {
+    "case_id": "CASE-2026-0002",
+    "case_type": "COMMISSION_OVERPAYMENT",
+    "source": "TICKET",
+    "partner_id": "AGT-10002",
+    "order_id": "EZ202607002",
+    "description": "代理商复核时发现订单 EZ202607002 按 GOLD 等级算了 15,000 KES，但合同约定 GOLD 等级 7 月 15 日才生效，订单创建于 7 月 10 日，请核查是否多算。",
+    "claim": {"actual_amount": 15000, "expected_amount": null, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "tier_at_order_date": "SILVER",
+    "total_commission": "11000.00",
+    "root_causes": ["MISSING_COMPONENT", "TIER_EFFECTIVE_DATE_CONFLICT"],
+    "risk_level": "L2",
+    "final_status": "CLOSED",
+    "verification_status": "PASSED"
+  }
+}

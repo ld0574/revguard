@@ -1,0 +1,18 @@
+{
+  "case_id": "CASE-2026-0003",
+  "title": "证据不足：工单只有代理商名称，存在多笔候选订单",
+  "input": {
+    "case_id": "CASE-2026-0003",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "TICKET",
+    "partner_name": "Kisumu EcoPower Ltd",
+    "order_id": null,
+    "description": "代理商来电说 7 月佣金好像少了，请帮忙看看。",
+    "claim": {"actual_amount": null, "expected_amount": null, "currency": "KES"}
+  },
+  "expected": {
+    "final_status": "WAITING_FOR_EVIDENCE",
+    "escalated": true,
+    "no_fake_conclusion": true
+  }
+}

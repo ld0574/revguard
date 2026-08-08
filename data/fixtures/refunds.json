@@ -1,0 +1,18 @@
+[
+  {
+    "refund_id": "RFD-3001",
+    "order_id": "EZ202606202",
+    "refund_amount": 72000,
+    "currency": "KES",
+    "refund_date": "2026-06-25",
+    "reason": "ORDER_CANCELLED"
+  },
+  {
+    "refund_id": "RFD-3002",
+    "order_id": "EZ202605501",
+    "refund_amount": 8000,
+    "currency": "KES",
+    "refund_date": "2026-06-10",
+    "reason": "PARTIAL_RETURN"
+  }
+]

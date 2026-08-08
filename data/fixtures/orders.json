@@ -1,0 +1,112 @@
+[
+  {
+    "order_id": "EZ202608001",
+    "partner_id": "AGT-10001",
+    "product_id": "SHS-500",
+    "order_amount": 180000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-10",
+    "completed_date": "2026-07-12",
+    "sales_owner": "j.mwangi"
+  },
+  {
+    "order_id": "EZ202607002",
+    "partner_id": "AGT-10002",
+    "product_id": "SHS-1000",
+    "order_amount": 100000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-10",
+    "completed_date": "2026-07-11",
+    "sales_owner": "a.otieno"
+  },
+  {
+    "order_id": "EZ202607101",
+    "partner_id": "AGT-10003",
+    "product_id": "SHS-500",
+    "order_amount": 60000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-05",
+    "completed_date": "2026-07-06",
+    "sales_owner": "p.kiprop"
+  },
+  {
+    "order_id": "EZ202607102",
+    "partner_id": "AGT-10003",
+    "product_id": "SHS-1000",
+    "order_amount": 85000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-18",
+    "completed_date": "2026-07-19",
+    "sales_owner": "p.kiprop"
+  },
+  {
+    "order_id": "EZ202607103",
+    "partner_id": "AGT-10003",
+    "product_id": "SHS-500",
+    "order_amount": 52000,
+    "currency": "KES",
+    "order_status": "PENDING",
+    "order_date": "2026-07-29",
+    "completed_date": null,
+    "sales_owner": "p.kiprop"
+  },
+  {
+    "order_id": "EZ202606201",
+    "partner_id": "AGT-10004",
+    "product_id": "SHS-500",
+    "order_amount": 45000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-06-15",
+    "completed_date": "2026-06-16",
+    "sales_owner": "r.wanjiru"
+  },
+  {
+    "order_id": "EZ202606202",
+    "partner_id": "AGT-10004",
+    "product_id": "SHS-1000",
+    "order_amount": 72000,
+    "currency": "KES",
+    "order_status": "CANCELLED",
+    "order_date": "2026-06-20",
+    "completed_date": null,
+    "sales_owner": "r.wanjiru"
+  },
+  {
+    "order_id": "EZ202607301",
+    "partner_id": "AGT-10005",
+    "product_id": "SHS-1000",
+    "order_amount": 210000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-02",
+    "completed_date": "2026-07-03",
+    "sales_owner": "d.kimani"
+  },
+  {
+    "order_id": "EZ202607401",
+    "partner_id": "AGT-10007",
+    "product_id": "SHS-500",
+    "order_amount": 38000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-07-22",
+    "completed_date": "2026-07-23",
+    "sales_owner": "s.maina"
+  },
+  {
+    "order_id": "EZ202605501",
+    "partner_id": "AGT-10009",
+    "product_id": "SHS-500",
+    "order_amount": 56000,
+    "currency": "KES",
+    "order_status": "COMPLETED",
+    "order_date": "2026-05-12",
+    "completed_date": "2026-05-13",
+    "sales_owner": "l.ochieng"
+  }
+]
