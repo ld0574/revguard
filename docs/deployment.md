@@ -81,6 +81,18 @@ VM 上 9000 已被其他容器占用（docker-proxy）→ compose 使用 **19000
 注意：expect 空闲超时会在远程长时间无输出时掐断会话（曾因镜像拉取无输出被掐断），
 长任务务必用 long 版本并让命令持续输出（如 `| tail -f` 或分段执行）。
 
+### 4.5 Element Web 登录页显示 127.0.0.1（2026-08-08 已修复）
+
+- 现象：浏览器打开 `http://10.10.10.202:8088` 登录时 homeserver 指向 127.0.0.1，必然失败。
+- 根因：`agentteams-controller` 容器内 `/opt/element-web/config.json` 的
+  `default_server_config.m.homeserver.base_url` 出厂值为 `http://127.0.0.1:8086`，
+  该地址只在 VM 本机有意义。
+- 修复（已执行）：`sed -i 's|http://127.0.0.1:8086|http://10.10.10.202:8086|g' /opt/element-web/config.json`
+  （原文件备份为 config.json.bak）。验证：`/_matrix/client/versions` 与
+  `m.login.password`（admin）均通过 8086 正常返回。
+- 注意：该修改在容器文件系统内，**容器重建后需重做**；持久化做法是把修正后的
+  config.json 挂卷覆盖 `/opt/element-web/config.json`。
+
 ## 5. 复赛演示检查清单
 
 - [x] `docker compose ps`：revguard-api Up（8.8 验证）
