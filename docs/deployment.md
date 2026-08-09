@@ -1,106 +1,152 @@
 # RevGuard 部署与 AgentTeams 联调手册
 
-> 沉淀日期：2026-08-08。记录 VM（10.10.10.202）上的实际部署状态、已踩过的坑与恢复步骤。
+## 1. 推荐拓扑
 
-## 1. 部署拓扑
-
-```
-┌─────────────────────────── VM 10.10.10.202 ───────────────────────────┐
-│                                                                       │
-│  agentteams-controller (agt CLI)      revguard-api (Docker Compose)   │
-│  ├─ agentteams-manager                ├─ FastAPI :9000 (容器)          │
-│  ├─ agentteams-dashboard :13000       └─ 宿主端口 19000 → 9000         │
-│  ├─ Higress :8086/:8087/:8088                                        │
-│  │   └─ Element Web http://10.10.10.202:8088                          │
-│  └─ revguard-worker × 10 (copaw) ──HTTP──► 10.10.10.202:19000         │
-│                                            /api/v1/tools/call         │
-└───────────────────────────────────────────────────────────────────────┘
+```text
+AgentTeams Manager / Workers
+        │  HTTPS + Bearer Principal（由 Secret/Adapter 注入）
+        ▼
+RevGuard API :9000
+        ├── Skill Runtime / ToolGateway
+        ├── SQLite Case / Trace / Audit
+        ├── persistent gateway state
+        └── reports / case memory
 ```
 
-- RevGuard API：`http://10.10.10.202:19000`（文档 `/docs`，健康检查 `/api/v1/health`）
-- LLM 网关：`moonshotai/kimi-k3` 经 Higress ai-proxy（openai-compat.static:34350，前期已修复 503）
+与 AgentTeams 同一 Docker 网络时使用 `http://revguard-api:9000`；跨主机部署必须通过
+TLS Gateway 暴露，并配置限流、访问日志与网络白名单。SOUL 使用
+`{{REVGUARD_API_BASE_URL}}`，`agentteams_setup.sh` 在部署时渲染，不再硬编码 IP。
 
-## 2. 部署命令（VM 上）
+## 2. 本地 Docker
 
 ```bash
-cd /root/revguard
-docker compose up -d --build        # 构建并启动（启动时自动 seed 7 个 Golden Case）
-curl http://localhost:19000/api/v1/health   # {"status":"ok","cases":7}
+cd revguard
+docker compose up -d --build
+curl http://127.0.0.1:19000/api/v1/health
+docker compose ps
 ```
 
-AgentTeams 联调（Worker + Team 一键创建，幂等）：
+默认保留 volume 中的案件、Mock 台账、审批、幂等、回执、报告与 Trace。需要评委从
+完全相同的干净状态复现时：
 
 ```bash
-bash /root/revguard/scripts/agentteams_setup.sh
+REVGUARD_RESET_ON_START=true docker compose up -d --build
 ```
 
-## 3. 端到端验证记录（2026-08-08 实测通过）
+`seed_demo.py` 的语义：
 
-| 步骤 | 命令 | 结果 |
-|---|---|---|
-| 健康检查 | `GET /api/v1/health` | `{"status":"ok","cases":7}`（扩充后重建容器 + 重置 DB 实测） |
-| 运行案件 | `POST /api/v1/cases/CASE-2026-0001/run` | `WAITING_FOR_APPROVAL`（L2 挂起） |
-| 人工审批续跑 | `POST /api/v1/cases/CASE-2026-0001/approval` | `CLOSED` + 独立验证 `PASSED` |
-| Worker 创建 | `agt apply worker × 10` | 全部 created（copaw / kimi-k3） |
-| Team 组建 | `agt create team revguard-team` | **Active，READY 9/9**（首次 Failed 为启动竞态，恢复后重建通过） |
-| Worker→API 连通 | Worker 容器内 curl `/api/v1/health` 与 `/api/v1/tools/call` | 成功，返回 `tool_receipt` |
+- 默认模式：已有案件保持原状态，只补充不存在的 Golden Case；
+- `--reset`：原子清空案件、证据、审批、执行、验证、审计和 Trace，再 seed；
+- `--gateway-state`：reset 时同步删除指定的 ToolGateway 状态文件。
 
-## 4. 踩坑与排查手册
+正式故障演练可在干净状态下让 Verifier 的首次读取产生可控偏差：
 
-### 4.1 宿主端口冲突
+```bash
+REVGUARD_RESET_ON_START=true \
+REVGUARD_VERIFICATION_TAMPER_AMOUNT=1 \
+docker compose up -d --build
+```
 
-VM 上 9000 已被其他容器占用（docker-proxy）→ compose 使用 **19000:9000**。
-改端口需同步三处：`docker-compose.yml`、`agentteams/README.md`、Worker SOUL 中的工具契约地址。
+该偏差只作用于 Verifier 的一次查询结果，不会修改真实台账；预期链路为“审批后写入 →
+独立验证失败 → 自动反向冲销 → 回滚后验证通过”。取证完成后把两个变量恢复为 `false`
+和 `0`，已有 Trace 与报告仍保留。
 
-### 4.2 SOUL 中的 API 地址占位符
+## 3. 生产安全配置
 
-初版 SOUL 写 `{REVGUARD_API}` 占位符，Worker 无法解析。
-现 8 个 SOUL 统一为 `http://10.10.10.202:19000/api/v1/tools/call`（迁移环境时全局替换即可）。
+复制 `.env.example` 并生成真实值：
 
-### 4.3 10 个 Worker 并发拉起导致主机过载
+```bash
+cp .env.example .env
+```
 
-- 现象：sshd TCP 可连但会话挂起、RevGuard API 超时、`agt` 查询无响应。
-- 原因：10 个 copaw 运行时同时启动，CPU/内存瞬时打满（load 峰值 >390）；磁盘已 89%。
-- 结局：约 1.5 小时后负载自行回落，10 个 Worker 全部 Running，Team 自愈为 Active 9/9。
-- 应对：
-  1. 等待 Worker 全部进入 Running 后再操作（避免启动高峰期查询 controller）；
-  2. 如持续过载，分批启动或缩减演示 Worker 数（≥3 个即满足赛道要求）；
-  3. SSH 使用 ControlMaster 复用连接，避免 MaxStartups 限流（见 §4.4）。
-- 另注意：`agt delete team` 为异步删除，立即重建会 409；`agentteams_setup.sh` 已处理
-  （Active 跳过 / 非 Active 时先删并轮询等待消失再建）。
+必须满足：
 
-### 4.4 本机访问 VM 的 SSH 工具链
+1. `REVGUARD_APPROVAL_SIGNING_KEY` 至少 32 字节并由 Secret Manager 管理；
+2. `REVGUARD_API_KEYS_JSON` 为每个 Worker 配置独立 actor、roles 和最小 scopes；
+3. `REVGUARD_ALLOW_INSECURE_DEMO_KEYS=false`；
+4. API 只经 TLS Gateway 暴露，SQLite/状态 volume 不对 Worker 直接开放；
+5. 定期轮换 API key 和签名密钥；轮换签名密钥会使旧能力令牌立即失效。
 
-本机无 sshpass，使用 expect 脚本（密码在脚本中，仅限内网演示环境）：
+Compose 已配置非 root、只读根文件系统、`no-new-privileges`、drop all capabilities、
+CPU/内存限制与健康检查。三个命名 volume 保持可写。
 
-- `/tmp/at_ssh.exp "cmd"` — 普通命令（20s 空闲超时）
-- `/tmp/at_ssh_long.exp "cmd"` — 长任务（280s 空闲超时，用于镜像构建/批量 agt）
-- `/tmp/at_scp.exp local remote` — 文件上传
-- `/tmp/at_mux.exp "cmd"` — ControlMaster 连接复用（防 sshd 限流）
+从旧版 root 容器升级到非 root 镜像时，需要在宿主机上一次性修正旧卷属主，
+否则 SQLite 迁移会报 `attempt to write a readonly database`：
 
-注意：expect 空闲超时会在远程长时间无输出时掐断会话（曾因镜像拉取无输出被掐断），
-长任务务必用 long 版本并让命令持续输出（如 `| tail -f` 或分段执行）。
+```bash
+UID_GID=$(docker run --rm --entrypoint id revguard-revguard-api revguard \
+  | sed -n 's/uid=\([0-9]*\).*gid=\([0-9]*\).*/\1:\2/p')
+for VOLUME in revguard_revguard-db revguard_revguard-outputs revguard_revguard-reports; do
+  docker run --rm --user 0 -v "$VOLUME:/mnt" --entrypoint sh revguard-revguard-api \
+    -c "chown -R $UID_GID /mnt && chmod -R u+rwX /mnt"
+done
+```
 
-### 4.5 Element Web 登录页显示 127.0.0.1（2026-08-08 已修复）
+## 4. AgentTeams Worker 与 Team
 
-- 现象：浏览器打开 `http://10.10.10.202:8088` 登录时 homeserver 指向 127.0.0.1，必然失败。
-- 根因：`agentteams-controller` 容器内 `/opt/element-web/config.json` 的
-  `default_server_config.m.homeserver.base_url` 出厂值为 `http://127.0.0.1:8086`，
-  该地址只在 VM 本机有意义。
-- 修复（已执行）：`sed -i 's|http://127.0.0.1:8086|http://10.10.10.202:8086|g' /opt/element-web/config.json`
-  （原文件备份为 config.json.bak）。验证：`/_matrix/client/versions` 与
-  `m.login.password`（admin）均通过 8086 正常返回。
-- 注意：该修改在容器文件系统内，**容器重建后需重做**；持久化做法是把修正后的
-  config.json 挂卷覆盖 `/opt/element-web/config.json`。
+```bash
+REVGUARD_HOME=/absolute/path/to/revguard \
+REVGUARD_API_BASE_URL=http://revguard-api:9000 \
+bash scripts/agentteams_setup.sh
+```
 
-## 5. 复赛演示检查清单
+脚本会：
 
-- [x] `docker compose ps`：revguard-api Up（8.8 验证）
-- [x] `agt get workers`：10 个 Running（8.8 验证，copaw / kimi-k3）
-- [x] `agt get teams`：revguard-team **Active，READY 9/9**（8.8 验证）
-- [x] Worker→API 连通：Worker 容器内 `curl http://10.10.10.202:19000/api/v1/health` 与
-      `POST /api/v1/tools/call`（crm.get_partner）均成功，返回 tool_receipt（8.8 验证）
-- [x] `agentteams_setup.sh` 幂等验证：Active 时跳过重建；异步删除竞态已修复（8.8）
-- [ ] Element Web 进入 revguard-team 聊天室（现场演示步骤）
-- [ ] 发送 Golden Case 申诉文本 → 观察 Worker 协同与审批节点
-- [ ] 展示 `GET /api/v1/cases/{id}/trace` 与 `docs/reports/` 审计报告
+1. 在临时目录渲染 SOUL 中的 API Base URL；
+2. `agt apply worker` 创建或更新 10 个 Agent；
+3. 以 `revguard-orchestrator` 为 leader 组建 Team；
+4. 等待异步删除完成，避免重复部署 409；
+5. 输出 Worker 和 Team 状态。
+
+当前 CoPaw 运行时会在约 30 分钟空闲后把 Worker 自动置为 `Sleeping`，这是资源回收而非
+故障。现场演示前可显式预热：
+
+```bash
+for worker in revguard-orchestrator revguard-intake revguard-evidence \
+  revguard-policy revguard-calculation revguard-rootcause revguard-risk \
+  revguard-executor revguard-verifier revguard-knowledge; do
+  agt worker ensure-ready --name "$worker"
+done
+agt get teams   # 预期 revguard-team Active / 9/9
+```
+
+API key 不写入 SOUL。应在 AgentTeams Tool Adapter/Secret 层按 Worker 注入：
+
+```http
+Authorization: Bearer <worker-specific-key>
+```
+
+建议至少配置 Evidence、Intake、Policy、Calculation、Risk、Executor、Verifier、Knowledge
+八个独立 Principal；Executor 仅有 `commission:draft/write/reverse`，Verifier 仅有
+`ledger:read`，Approver 使用独立的人类 Principal。
+
+## 5. 验收命令
+
+```bash
+make verify
+make demo
+
+curl http://127.0.0.1:19000/api/v1/health
+curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
+  http://127.0.0.1:19000/api/v1/skills
+```
+
+需要逐项核验：
+
+- [ ] `make verify`：64 项测试、102/102 场景评测；
+- [ ] 容器状态 healthy，重启后案件与幂等状态一致；
+- [ ] 无认证为 401，错误角色为 403，自报 actor/scope 为 422；
+- [ ] L2 在 `WAITING_FOR_APPROVAL` 挂起；
+- [ ] 可信 Approver 批准后写入并验证；
+- [ ] CASE-0008 首次验证失败后真实冲销，最终 `ROLLED_BACK`；
+- [ ] AgentTeams Team Active，9 个 Worker Ready；
+- [ ] Element 演示从任务触发到审批、执行、验证/回滚完整结束；
+- [ ] Trace、报告、evaluation summary 和视频中的 case_id 一致。
+
+## 6. 已知资源风险
+
+一次性启动全部 Worker 可能造成演示主机资源尖峰。现场建议预热 Team，或分批 apply；
+比赛只要求至少 3 个不同职能 Agent，不应为了数量牺牲 5–8 分钟内的稳定闭环。
+
+旧版 2026-08-08 内网实录完成了任务拆解和结果汇总，但发生过明显启动过载，且早于本轮
+Bearer/RBAC/签名令牌改造。该实录只能作为历史证据；提交前必须按本页检查清单重新录制。

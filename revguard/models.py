@@ -16,7 +16,7 @@ from typing import Any, Optional
 
 def utc_now() -> str:
     """返回 ISO-8601 UTC 时间戳，统一全系统时间格式。"""
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 def new_id(prefix: str) -> str:
@@ -62,7 +62,7 @@ class TaskStatus(str, enum.Enum):
 class RiskLevel(str, enum.Enum):
     """风险等级（设计文档 14.1）。"""
     L0 = "L0"  # 只读诊断，自动执行
-    L1 = "L1"  # 低风险草稿，可自动执行
+    L1 = "L1"  # 低风险，仅自动创建不生效草稿
     L2 = "L2"  # 有限写操作，人工审批后执行
     L3 = "L3"  # 高风险，只生成方案，强制人工处理
 

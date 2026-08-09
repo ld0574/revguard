@@ -10,7 +10,7 @@
 
 ## Capabilities
 
-1. 确定性分级：L0 只读 / L1 低风险草稿 / L2 审批后执行 / L3 强制人工；
+1. 按组件绝对值之和（gross）确定性分级：L0 只读 / L1 低风险草稿 / L2 审批后执行 / L3 强制人工；
 2. 硬性升 L3：金额超阈值、批量操作、政策冲突未消解、证据分 < 0.6；
 3. 负向调整（扣回/冲销）一律不低于 L2（必须人工审批）；
 4. 创建审批单并路由到对应角色（FINANCE_LEAD / FINANCE_HEAD+OPS_HEAD）。
@@ -40,7 +40,9 @@
 ## Dependencies
 
 - RiskClassifySkill / ApprovalRouteSkill
-- 工具（统一入口 `POST http://10.10.10.202:19000/api/v1/tools/call`）：`workflow.create_approval` / `workflow.get_approval_status`
+- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`workflow.create_approval` / `workflow.get_approval_status`
+
+Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：HumanApprovalGate → revguard-executor
 
 ## Decision Boundary

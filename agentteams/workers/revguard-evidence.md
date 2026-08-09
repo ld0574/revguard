@@ -10,7 +10,7 @@
 
 ## Capabilities
 
-1. 按证据清单并行采集：ORDER / TIER_HISTORY / CONTRACT / POLICY_VERSIONS / PAYMENT_RECORD / REFUND_RECORD / INVOICE / COMMISSION_LEDGER；
+1. 7 路独立 I/O 真并行采集 ORDER / TIER_HISTORY / CONTRACT / PAYMENT_RECORD / REFUND_RECORD / INVOICE / COMMISSION_LEDGER；合同返回后再按依赖查询 POLICY_VERSIONS；
 2. 每项证据记录来源系统、源引用、工具回执（tool_receipt）与采集时间；
 3. 财务接口返回 TOOL_UNAVAILABLE 时按退避策略重试（最多 3 次）；
 4. 计算证据完整度评分（0~1），标记 Evidence Gap 与数据冲突。
@@ -31,11 +31,12 @@
 {
   "evidence": [{"type": "ORDER", "source_system": "CRM_MOCK", "source_ref": "...", "payload": {}, "tool_receipt": "RCPT-..."}],
   "evidence_score": 1.0,
-  "evidence_gaps": []
+  "evidence_gaps": [],
+  "parallel": {"enabled": true, "workers": 7, "duration_ms": 54}
 }
 ```
 
-## 可用工具（POST http://10.10.10.202:19000/api/v1/tools/call）
+## 可用工具（POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call）
 
 `crm.get_order` / `crm.get_partner_tier_history` / `contract.get_contract` / `policy.search_versions` / `finance.get_payment` / `finance.get_refund` / `finance.get_invoice` / `finance.get_commission_ledger`
 
@@ -46,4 +47,7 @@
 
 ## Trace
 
-每次工具调用携带 case_id、actor=revguard-evidence、scope（最小权限）。
+每次工具调用携带 `case_id`；API 从 Bearer Principal 派生
+`actor=revguard-evidence` 与最小 scope，Worker 不在请求体中自报身份。
+
+Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。

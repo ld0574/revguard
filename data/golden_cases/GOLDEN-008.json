@@ -1,0 +1,25 @@
+{
+  "case_id": "CASE-2026-0008",
+  "title": "执行后验证故障：独立验证失败，自动反向冲销并确认恢复",
+  "gateway_overrides": {
+    "verification_tamper_amount": "1"
+  },
+  "input": {
+    "case_id": "CASE-2026-0008",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "EVALUATION",
+    "partner_id": "AGT-10001",
+    "order_id": "EZ202608001",
+    "description": "故障注入评测：写入后 Verifier 首次查询出现 1 KES 偏差，系统必须冲销。",
+    "claim": {"actual_amount": 18000, "expected_amount": 32400, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "total_commission": "32400.00",
+    "root_causes": ["MISSING_COMPONENT", "WRONG_POLICY_VERSION"],
+    "risk_level": "L2",
+    "final_status": "ROLLED_BACK",
+    "verification_status": "FAILED",
+    "rollback_verification_status": "PASSED"
+  }
+}

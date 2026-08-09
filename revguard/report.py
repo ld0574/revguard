@@ -5,9 +5,19 @@
 """
 from __future__ import annotations
 
+from decimal import Decimal
+import hashlib
+
 
 def _money(amount, currency="") -> str:
-    return f"{amount} {currency}".strip()
+    value = "-" if amount is None else amount
+    return f"{value} {currency}".strip()
+
+
+def _token_ref(token: str | None) -> str:
+    if not token:
+        return "-"
+    return "sha256:" + hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
 
 
 def render_audit_report(*, case: dict, state: dict, evidence: list[dict],
@@ -19,6 +29,7 @@ def render_audit_report(*, case: dict, state: dict, evidence: list[dict],
     risk = state.get("risk_decision") or {}
     approval = state.get("approval") or {}
     verification = state.get("verification") or {}
+    rollback = state.get("rollback") or {}
     executions = state.get("executions") or []
     currency = calc.get("currency") or (case.get("claim") or {}).get("currency", "")
     lines: list[str] = []
@@ -137,12 +148,15 @@ def render_audit_report(*, case: dict, state: dict, evidence: list[dict],
         for ex in executions:
             add(f"### 动作 `{ex['action_id']}`（{ex['component']}，{_money(ex['amount'], ex.get('currency', currency))}）")
             add(f"- 幂等键：`{ex.get('idempotency_key')}`　状态：{ex.get('status')}"
-                f"　回滚令牌：`{ex.get('rollback_token') or '-'}`")
-            before = sum(float(e.get("amount", 0)) for e in ex.get("before_snapshot", [])
-                         if e.get("status") == "POSTED")
-            after = sum(float(e.get("amount", 0)) for e in ex.get("after_snapshot", [])
-                        if e.get("status") == "POSTED")
-            add(f"- 执行前台账合计：{before:.2f}　执行后台账合计：{after:.2f}")
+                f"　回滚令牌指纹：`{_token_ref(ex.get('rollback_token'))}`")
+            before = sum((Decimal(str(e.get("amount", 0))) for e in ex.get("before_snapshot", [])
+                          if e.get("status") == "POSTED"), Decimal("0"))
+            after = sum((Decimal(str(e.get("amount", 0))) for e in ex.get("after_snapshot", [])
+                         if e.get("status") == "POSTED"), Decimal("0"))
+            if ex.get("action_type") == "DRAFT":
+                add("- L1 安全边界：仅生成不生效草稿，未写入资金台账")
+            else:
+                add(f"- 执行前台账合计：{before:.2f}　执行后台账合计：{after:.2f}")
     else:
         add("（无执行动作）")
     add("")
@@ -162,8 +176,19 @@ def render_audit_report(*, case: dict, state: dict, evidence: list[dict],
         add("（未执行验证）")
     add("")
 
+    if rollback:
+        add("## 8. 回滚与冲销验证")
+        add("")
+        for reversal in rollback.get("reversals") or []:
+            add(f"- 冲销记录 `{reversal.get('ledger_id')}` 对冲 "
+                f"`{reversal.get('reversal_of')}`，金额 "
+                f"{_money(reversal.get('amount'), reversal.get('currency', currency))}")
+        rb_verify = rollback.get("verification") or {}
+        add(f"- 回滚后独立验证：**{rb_verify.get('verification_status', '-')}**")
+        add("")
+
     # ---------------------------------------------------------- Trace 与审计
-    add("## 8. Trace 与审计摘要")
+    add("## 9. Trace 与审计摘要" if rollback else "## 8. Trace 与审计摘要")
     add("")
     add(f"- Trace span 数：{trace_summary.get('span_count')}　"
         f"总耗时：{trace_summary.get('total_duration_ms')}ms　"

@@ -44,6 +44,10 @@ class TestSelectPolicyVersion(unittest.TestCase):
         with self.assertRaises(PolicyMatchError):
             select_policy_version(_versions(), {})
 
+    def test_malformed_date_raises(self):
+        with self.assertRaises(PolicyMatchError):
+            select_policy_version(_versions(), {"order_date": "2026-99-42"})
+
 
 class TestResolveTierAtDate(unittest.TestCase):
     def test_tier_conflict_case(self):
@@ -68,6 +72,12 @@ class TestResolveTierAtDate(unittest.TestCase):
     def test_empty_history_raises(self):
         with self.assertRaises(PolicyMatchError):
             resolve_tier_at_date([], "2026-07-10")
+
+    def test_date_before_first_tier_raises(self):
+        with self.assertRaises(PolicyMatchError):
+            resolve_tier_at_date([
+                {"tier": "SILVER", "effective_from": "2026-01-01"},
+            ], "2025-12-31")
 
 
 if __name__ == "__main__":

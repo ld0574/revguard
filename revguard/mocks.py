@@ -15,11 +15,14 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
+import os
 from pathlib import Path
+from decimal import Decimal
+from threading import RLock
 
 from .models import new_id, utc_now
+from .security import (CapabilityTokenSigner, SecurityError, authorize_tool)
 
 
 class ToolError(Exception):
@@ -48,10 +51,24 @@ def _load_fixtures(fixtures_dir: str | Path) -> dict:
 
 
 class ToolGateway:
-    """Mock 系统集合 + 统一调用入口。线程不安全（Demo 单进程足够）。"""
+    """Mock 系统集合 + 统一调用入口。
 
-    def __init__(self, fixtures_dir: str | Path, finance_fail_times: int = 0):
+    读工具可并发；可变状态、故障计数、回执与持久化由可重入锁保护。
+    ``state_path`` 可选，用于 Docker/API 重启后恢复 Mock 台账和幂等状态。
+    """
+
+    def __init__(self, fixtures_dir: str | Path, finance_fail_times: int = 0,
+                 *, signing_key: str | None = None,
+                 state_path: str | Path | None = None,
+                 verification_tamper_amount: str | Decimal = "0"):
         self.fixtures = _load_fixtures(fixtures_dir)
+        self._lock = RLock()
+        self._state_path = Path(state_path) if state_path else None
+        secret = signing_key or os.getenv(
+            "REVGUARD_APPROVAL_SIGNING_KEY",
+            "revguard-demo-signing-key-change-before-production-2026",
+        )
+        self._token_signer = CapabilityTokenSigner(secret)
         # 深拷贝可变系统状态，避免污染磁盘 fixtures，且支持重复运行
         self._ledger: list[dict] = copy.deepcopy(self.fixtures.get("ledger", {}).get("entries", []))
         self._adjustments: dict[str, dict] = {}       # action_id -> 调整单
@@ -59,7 +76,12 @@ class ToolGateway:
         self._idempotency: dict[str, str] = {}         # idempotency_key -> action_id
         self._outbox: list[dict] = []                  # 工单更新 / 邮件草稿
         self._receipts: list[dict] = []                # 全部调用回执
+        self._token_consumed_amount: dict[str, str] = {}  # approval jti -> 已执行绝对金额
+        self._used_rollback_tokens: set[str] = set()
         self._finance_fail_left = finance_fail_times   # 故障注入计数
+        self._verification_tamper_amount = Decimal(str(verification_tamper_amount))
+        self._verification_tamper_used = False
+        self._load_state()
 
     # ------------------------------------------------------------------ 入口
     def call(self, tool_name: str, parameters: dict, *, case_id: str = "",
@@ -77,9 +99,17 @@ class ToolGateway:
         try:
             if handler is None:
                 raise ToolError("NOT_FOUND", f"未知工具: {tool_name}")
-            data = handler(parameters or {}, scope=scope or [], idempotency_key=idempotency_key)
+            try:
+                required_scope = authorize_tool(actor, scope or [], tool_name)
+            except SecurityError as exc:
+                raise ToolError("AUTH_FAILED", str(exc)) from exc
+            receipt["required_scope"] = required_scope
+            data = handler(parameters or {}, scope=scope or [], idempotency_key=idempotency_key,
+                           actor=actor, case_id=case_id)
             receipt["success"] = True
-            self._receipts.append(receipt)
+            with self._lock:
+                self._receipts.append(receipt)
+                self._persist_state()
             return {
                 "success": True,
                 "data": data,
@@ -90,7 +120,9 @@ class ToolGateway:
         except ToolError as exc:
             receipt["success"] = False
             receipt["error_type"] = exc.error_type
-            self._receipts.append(receipt)
+            with self._lock:
+                self._receipts.append(receipt)
+                self._persist_state()
             return {
                 "success": False,
                 "data": None,
@@ -101,11 +133,13 @@ class ToolGateway:
 
     @property
     def receipts(self) -> list[dict]:
-        return list(self._receipts)
+        with self._lock:
+            return copy.deepcopy(self._receipts)
 
     @property
     def outbox(self) -> list[dict]:
-        return list(self._outbox)
+        with self._lock:
+            return copy.deepcopy(self._outbox)
 
     # ------------------------------------------------------------------- CRM
     def _tool_crm_get_order(self, p: dict, **_kw) -> dict:
@@ -161,9 +195,10 @@ class ToolGateway:
     # ------------------------------------------------------------------- 财务
     def _maybe_fail_finance(self) -> None:
         """故障注入：前 N 次财务调用返回可重试错误，用于演示工具重试链路。"""
-        if self._finance_fail_left > 0:
-            self._finance_fail_left -= 1
-            raise ToolError("TOOL_UNAVAILABLE", "财务系统暂时不可用（故障注入）")
+        with self._lock:
+            if self._finance_fail_left > 0:
+                self._finance_fail_left -= 1
+                raise ToolError("TOOL_UNAVAILABLE", "财务系统暂时不可用（故障注入）")
 
     def _tool_finance_get_payment(self, p: dict, **_kw) -> dict:
         self._maybe_fail_finance()
@@ -176,8 +211,8 @@ class ToolGateway:
     def _tool_finance_get_refund(self, p: dict, **_kw) -> dict:
         self._maybe_fail_finance()
         refunds = [x for x in self.fixtures.get("refunds", []) if x.get("order_id") == p.get("order_id")]
-        total = sum(float(x.get("refund_amount", 0)) for x in refunds)
-        return {"refunds": copy.deepcopy(refunds), "refund_amount": total}
+        total = sum((Decimal(str(x.get("refund_amount", 0))) for x in refunds), Decimal("0"))
+        return {"refunds": copy.deepcopy(refunds), "refund_amount": str(total)}
 
     def _tool_finance_get_invoice(self, p: dict, **_kw) -> dict:
         self._maybe_fail_finance()
@@ -187,11 +222,22 @@ class ToolGateway:
             raise ToolError("NOT_FOUND", f"发票不存在: {p}")
         return copy.deepcopy(invoice)
 
-    def _tool_finance_get_commission_ledger(self, p: dict, **_kw) -> dict:
+    def _tool_finance_get_commission_ledger(self, p: dict, *, actor="", **_kw) -> dict:
         self._maybe_fail_finance()
-        entries = [e for e in self._ledger if e.get("order_id") == p.get("order_id")]
-        total = sum(float(e.get("amount", 0)) for e in entries if e.get("status") == "POSTED")
-        return {"entries": copy.deepcopy(entries), "posted_total": total}
+        with self._lock:
+            entries = copy.deepcopy([
+                e for e in self._ledger if e.get("order_id") == p.get("order_id")
+            ])
+            if (actor == "revguard-verifier" and not self._verification_tamper_used
+                    and self._verification_tamper_amount != 0 and entries):
+                # 仅篡改一次“查询结果”，不污染真实台账；用于验证失败→回滚闭环评测。
+                entries[-1]["amount"] = str(
+                    Decimal(str(entries[-1].get("amount", 0))) + self._verification_tamper_amount
+                )
+                self._verification_tamper_used = True
+            total = sum((Decimal(str(e.get("amount", 0))) for e in entries
+                         if e.get("status") == "POSTED"), Decimal("0"))
+        return {"entries": entries, "posted_total": str(total)}
 
     # -------------------------------------------------------------- 佣金执行
     def _tool_commission_create_adjustment_draft(self, p: dict, **kw) -> dict:
@@ -207,71 +253,123 @@ class ToolGateway:
             "status": "DRAFT",  # 草稿不生效（L1 安全边界）
             "created_at": utc_now(),
         }
-        self._adjustments[action_id] = draft
+        with self._lock:
+            self._adjustments[action_id] = draft
+            self._persist_state()
         return copy.deepcopy(draft)
 
-    def _tool_commission_submit_adjustment(self, p: dict, *, idempotency_key=None, **_kw) -> dict:
+    def _tool_commission_submit_adjustment(self, p: dict, *, idempotency_key=None,
+                                           actor="", case_id="", **_kw) -> dict:
         """提交调整单写入台账。强制幂等键 + 审批凭证校验。"""
         if not idempotency_key:
             raise ToolError("INVALID_PARAMS", "写操作必须携带幂等键")
-        if idempotency_key in self._idempotency:
-            raise ToolError("IDEMPOTENCY_CONFLICT",
-                            f"幂等键已使用: {idempotency_key} -> {self._idempotency[idempotency_key]}")
-        if not p.get("approval_token"):
+        token = p.get("approval_token")
+        if not token:
             raise ToolError("AUTH_FAILED", "提交调整必须携带有效审批凭证")
-        draft = self._adjustments.get(p.get("action_id", ""))
-        if not draft:
-            raise ToolError("NOT_FOUND", f"调整草稿不存在: {p.get('action_id')}")
-        if draft["status"] != "DRAFT":
-            raise ToolError("DATA_CONFLICT", f"调整单状态不允许提交: {draft['status']}")
+        with self._lock:
+            if idempotency_key in self._idempotency:
+                raise ToolError("IDEMPOTENCY_CONFLICT",
+                                f"幂等键已使用: {idempotency_key} -> {self._idempotency[idempotency_key]}")
+            draft = self._adjustments.get(p.get("action_id", ""))
+            if not draft:
+                raise ToolError("NOT_FOUND", f"调整草稿不存在: {p.get('action_id')}")
+            if draft["status"] != "DRAFT":
+                raise ToolError("DATA_CONFLICT", f"调整单状态不允许提交: {draft['status']}")
+            try:
+                claims = self._token_signer.verify(token, purpose="ledger_adjust")
+            except SecurityError as exc:
+                raise ToolError("AUTH_FAILED", str(exc)) from exc
+            if actor != "revguard-executor":
+                raise ToolError("AUTH_FAILED", "只有 revguard-executor 可提交调整")
+            if claims.get("case_id") != draft.get("case_id") or case_id != draft.get("case_id"):
+                raise ToolError("AUTH_FAILED", "审批凭证与案件不匹配")
+            if claims.get("currency") != draft.get("currency"):
+                raise ToolError("AUTH_FAILED", "审批凭证与币种不匹配")
+            approval = self._approvals.get(str(claims.get("approval_id", "")))
+            if not approval or approval.get("status") != "APPROVED":
+                raise ToolError("AUTH_FAILED", "审批单不存在或未批准")
+            jti = str(claims.get("jti", ""))
+            approved_amount = Decimal(str(claims.get("max_amount", "0")))
+            consumed = Decimal(self._token_consumed_amount.get(jti, "0"))
+            requested = abs(Decimal(str(draft["amount"])))
+            if requested <= 0 or consumed + requested > approved_amount:
+                raise ToolError("AUTH_FAILED", "提交金额超过审批凭证授权额度")
 
-        # 执行前快照 -> 写台账 -> 执行后快照（设计文档 7.6）
-        before = [e for e in self._ledger if e.get("order_id") == draft["order_id"]]
-        entry = {
-            "ledger_id": new_id("LED"),
-            "order_id": draft["order_id"],
-            "component": draft["component"],
-            "amount": draft["amount"],
-            "currency": draft["currency"],
-            "policy_version": p.get("policy_version"),
-            "status": "POSTED",
-            "source": f"REVGUARD:{draft.get('case_id')}",
-            "posted_at": utc_now(),
-        }
-        self._ledger.append(entry)
-        draft["status"] = "SUBMITTED"
-        self._idempotency[idempotency_key] = draft["action_id"]
-        after = [e for e in self._ledger if e.get("order_id") == draft["order_id"]]
-        return {
-            "action_id": draft["action_id"],
-            "status": "SUBMITTED",
-            "ledger_entry": copy.deepcopy(entry),
-            "before_snapshot": copy.deepcopy(before),
-            "after_snapshot": copy.deepcopy(after),
-            "rollback_token": new_id("RBK"),
-        }
+            # 执行前快照 -> 写台账 -> 执行后快照（设计文档 7.6）
+            before = [e for e in self._ledger if e.get("order_id") == draft["order_id"]]
+            entry = {
+                "ledger_id": new_id("LED"),
+                "order_id": draft["order_id"],
+                "component": draft["component"],
+                "amount": draft["amount"],
+                "currency": draft["currency"],
+                "policy_version": p.get("policy_version"),
+                "status": "POSTED",
+                "source": f"REVGUARD:{draft.get('case_id')}",
+                "posted_at": utc_now(),
+            }
+            self._ledger.append(entry)
+            draft["status"] = "SUBMITTED"
+            self._idempotency[idempotency_key] = draft["action_id"]
+            self._token_consumed_amount[jti] = str(consumed + requested)
+            rollback_token = self._token_signer.issue("ledger_reverse", {
+                "case_id": draft["case_id"],
+                "ledger_id": entry["ledger_id"],
+                "action_id": draft["action_id"],
+                "currency": draft["currency"],
+            }, ttl_seconds=3600)
+            after = [e for e in self._ledger if e.get("order_id") == draft["order_id"]]
+            self._persist_state()
+            return {
+                "action_id": draft["action_id"],
+                "status": "SUBMITTED",
+                "ledger_entry": copy.deepcopy(entry),
+                "before_snapshot": copy.deepcopy(before),
+                "after_snapshot": copy.deepcopy(after),
+                "rollback_token": rollback_token,
+            }
 
-    def _tool_commission_reverse_adjustment(self, p: dict, *, idempotency_key=None, **_kw) -> dict:
+    def _tool_commission_reverse_adjustment(self, p: dict, *, idempotency_key=None,
+                                            actor="", case_id="", **_kw) -> dict:
         """冲销：新增一笔反向台账（不物理删除，保证可审计）。"""
         if not idempotency_key:
             raise ToolError("INVALID_PARAMS", "冲销必须携带幂等键")
-        if idempotency_key in self._idempotency:
-            raise ToolError("IDEMPOTENCY_CONFLICT", f"幂等键已使用: {idempotency_key}")
-        target = self._find_ledger(p.get("ledger_id"))
-        if not target:
-            raise ToolError("NOT_FOUND", f"台账记录不存在: {p.get('ledger_id')}")
-        reversal = copy.deepcopy(target)
-        reversal["ledger_id"] = new_id("LED")
-        reversal["amount"] = str(-float(target["amount"]))
-        reversal["status"] = "POSTED"
-        reversal["reversal_of"] = target["ledger_id"]
-        reversal["source"] = f"REVGUARD:{p.get('case_id', '')}"
-        reversal["posted_at"] = utc_now()
-        self._ledger.append(reversal)
-        # 会计惯例：原记录保留 POSTED 并标记被冲销，由冲销记录对冲（净额为 0），全程可审计
-        target["reversed_by"] = reversal["ledger_id"]
-        self._idempotency[idempotency_key] = reversal["ledger_id"]
-        return {"reversal_entry": copy.deepcopy(reversal), "reversed_entry": copy.deepcopy(target)}
+        rollback_token = p.get("rollback_token")
+        if not rollback_token:
+            raise ToolError("AUTH_FAILED", "冲销必须携带回滚能力令牌")
+        with self._lock:
+            if idempotency_key in self._idempotency:
+                raise ToolError("IDEMPOTENCY_CONFLICT", f"幂等键已使用: {idempotency_key}")
+            try:
+                claims = self._token_signer.verify(rollback_token, purpose="ledger_reverse")
+            except SecurityError as exc:
+                raise ToolError("AUTH_FAILED", str(exc)) from exc
+            if actor != "revguard-executor":
+                raise ToolError("AUTH_FAILED", "只有 revguard-executor 可执行冲销")
+            if claims.get("case_id") != case_id or claims.get("ledger_id") != p.get("ledger_id"):
+                raise ToolError("AUTH_FAILED", "回滚令牌与案件或台账记录不匹配")
+            jti = str(claims.get("jti", ""))
+            if jti in self._used_rollback_tokens:
+                raise ToolError("AUTH_FAILED", "回滚令牌已使用")
+            target = self._find_ledger(p.get("ledger_id"))
+            if not target:
+                raise ToolError("NOT_FOUND", f"台账记录不存在: {p.get('ledger_id')}")
+            if target.get("reversed_by"):
+                raise ToolError("DATA_CONFLICT", "台账记录已经冲销")
+            reversal = copy.deepcopy(target)
+            reversal["ledger_id"] = new_id("LED")
+            reversal["amount"] = str(-Decimal(str(target["amount"])))
+            reversal["status"] = "POSTED"
+            reversal["reversal_of"] = target["ledger_id"]
+            reversal["source"] = f"REVGUARD:{case_id}"
+            reversal["posted_at"] = utc_now()
+            self._ledger.append(reversal)
+            target["reversed_by"] = reversal["ledger_id"]
+            self._idempotency[idempotency_key] = reversal["ledger_id"]
+            self._used_rollback_tokens.add(jti)
+            self._persist_state()
+            return {"reversal_entry": copy.deepcopy(reversal),
+                    "reversed_entry": copy.deepcopy(target)}
 
     # ------------------------------------------------------------------ 审批
     def _tool_workflow_create_approval(self, p: dict, **_kw) -> dict:
@@ -287,42 +385,58 @@ class ToolGateway:
             "status": "PENDING",
             "created_at": utc_now(),
         }
-        self._approvals[approval_id] = approval
+        with self._lock:
+            self._approvals[approval_id] = approval
+            self._persist_state()
         return copy.deepcopy(approval)
 
     def _tool_workflow_get_approval_status(self, p: dict, **_kw) -> dict:
-        approval = self._approvals.get(p.get("approval_id", ""))
-        if not approval:
-            raise ToolError("NOT_FOUND", f"审批单不存在: {p.get('approval_id')}")
-        return copy.deepcopy(approval)
+        with self._lock:
+            approval = self._approvals.get(p.get("approval_id", ""))
+            if not approval:
+                raise ToolError("NOT_FOUND", f"审批单不存在: {p.get('approval_id')}")
+            return copy.deepcopy(approval)
 
-    def _tool_workflow_decide_approval(self, p: dict, **_kw) -> dict:
+    def _tool_workflow_decide_approval(self, p: dict, *, actor="", **_kw) -> dict:
         """模拟人工审批动作（演示环境专用；生产对接真实审批系统）。"""
-        approval = self._approvals.get(p.get("approval_id", ""))
-        if not approval:
-            raise ToolError("NOT_FOUND", f"审批单不存在: {p.get('approval_id')}")
-        if approval["status"] != "PENDING":
-            raise ToolError("DATA_CONFLICT", f"审批单已处理: {approval['status']}")
-        decision = p.get("decision", "REJECTED")
-        approval["status"] = "APPROVED" if decision == "APPROVED" else "REJECTED"
-        approval["approver"] = p.get("approver", "unknown")
-        approval["comment"] = p.get("comment", "")
-        approval["decided_at"] = utc_now()
-        if approval["status"] == "APPROVED":
-            # 审批凭证：执行时校验，伪造凭证会被拒绝（设计文档 14.3）
-            token_src = f"{approval['approval_id']}:{approval['approver']}:{approval['decided_at']}"
-            approval["approval_token"] = "ATK-" + hashlib.sha256(token_src.encode()).hexdigest()[:24]
-        return copy.deepcopy(approval)
+        with self._lock:
+            approval = self._approvals.get(p.get("approval_id", ""))
+            if not approval:
+                raise ToolError("NOT_FOUND", f"审批单不存在: {p.get('approval_id')}")
+            if approval["status"] != "PENDING":
+                raise ToolError("DATA_CONFLICT", f"审批单已处理: {approval['status']}")
+            decision = p.get("decision", "REJECTED")
+            approval["status"] = "APPROVED" if decision == "APPROVED" else "REJECTED"
+            # 审批人身份由可信 actor 决定，请求参数仅作兼容，不参与授权。
+            approval["approver"] = actor
+            approval["comment"] = p.get("comment", "")
+            approval["decided_at"] = utc_now()
+            if approval["status"] == "APPROVED":
+                approval["approval_token"] = self._token_signer.issue("ledger_adjust", {
+                    "approval_id": approval["approval_id"],
+                    "case_id": approval["case_id"],
+                    "max_amount": approval["amount"],
+                    "currency": approval["currency"],
+                    "risk_level": approval["risk_level"],
+                    "approver": actor,
+                    "approver_role": approval["approver_role"],
+                }, ttl_seconds=900)
+            self._persist_state()
+            return copy.deepcopy(approval)
 
     # -------------------------------------------------------------- 工单/邮件
     def _tool_ticket_update_case(self, p: dict, **_kw) -> dict:
         record = {"system": "TICKET", "payload": copy.deepcopy(p), "at": utc_now()}
-        self._outbox.append(record)
+        with self._lock:
+            self._outbox.append(record)
+            self._persist_state()
         return {"updated": True, "ticket_ref": p.get("ticket_ref", "TICKET-MOCK")}
 
     def _tool_mail_create_reply_draft(self, p: dict, **_kw) -> dict:
         record = {"system": "MAIL", "payload": copy.deepcopy(p), "at": utc_now()}
-        self._outbox.append(record)
+        with self._lock:
+            self._outbox.append(record)
+            self._persist_state()
         return {"draft_id": new_id("MAIL"), "status": "DRAFT"}
 
     # ------------------------------------------------------------------ 内部
@@ -333,3 +447,37 @@ class ToolGateway:
 
     def _find_ledger(self, ledger_id: str | None):
         return next((e for e in self._ledger if e.get("ledger_id") == ledger_id), None)
+
+    def _load_state(self) -> None:
+        if not self._state_path or not self._state_path.exists():
+            return
+        try:
+            state = json.loads(self._state_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"无法加载 ToolGateway 状态 {self._state_path}: {exc}") from exc
+        self._ledger = state.get("ledger", self._ledger)
+        self._adjustments = state.get("adjustments", {})
+        self._approvals = state.get("approvals", {})
+        self._idempotency = state.get("idempotency", {})
+        self._outbox = state.get("outbox", [])
+        self._receipts = state.get("receipts", [])
+        self._token_consumed_amount = state.get("token_consumed_amount", {})
+        self._used_rollback_tokens = set(state.get("used_rollback_tokens", []))
+
+    def _persist_state(self) -> None:
+        if not self._state_path:
+            return
+        self._state_path.parent.mkdir(parents=True, exist_ok=True)
+        state = {
+            "ledger": self._ledger,
+            "adjustments": self._adjustments,
+            "approvals": self._approvals,
+            "idempotency": self._idempotency,
+            "outbox": self._outbox,
+            "receipts": self._receipts,
+            "token_consumed_amount": self._token_consumed_amount,
+            "used_rollback_tokens": sorted(self._used_rollback_tokens),
+        }
+        tmp = self._state_path.with_suffix(self._state_path.suffix + ".tmp")
+        tmp.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(self._state_path)

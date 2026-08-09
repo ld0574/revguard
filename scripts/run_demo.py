@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -50,17 +49,9 @@ def main() -> int:
     parser.add_argument("--keep-db", action="store_true", help="不清空历史数据库")
     args = parser.parse_args()
 
-    if not args.keep_db and DB_PATH.exists():
-        DB_PATH.unlink()  # 保证 Demo 可重复运行且幂等结果一致
-
     banner("RevGuard Demo — 初始化")
     store = Store(DB_PATH)
-    gateway = ToolGateway(FIXTURES, finance_fail_times=1)  # 财务接口故障注入 1 次
-    orchestrator = Orchestrator(
-        store, gateway, output_dir=OUTPUT_DIR, report_dir=REPORT_DIR,
-        approval_mode="wait" if args.wait_approval else "auto")
-
-    cases = seed(str(DB_PATH))
+    cases = seed(str(DB_PATH), reset=not args.keep_db)
     if args.case:
         cases = [c for c in cases if c["case_id"] == args.case]
         if not cases:
@@ -71,8 +62,18 @@ def main() -> int:
              for fp in sorted((ROOT / "data" / "golden_cases").glob("*.json"))}
 
     results: list[dict] = []
+    mismatches: list[str] = []
     for case in cases:
         spec = next((s for s in specs.values() if s["input"]["case_id"] == case["case_id"]), {})
+        gateway = ToolGateway(
+            FIXTURES, finance_fail_times=1,
+            verification_tamper_amount=(spec.get("gateway_overrides") or {}).get(
+                "verification_tamper_amount", "0"
+            ),
+        )
+        orchestrator = Orchestrator(
+            store, gateway, output_dir=OUTPUT_DIR, report_dir=REPORT_DIR,
+            approval_mode="wait" if args.wait_approval else "auto")
         banner(f"{case['case_id']} — {spec.get('title', '')}")
         state = orchestrator.run_case(case)
         fresh = store.get_case(case["case_id"])
@@ -82,6 +83,9 @@ def main() -> int:
             "final_status": fresh["status"],
             "risk_level": fresh.get("risk_level"),
             "verification": verification.get("verification_status"),
+            "rollback_verification": ((state.get("rollback") or {}).get("verification") or {}).get(
+                "verification_status"
+            ),
             "expected": spec.get("expected", {}),
         }
         results.append(summary)
@@ -94,17 +98,34 @@ def main() -> int:
             print(f"  根因          : {', '.join(rca.get('root_causes') or ['-'])}")
         if summary["verification"]:
             print(f"  独立验证      : {summary['verification']}")
+        if summary["rollback_verification"]:
+            print(f"  回滚后验证    : {summary['rollback_verification']}")
         if state.get("errors"):
             print(f"  挂起原因      : {state['errors'][-1]}")
         print(f"  审计报告      : docs/reports/{case['case_id']}.md")
+        expected = summary["expected"]
+        for key, actual_key in (
+            ("final_status", "final_status"),
+            ("risk_level", "risk_level"),
+            ("verification_status", "verification"),
+            ("rollback_verification_status", "rollback_verification"),
+        ):
+            if key in expected and summary.get(actual_key) != expected[key]:
+                mismatches.append(
+                    f"{case['case_id']} {key}: {summary.get(actual_key)} != {expected[key]}"
+                )
 
     banner("Demo 结果汇总")
     for r in results:
         print(f"  {r['case_id']}: {r['final_status']}"
               + (f"  verify={r['verification']}" if r["verification"] else ""))
     print(f"\n产物：{REPORT_DIR}  |  {OUTPUT_DIR}")
+    if mismatches:
+        print("\nGolden 期望不一致：")
+        for mismatch in mismatches:
+            print(f"  - {mismatch}")
     store.close()
-    return 0
+    return 1 if mismatches else 0
 
 
 if __name__ == "__main__":

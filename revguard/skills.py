@@ -12,7 +12,10 @@
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from decimal import Decimal
 from typing import Callable
@@ -23,6 +26,7 @@ from .models import (CalculationResult, Evidence, PolicyDecision, RiskDecision,
                      new_id, utc_now)
 from .policy_matcher import resolve_tier_at_date, select_policy_version
 from .risk import classify_risk
+from .security import redact_secrets
 from .trace import Tracer
 
 
@@ -33,7 +37,8 @@ from .trace import Tracer
 def call_tool(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
               parameters: dict, *, case_id: str, actor: str,
               scope: list[str] | None = None, idempotency_key: str | None = None,
-              max_retries: int = 3, retry_backoff: float = 0.05) -> dict:
+              max_retries: int = 3, retry_backoff: float = 0.05,
+              parent_span_id: str | None = None) -> dict:
     """带重试与 Trace 的工具调用。可重试错误按次数退避重试，最终失败抛 ToolError。"""
     from .mocks import ToolError  # 延迟导入避免循环
 
@@ -41,13 +46,18 @@ def call_tool(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
     while True:
         attempt += 1
         span_ctx = (tracer.span("TOOL", tool_name, actor=actor,
-                                inputs={"parameters": parameters, "attempt": attempt})
+                                inputs={"parameters": redact_secrets(parameters),
+                                        "attempt": attempt},
+                                parent_span_id=parent_span_id)
                     if tracer else _null_span())
         with span_ctx as span:
             resp = gateway.call(tool_name, parameters, case_id=case_id, actor=actor,
                                 scope=scope, idempotency_key=idempotency_key)
             span["outputs"] = {"success": resp["success"], "error": resp["error"],
                                "tool_receipt": resp["tool_receipt"]}
+            if not resp["success"]:
+                span["status"] = "ERROR"
+                span["error"] = (resp.get("error") or {}).get("message", "工具调用失败")
         if resp["success"]:
             return resp
         error = resp["error"] or {}
@@ -85,7 +95,7 @@ def case_normalize(raw_case: dict) -> dict:
         "order_id": raw_case.get("order_id"),
         "contract_id": raw_case.get("contract_id"),
     }
-    missing = [k for k in ("partner_id", "partner_name") if not entities.get(k)]
+    missing = [] if entities.get("partner_id") or entities.get("partner_name") else ["partner_identity"]
     return {"entities": entities, "missing_fields": missing,
             "claim": raw_case.get("claim", {})}
 
@@ -133,16 +143,19 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
 
     def _record(ev_type: str, source_system: str, source_ref: str, payload: dict,
                 tool_receipt: str) -> Evidence:
+        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                               separators=(",", ":"), default=str).encode("utf-8")
         ev = Evidence(
             evidence_id=new_id("EV"), case_id=case_id, type=ev_type,
             source_system=source_system, source_ref=source_ref,
             collected_by="revguard-evidence", payload=payload,
             strength="STRONG", tool_receipt=tool_receipt,
+            content_hash="sha256:" + hashlib.sha256(canonical).hexdigest(),
         )
         evidence.append(ev)
         return ev
 
-    # ---- 同一采集批次（逻辑并行：任一失败不影响其他项，财务类失败自动重试） ----
+    # ---- 同一采集批次真实并行：任一失败不影响其他项，财务类失败自动重试 ----
     batch: list[tuple[str, str, str, dict, list[str]]] = [
         ("ORDER", "CRM_MOCK", order_id, "crm.get_order", ["order:read"]),
         ("TIER_HISTORY", "CRM_MOCK", partner["partner_id"], "crm.get_partner_tier_history", ["partner:read"]),
@@ -153,14 +166,44 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
         ("COMMISSION_LEDGER", "FINANCE_MOCK", order_id, "finance.get_commission_ledger", ["ledger:read"]),
     ]
     collected: dict[str, dict] = {}
-    for ev_type, source_system, ref, tool, scope in batch:
+    batch_parent = tracer.current_span_id if tracer else None
+    started = time.monotonic()
+
+    def _collect_one(item):
+        ev_type, source_system, ref, tool, scope = item
+        resp = call_tool(
+            gateway, tracer, tool,
+            {"order_id": order_id, "partner_id": partner["partner_id"]},
+            case_id=case_id, actor="revguard-evidence", scope=scope,
+            parent_span_id=batch_parent,
+        )
+        return ev_type, source_system, ref, resp
+
+    results: dict[str, tuple[str, str, dict]] = {}
+    max_workers = min(7, len(batch))
+    with ThreadPoolExecutor(max_workers=max_workers,
+                            thread_name_prefix="revguard-evidence") as pool:
+        future_to_type = {pool.submit(_collect_one, item): item[0] for item in batch}
+        for future in as_completed(future_to_type):
+            ev_type = future_to_type[future]
+            try:
+                result_type, source_system, ref, resp = future.result()
+                results[result_type] = (source_system, ref, resp)
+            except Exception as exc:
+                gaps.append(f"{ev_type}: {exc}")
+
+    # 固定证据输出顺序，保证报告/哈希在并发完成顺序变化时仍可复现。
+    for ev_type, _source_system, _ref, _tool, _scope in batch:
+        result = results.get(ev_type)
+        if not result:
+            continue
+        source_system, ref, resp = result
         try:
-            resp = call_tool(gateway, tracer, tool, {"order_id": order_id, "partner_id": partner["partner_id"]},
-                             case_id=case_id, actor="revguard-evidence", scope=scope)
             collected[ev_type] = resp["data"]
             _record(ev_type, source_system, ref, resp["data"], resp["tool_receipt"])
         except Exception as exc:
             gaps.append(f"{ev_type}: {exc}")
+    parallel_duration_ms = int((time.monotonic() - started) * 1000)
 
     # 政策库查询依赖合同结果（政策 ID 来自合同）
     contract = collected.get("CONTRACT") or {}
@@ -183,6 +226,8 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
         "collected": collected,
         "evidence_gaps": gaps,
         "evidence_score": score,
+        "parallel": {"enabled": True, "workers": max_workers,
+                     "duration_ms": parallel_duration_ms, "task_count": len(batch)},
     }
 
 
@@ -304,6 +349,9 @@ def permission_check(*, actor: str, action_type: str, risk: RiskDecision,
         raise ToolError("AUTH_FAILED", f"{actor} 无权执行写操作")
     if risk.risk_level == "L3":
         raise ToolError("AUTH_FAILED", "L3 高风险案件禁止系统自动执行")
+    if (risk.execution_constraints.get("write") == "draft_only"
+            and action_type != "DRAFT"):
+        raise ToolError("AUTH_FAILED", "L1 仅允许创建不生效草稿，禁止写入台账")
     if risk.approval_required:
         if not approval or approval.get("status") != "APPROVED" or not approval.get("approval_token"):
             raise ToolError("AUTH_FAILED", "缺少有效审批凭证，禁止执行")
@@ -325,7 +373,20 @@ def adjustment_draft(gateway: ToolGateway, tracer: Tracer | None, *, case_id: st
     resp = call_tool(gateway, tracer, "commission.create_adjustment_draft", {
         "order_id": order_id, "case_id": case_id, "component": component,
         "amount": str(delta), "currency": currency, "reason": reason,
-    }, case_id=case_id, actor="revguard-executor", scope=["commission:write"])
+    }, case_id=case_id, actor="revguard-executor", scope=["commission:draft"])
+    return resp["data"]
+
+
+def ledger_reverse(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
+                   ledger_id: str, rollback_token: str,
+                   idempotency_key: str) -> dict:
+    """LedgerReverseSkill：用一次性回滚令牌新增反向台账，不物理删除原记录。"""
+    resp = call_tool(gateway, tracer, "commission.reverse_adjustment", {
+        "case_id": case_id,
+        "ledger_id": ledger_id,
+        "rollback_token": rollback_token,
+    }, case_id=case_id, actor="revguard-executor", scope=["commission:reverse"],
+        idempotency_key=idempotency_key)
     return resp["data"]
 
 
@@ -382,13 +443,51 @@ def post_action_verify(gateway: ToolGateway, tracer: Tracer | None, *, case_id: 
     }
 
 
+def post_rollback_verify(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
+                         order_id: str, expected_snapshot: list[dict]) -> dict:
+    """PostRollbackVerifySkill：独立查询并确认冲销后恢复到执行前台账净额。"""
+    resp = call_tool(gateway, tracer, "finance.get_commission_ledger", {"order_id": order_id},
+                     case_id=case_id, actor="revguard-verifier", scope=["ledger:read"])
+
+    def _totals(entries: list[dict]) -> dict[str, Decimal]:
+        totals: dict[str, Decimal] = {}
+        for entry in entries:
+            if entry.get("status") != "POSTED":
+                continue
+            component = entry.get("component", "UNKNOWN")
+            totals[component] = totals.get(component, Decimal("0")) + Decimal(
+                str(entry.get("amount", 0))
+            )
+        return totals
+
+    expected = _totals(expected_snapshot)
+    actual = _totals(resp["data"]["entries"])
+    components = sorted(set(expected) | set(actual))
+    checks = [{
+        "component": component,
+        "expected": str(expected.get(component, Decimal("0"))),
+        "actual": str(actual.get(component, Decimal("0"))),
+        "passed": expected.get(component, Decimal("0")) == actual.get(component, Decimal("0")),
+    } for component in components]
+    passed = all(item["passed"] for item in checks)
+    return {
+        "verification_status": "PASSED" if passed else "FAILED",
+        "component_checks": checks,
+        "evidence_refs": [resp["tool_receipt"]],
+        "checked_at": utc_now(),
+    }
+
+
 # ---------------------------------------------------------------------------
 # F. 沉淀类 Skill
 # ---------------------------------------------------------------------------
 
 def case_to_dataset(case: dict, shared_state: dict, verification: dict) -> dict:
     """CaseToDatasetSkill：把完整案件轨迹沉淀为可回放评测样本。"""
-    label = "GOLDEN" if verification.get("verification_status") == "PASSED" else "BAD"
+    accepted = {"PASSED", "NOT_APPLICABLE_DRAFT_ONLY"}
+    label = "GOLDEN" if verification.get("verification_status") in accepted else "BAD"
+    if case.get("status") == "ROLLED_BACK":
+        label = "SAFE_ROLLBACK"
     return {
         "case_id": case["case_id"],
         "label": label,
@@ -425,7 +524,7 @@ SKILL_REGISTRY: dict[str, dict] = {m["name"]: m for m in [
           ["entities"], ["partner", "resolved_by"], ["crm.get_partner"],
           ["not_found", "ambiguous"], {"read_only": True, "pii": True},
           ["commission_dispute", "partner_lookup"], entity_resolve),
-    _meta("EvidenceCollectSkill", "1.0.0", "tool", "跨系统证据采集与完整度评分",
+    _meta("EvidenceCollectSkill", "1.1.0", "tool", "跨系统真实并行证据采集与完整度评分",
           ["partner", "order_id"], ["evidence", "evidence_gaps", "evidence_score"],
           ["crm.*", "contract.*", "policy.*", "finance.*"],
           ["tool_unavailable_retry", "evidence_gap"], {"read_only": True, "pii": False},
@@ -467,15 +566,26 @@ SKILL_REGISTRY: dict[str, dict] = {m["name"]: m for m in [
           ["order_id", "component", "delta"], ["draft"],
           ["commission.create_adjustment_draft"], ["tool_unavailable"],
           {"write_permission": "commission_draft"}, ["commission_dispute"], adjustment_draft),
-    _meta("LedgerAdjustSkill", "1.0.0", "tool", "提交调整写入台账（审批凭证+幂等）",
+    _meta("LedgerAdjustSkill", "2.0.0", "tool", "提交调整写入台账（签名审批凭证+幂等）",
           ["action_id", "approval_token", "idempotency_key"],
           ["execution", "snapshots", "rollback_token"],
           ["commission.submit_adjustment"], ["auth_failed", "idempotency_conflict"],
           {"write_permission": "commission_post"}, ["commission_dispute"], ledger_adjust),
+    _meta("LedgerReverseSkill", "1.0.0", "tool", "验证失败后以一次性能力令牌反向冲销",
+          ["ledger_id", "rollback_token", "idempotency_key"],
+          ["reversal_entry", "reversed_entry"],
+          ["commission.reverse_adjustment"],
+          ["auth_failed", "token_replayed", "idempotency_conflict"],
+          {"write_permission": "commission_reverse"},
+          ["commission_dispute", "any_reversible_write"], ledger_reverse),
     _meta("PostActionVerifySkill", "1.0.0", "tool", "独立查询验证执行结果",
           ["order_id", "expected_components"], ["verification"],
           ["finance.get_commission_ledger"], ["tool_unavailable"],
           {"read_only": True}, ["any_executed_case"], post_action_verify),
+    _meta("PostRollbackVerifySkill", "1.0.0", "tool", "独立确认回滚后恢复执行前净额",
+          ["order_id", "expected_snapshot"], ["rollback_verification"],
+          ["finance.get_commission_ledger"], ["tool_unavailable", "rollback_variance"],
+          {"read_only": True}, ["any_reversible_write"], post_rollback_verify),
     _meta("CaseToDatasetSkill", "1.0.0", "deterministic", "案件轨迹沉淀为评测样本",
           ["case", "shared_state", "verification"], ["dataset_record"], [],
           ["incomplete_trace"], {"read_only": False},

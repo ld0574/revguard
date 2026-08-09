@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "revguard-agent-infra"
+version = "0.2.0"
+description = "Auditable multi-agent commission dispute resolution on AgentTeams"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [{name = "RevGuard Team"}]
+dependencies = [
+  "fastapi==0.141.1",
+  "uvicorn[standard]==0.52.1",
+]
+
+[project.optional-dependencies]
+dev = ["httpx==0.28.1"]
+
+[tool.setuptools.packages.find]
+include = ["revguard*"]

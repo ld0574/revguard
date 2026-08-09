@@ -27,11 +27,16 @@ class TestGoldenCasesE2E(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             db = str(Path(tmp) / "test.db")
             store = Store(db)
-            gateway = ToolGateway(FIXTURES, finance_fail_times=1)
+            gateway = ToolGateway(
+                FIXTURES, finance_fail_times=1,
+                verification_tamper_amount=(spec.get("gateway_overrides") or {}).get(
+                    "verification_tamper_amount", "0"
+                ),
+            )
             orch = Orchestrator(store, gateway,
                                 output_dir=Path(tmp) / "outputs",
                                 report_dir=Path(tmp) / "reports")
-            seed(db)
+            seed(db, quiet=True)
             case = store.get_case(spec["input"]["case_id"])
             state = orch.run_case(case)
             final = store.get_case(case["case_id"])
@@ -97,8 +102,8 @@ class TestGoldenCasesE2E(unittest.TestCase):
         self.assertEqual(state["approval"]["status"], "APPROVED")
         self.assertTrue(state["approval"]["approval_token"])
 
-    def test_golden_006_l1_auto_execute(self):
-        """L1 小额免审批：证据充分 + 差额 ≤5000，自动执行不经过审批节点。"""
+    def test_golden_006_l1_draft_only(self):
+        """L1 小额免审批：只创建不生效草稿，绝不写入资金台账。"""
         spec, final, state = self._run(ROOT / "data" / "golden_cases" / "GOLDEN-006.json")
         exp = spec["expected"]
         self.assertEqual(state["calculation_result"]["total_commission"], exp["total_commission"])
@@ -110,6 +115,8 @@ class TestGoldenCasesE2E(unittest.TestCase):
         # L1 不允许出现审批节点
         self.assertNotIn("approval", state)
         self.assertTrue(state["executions"])
+        self.assertTrue(all(e["status"] == "DRAFT" for e in state["executions"]))
+        self.assertTrue(all(e.get("ledger_entry") is None for e in state["executions"]))
 
     def test_golden_007_l3_forced_manual(self):
         """L3 超额强制人工：只生成方案，绝不允许任何执行记录。"""
@@ -121,6 +128,18 @@ class TestGoldenCasesE2E(unittest.TestCase):
         self.assertEqual(final["status"], exp["final_status"])
         self.assertNotIn("executions", state)
         self.assertNotIn("verification", state)
+
+    def test_golden_008_verification_failure_rolls_back(self):
+        """Verifier 发现偏差后必须真实冲销，并独立确认恢复执行前净额。"""
+        spec, final, state = self._run(ROOT / "data" / "golden_cases" / "GOLDEN-008.json")
+        exp = spec["expected"]
+        self.assertEqual(final["status"], exp["final_status"])
+        self.assertEqual(state["verification"]["verification_status"],
+                         exp["verification_status"])
+        self.assertEqual(state["rollback"]["verification"]["verification_status"],
+                         exp["rollback_verification_status"])
+        self.assertTrue(state["rollback"]["reversals"])
+        self.assertTrue(all(e["status"] == "ROLLED_BACK" for e in state["executions"]))
 
     def test_high_risk_never_auto_executed(self):
         """质量红线：L3 案件不允许出现任何执行记录。"""

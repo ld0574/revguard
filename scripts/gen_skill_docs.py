@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from revguard.skills import list_skills  # noqa: E402
+from revguard.skill_runtime import SKILL_ACTORS  # noqa: E402
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "skills.md"
 
@@ -47,6 +48,8 @@ def main() -> None:
         lines.append("")
         lines.append(f"- 输入：{', '.join(f'`{i}`' for i in s['inputs'])}")
         lines.append(f"- 输出：{', '.join(f'`{o}`' for o in s['outputs'])}")
+        lines.append(f"- 调用：`POST /api/v1/skills/{s['name']}/invoke`")
+        lines.append(f"- 允许身份：{', '.join(f'`{a}`' for a in sorted(SKILL_ACTORS[s['name']]))}")
         lines.append(f"- 说明：{s['description']}")
         lines.append("")
     OUT.write_text("\n".join(lines), encoding="utf-8")

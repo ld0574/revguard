@@ -9,6 +9,8 @@ data/revguard.db
 data/revguard.db-journal
 data/outputs/
 docs/reports/CASE-*.md
+!docs/reports/CASE-2026-0001.md
+!docs/reports/CASE-2026-0008.md
 
 # 环境配置
 .env

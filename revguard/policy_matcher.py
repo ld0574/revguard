@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from datetime import date
+
 from .models import PolicyDecision
 
 
@@ -13,12 +15,19 @@ class PolicyMatchError(Exception):
     """政策匹配失败（无可用版本 / 冲突无法消解）。"""
 
 
-def _date_of(facts: dict, field_name: str) -> str:
-    """从业务事实中取日期字段（ISO 日期字符串，按字典序即可比较）。"""
+def _parse_date(value, label: str) -> date:
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError) as exc:
+        raise PolicyMatchError(f"{label} 不是合法 ISO 日期: {value!r}") from exc
+
+
+def _date_of(facts: dict, field_name: str) -> date:
+    """从业务事实中取日期字段并严格解析。"""
     value = facts.get(field_name)
     if not value:
         raise PolicyMatchError(f"政策匹配缺少时间字段: {field_name}")
-    return str(value)[:10]
+    return _parse_date(value, field_name)
 
 
 def select_policy_version(versions: list[dict], facts: dict, time_basis: str = "order_date") -> PolicyDecision:
@@ -31,15 +40,19 @@ def select_policy_version(versions: list[dict], facts: dict, time_basis: str = "
     if not versions:
         raise PolicyMatchError("政策库中没有任何版本")
 
-    decision_date = _date_of(facts, time_basis)
+    decision_day = _date_of(facts, time_basis)
+    decision_date = decision_day.isoformat()
     selected: list[dict] = []
     excluded: list[dict] = []
 
     for v in versions:
-        eff_from = str(v.get("effective_from", "0000-00-00"))[:10]
-        eff_to = v.get("effective_to")
-        eff_to = str(eff_to)[:10] if eff_to else "9999-12-31"
-        if eff_from <= decision_date <= eff_to:
+        eff_from_day = _parse_date(v.get("effective_from"),
+                                   f"政策 {v.get('version')} effective_from")
+        eff_to_day = (_parse_date(v.get("effective_to"),
+                                  f"政策 {v.get('version')} effective_to")
+                      if v.get("effective_to") else date.max)
+        eff_from, eff_to = eff_from_day.isoformat(), eff_to_day.isoformat()
+        if eff_from_day <= decision_day <= eff_to_day:
             selected.append(v)
         else:
             excluded.append({
@@ -55,7 +68,9 @@ def select_policy_version(versions: list[dict], facts: dict, time_basis: str = "
         )
     if len(selected) > 1:
         # 多个版本同时生效属于配置冲突：取最新生效者，但必须显式留痕（不静默）
-        selected.sort(key=lambda v: str(v.get("effective_from", "")), reverse=True)
+        selected.sort(key=lambda v: _parse_date(v.get("effective_from"),
+                                                f"政策 {v.get('version')} effective_from"),
+                      reverse=True)
         conflicts.append(
             f"业务时点 {decision_date} 存在 {len(selected)} 个重叠生效版本: "
             f"{[v.get('version') for v in selected]}，已按最新生效版本裁决，需政策管理员复核"
@@ -86,20 +101,31 @@ def resolve_tier_at_date(tier_history: list[dict], at_date: str) -> dict:
     """
     if not tier_history:
         raise PolicyMatchError("代理商等级历史为空，无法确定业务时点等级")
-    ordered = sorted(tier_history, key=lambda t: str(t.get("effective_from", "")))
-    effective = ordered[0]
+    target_day = _parse_date(at_date, "业务时点")
+    ordered = sorted(
+        tier_history,
+        key=lambda t: _parse_date(t.get("effective_from"),
+                                  f"等级 {t.get('tier')} effective_from"),
+    )
+    effective = None
     for item in ordered:
-        if str(item.get("effective_from", ""))[:10] <= at_date:
+        if _parse_date(item.get("effective_from"),
+                       f"等级 {item.get('tier')} effective_from") <= target_day:
             effective = item
         else:
             break
+    if effective is None:
+        raise PolicyMatchError(
+            f"业务时点 {target_day.isoformat()} 早于首个等级生效日 "
+            f"{ordered[0].get('effective_from')}，无法回溯等级"
+        )
     # 若最新等级已生效但业务时点在其生效日之前，标记冲突供审计解释
     latest = ordered[-1]
     conflict = None
     if latest is not effective:
         conflict = (
             f"当前等级 {latest.get('tier')}（{latest.get('effective_from')} 生效），"
-            f"但业务时点 {at_date} 应适用 {effective.get('tier')}"
+            f"但业务时点 {target_day.isoformat()} 应适用 {effective.get('tier')}"
         )
     return {
         "tier": effective.get("tier"),

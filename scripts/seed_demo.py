@@ -22,12 +22,20 @@ from revguard.store import Store  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def seed(db_path: str) -> list[dict]:
+def seed(db_path: str, *, reset: bool = False, quiet: bool = False) -> list[dict]:
     store = Store(db_path)
+    if reset:
+        store.reset()
     cases: list[dict] = []
     for fp in sorted((ROOT / "data" / "golden_cases").glob("*.json")):
         spec = json.loads(fp.read_text(encoding="utf-8"))
         raw = spec["input"]
+        existing = store.get_case(raw["case_id"])
+        if existing and not reset:
+            cases.append(existing)
+            if not quiet:
+                print(f"  kept   {raw['case_id']}  ({spec['title']})")
+            continue
         case = Case(
             case_id=raw["case_id"],
             case_type=raw["case_type"],
@@ -46,7 +54,8 @@ def seed(db_path: str) -> list[dict]:
         store.save_case(case)
         store.audit(case["case_id"], "seed", "CASE_CREATED", {"source": fp.name})
         cases.append(case)
-        print(f"  seeded {case['case_id']}  ({spec['title']})")
+        if not quiet:
+            print(f"  seeded {case['case_id']}  ({spec['title']})")
     store.close()
     return cases
 
@@ -54,7 +63,15 @@ def seed(db_path: str) -> list[dict]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="初始化 RevGuard 演示案件")
     parser.add_argument("--db", default=str(ROOT / "data" / "revguard.db"))
+    parser.add_argument("--reset", action="store_true",
+                        help="先原子清空案件/证据/审批/执行/验证/审计/Trace")
+    parser.add_argument("--gateway-state", default="",
+                        help="--reset 时同步删除 ToolGateway 持久化状态文件")
     args = parser.parse_args()
+    if args.reset and args.gateway_state:
+        gateway_state = Path(args.gateway_state).resolve()
+        if gateway_state.exists() and gateway_state.is_file():
+            gateway_state.unlink()
     print(f"Seeding demo cases into {args.db}")
-    seed(args.db)
+    seed(args.db, reset=args.reset)
     print("Done.")

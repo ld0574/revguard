@@ -42,7 +42,9 @@
 
 ## Dependencies
 
-- 工具（统一入口 `POST http://10.10.10.202:19000/api/v1/tools/call`）：`policy.search_versions` / `policy.get_rule_dsl` / `contract.get_effective_terms`
+- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`policy.search_versions` / `policy.get_rule_dsl` / `contract.get_effective_terms`
+
+Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：revguard-calculation
 
 ## Decision Boundary

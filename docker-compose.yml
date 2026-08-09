@@ -13,6 +13,20 @@ services:
     environment:
       REVGUARD_APPROVAL_MODE: wait           # 服务端默认人工审批（演示真实人工节点）
       REVGUARD_FINANCE_FAIL_TIMES: "1"       # 财务接口故障注入，演示重试
+      REVGUARD_VERIFICATION_TAMPER_AMOUNT: "${REVGUARD_VERIFICATION_TAMPER_AMOUNT:-0}" # 故障演练：仅偏移 Verifier 首次读取，不污染真实台账
+      REVGUARD_APPROVAL_SIGNING_KEY: "${REVGUARD_APPROVAL_SIGNING_KEY:-}"
+      REVGUARD_API_KEYS_JSON: "${REVGUARD_API_KEYS_JSON:-}"
+      REVGUARD_ALLOW_INSECURE_DEMO_KEYS: "${REVGUARD_ALLOW_INSECURE_DEMO_KEYS:-true}" # 本地默认可一键运行；正式环境在 .env 中设为 false
+      REVGUARD_RESET_ON_START: "${REVGUARD_RESET_ON_START:-false}"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.0
     restart: unless-stopped
 
 volumes:

@@ -1,81 +1,72 @@
 # AgentTeams 集成说明
 
-RevGuard 以 [AgentTeams](https://hiclaw.io)（原 Hiclaw）为多 Agent 协同设计基点。
-本目录存放各 Worker 的 SOUL.md 身份定义，部署到 AgentTeams 后即可通过
-Element Web 聊天室驱动多 Agent 协同闭环。
+RevGuard 以 AgentTeams 为多 Agent 协同基点。本目录提供 1 个 Orchestrator 与 9 个
+职能 Worker 的 SOUL；金额、政策、风险和权限仍由 RevGuard 确定性 Skill 执行。
 
-## 两种运行路径
+## 两条互补路径
 
 | 路径 | 用途 | 入口 |
 |---|---|---|
-| **确定性闭环**（本仓库 `revguard/`） | 可复现评测、Golden Case 回放、单元/集成测试 | `python3 scripts/run_demo.py` |
-| **AgentTeams 协同**（本平台部署） | 现场 Demo、人机对话驱动、Worker 编排展示 | Element Web 聊天室 |
+| 确定性回放 | 评测、Golden Case、故障注入、回归测试 | `make verify && make demo` |
+| AgentTeams 协同 | 任务拆解、Worker 协作、人工审批、现场展示 | Element / AgentTeams Team |
 
-两条路径共享同一套 **Skill 层与工具契约**：Worker 通过
-`POST {REVGUARD_API}/api/v1/tools/call` 调用工具、通过
-`POST /api/v1/cases/{id}/run` 触发闭环，保证"聊天演示"与"可复现评测"结果一致。
+两条路径共享同一套 16 个 Skill、ToolGateway、状态机与 Trace 语义。AgentTeams Worker
+优先调用 `POST /api/v1/skills/{name}/invoke`；需要底层系统操作时调用
+`POST /api/v1/tools/call`。
 
-## 部署步骤
-
-### 1. 部署 RevGuard API（与 AgentTeams 同机）
+## 部署
 
 ```bash
-cd revguard
 docker compose up -d --build
-# API 位于 http://<host>:19000（宿主端口 19000 → 容器 9000），文档 http://<host>:19000/docs
+
+REVGUARD_HOME=/absolute/path/to/revguard \
+REVGUARD_API_BASE_URL=http://revguard-api:9000 \
+bash scripts/agentteams_setup.sh
 ```
 
-如需被 AgentTeams Worker 容器访问，将 `revguard-api` 接入 AgentTeams 的
-docker 网络（或直接用宿主机 IP:19000）。
+SOUL 使用 `{{REVGUARD_API_BASE_URL}}`，setup 脚本在临时目录渲染后复制到 controller。
+API key 不能出现在 SOUL、Prompt、聊天或 Trace 中，必须由 AgentTeams Secret/Tool
+Adapter 注入 `Authorization: Bearer ...`。
 
-### 2. 创建 Worker（在 agentteams-controller 容器内执行）
+## 协同映射
 
-```bash
-docker exec -it agentteams-controller bash
-
-agt apply worker --name revguard-intake \
-  --soul-file /path/to/revguard-intake.md --model moonshotai/kimi-k3
-
-# 依次创建其余 Worker：revguard-evidence / revguard-policy /
-# revguard-calculation / revguard-rootcause / revguard-risk /
-# revguard-executor / revguard-verifier / revguard-knowledge
-```
-
-> 也可以在 Element Web 里直接告诉 Manager：
-> "创建一个名为 revguard-intake 的 Worker，SOUL 如下……"，Manager 会自动处理。
-
-### 3. 组成 Team 并演示
-
-```bash
-agt create team --name revguard-team \
-  --workers revguard-intake,revguard-evidence,revguard-policy,revguard-calculation,revguard-rootcause,revguard-risk,revguard-executor,revguard-verifier,revguard-knowledge
-```
-
-在 Element Web 中向 Team 发送 Golden Case 申诉文本（见 `data/golden_cases/`），
-Worker 按 SOUL 边界协作，高风险节点回到人工审批。
-
-## 协同映射（赛道要求 §8.1/6.3）
-
-| 要求 | RevGuard 落地 |
+| 赛道关注 | RevGuard 实现 |
 |---|---|
-| ≥3 个不同职能 Agent | 9 个职能 Worker + Orchestrator，职责与写权限严格分离 |
-| 任务拆解 | Orchestrator 按状态机拆解为 10 个阶段任务 |
-| 上下文传递 | Shared Case State（结构化 Artifact，非长文本） |
-| 协同执行 | 证据采集并行批次、审批人工等待节点、失败重试 |
-| 状态追踪 | Case 状态机 + Task 状态 + 全链路 Trace |
-| 高风险审批/回滚 | L0-L3 分级、审批凭证、幂等键、快照、rollback_token |
+| ≥3 个不同职能 Agent | 1 Manager + 9 Worker，共 10 Agent |
+| 任务拆解 | Orchestrator 按 Case 状态机拆成 10 个阶段 |
+| 上下文传递 | Shared Case State，传递结构化 Artifact 而非聊天长文本 |
+| 并行协作 | Evidence 7 路独立 I/O 真并行；政策查询等待合同依赖 |
+| 人工节点 | L2 挂起等待独立 Approver Principal |
+| 权限 | 每个 Worker 独立 actor/scopes；请求体不能自报身份 |
+| 安全执行 | 签名能力令牌、gross 额度、幂等、前后快照 |
+| 结果验证 | Verifier 独立新查询，不使用 Executor 回执自证 |
+| 回滚 | 验证失败 → 反向台账 → 回滚后独立验证 |
+| 经验沉淀 | Trace、Markdown 报告、Case Memory、Evaluation Dataset |
 
-## Worker 清单与 SOUL 文件
+## Worker 清单
 
-| Worker | SOUL | 写权限 |
+| Worker | 职责 | 资金写权限 |
 |---|---|---|
-| revguard-orchestrator | workers/revguard-orchestrator.md | 否 |
-| revguard-intake | workers/revguard-intake.md | 否 |
-| revguard-evidence | workers/revguard-evidence.md | 否 |
-| revguard-policy | workers/revguard-policy.md | 否 |
-| revguard-calculation | workers/revguard-calculation.md | 否 |
-| revguard-rootcause | workers/revguard-rootcause.md | 否 |
-| revguard-risk | workers/revguard-risk.md | 仅审批单 |
-| revguard-executor | workers/revguard-executor.md | 是（唯一） |
-| revguard-verifier | workers/revguard-verifier.md | 否 |
-| revguard-knowledge | workers/revguard-knowledge.md | 仅知识库/草稿 |
+| revguard-orchestrator | 拆解、路由、状态推进 | 无 |
+| revguard-intake | 标准化与实体消歧 | 无 |
+| revguard-evidence | 并行证据采集 | 无 |
+| revguard-policy | 政策版本与等级时点 | 无 |
+| revguard-calculation | Decimal 规则复算 | 无 |
+| revguard-rootcause | 差异与根因解释 | 无 |
+| revguard-risk | 风险分级与审批单 | 仅审批工作流 |
+| revguard-executor | 草稿、写入、反向冲销 | 唯一资金写主体 |
+| revguard-verifier | 写后/回滚后独立验证 | 无，仅 ledger read |
+| revguard-knowledge | 报告、回复草稿、数据集 | 无资金权限 |
+
+## 现场验收
+
+不要以“聊天室里出现最终文字”为闭环标准。必须看到同一个 case_id 的：
+
+1. AgentTeams 任务拆解与 Worker 完成状态；
+2. Tool/Skill receipts；
+3. HumanApprovalGate 决策；
+4. Executor 写入；
+5. Verifier PASSED，或 CASE-0008 的 FAILED → ROLLED_BACK；
+6. Trace、审计报告与 Case Memory 落盘。
+
+完整部署与复录检查清单见 [`../docs/deployment.md`](../docs/deployment.md)。

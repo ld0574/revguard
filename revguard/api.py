@@ -12,17 +12,21 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from .models import Case, CaseStatus
 from .mocks import ToolGateway
 from .orchestrator import Orchestrator
 from .skills import list_skills
+from .skill_runtime import SKILL_ACTORS, SkillInvocationError, invoke_skill
 from .store import Store
 from .trace import Tracer
+from .security import (ApiPrincipal, SecurityError, constant_time_lookup,
+                       load_api_principals, secret_fingerprint)
 
 try:
-    from fastapi import FastAPI, HTTPException
-    from pydantic import BaseModel
+    from fastapi import Depends, FastAPI, Header, HTTPException
+    from pydantic import BaseModel, ConfigDict, Field
 except ImportError as exc:  # 本地纯标准库跑 Demo 时允许不安装 FastAPI
     raise ImportError("API 服务需要安装依赖：pip install -r requirements.txt") from exc
 
@@ -33,13 +37,101 @@ OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
 APPROVAL_MODE = os.getenv("REVGUARD_APPROVAL_MODE", "wait")  # 服务端默认等待人工审批
 FINANCE_FAIL_TIMES = int(os.getenv("REVGUARD_FINANCE_FAIL_TIMES", "1"))
+VERIFICATION_TAMPER_AMOUNT = os.getenv("REVGUARD_VERIFICATION_TAMPER_AMOUNT", "0")
+GATEWAY_STATE_PATH = os.getenv(
+    "REVGUARD_GATEWAY_STATE_PATH", str(Path(DB_PATH).with_suffix(".gateway.json"))
+)
+SIGNING_KEY = os.getenv("REVGUARD_APPROVAL_SIGNING_KEY", "")
+ALLOW_INSECURE_DEMO_KEYS = os.getenv("REVGUARD_ALLOW_INSECURE_DEMO_KEYS", "false").lower() == "true"
 
-app = FastAPI(title="RevGuard API", version="0.1.0",
+_DEMO_KEYS = json.dumps({
+    "rg-demo-operator-key": {"actor": "api-operator", "roles": ["viewer", "operator"]},
+    "rg-demo-viewer-key-1": {"actor": "api-viewer", "roles": ["viewer"]},
+    "rg-demo-approver-key": {
+        "actor": "finance.lead", "roles": ["viewer", "approver"],
+        "scopes": ["approval:read", "approval:decide"],
+    },
+    "rg-demo-evidence-key": {
+        "actor": "revguard-evidence", "roles": ["viewer", "worker"],
+        "scopes": ["order:read", "partner:read", "contract:read", "policy:read",
+                   "payment:read", "ledger:read"],
+    },
+    "rg-demo-intake-key-1": {
+        "actor": "revguard-intake", "roles": ["viewer", "worker"],
+        "scopes": ["partner:read", "order:read", "ticket:write"],
+    },
+    "rg-demo-policy-key-1": {
+        "actor": "revguard-policy", "roles": ["viewer", "worker"],
+        "scopes": ["policy:read", "partner:read"],
+    },
+    "rg-demo-calculation-key": {
+        "actor": "revguard-calculation", "roles": ["viewer", "worker"],
+        "scopes": ["order:read"],
+    },
+    "rg-demo-rootcause-key": {
+        "actor": "revguard-rootcause", "roles": ["viewer", "worker"], "scopes": [],
+    },
+    "rg-demo-risk-key-01": {
+        "actor": "revguard-risk", "roles": ["viewer", "worker"],
+        "scopes": ["approval:write", "approval:read"],
+    },
+    "rg-demo-executor-key": {
+        "actor": "revguard-executor", "roles": ["worker"],
+        "scopes": ["commission:draft", "commission:write", "commission:reverse"],
+    },
+    "rg-demo-verifier-key": {
+        "actor": "revguard-verifier", "roles": ["viewer", "worker"],
+        "scopes": ["ledger:read"],
+    },
+    "rg-demo-knowledge-key": {
+        "actor": "revguard-knowledge", "roles": ["viewer", "worker"],
+        "scopes": ["ticket:write", "mail:draft"],
+    },
+}, ensure_ascii=False)
+
+raw_api_keys = os.getenv("REVGUARD_API_KEYS_JSON", _DEMO_KEYS if ALLOW_INSECURE_DEMO_KEYS else "")
+try:
+    API_PRINCIPALS = load_api_principals(raw_api_keys) if raw_api_keys else {}
+except SecurityError as exc:
+    raise RuntimeError(f"API 鉴权配置无效: {exc}") from exc
+if not SIGNING_KEY:
+    if ALLOW_INSECURE_DEMO_KEYS:
+        SIGNING_KEY = "revguard-demo-signing-key-change-before-production-2026"
+    else:
+        raise RuntimeError("必须配置 REVGUARD_APPROVAL_SIGNING_KEY（至少 32 字节）")
+
+app = FastAPI(title="RevGuard API", version="0.2.0",
               description="企业渠道佣金与结算异常多 Agent 协同平台")
 
 # Demo 单进程即可：共享一份 Store / Mock 系统状态
 store = Store(DB_PATH)
-gateway = ToolGateway(FIXTURES, finance_fail_times=FINANCE_FAIL_TIMES)
+gateway = ToolGateway(FIXTURES, finance_fail_times=FINANCE_FAIL_TIMES,
+                      signing_key=SIGNING_KEY, state_path=GATEWAY_STATE_PATH,
+                      verification_tamper_amount=VERIFICATION_TAMPER_AMOUNT)
+
+
+def authenticate(authorization: str | None = Header(default=None)) -> ApiPrincipal:
+    if not API_PRINCIPALS:
+        raise HTTPException(503, "API 身份配置为空，拒绝受保护请求")
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(401, "缺少 Bearer API key",
+                            headers={"WWW-Authenticate": "Bearer"})
+    principal = constant_time_lookup(token, API_PRINCIPALS)
+    if principal is None:
+        raise HTTPException(401, "API key 无效", headers={"WWW-Authenticate": "Bearer"})
+    return principal
+
+
+def require_roles(*roles: str):
+    required = set(roles)
+
+    def dependency(principal: ApiPrincipal = Depends(authenticate)) -> ApiPrincipal:
+        if not required.intersection(principal.roles):
+            raise HTTPException(403, f"需要角色之一: {sorted(required)}")
+        return principal
+
+    return dependency
 
 
 def _orchestrator() -> Orchestrator:
@@ -55,27 +147,33 @@ class CaseCreate(BaseModel):
     partner_name: str | None = None
     order_id: str | None = None
     description: str = ""
-    claim: dict = {}
+    claim: dict = Field(default_factory=dict)
 
 
 class ApprovalDecision(BaseModel):
-    decision: str            # APPROVED / REJECTED
-    approver: str
+    model_config = ConfigDict(extra="forbid")
+    decision: Literal["APPROVED", "REJECTED"]
     comment: str = ""
 
 
 class ToolCall(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     tool_name: str
-    parameters: dict = {}
+    parameters: dict = Field(default_factory=dict)
     case_id: str = ""
-    actor: str = "api"
-    scope: list[str] = []
     idempotency_key: str | None = None
+
+
+class SkillInvoke(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    input: dict = Field(default_factory=dict)
+    case_id: str = ""
 
 
 # --------------------------------------------------------------------- 案件
 @app.post("/api/v1/cases", status_code=201)
-def create_case(payload: CaseCreate):
+def create_case(payload: CaseCreate,
+                principal: ApiPrincipal = Depends(require_roles("operator"))):
     from .models import new_id
     case = Case(
         case_id=new_id("CASE"),
@@ -88,17 +186,17 @@ def create_case(payload: CaseCreate):
                   "order_id": payload.order_id, "contract_id": None},
     ).to_dict()
     store.save_case(case)
-    store.audit(case["case_id"], "api", "CASE_CREATED", {"source": payload.source})
+    store.audit(case["case_id"], principal.actor, "CASE_CREATED", {"source": payload.source})
     return case
 
 
 @app.get("/api/v1/cases")
-def list_cases():
+def list_cases(_principal: ApiPrincipal = Depends(require_roles("viewer"))):
     return {"cases": store.list_cases()}
 
 
 @app.get("/api/v1/cases/{case_id}")
-def get_case(case_id: str):
+def get_case(case_id: str, _principal: ApiPrincipal = Depends(require_roles("viewer"))):
     case = store.get_case(case_id)
     if not case:
         raise HTTPException(404, f"案件不存在: {case_id}")
@@ -108,7 +206,7 @@ def get_case(case_id: str):
 
 
 @app.post("/api/v1/cases/{case_id}/run")
-def run_case(case_id: str):
+def run_case(case_id: str, _principal: ApiPrincipal = Depends(require_roles("operator"))):
     case = store.get_case(case_id)
     if not case:
         raise HTTPException(404, f"案件不存在: {case_id}")
@@ -122,7 +220,8 @@ def run_case(case_id: str):
 
 
 @app.post("/api/v1/cases/{case_id}/approval")
-def decide_approval(case_id: str, payload: ApprovalDecision):
+def decide_approval(case_id: str, payload: ApprovalDecision,
+                    principal: ApiPrincipal = Depends(require_roles("approver"))):
     """人工审批节点：审批通过后自动续跑执行与独立验证。"""
     case = store.get_case(case_id)
     if not case:
@@ -136,14 +235,13 @@ def decide_approval(case_id: str, payload: ApprovalDecision):
     resp = gateway.call("workflow.decide_approval", {
         "approval_id": approval["approval_id"],
         "decision": payload.decision,
-        "approver": payload.approver,
         "comment": payload.comment,
-    }, case_id=case_id, actor=payload.approver, scope=["approval:decide"])
+    }, case_id=case_id, actor=principal.actor, scope=["approval:decide"])
     if not resp["success"]:
         raise HTTPException(400, resp["error"])
     decided = resp["data"]
     store.save_approval({"approval_id": decided["approval_id"], "case_id": case_id, **decided})
-    store.audit(case_id, payload.approver, "APPROVAL_DECIDED",
+    store.audit(case_id, principal.actor, "APPROVAL_DECIDED",
                 {"decision": decided["status"], "simulated_human": False})
 
     if decided["status"] != "APPROVED":
@@ -156,19 +254,23 @@ def decide_approval(case_id: str, payload: ApprovalDecision):
     orch = _orchestrator()
     state = orch.execute_and_verify(case)
     orch._finalize(case, state, Tracer(store, case_id), archived=True)
-    return {"case": store.get_case(case_id), "approval": decided,
+    public_approval = {k: v for k, v in decided.items() if k != "approval_token"}
+    public_approval["approval_token_ref"] = secret_fingerprint(
+        decided.get("approval_token", "")
+    )
+    return {"case": store.get_case(case_id), "approval": public_approval,
             "verification": state.get("verification")}
 
 
 @app.get("/api/v1/cases/{case_id}/trace")
-def get_trace(case_id: str):
+def get_trace(case_id: str, _principal: ApiPrincipal = Depends(require_roles("viewer"))):
     if not store.get_case(case_id):
         raise HTTPException(404, f"案件不存在: {case_id}")
     return Tracer(store, case_id).export()
 
 
 @app.get("/api/v1/cases/{case_id}/report")
-def get_report(case_id: str):
+def get_report(case_id: str, _principal: ApiPrincipal = Depends(require_roles("viewer"))):
     report_path = Path(REPORT_DIR) / f"{case_id}.md"
     if not report_path.exists():
         raise HTTPException(404, "审计报告尚未生成")
@@ -177,18 +279,46 @@ def get_report(case_id: str):
 
 # ---------------------------------------------------------------- 工具与 Skill
 @app.post("/api/v1/tools/call")
-def call_tool(payload: ToolCall):
+def call_tool(payload: ToolCall,
+              principal: ApiPrincipal = Depends(require_roles("worker"))):
     """AgentTeams Worker 访问 Skill 层的统一工具契约入口（设计文档 13.1）。"""
     resp = gateway.call(payload.tool_name, payload.parameters,
-                        case_id=payload.case_id, actor=payload.actor,
-                        scope=payload.scope, idempotency_key=payload.idempotency_key)
+                        case_id=payload.case_id, actor=principal.actor,
+                        scope=list(principal.scopes), idempotency_key=payload.idempotency_key)
     return resp
 
 
 @app.get("/api/v1/skills")
-def get_skills():
+def get_skills(_principal: ApiPrincipal = Depends(require_roles("viewer"))):
     """Skill 清单（设计文档 9.1：输入输出/依赖/失败处理/安全边界/复用价值）。"""
-    return {"skills": list_skills()}
+    catalog = []
+    for item in list_skills():
+        catalog.append({
+            **item,
+            "invoke_endpoint": f"/api/v1/skills/{item['name']}/invoke",
+            "allowed_actors": sorted(SKILL_ACTORS.get(item["name"], [])),
+        })
+    return {"skills": catalog}
+
+
+@app.post("/api/v1/skills/{skill_name}/invoke")
+def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
+                            principal: ApiPrincipal = Depends(require_roles("worker"))):
+    """调用版本化 Skill；身份来自 Bearer principal，不接受自报 actor/scope。"""
+    try:
+        return invoke_skill(
+            skill_name, payload.input, actor=principal.actor, case_id=payload.case_id,
+            gateway=gateway, store=store,
+        )
+    except SkillInvocationError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except Exception as exc:
+        from .mocks import ToolError
+        if isinstance(exc, ToolError) and exc.error_type == "AUTH_FAILED":
+            raise HTTPException(403, exc.message) from exc
+        if isinstance(exc, ToolError):
+            raise HTTPException(400, {"type": exc.error_type, "message": exc.message}) from exc
+        raise
 
 
 @app.get("/api/v1/health")

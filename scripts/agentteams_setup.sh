@@ -12,11 +12,22 @@ set -euo pipefail
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
 MODEL="${MODEL:-moonshotai/kimi-k3}"
+REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 TEAM="revguard-team"
 WORKERS="orchestrator intake evidence policy calculation rootcause risk executor verifier knowledge"
 
-echo "==> 1/4 同步 SOUL 文件到 controller 容器"
-docker cp "$REVGUARD_HOME/agentteams/workers" "$CONTROLLER:/tmp/agentteams/"
+TMP_SOUL_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_SOUL_DIR"' EXIT
+
+echo "==> 1/4 渲染并同步 SOUL 文件到 controller 容器"
+for w in $WORKERS; do
+  sed \
+    -e "s|{{REVGUARD_API_BASE_URL}}|$REVGUARD_API_BASE_URL|g" \
+    "$REVGUARD_HOME/agentteams/workers/revguard-$w.md" \
+    > "$TMP_SOUL_DIR/revguard-$w.md"
+done
+docker exec "$CONTROLLER" mkdir -p /tmp/agentteams/workers
+docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 
 echo "==> 2/4 创建/更新 10 个 Worker（model=$MODEL）"
 for w in $WORKERS; do
@@ -52,4 +63,5 @@ docker exec "$CONTROLLER" agt get teams
 
 echo
 echo "完成。在 Element Web（http://<host>:8088）进入 revguard-team 聊天室即可演示。"
-echo "Worker 通过 http://10.10.10.202:19000/api/v1/tools/call 调用 RevGuard Skill 层。"
+echo "Worker 通过 $REVGUARD_API_BASE_URL/api/v1/tools/call 调用 RevGuard 工具层。"
+echo "API key 必须由 AgentTeams Secret/Adapter 注入，禁止写入 SOUL 或聊天消息。"

@@ -65,52 +65,100 @@ class TestToolContract(unittest.TestCase):
         self.gw = ToolGateway(FIXTURES)
 
     def test_success_envelope(self):
-        resp = self.gw.call("crm.get_order", {"order_id": "EZ202608001"})
+        resp = self.gw.call("crm.get_order", {"order_id": "EZ202608001"},
+                            actor="revguard-evidence", scope=["order:read"])
         self.assertTrue(resp["success"])
         self.assertEqual(resp["data"]["order_amount"], 180000)
         self.assertTrue(resp["tool_receipt"].startswith("RCPT-"))
 
     def test_not_found_envelope(self):
-        resp = self.gw.call("crm.get_order", {"order_id": "NOPE"})
+        resp = self.gw.call("crm.get_order", {"order_id": "NOPE"},
+                            actor="revguard-evidence", scope=["order:read"])
         self.assertFalse(resp["success"])
         self.assertEqual(resp["error"]["type"], "NOT_FOUND")
         self.assertFalse(resp["error"]["retryable"])
 
     def test_flaky_finance_then_recover(self):
         gw = ToolGateway(FIXTURES, finance_fail_times=1)
-        first = gw.call("finance.get_payment", {"order_id": "EZ202608001"})
+        first = gw.call("finance.get_payment", {"order_id": "EZ202608001"},
+                        actor="revguard-evidence", scope=["payment:read"])
         self.assertFalse(first["success"])
         self.assertTrue(first["error"]["retryable"])
-        second = gw.call("finance.get_payment", {"order_id": "EZ202608001"})
+        second = gw.call("finance.get_payment", {"order_id": "EZ202608001"},
+                         actor="revguard-evidence", scope=["payment:read"])
         self.assertTrue(second["success"])
+
+    def _approved_draft(self, *, case_id="CASE-T", amount="100"):
+        approval = self.gw.call("workflow.create_approval", {
+            "case_id": case_id, "amount": amount, "currency": "KES",
+            "risk_level": "L2", "approver_role": "FINANCE_LEAD",
+            "action_summary": "test",
+        }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])
+        decided = self.gw.call("workflow.decide_approval", {
+            "approval_id": approval["data"]["approval_id"],
+            "decision": "APPROVED", "comment": "test",
+        }, case_id=case_id, actor="finance.lead", scope=["approval:decide"])
+        draft = self.gw.call("commission.create_adjustment_draft", {
+            "order_id": "EZ202608001", "case_id": case_id,
+            "amount": amount, "currency": "KES", "component": "SALES_COMMISSION",
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:draft"])
+        return draft["data"], decided["data"]["approval_token"]
 
     def test_submit_requires_approval_token(self):
         draft = self.gw.call("commission.create_adjustment_draft", {
-            "order_id": "EZ202608001", "amount": "100", "currency": "KES"})
+            "order_id": "EZ202608001", "case_id": "CASE-T",
+            "amount": "100", "currency": "KES"}, case_id="CASE-T",
+            actor="revguard-executor", scope=["commission:draft"])
         resp = self.gw.call("commission.submit_adjustment",
                             {"action_id": draft["data"]["action_id"]},
-                            idempotency_key="k1")
+                            case_id="CASE-T", actor="revguard-executor",
+                            scope=["commission:write"], idempotency_key="k1")
         self.assertFalse(resp["success"])
         self.assertEqual(resp["error"]["type"], "AUTH_FAILED")
 
     def test_idempotency_conflict(self):
-        draft = self.gw.call("commission.create_adjustment_draft", {
-            "order_id": "EZ202608001", "amount": "100", "currency": "KES"})
-        params = {"action_id": draft["data"]["action_id"], "approval_token": "ATK-x"}
-        first = self.gw.call("commission.submit_adjustment", params, idempotency_key="k2")
+        draft, token = self._approved_draft()
+        params = {"action_id": draft["action_id"], "approval_token": token}
+        first = self.gw.call("commission.submit_adjustment", params, case_id="CASE-T",
+                             actor="revguard-executor", scope=["commission:write"],
+                             idempotency_key="k2")
         self.assertTrue(first["success"])
-        second = self.gw.call("commission.submit_adjustment", params, idempotency_key="k2")
+        second = self.gw.call("commission.submit_adjustment", params, case_id="CASE-T",
+                              actor="revguard-executor", scope=["commission:write"],
+                              idempotency_key="k2")
         self.assertFalse(second["success"])
         self.assertEqual(second["error"]["type"], "IDEMPOTENCY_CONFLICT")
 
     def test_reversal_creates_negative_entry(self):
-        resp = self.gw.call("commission.reverse_adjustment",
-                            {"ledger_id": "LED-50001", "case_id": "T"},
-                            idempotency_key="k3")
+        draft, token = self._approved_draft()
+        submitted = self.gw.call("commission.submit_adjustment", {
+            "action_id": draft["action_id"], "approval_token": token,
+        }, case_id="CASE-T", actor="revguard-executor", scope=["commission:write"],
+            idempotency_key="k3-submit")
+        entry = submitted["data"]["ledger_entry"]
+        resp = self.gw.call("commission.reverse_adjustment", {
+            "ledger_id": entry["ledger_id"], "case_id": "CASE-T",
+            "rollback_token": submitted["data"]["rollback_token"],
+        }, case_id="CASE-T", actor="revguard-executor", scope=["commission:reverse"],
+            idempotency_key="k3")
         self.assertTrue(resp["success"])
-        self.assertEqual(resp["data"]["reversal_entry"]["amount"], "-18000.0")
-        ledger = self.gw.call("finance.get_commission_ledger", {"order_id": "EZ202608001"})
-        self.assertEqual(ledger["data"]["posted_total"], 0.0)
+        self.assertEqual(resp["data"]["reversal_entry"]["amount"], "-100")
+
+    def test_forged_token_and_scope_escalation_are_rejected(self):
+        draft, _token = self._approved_draft()
+        forged = self.gw.call("commission.submit_adjustment", {
+            "action_id": draft["action_id"], "approval_token": "RGC1.forged.signature",
+        }, case_id="CASE-T", actor="revguard-executor", scope=["commission:write"],
+            idempotency_key="forged")
+        self.assertFalse(forged["success"])
+        self.assertEqual(forged["error"]["type"], "AUTH_FAILED")
+
+        escalated = self.gw.call("commission.create_adjustment_draft", {
+            "order_id": "EZ202608001", "case_id": "CASE-T",
+            "amount": "1", "currency": "KES",
+        }, case_id="CASE-T", actor="revguard-evidence", scope=["commission:draft"])
+        self.assertFalse(escalated["success"])
+        self.assertEqual(escalated["error"]["type"], "AUTH_FAILED")
 
 
 if __name__ == "__main__":

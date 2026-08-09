@@ -22,6 +22,7 @@ from .models import CaseStatus, new_id, utc_now
 from .report import render_audit_report
 from .store import Store
 from .trace import Tracer
+from .security import secret_fingerprint
 
 # 证据分低于该值即挂起补证（设计文档 3.3：不生成虚假确定性结论）
 EVIDENCE_SCORE_THRESHOLD = 0.6
@@ -137,7 +138,8 @@ class Orchestrator:
                     partner=state["partner"], order_id=case["order_id"])
                 span["outputs"] = {"evidence_count": len(package["evidence"]),
                                    "evidence_score": package["evidence_score"],
-                                   "gaps": package["evidence_gaps"]}
+                                   "gaps": package["evidence_gaps"],
+                                   "parallel": package["parallel"]}
         for ev in package["evidence"]:
             self.store.save_evidence(ev)
         state["evidence"] = package["collected"]
@@ -265,13 +267,18 @@ class Orchestrator:
         self._transition(case, CaseStatus.RISK_REVIEW, "开始风险分级")
         report = state["root_cause_report"]
         delta = Decimal(report["total_delta"])
+        action_deltas = [Decimal(item["delta"]) for item in report["diffs"]
+                         if Decimal(item["delta"]) != 0]
+        gross_amount = sum((abs(item) for item in action_deltas), Decimal("0"))
+        # 任一扣回方向都按负向调整治理；额度使用 gross，避免组件间净额抵消风险。
+        risk_amount = -gross_amount if any(item < 0 for item in action_deltas) else gross_amount
         with tracer.span("AGENT", "revguard-risk", actor="revguard-risk"):
             with tracer.span("SKILL", "RiskClassifySkill", actor="revguard-risk",
                              inputs={"total_delta": str(delta),
                                      "evidence_score": case["evidence_score"]}) as span:
                 risk = skills.risk_classify(
-                    action_type="READONLY" if delta == 0 else "LEDGER_ADJUST",
-                    adjustment_amount=delta,
+                    action_type="READONLY" if not action_deltas else "LEDGER_ADJUST",
+                    adjustment_amount=risk_amount,
                     currency=state["calculation_result"]["currency"],
                     evidence_score=case["evidence_score"],
                     case_type=case["case_type"],
@@ -286,7 +293,7 @@ class Orchestrator:
                              asdict(risk))
             self.store.save_case(case)
 
-            if delta == 0:
+            if not action_deltas:
                 self.store.audit(case["case_id"], "revguard-risk", "NO_ACTION_NEEDED",
                                  {"note": "台账金额与政策复算一致"})
                 self._transition(case, CaseStatus.RESOLVED, "无需调整")
@@ -298,10 +305,16 @@ class Orchestrator:
                 self._transition(case, CaseStatus.CLOSED, "L3 高风险，转人工线下处理")
                 return
             if risk.approval_required:
+                # 授权额度按各组件绝对值之和计算，避免正负组件净额相抵后低估写入规模。
+                approval_amount = sum(
+                    (abs(Decimal(item["delta"])) for item in report["diffs"]
+                     if Decimal(item["delta"]) != 0),
+                    Decimal("0"),
+                )
                 with tracer.span("SKILL", "ApprovalRouteSkill", actor="revguard-risk") as span:
                     approval = skills.approval_route(
                         self.gateway, tracer, case_id=case["case_id"], risk=risk,
-                        amount=abs(delta),
+                        amount=approval_amount,
                         currency=state["calculation_result"]["currency"],
                         action_summary=self._action_summary(state))
                     span["outputs"] = approval
@@ -351,15 +364,6 @@ class Orchestrator:
         approval = state.get("approval") or {}
         risk = _to_risk(state["risk_decision"])
 
-        # L1 免人工审批：由系统签发自动授权凭证（设计文档 14.2 低风险自动处理），
-        # 与人工审批凭证同等留痕，保证"任何写操作必须携带有效凭证"的底线不被突破
-        system_token = ""
-        if not approval.get("approval_token") and not risk.approval_required:
-            system_token = f"AUTO-{risk.risk_level}:{case['case_id']}"
-            self.store.audit(case["case_id"], "revguard-executor", "AUTO_AUTH_ISSUED",
-                             {"token": system_token, "risk_level": risk.risk_level,
-                              "note": "低风险免人工审批，系统签发自动授权凭证"})
-
         self._transition(case, CaseStatus.EXECUTING, "开始受控执行")
         executions: list[dict] = []
         with tracer.span("AGENT", "revguard-executor", actor="revguard-executor"):
@@ -374,6 +378,32 @@ class Orchestrator:
                     self.store.audit(case["case_id"], "revguard-executor",
                                      "IDEMPOTENCY_SUPPRESSED", {"key": idem_key})
                     executions.append(existing)
+                    continue
+                if risk.execution_constraints.get("write") == "draft_only":
+                    skills.permission_check(actor="revguard-executor", action_type="DRAFT",
+                                            risk=risk, approval=None)
+                    with tracer.span("SKILL", "AdjustmentDraftSkill",
+                                     actor="revguard-executor") as span:
+                        draft = skills.adjustment_draft(
+                            self.gateway, tracer, case_id=case["case_id"],
+                            order_id=case["order_id"], component=diff["component"],
+                            delta=delta, currency=state["calculation_result"]["currency"],
+                            reason=diff.get("explanation", "佣金差异调整"))
+                        span["outputs"] = {"action_id": draft["action_id"],
+                                           "status": draft["status"]}
+                    execution = {
+                        "action_id": draft["action_id"], "case_id": case["case_id"],
+                        "action_type": "DRAFT", "status": "DRAFT",
+                        "amount": str(delta), "currency": state["calculation_result"]["currency"],
+                        "component": diff["component"], "idempotency_key": idem_key,
+                        "before_snapshot": [], "after_snapshot": [],
+                        "rollback_token": None, "ledger_entry": None,
+                    }
+                    self.store.save_execution(execution)
+                    executions.append(execution)
+                    self.store.audit(case["case_id"], "revguard-executor", "DRAFT_CREATED",
+                                     {"action_id": draft["action_id"],
+                                      "component": diff["component"], "amount": str(delta)})
                     continue
                 # 权限守门：Executor 身份 + 审批凭证（设计文档 14.3）
                 skills.permission_check(actor="revguard-executor",
@@ -392,11 +422,12 @@ class Orchestrator:
                     submitted = skills.ledger_adjust(
                         self.gateway, tracer, case_id=case["case_id"],
                         action_id=draft["action_id"],
-                        approval_token=approval.get("approval_token", "") or system_token,
+                        approval_token=approval.get("approval_token", ""),
                         policy_version=state["policy_decision"]["policy_version"],
                         idempotency_key=idem_key)
                     span["outputs"] = {"status": submitted["status"],
-                                       "rollback_token": submitted.get("rollback_token")}
+                                       "rollback_token_ref": secret_fingerprint(
+                                           submitted.get("rollback_token", ""))}
                 execution = {
                     "action_id": draft["action_id"], "case_id": case["case_id"],
                     "action_type": "LEDGER_ADJUST", "status": submitted["status"],
@@ -414,6 +445,20 @@ class Orchestrator:
                                   "amount": str(delta), "idempotency_key": idem_key})
         state["executions"] = executions
 
+        if risk.execution_constraints.get("write") == "draft_only":
+            state["verification"] = {
+                "verification_status": "NOT_APPLICABLE_DRAFT_ONLY",
+                "expected_amount": state["calculation_result"]["total_commission"],
+                "actual_amount": state["root_cause_report"]["total_posted"],
+                "variance": state["root_cause_report"]["total_delta"],
+                "component_checks": [], "rollback_required": False,
+                "checked_at": utc_now(),
+            }
+            self.store.save_verification(case["case_id"], state["verification"])
+            self._transition(case, CaseStatus.RESOLVED,
+                             "L1 仅创建不生效草稿，未写入资金台账")
+            return state
+
         self._transition(case, CaseStatus.VERIFYING, "开始独立验证")
         with tracer.span("AGENT", "revguard-verifier", actor="revguard-verifier"):
             with tracer.span("SKILL", "PostActionVerifySkill",
@@ -429,11 +474,62 @@ class Orchestrator:
         if verification["verification_status"] == "PASSED":
             self._transition(case, CaseStatus.RESOLVED, "执行结果验证通过")
         else:
-            # 验证失败必须显式升级（Demo 中不出现，但路径必须真实存在）
             self._transition(case, CaseStatus.ROLLBACK_REQUIRED,
                              f"验证失败，variance={verification['variance']}")
+            self._rollback_executions(case, state, tracer)
         self.store.save_case(case)
         return state
+
+    def _rollback_executions(self, case: dict, state: dict, tracer: Tracer) -> None:
+        """验证失败后按执行逆序冲销，并由 Verifier 独立确认恢复执行前净额。"""
+        executions = [e for e in state.get("executions", [])
+                      if e.get("status") == "SUBMITTED" and e.get("ledger_entry")]
+        if not executions:
+            self._transition(case, CaseStatus.FAILED, "验证失败但没有可回滚执行记录")
+            return
+        expected_snapshot = executions[0].get("before_snapshot", [])
+        reversals = []
+        with tracer.span("AGENT", "revguard-executor-rollback", actor="revguard-executor"):
+            for execution in reversed(executions):
+                ledger_id = execution["ledger_entry"]["ledger_id"]
+                rollback_key = f"{case['case_id']}:{execution['component']}:rollback"
+                with tracer.span("SKILL", "LedgerReverseSkill",
+                                 actor="revguard-executor") as span:
+                    reversed_result = skills.ledger_reverse(
+                        self.gateway, tracer, case_id=case["case_id"],
+                        ledger_id=ledger_id,
+                        rollback_token=execution["rollback_token"],
+                        idempotency_key=rollback_key,
+                    )
+                    span["outputs"] = {
+                        "ledger_id": reversed_result["reversal_entry"]["ledger_id"],
+                        "reversal_of": ledger_id,
+                    }
+                execution["status"] = "ROLLED_BACK"
+                execution["reversal"] = reversed_result["reversal_entry"]
+                self.store.save_execution(execution)
+                reversals.append(reversed_result["reversal_entry"])
+                self.store.audit(case["case_id"], "revguard-executor", "ROLLED_BACK",
+                                 {"action_id": execution["action_id"],
+                                  "ledger_id": ledger_id,
+                                  "reversal_id": reversed_result["reversal_entry"]["ledger_id"]})
+
+        with tracer.span("AGENT", "revguard-verifier-rollback", actor="revguard-verifier"):
+            with tracer.span("SKILL", "PostRollbackVerifySkill",
+                             actor="revguard-verifier") as span:
+                rollback_verification = skills.post_rollback_verify(
+                    self.gateway, tracer, case_id=case["case_id"],
+                    order_id=case["order_id"], expected_snapshot=expected_snapshot,
+                )
+                span["outputs"] = rollback_verification
+        state["rollback"] = {"reversals": reversals,
+                             "verification": rollback_verification}
+        self.store.audit(case["case_id"], "revguard-verifier", "ROLLBACK_VERIFIED",
+                         rollback_verification)
+        if rollback_verification["verification_status"] == "PASSED":
+            self._transition(case, CaseStatus.ROLLED_BACK, "冲销后已恢复执行前台账净额")
+        else:
+            self._transition(case, CaseStatus.FAILED, "冲销后独立验证仍存在偏差")
 
     # ------------------------------------------------------------- 10. 沉淀
     def _finalize(self, case: dict, state: dict, tracer: Tracer, *,
@@ -441,6 +537,7 @@ class Orchestrator:
         """Knowledge Agent：沉淀案例、生成审计报告、导出 Trace、生成回复草稿。"""
         verification = state.get("verification") or {}
         if archived:
+            terminal_status = case.get("status")
             with tracer.span("AGENT", "revguard-knowledge", actor="revguard-knowledge"):
                 with tracer.span("SKILL", "CaseToDatasetSkill",
                                  actor="revguard-knowledge") as span:
@@ -463,8 +560,13 @@ class Orchestrator:
                     "case_id": case["case_id"], "status": case["status"],
                 }, case_id=case["case_id"], actor="revguard-knowledge",
                     scope=["ticket:write"])
-            self._transition(case, CaseStatus.KNOWLEDGE_ARCHIVED, "案例与评测数据已沉淀")
-            self._transition(case, CaseStatus.CLOSED, "案件关闭")
+            if terminal_status in (CaseStatus.ROLLED_BACK.value, CaseStatus.FAILED.value):
+                # 保留关键失败/回滚终态，避免归档动作覆盖安全结论。
+                self.store.audit(case["case_id"], "revguard-knowledge", "KNOWLEDGE_ARCHIVED",
+                                 {"terminal_status_preserved": terminal_status})
+            else:
+                self._transition(case, CaseStatus.KNOWLEDGE_ARCHIVED, "案例与评测数据已沉淀")
+                self._transition(case, CaseStatus.CLOSED, "案件关闭")
 
         # 无论成功与否都导出 Trace + 审计报告（失败案件更需要证据）
         trace_dir = self.output_dir / "traces"

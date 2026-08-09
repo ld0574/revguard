@@ -38,7 +38,9 @@
 
 ## Dependencies
 
-- 工具契约：`POST http://10.10.10.202:19000/api/v1/tools/call`（crm.get_partner / crm.list_orders_by_partner）
+- 工具契约：`POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`（crm.get_partner / crm.list_orders_by_partner）
+
+Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：revguard-evidence
 
 ## Decision Boundary
@@ -49,4 +51,5 @@
 
 ## Trace
 
-每次工具调用必须携带 case_id 与 actor=revguard-intake，确保全链路可回放。
+每次工具调用必须携带 `case_id`；API 从 Bearer Principal 派生
+`actor=revguard-intake` 与最小 scope，确保全链路可回放且不可自报提权。

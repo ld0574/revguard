@@ -1,6 +1,6 @@
 {
   "case_id": "CASE-2026-0006",
-  "title": "L1 小额免审批：证据充分且差额 ≤5000，自动建草稿执行",
+  "title": "L1 小额免审批：证据充分且差额 ≤5000，仅自动建不生效草稿",
   "input": {
     "case_id": "CASE-2026-0006",
     "case_type": "COMMISSION_UNDERPAYMENT",
@@ -16,7 +16,7 @@
     "root_causes": ["MISSING_COMPONENT"],
     "risk_level": "L1",
     "final_status": "CLOSED",
-    "verification_status": "PASSED",
+    "verification_status": "NOT_APPLICABLE_DRAFT_ONLY",
     "no_approval": true
   }
 }

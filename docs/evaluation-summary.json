@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-08-09",
+  "method": "deterministic_oracle_and_golden_holdout",
+  "total_scenarios": 102,
+  "passed": 102,
+  "pass_rate": 1.0,
+  "security_probe_pass_rate": 1.0,
+  "security_probe_scope": "forged/expired/cross-case capability tokens, actor-scope escalation, concurrent double-submit, and rollback-token replay",
+  "categories": {
+    "golden_e2e": {
+      "scenarios": 8,
+      "passed": 8,
+      "failures": []
+    },
+    "risk_boundaries": {
+      "scenarios": 80,
+      "passed": 80,
+      "failures": []
+    },
+    "policy_dates": {
+      "scenarios": 8,
+      "passed": 8,
+      "failures": []
+    },
+    "security_probes": {
+      "scenarios": 6,
+      "passed": 6,
+      "failures": []
+    }
+  },
+  "parallel_benchmark": {
+    "parallel_batch_ms": 54,
+    "end_to_end_ms": 54,
+    "serial_io_baseline_ms": 350,
+    "estimated_speedup": 6.48,
+    "workers": 7,
+    "task_count": 7
+  }
+}
