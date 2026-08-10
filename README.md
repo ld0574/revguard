@@ -11,10 +11,11 @@ RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突�
 - 16 个版本化 Skill，均有统一调用入口、允许身份、输入输出、失败处理与复用说明。
 - 7 路独立 I/O 真实并行采集，政策查询在合同返回后按依赖继续执行。
 - L0 只读、L1 仅建不生效草稿、L2 人工审批后写入、L3 禁止自动执行。
-- HMAC-SHA256 能力令牌绑定案件、币种、授权总额、用途、过期时间与唯一 JTI。
+- HMAC-SHA256 能力令牌绑定案件、币种、总额、逐组件额度、用途、过期时间与唯一 JTI。
 - 验证失败时真实创建反向台账，再由 Verifier 独立确认恢复执行前净额。
-- 8 个端到端 Golden Case；102 个确定性评测场景；64 项单元、集成与 API 测试。
-- SQLite + ToolGateway 状态持久化；支持干净重置、重复 seed 与容器重启。
+- 8 个端到端 Golden Case；105 个确定性评测场景；70 项单元、集成与 API 测试。
+- 显式状态迁移白名单；SQLite WAL + keyset 分页；支持干净重置、重复 seed 与容器重启。
+- 真实 Matrix → AgentTeams Worker → RevGuard API 调用已用 request ID、receipt、Trace 与 Audit 四方对账。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
 可直接审阅正常闭环报告 [`CASE-2026-0001.md`](docs/reports/CASE-2026-0001.md)
@@ -37,7 +38,7 @@ RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突�
 ```bash
 cd revguard
 make setup
-make verify       # 64 项测试 + 102 场景评测
+make verify-ci    # 静态检查 + 70 项测试 + 覆盖率门禁 + 105 场景评测
 make demo         # 干净重置并运行 8 个 Golden Case
 ```
 
@@ -46,7 +47,7 @@ make demo         # 干净重置并运行 8 个 Golden Case
 - `docs/reports/CASE-*.md`：证据、政策、公式、审批、执行、回滚与审计报告；
 - `data/outputs/traces/CASE-*.json`：Agent / Skill / Tool / Approval / Execution Trace；
 - `data/outputs/case_memory/*.json`：Golden、Bad 与 Safe-Rollback 评测样本；
-- `data/outputs/evaluation_summary.json`：102 场景指标与并行基准。
+- `data/outputs/evaluation_summary.json`：105 场景指标、9 个安全探针与并行基准。
 
 核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
@@ -54,7 +55,7 @@ make demo         # 干净重置并运行 8 个 Golden Case
 ## API 与身份边界
 
 安全默认值是 fail-closed：API 启动必须提供签名密钥和 Principal 配置。
-本地演示可显式启用公开 Demo keys：
+本地演示可显式启用 `config/demo_principals.json` 中的公开 Demo principals：
 
 ```bash
 make run
@@ -79,6 +80,7 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
 - `POST /api/v1/skills/{skill}/invoke`：版本化 Skill 调用入口；
 - `POST /api/v1/tools/call`：最小权限 Tool Adapter 入口；
+- `GET /api/v1/cases?limit=50&cursor=...`：稳定 keyset 分页；
 - `GET /api/v1/cases/{id}/trace`：Trace 回放；
 - `GET /api/v1/cases/{id}/report`：审计报告。
 
@@ -91,6 +93,9 @@ docker compose up -d --build
 curl http://127.0.0.1:19000/api/v1/health
 ```
 
+与 AgentTeams 同机时使用 `docker-compose.agentteams.yml` 把 API 接入 Worker 网络，详见
+[`docs/deployment.md`](docs/deployment.md)。
+
 容器使用非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
 设置 `REVGUARD_RESET_ON_START=true` 可在评审前原子清空全部 Demo 状态再 seed；默认保留状态。
 
@@ -102,18 +107,19 @@ revguard/
 │   ├── security.py       # RBAC、API Principal、签名能力令牌
 │   ├── skill_runtime.py  # 16 个 Skill 的版本化运行时
 │   ├── skills.py         # Skill 实现与注册中心
-│   ├── orchestrator.py   # 状态机、审批、执行、验证与回滚
+│   ├── state_machine.py  # 状态迁移白名单与终态不变量
+│   ├── orchestrator.py   # 阶段编排、审批、执行、验证与回滚
 │   ├── rule_engine.py    # Decimal 确定性规则引擎
 │   ├── policy_matcher.py # 严格日期解析与政策 Time Travel
 │   ├── mocks.py          # 最小权限 ToolGateway 与持久化 Mock
 │   ├── store.py          # 线程安全 SQLite Store
 │   ├── trace.py          # 可回放 Trace
 │   └── api.py            # FastAPI 服务
-├── agentteams/           # Worker SOUL 与 AgentTeams 集成说明
+├── agentteams/           # Worker SOUL、few-shot Playbook 与只读 API Skill
 ├── data/golden_cases/    # 8 个端到端场景
 ├── docs/                 # API、Agent、Skill、部署、评测与报告
 ├── scripts/              # seed、demo、evaluation、AgentTeams setup
-└── tests/                # 64 项自动测试
+└── tests/                # 70 项自动测试
 ```
 
 ## MCP、RAG 与替代机制

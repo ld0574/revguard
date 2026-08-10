@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import json
+import base64
+import binascii
 import sqlite3
 from pathlib import Path
 from threading import RLock
@@ -22,6 +24,7 @@ CREATE TABLE IF NOT EXISTS cases (
     status TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_cases_updated_cursor ON cases(updated_at DESC, case_id DESC);
 CREATE TABLE IF NOT EXISTS evidence (
     evidence_id TEXT PRIMARY KEY,
     case_id TEXT NOT NULL,
@@ -82,6 +85,9 @@ class Store:
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA journal_mode=WAL")
+        self.conn.execute("PRAGMA synchronous=NORMAL")
+        self.conn.execute("PRAGMA busy_timeout=5000")
         self.conn.executescript(_SCHEMA)
         columns = {r[1] for r in self.conn.execute("PRAGMA table_info(trace_spans)")}
         if "sequence" not in columns:
@@ -121,6 +127,55 @@ class Store:
         with self._lock:
             rows = self.conn.execute("SELECT data FROM cases ORDER BY updated_at DESC").fetchall()
         return [json.loads(r["data"]) for r in rows]
+
+    @staticmethod
+    def _encode_case_cursor(updated_at: str, case_id: str) -> str:
+        raw = f"{updated_at}\0{case_id}".encode("utf-8")
+        return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+    @staticmethod
+    def _decode_case_cursor(cursor: str) -> tuple[str, str]:
+        try:
+            padded = cursor + "=" * (-len(cursor) % 4)
+            decoded = base64.urlsafe_b64decode(padded).decode("utf-8")
+            updated_at, case_id = decoded.split("\0", 1)
+            if not updated_at or not case_id:
+                raise ValueError
+            return updated_at, case_id
+        except (ValueError, UnicodeDecodeError, binascii.Error) as exc:
+            raise ValueError("无效的 cases cursor") from exc
+
+    def list_cases_page(self, *, limit: int = 50, cursor: str | None = None) -> dict:
+        """按 updated_at/case_id 做稳定的 keyset 分页，避免全表装入内存。"""
+        if not 1 <= limit <= 200:
+            raise ValueError("limit 必须在 1..200 之间")
+        params: list[object] = []
+        where = ""
+        if cursor:
+            updated_at, case_id = self._decode_case_cursor(cursor)
+            where = "WHERE updated_at < ? OR (updated_at = ? AND case_id < ?)"
+            params.extend((updated_at, updated_at, case_id))
+        params.append(limit + 1)
+        with self._lock:
+            rows = self.conn.execute(
+                f"SELECT case_id, data, updated_at FROM cases {where} "
+                "ORDER BY updated_at DESC, case_id DESC LIMIT ?",
+                params,
+            ).fetchall()
+        has_more = len(rows) > limit
+        page = rows[:limit]
+        next_cursor = None
+        if has_more and page:
+            next_cursor = self._encode_case_cursor(page[-1]["updated_at"], page[-1]["case_id"])
+        return {
+            "cases": [json.loads(row["data"]) for row in page],
+            "next_cursor": next_cursor,
+        }
+
+    def count_cases(self) -> int:
+        with self._lock:
+            row = self.conn.execute("SELECT COUNT(*) AS count FROM cases").fetchone()
+        return int(row["count"])
 
     # --------------------------------------------------------------- evidence
     def save_evidence(self, ev: dict) -> None:

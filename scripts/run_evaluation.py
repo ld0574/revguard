@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""运行 RevGuard 102 场景确定性评测并输出机器可读指标。
+"""运行 RevGuard 确定性评测并输出机器可读指标。
 
 评测由 8 个端到端 Golden Case、80 个风险边界组合、8 个政策日期样本、
-6 个安全攻击探针组成；并额外报告 7 路 I/O 并行基准。任何失败返回非零。
+9 个安全攻击探针组成；并额外报告 7 路 I/O 并行基准。任何失败返回非零。
 """
 from __future__ import annotations
 
 import argparse
+import csv
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from decimal import Decimal
@@ -30,6 +31,7 @@ from revguard.store import Store  # noqa: E402
 
 FIXTURES = ROOT / "data" / "fixtures"
 GOLDEN_DIR = ROOT / "data" / "golden_cases"
+RISK_EXPECTED = ROOT / "data" / "expected" / "risk_matrix.csv"
 SIGNING_KEY = "revguard-evaluation-signing-key-at-least-32-bytes"
 
 
@@ -86,37 +88,28 @@ def evaluate_golden_cases() -> tuple[int, list[str]]:
     return len(specs), failures
 
 
-def _risk_oracle(amount: Decimal, score: float, conflict: bool) -> str:
-    if amount == 0:
-        return "L0"
-    absolute = abs(amount)
-    if conflict or score < 0.6 or absolute > Decimal("50000"):
-        return "L3"
-    if amount > 0 and absolute <= Decimal("5000") and score >= 0.9:
-        return "L1"
-    return "L2"
-
-
 def evaluate_risk_matrix() -> tuple[int, list[str]]:
+    """从独立静态期望集读取边界，不在评测代码中复刻被测规则。"""
     failures: list[str] = []
-    amounts = [Decimal("0"), Decimal("1"), Decimal("5000"), Decimal("5000.01"),
-               Decimal("50000"), Decimal("50000.01"), Decimal("-1"), Decimal("-5000")]
-    scores = [1.0, 0.95, 0.89, 0.6, 0.59]
-    count = 0
-    for amount in amounts:
-        for score in scores:
-            for conflict in (False, True):
-                count += 1
-                actual = classify_risk(
-                    action_type="LEDGER_ADJUST", adjustment_amount=amount, currency="KES",
-                    evidence_score=score, case_type="EVALUATION", policy_conflict=conflict,
-                ).risk_level
-                expected = _risk_oracle(amount, score, conflict)
-                if actual != expected:
-                    failures.append(
-                        f"risk amount={amount} score={score} conflict={conflict}: {actual}!={expected}"
-                    )
-    return count, failures
+    with RISK_EXPECTED.open(encoding="utf-8", newline="") as handle:
+        samples = list(csv.DictReader(handle))
+    required = {"amount", "evidence_score", "policy_conflict", "expected_risk"}
+    if not samples or set(samples[0]) != required:
+        return len(samples), ["risk expected dataset schema invalid"]
+    for sample in samples:
+        amount = Decimal(sample["amount"])
+        score = float(sample["evidence_score"])
+        conflict = sample["policy_conflict"].lower() == "true"
+        expected = sample["expected_risk"]
+        actual = classify_risk(
+            action_type="LEDGER_ADJUST", adjustment_amount=amount, currency="KES",
+            evidence_score=score, case_type="EVALUATION", policy_conflict=conflict,
+        ).risk_level
+        if actual != expected:
+            failures.append(
+                f"risk amount={amount} score={score} conflict={conflict}: {actual}!={expected}"
+            )
+    return len(samples), failures
 
 
 def evaluate_policy_dates() -> tuple[int, list[str]]:
@@ -138,6 +131,7 @@ def evaluate_policy_dates() -> tuple[int, list[str]]:
 def _approval_and_draft(gateway: ToolGateway, case_id: str, amount: str = "100"):
     approval = gateway.call("workflow.create_approval", {
         "case_id": case_id, "amount": amount, "currency": "KES", "risk_level": "L2",
+        "component_quota": {"SALES_COMMISSION": amount},
         "approver_role": "FINANCE_LEAD", "action_summary": "evaluation",
     }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])
     decided = gateway.call("workflow.decide_approval", {
@@ -206,6 +200,31 @@ def evaluate_security_probes() -> tuple[int, list[str]]:
         expiry_blocked = True
     probes.append(("expired_token", expiry_blocked))
 
+    wrong_component = gateway.call("commission.create_adjustment_draft", {
+        "order_id": "EZ202608001", "case_id": "CASE-COMPONENT",
+        "component": "COLLECTION_COMMISSION", "amount": "100", "currency": "KES",
+    }, case_id="CASE-COMPONENT", actor="revguard-executor", scope=["commission:draft"])
+    component_token, _ = _approval_and_draft(gateway, "CASE-COMPONENT")
+    component_blocked = gateway.call("commission.submit_adjustment", {
+        "action_id": wrong_component["data"]["action_id"],
+        "approval_token": component_token,
+    }, case_id="CASE-COMPONENT", actor="revguard-executor", scope=["commission:write"],
+        idempotency_key="sec-component")
+    probes.append(("cross_component_quota", not component_blocked["success"]))
+
+    missing_quota = gateway.call("workflow.create_approval", {
+        "case_id": "CASE-NO-QUOTA", "amount": "100", "currency": "KES",
+        "risk_level": "L2", "approver_role": "FINANCE_LEAD", "action_summary": "invalid",
+    }, case_id="CASE-NO-QUOTA", actor="revguard-risk", scope=["approval:write"])
+    probes.append(("missing_component_quota", not missing_quota["success"]))
+
+    mismatched_quota = gateway.call("workflow.create_approval", {
+        "case_id": "CASE-BAD-QUOTA", "amount": "100", "currency": "KES",
+        "component_quota": {"SALES_COMMISSION": "99"},
+        "risk_level": "L2", "approver_role": "FINANCE_LEAD", "action_summary": "invalid",
+    }, case_id="CASE-BAD-QUOTA", actor="revguard-risk", scope=["approval:write"])
+    probes.append(("component_quota_sum", not mismatched_quota["success"]))
+
     failures.extend(name for name, passed in probes if not passed)
     return len(probes), failures
 
@@ -263,7 +282,8 @@ def main() -> int:
     passed = sum(item["passed"] for item in categories.values())
     summary = {
         "generated_at": date.today().isoformat(),
-        "method": "deterministic_oracle_and_golden_holdout",
+        "method": "external_expected_matrix_and_golden_holdout",
+        "expected_dataset": str(RISK_EXPECTED.relative_to(ROOT)),
         "total_scenarios": total,
         "passed": passed,
         "pass_rate": round(passed / total, 4),
@@ -274,7 +294,7 @@ def main() -> int:
         ),
         "security_probe_scope": (
             "forged/expired/cross-case capability tokens, actor-scope escalation, "
-            "concurrent double-submit, and rollback-token replay"
+            "concurrent double-submit, component quota abuse, and rollback-token replay"
         ),
         "categories": categories,
         "parallel_benchmark": benchmark_parallel(),

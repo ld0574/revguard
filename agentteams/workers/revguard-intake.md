@@ -53,3 +53,7 @@ Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 S
 
 每次工具调用必须携带 `case_id`；API 从 Bearer Principal 派生
 `actor=revguard-intake` 与最小 scope，确保全链路可回放且不可自报提权。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md) 的 5 组 few-shot、关联请求头和凭证红线；本角色只使用 intake 行能力。

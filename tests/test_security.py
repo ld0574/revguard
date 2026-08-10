@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from revguard.mocks import ToolGateway
-from revguard.security import CapabilityTokenSigner, SecurityError
+from revguard.security import CapabilityTokenSigner, SecurityError, redact_secrets
 from revguard.store import Store
 from revguard.trace import Tracer
 
@@ -59,6 +59,16 @@ class TestCapabilityTokenSigner(unittest.TestCase):
         with self.assertRaises(SecurityError):
             self.signer.verify(altered, purpose="ledger_adjust")
 
+    def test_embedded_tokens_are_redacted_inside_text(self):
+        token = self.signer.issue("ledger_adjust", {"case_id": "CASE-A"})
+        redacted = redact_secrets({
+            "message": f"upstream failed; token={token}; AUTHORIZATION: bEaReR abc.def-123",
+        })
+        rendered = json.dumps(redacted)
+        self.assertNotIn(token, rendered)
+        self.assertNotIn("abc.def-123", rendered)
+        self.assertGreaterEqual(rendered.count("<redacted:sha256:"), 2)
+
 
 class TestGatewaySecurity(unittest.TestCase):
     def setUp(self):
@@ -67,6 +77,7 @@ class TestGatewaySecurity(unittest.TestCase):
     def _approval_token(self, case_id: str, amount: str = "100") -> str:
         created = self.gw.call("workflow.create_approval", {
             "case_id": case_id, "amount": amount, "currency": "KES",
+            "component_quota": {"SALES_COMMISSION": amount},
             "risk_level": "L2", "approver_role": "FINANCE_LEAD",
             "action_summary": "security test",
         }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])
@@ -113,6 +124,20 @@ class TestGatewaySecurity(unittest.TestCase):
         with ThreadPoolExecutor(max_workers=2) as pool:
             results = list(pool.map(submit, (1, 2)))
         self.assertEqual(sum(1 for result in results if result["success"]), 1)
+
+    def test_token_cannot_move_quota_to_another_component(self):
+        token = self._approval_token("CASE-COMPONENT", "100")
+        draft = self.gw.call("commission.create_adjustment_draft", {
+            "order_id": "EZ202608001", "case_id": "CASE-COMPONENT",
+            "component": "COLLECTION_COMMISSION", "amount": "100", "currency": "KES",
+        }, case_id="CASE-COMPONENT", actor="revguard-executor",
+            scope=["commission:draft"])["data"]
+        response = self.gw.call("commission.submit_adjustment", {
+            "action_id": draft["action_id"], "approval_token": token,
+        }, case_id="CASE-COMPONENT", actor="revguard-executor",
+            scope=["commission:write"], idempotency_key="wrong-component")
+        self.assertFalse(response["success"])
+        self.assertEqual(response["error"]["type"], "AUTH_FAILED")
 
     def test_rollback_token_is_one_time_and_bound(self):
         token = self._approval_token("CASE-D")

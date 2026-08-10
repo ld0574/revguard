@@ -77,6 +77,7 @@ class ToolGateway:
         self._outbox: list[dict] = []                  # 工单更新 / 邮件草稿
         self._receipts: list[dict] = []                # 全部调用回执
         self._token_consumed_amount: dict[str, str] = {}  # approval jti -> 已执行绝对金额
+        self._token_consumed_by_component: dict[str, dict[str, str]] = {}
         self._used_rollback_tokens: set[str] = set()
         self._finance_fail_left = finance_fail_times   # 故障注入计数
         self._verification_tamper_amount = Decimal(str(verification_tamper_amount))
@@ -294,6 +295,15 @@ class ToolGateway:
             requested = abs(Decimal(str(draft["amount"])))
             if requested <= 0 or consumed + requested > approved_amount:
                 raise ToolError("AUTH_FAILED", "提交金额超过审批凭证授权额度")
+            component = str(draft.get("component", ""))
+            quotas = claims.get("component_quota")
+            if not isinstance(quotas, dict) or component not in quotas:
+                raise ToolError("AUTH_FAILED", "审批凭证未授权该佣金组件")
+            component_limit = Decimal(str(quotas[component]))
+            component_usage = self._token_consumed_by_component.get(jti, {})
+            component_consumed = Decimal(str(component_usage.get(component, "0")))
+            if component_consumed + requested > component_limit:
+                raise ToolError("AUTH_FAILED", "提交金额超过该组件审批额度")
 
             # 执行前快照 -> 写台账 -> 执行后快照（设计文档 7.6）
             before = [e for e in self._ledger if e.get("order_id") == draft["order_id"]]
@@ -312,6 +322,9 @@ class ToolGateway:
             draft["status"] = "SUBMITTED"
             self._idempotency[idempotency_key] = draft["action_id"]
             self._token_consumed_amount[jti] = str(consumed + requested)
+            self._token_consumed_by_component.setdefault(jti, {})[component] = str(
+                component_consumed + requested
+            )
             rollback_token = self._token_signer.issue("ledger_reverse", {
                 "case_id": draft["case_id"],
                 "ledger_id": entry["ledger_id"],
@@ -373,12 +386,29 @@ class ToolGateway:
 
     # ------------------------------------------------------------------ 审批
     def _tool_workflow_create_approval(self, p: dict, **_kw) -> dict:
+        raw_quota = p.get("component_quota")
+        if not isinstance(raw_quota, dict) or not raw_quota:
+            raise ToolError("INVALID_PARAMS", "审批必须绑定非空 component_quota")
+        try:
+            component_quota = {
+                str(component): str(Decimal(str(amount)))
+                for component, amount in raw_quota.items()
+                if Decimal(str(amount)) > 0
+            }
+            approved_amount = Decimal(str(p.get("amount")))
+        except (ArithmeticError, ValueError, TypeError) as exc:
+            raise ToolError("INVALID_PARAMS", "审批金额或组件额度不是有效数字") from exc
+        if len(component_quota) != len(raw_quota):
+            raise ToolError("INVALID_PARAMS", "组件额度必须全部大于 0")
+        if sum((Decimal(value) for value in component_quota.values()), Decimal("0")) != approved_amount:
+            raise ToolError("INVALID_PARAMS", "组件额度之和必须等于审批总额度")
         approval_id = new_id("APR")
         approval = {
             "approval_id": approval_id,
             "case_id": p.get("case_id"),
             "action_summary": p.get("action_summary"),
             "amount": str(p.get("amount")),
+            "component_quota": component_quota,
             "currency": p.get("currency"),
             "risk_level": p.get("risk_level"),
             "approver_role": p.get("approver_role"),
@@ -416,6 +446,7 @@ class ToolGateway:
                     "approval_id": approval["approval_id"],
                     "case_id": approval["case_id"],
                     "max_amount": approval["amount"],
+                    "component_quota": approval["component_quota"],
                     "currency": approval["currency"],
                     "risk_level": approval["risk_level"],
                     "approver": actor,
@@ -462,6 +493,7 @@ class ToolGateway:
         self._outbox = state.get("outbox", [])
         self._receipts = state.get("receipts", [])
         self._token_consumed_amount = state.get("token_consumed_amount", {})
+        self._token_consumed_by_component = state.get("token_consumed_by_component", {})
         self._used_rollback_tokens = set(state.get("used_rollback_tokens", []))
 
     def _persist_state(self) -> None:
@@ -476,6 +508,7 @@ class ToolGateway:
             "outbox": self._outbox,
             "receipts": self._receipts,
             "token_consumed_amount": self._token_consumed_amount,
+            "token_consumed_by_component": self._token_consumed_by_component,
             "used_rollback_tokens": sorted(self._used_rollback_tokens),
         }
         tmp = self._state_path.with_suffix(self._state_path.suffix + ".tmp")

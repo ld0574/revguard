@@ -9,7 +9,6 @@
 """
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from typing import Literal
@@ -20,12 +19,13 @@ from .orchestrator import Orchestrator
 from .skills import list_skills
 from .skill_runtime import SKILL_ACTORS, SkillInvocationError, invoke_skill
 from .store import Store
+from .state_machine import transition_case
 from .trace import Tracer
 from .security import (ApiPrincipal, SecurityError, constant_time_lookup,
                        load_api_principals, secret_fingerprint)
 
 try:
-    from fastapi import Depends, FastAPI, Header, HTTPException
+    from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
     from pydantic import BaseModel, ConfigDict, Field
 except ImportError as exc:  # 本地纯标准库跑 Demo 时允许不安装 FastAPI
     raise ImportError("API 服务需要安装依赖：pip install -r requirements.txt") from exc
@@ -43,53 +43,16 @@ GATEWAY_STATE_PATH = os.getenv(
 )
 SIGNING_KEY = os.getenv("REVGUARD_APPROVAL_SIGNING_KEY", "")
 ALLOW_INSECURE_DEMO_KEYS = os.getenv("REVGUARD_ALLOW_INSECURE_DEMO_KEYS", "false").lower() == "true"
+DEMO_PRINCIPALS_PATH = Path(os.getenv(
+    "REVGUARD_DEMO_PRINCIPALS_PATH", str(ROOT / "config" / "demo_principals.json")
+))
 
-_DEMO_KEYS = json.dumps({
-    "rg-demo-operator-key": {"actor": "api-operator", "roles": ["viewer", "operator"]},
-    "rg-demo-viewer-key-1": {"actor": "api-viewer", "roles": ["viewer"]},
-    "rg-demo-approver-key": {
-        "actor": "finance.lead", "roles": ["viewer", "approver"],
-        "scopes": ["approval:read", "approval:decide"],
-    },
-    "rg-demo-evidence-key": {
-        "actor": "revguard-evidence", "roles": ["viewer", "worker"],
-        "scopes": ["order:read", "partner:read", "contract:read", "policy:read",
-                   "payment:read", "ledger:read"],
-    },
-    "rg-demo-intake-key-1": {
-        "actor": "revguard-intake", "roles": ["viewer", "worker"],
-        "scopes": ["partner:read", "order:read", "ticket:write"],
-    },
-    "rg-demo-policy-key-1": {
-        "actor": "revguard-policy", "roles": ["viewer", "worker"],
-        "scopes": ["policy:read", "partner:read"],
-    },
-    "rg-demo-calculation-key": {
-        "actor": "revguard-calculation", "roles": ["viewer", "worker"],
-        "scopes": ["order:read"],
-    },
-    "rg-demo-rootcause-key": {
-        "actor": "revguard-rootcause", "roles": ["viewer", "worker"], "scopes": [],
-    },
-    "rg-demo-risk-key-01": {
-        "actor": "revguard-risk", "roles": ["viewer", "worker"],
-        "scopes": ["approval:write", "approval:read"],
-    },
-    "rg-demo-executor-key": {
-        "actor": "revguard-executor", "roles": ["worker"],
-        "scopes": ["commission:draft", "commission:write", "commission:reverse"],
-    },
-    "rg-demo-verifier-key": {
-        "actor": "revguard-verifier", "roles": ["viewer", "worker"],
-        "scopes": ["ledger:read"],
-    },
-    "rg-demo-knowledge-key": {
-        "actor": "revguard-knowledge", "roles": ["viewer", "worker"],
-        "scopes": ["ticket:write", "mail:draft"],
-    },
-}, ensure_ascii=False)
-
-raw_api_keys = os.getenv("REVGUARD_API_KEYS_JSON", _DEMO_KEYS if ALLOW_INSECURE_DEMO_KEYS else "")
+raw_api_keys = os.getenv("REVGUARD_API_KEYS_JSON", "")
+if not raw_api_keys and ALLOW_INSECURE_DEMO_KEYS:
+    try:
+        raw_api_keys = DEMO_PRINCIPALS_PATH.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeError(f"无法读取显式启用的 Demo Principal 配置: {DEMO_PRINCIPALS_PATH}") from exc
 try:
     API_PRINCIPALS = load_api_principals(raw_api_keys) if raw_api_keys else {}
 except SecurityError as exc:
@@ -191,8 +154,14 @@ def create_case(payload: CaseCreate,
 
 
 @app.get("/api/v1/cases")
-def list_cases(_principal: ApiPrincipal = Depends(require_roles("viewer"))):
-    return {"cases": store.list_cases()}
+def list_cases(limit: int = Query(default=50, ge=1, le=200),
+               cursor: str | None = Query(default=None),
+               _principal: ApiPrincipal = Depends(require_roles("viewer"))):
+    try:
+        page = store.list_cases_page(limit=limit, cursor=cursor)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {**page, "limit": limit}
 
 
 @app.get("/api/v1/cases/{case_id}")
@@ -245,12 +214,11 @@ def decide_approval(case_id: str, payload: ApprovalDecision,
                 {"decision": decided["status"], "simulated_human": False})
 
     if decided["status"] != "APPROVED":
-        case["status"] = CaseStatus.REJECTED.value
-        store.save_case(case)
+        transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=principal.actor)
         return {"case": case, "approval": decided}
 
-    case["status"] = CaseStatus.READY_TO_EXECUTE.value
-    store.save_case(case)
+    transition_case(store, case, CaseStatus.READY_TO_EXECUTE,
+                    "人工审批通过", actor=principal.actor)
     orch = _orchestrator()
     state = orch.execute_and_verify(case)
     orch._finalize(case, state, Tracer(store, case_id), archived=True)
@@ -280,11 +248,58 @@ def get_report(case_id: str, _principal: ApiPrincipal = Depends(require_roles("v
 # ---------------------------------------------------------------- 工具与 Skill
 @app.post("/api/v1/tools/call")
 def call_tool(payload: ToolCall,
-              principal: ApiPrincipal = Depends(require_roles("worker"))):
-    """AgentTeams Worker 访问 Skill 层的统一工具契约入口（设计文档 13.1）。"""
-    resp = gateway.call(payload.tool_name, payload.parameters,
-                        case_id=payload.case_id, actor=principal.actor,
-                        scope=list(principal.scopes), idempotency_key=payload.idempotency_key)
+              response: Response,
+              principal: ApiPrincipal = Depends(require_roles("worker")),
+              request_id: str | None = Header(default=None, alias="X-Request-ID"),
+              agentteams_message_id: str | None = Header(
+                  default=None, alias="X-AgentTeams-Message-ID"
+              ),
+              traceparent: str | None = Header(default=None, alias="traceparent")):
+    """AgentTeams Worker 工具入口；关联消息、HTTP 请求、回执、Trace 与 Audit。"""
+    from .models import new_id
+
+    correlation = {
+        "request_id": request_id or new_id("REQ"),
+        "agentteams_message_id": agentteams_message_id,
+        "traceparent": traceparent,
+    }
+    if any(value is not None and len(value) > 256 for value in correlation.values()):
+        raise HTTPException(400, "关联请求头长度不能超过 256")
+
+    case_exists = bool(payload.case_id and store.get_case(payload.case_id))
+    if case_exists:
+        tracer = Tracer(store, payload.case_id)
+        with tracer.span(
+            "REMOTE_TOOL",
+            payload.tool_name,
+            actor=principal.actor,
+            inputs={"parameters": payload.parameters, **correlation},
+        ) as span:
+            resp = gateway.call(
+                payload.tool_name, payload.parameters,
+                case_id=payload.case_id, actor=principal.actor,
+                scope=list(principal.scopes), idempotency_key=payload.idempotency_key,
+            )
+            span["outputs"] = {
+                "success": resp["success"],
+                "tool_receipt": resp["tool_receipt"],
+                "error_type": (resp.get("error") or {}).get("type"),
+                **correlation,
+            }
+        store.audit(payload.case_id, principal.actor, "AGENTTEAMS_TOOL_CALLED", {
+            "tool_name": payload.tool_name,
+            "success": resp["success"],
+            "tool_receipt": resp["tool_receipt"],
+            **correlation,
+        })
+    else:
+        resp = gateway.call(
+            payload.tool_name, payload.parameters,
+            case_id=payload.case_id, actor=principal.actor,
+            scope=list(principal.scopes), idempotency_key=payload.idempotency_key,
+        )
+    response.headers["X-Request-ID"] = correlation["request_id"]
+    response.headers["X-Tool-Receipt"] = resp["tool_receipt"]
     return resp
 
 
@@ -323,4 +338,4 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
 
 @app.get("/api/v1/health")
 def health():
-    return {"status": "ok", "cases": len(store.list_cases())}
+    return {"status": "ok", "cases": store.count_cases()}

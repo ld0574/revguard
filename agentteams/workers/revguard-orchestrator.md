@@ -36,3 +36,7 @@
 ## Trace
 
 任务拆解、每次状态迁移、重试与升级决策的理由全部留痕。
+
+## Mandatory API Playbook
+
+调度前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md) 的关联 ID、5 组错误处理 few-shot 和 Principal 边界；不得借用 Worker 身份执行职能任务。

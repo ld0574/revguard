@@ -94,6 +94,7 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
                 gateway, tracer, case_id=case_id,
                 risk=RiskDecision(**_required(payload, "risk")),
                 amount=Decimal(str(_required(payload, "amount"))),
+                component_quota=_required(payload, "component_quota"),
                 currency=_required(payload, "currency"),
                 action_summary=_required(payload, "action_summary"),
             )

@@ -54,3 +54,7 @@
 每个动作记录 action_id、幂等键、快照、回执——支持评委回放"谁、何时、改了什么"。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md)；尤其执行组件额度、幂等、审批凭证和 AUTH_FAILED few-shot，任何越额/跨组件请求立即停止。

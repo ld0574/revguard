@@ -91,6 +91,7 @@ class TestToolContract(unittest.TestCase):
     def _approved_draft(self, *, case_id="CASE-T", amount="100"):
         approval = self.gw.call("workflow.create_approval", {
             "case_id": case_id, "amount": amount, "currency": "KES",
+            "component_quota": {"SALES_COMMISSION": amount},
             "risk_level": "L2", "approver_role": "FINANCE_LEAD",
             "action_summary": "test",
         }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])

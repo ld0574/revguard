@@ -47,3 +47,7 @@
 ## Trace
 
 每个差异项的判定依据写入审计，支持评委追问"你怎么知道是版本用错了"。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md)；本角色只解释已有证据，不修改事实、政策或金额。

@@ -54,3 +54,7 @@ Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 S
 ## Trace
 
 分级依据（reason_codes）与审批单全量写入审计。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md)；创建审批时必须提交逐组件额度，且不得代替人工审批。

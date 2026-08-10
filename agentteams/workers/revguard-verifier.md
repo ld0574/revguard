@@ -56,3 +56,7 @@ Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 S
 ## Trace
 
 验证所用证据引用（tool_receipt）写入报告，证明"独立查询"真实发生。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md)；必须重新查询数据，不得把 Executor 回执当作验证证据。

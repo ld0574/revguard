@@ -10,10 +10,15 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import time
 from dataclasses import dataclass
 from typing import Iterable
+
+
+_CAPABILITY_TOKEN_RE = re.compile(r"RGC1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
+_BEARER_TOKEN_RE = re.compile(r"\bBearer\s+([A-Za-z0-9._~+/-]+=*)", re.IGNORECASE)
 
 
 class SecurityError(ValueError):
@@ -219,8 +224,13 @@ def redact_secrets(value):
         }
     if isinstance(value, list):
         return [redact_secrets(item) for item in value]
-    if isinstance(value, str) and value.startswith("RGC1."):
-        return f"<redacted:{secret_fingerprint(value)}>"
-    if isinstance(value, str) and value.lower().startswith("bearer "):
-        return f"Bearer <redacted:{secret_fingerprint(value[7:])}>"
+    if isinstance(value, str):
+        value = _BEARER_TOKEN_RE.sub(
+            lambda match: f"Bearer <redacted:{secret_fingerprint(match.group(1))}>",
+            value,
+        )
+        value = _CAPABILITY_TOKEN_RE.sub(
+            lambda match: f"<redacted:{secret_fingerprint(match.group(0))}>",
+            value,
+        )
     return value

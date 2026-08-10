@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.lock
 # 拷贝代码与数据（fixtures / golden_cases 为只读演示数据）
 COPY revguard/ ./revguard/
 COPY scripts/ ./scripts/
+COPY config/demo_principals.json ./config/demo_principals.json
 COPY data/fixtures/ ./data/fixtures/
 COPY data/golden_cases/ ./data/golden_cases/
 

@@ -55,3 +55,7 @@ Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 S
 ## Trace
 
 匹配依据（time_basis、decision_date、排除理由）全部写入案件审计。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md)；本角色只使用 policy 行只读能力，冲突时升级而非猜测政策。

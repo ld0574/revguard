@@ -52,3 +52,7 @@ Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 S
 ## Trace
 
 沉淀动作本身也记录审计——知识库变更可追溯。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md)；只创建回复草稿和更新工单，不直接发送、不接触资金写入。

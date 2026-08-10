@@ -37,6 +37,7 @@ try:
 
     from revguard.api import app, store
     from revguard.models import Case, CaseStatus
+    from revguard.trace import Tracer
     _IMPORT_ERROR = None
 except ImportError as exc:  # pragma: no cover - 纯标准库环境跳过
     _IMPORT_ERROR = exc
@@ -106,10 +107,17 @@ class TestApiSmoke(unittest.TestCase):
             "tool_name": "crm.get_partner",
             "parameters": {"partner_name": "Nairobi Solar Solutions Ltd"},
             "case_id": self.case_id,
-        }, headers=self.evidence)
+        }, headers={**self.evidence,
+                    "X-Request-ID": "REQ-API-TEST",
+                    "X-AgentTeams-Message-ID": "MATRIX-API-TEST"})
         body = resp.json()
         self.assertTrue(body["success"], body)
         self.assertTrue(body["tool_receipt"].startswith("RCPT-"))
+        self.assertEqual(resp.headers["X-Request-ID"], "REQ-API-TEST")
+        spans = Tracer(store, self.case_id).export()["spans"]
+        remote = [span for span in spans if span["kind"] == "REMOTE_TOOL"]
+        self.assertEqual(remote[-1]["actor"], "revguard-evidence")
+        self.assertEqual(remote[-1]["inputs"]["agentteams_message_id"], "MATRIX-API-TEST")
 
         # 未知工具 → 结构化错误而非 500
         resp = self.client.post("/api/v1/tools/call", json={
@@ -181,6 +189,24 @@ class TestApiSmoke(unittest.TestCase):
             "/api/v1/cases/CASE-NOPE/approval", json={"decision": "APPROVED"},
             headers=self.evidence,
         ).status_code, 403)
+
+    def test_09b_cases_cursor_pagination(self):
+        first = self.client.get("/api/v1/cases?limit=1", headers=self.viewer)
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(len(first.json()["cases"]), 1)
+        if first.json()["next_cursor"]:
+            second = self.client.get(
+                "/api/v1/cases",
+                params={"limit": 1, "cursor": first.json()["next_cursor"]},
+                headers=self.viewer,
+            )
+            self.assertEqual(second.status_code, 200)
+            self.assertNotEqual(
+                first.json()["cases"][0]["case_id"],
+                second.json()["cases"][0]["case_id"],
+            )
+        invalid = self.client.get("/api/v1/cases?cursor=not-base64", headers=self.viewer)
+        self.assertEqual(invalid.status_code, 400)
 
     def test_10_versioned_skill_invoke_contract(self):
         response = self.client.post("/api/v1/skills/CaseNormalizeSkill/invoke", json={

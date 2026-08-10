@@ -26,6 +26,14 @@ curl http://127.0.0.1:19000/api/v1/health
 docker compose ps
 ```
 
+与 AgentTeams 同机部署时，用覆盖文件把 API 加入 `agentteams-net`：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.agentteams.yml up -d --build
+docker exec agentteams-worker-revguard-evidence \
+  python -c 'import urllib.request; print(urllib.request.urlopen("http://revguard-api:9000/api/v1/health").status)'
+```
+
 默认保留 volume 中的案件、Mock 台账、审批、幂等、回执、报告与 Trace。需要评委从
 完全相同的干净状态复现时：
 
@@ -110,7 +118,10 @@ done
 agt get teams   # 预期 revguard-team Active / 9/9
 ```
 
-API key 不写入 SOUL。应在 AgentTeams Tool Adapter/Secret 层按 Worker 注入：
+API key 不写入 SOUL。Evidence Worker 使用 `agentteams/skills/revguard-api/` 中的只读
+Adapter，并从 Worker 的 `.copaw.secret/revguard_api_key` 注入专属 Principal。调用必须携带
+`X-AgentTeams-Message-ID` 与 `X-Request-ID`；聊天、日志和 Trace 均不得回显 Bearer 值。
+其他 Worker 也应按相同模式各自注入：
 
 ```http
 Authorization: Bearer <worker-specific-key>
@@ -123,7 +134,7 @@ Authorization: Bearer <worker-specific-key>
 ## 5. 验收命令
 
 ```bash
-make verify
+make verify-ci
 make demo
 
 curl http://127.0.0.1:19000/api/v1/health
@@ -133,14 +144,14 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 需要逐项核验：
 
-- [ ] `make verify`：64 项测试、102/102 场景评测；
+- [ ] `make verify-ci`：70 项测试、覆盖率 ≥75%、105/105 场景、9/9 安全探针；
 - [ ] 容器状态 healthy，重启后案件与幂等状态一致；
 - [ ] 无认证为 401，错误角色为 403，自报 actor/scope 为 422；
 - [ ] L2 在 `WAITING_FOR_APPROVAL` 挂起；
 - [ ] 可信 Approver 批准后写入并验证；
 - [ ] CASE-0008 首次验证失败后真实冲销，最终 `ROLLED_BACK`；
 - [ ] AgentTeams Team Active，9 个 Worker Ready；
-- [ ] Element 演示从任务触发到审批、执行、验证/回滚完整结束；
+- [ ] Matrix 任务事件、Worker 回执、REMOTE_TOOL span 与审计事件的 request ID / receipt 一致；
 - [ ] Trace、报告、evaluation summary 和视频中的 case_id 一致。
 
 ## 6. 已知资源风险
@@ -148,5 +159,7 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 一次性启动全部 Worker 可能造成演示主机资源尖峰。现场建议预热 Team，或分批 apply；
 比赛只要求至少 3 个不同职能 Agent，不应为了数量牺牲 5–8 分钟内的稳定闭环。
 
-旧版 2026-08-08 内网实录完成了任务拆解和结果汇总，但发生过明显启动过载，且早于本轮
-Bearer/RBAC/签名令牌改造。该实录只能作为历史证据；提交前必须按本页检查清单重新录制。
+2026-08-10 的正式链路证据位于 `submission/evidence/formal-20260810/`。当前 Worker 的
+MinIO Matrix password 对象仍缺失，但已持久化 access token 在关闭 E2EE 的部署中完成了
+真实消息收发；token 失效前应补齐 password Secret，确保自动重新登录。旧版 2026-08-08
+内网实录仅作为历史证据。

@@ -1,0 +1,11 @@
+# 正式 AgentTeams 同机部署覆盖层：把 RevGuard API 接入 Worker 所在网络。
+services:
+  revguard-api:
+    networks:
+      - default
+      - agentteams
+
+networks:
+  agentteams:
+    external: true
+    name: agentteams-net

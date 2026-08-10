@@ -27,6 +27,7 @@ Principal 映射；缺失时 API fail-closed，不会退回匿名模式。
 | `REVGUARD_APPROVAL_SIGNING_KEY` | 无 | 至少 32 字节；缺失时拒绝启动 |
 | `REVGUARD_API_KEYS_JSON` | 无 | API key → actor/roles/scopes |
 | `REVGUARD_ALLOW_INSECURE_DEMO_KEYS` | `false` | 仅本地评测可设为 `true` |
+| `REVGUARD_DEMO_PRINCIPALS_PATH` | `config/demo_principals.json` | 显式启用 Demo 模式时读取；生产不要启用 |
 
 ## 身份与角色
 
@@ -74,18 +75,27 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 {"decision": "APPROVED", "comment": "证据充分，同意调整"}
 ```
 
-批准后签发 15 分钟能力令牌，绑定 approval、case、currency、最大 gross 金额、用途和
-JTI；Executor 自动续跑写入与独立验证。令牌不匹配、超额、过期或伪造均返回
+批准后签发 15 分钟能力令牌，绑定 approval、case、currency、最大 gross 金额、逐组件
+`component_quota`、用途和 JTI；Executor 自动续跑写入与独立验证。案件/组件不匹配、
+超额、过期或伪造均返回
 `AUTH_FAILED`。
 
 ### 只读接口
 
-- `GET /api/v1/cases`
+- `GET /api/v1/cases?limit=50&cursor=...`
 - `GET /api/v1/cases/{case_id}`
 - `GET /api/v1/cases/{case_id}/trace`
 - `GET /api/v1/cases/{case_id}/report`
 
 均需要 `viewer`。
+
+案件列表使用 `(updated_at, case_id)` keyset 分页，返回：
+
+```json
+{"cases": [], "next_cursor": null, "limit": 50}
+```
+
+`limit` 范围为 1–200；继续请求时原样传回 `next_cursor`，无效 cursor 返回 400。
 
 ## Skill 运行时
 
@@ -126,7 +136,15 @@ JTI；Executor 自动续跑写入与独立验证。令牌不匹配、超额、�
 
 ### `POST /api/v1/tools/call`
 
-需要 `worker`。身份和 scope 不在请求体中：
+需要 `worker`。身份和 scope 不在请求体中。跨 AgentTeams 调用还应携带：
+
+```http
+X-AgentTeams-Message-ID: $matrix-event-id
+X-Request-ID: REQ-...
+traceparent: 00-...   # 可选，透传 W3C 上下文
+```
+
+请求示例：
 
 ```json
 {
@@ -136,6 +154,10 @@ JTI；Executor 自动续跑写入与独立验证。令牌不匹配、超额、�
   "idempotency_key": null
 }
 ```
+
+响应头返回同一个 `X-Request-ID` 与服务端 `X-Tool-Receipt`。当 `case_id` 存在时，服务端
+额外写入 `REMOTE_TOOL` span 与 `AGENTTEAMS_TOOL_CALLED` 审计事件；两者包含 message ID、
+request ID、receipt 和可选 traceparent，用于从 Matrix 事件反查完整调用。
 
 返回统一信封：
 

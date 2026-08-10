@@ -51,3 +51,7 @@
 `actor=revguard-evidence` 与最小 scope，Worker 不在请求体中自报身份。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md) 的 5 组 few-shot、关联请求头、重试与越权拒绝规则；本角色只使用 evidence 行只读能力。

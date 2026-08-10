@@ -325,12 +325,13 @@ def risk_classify(*, action_type: str, adjustment_amount: Decimal, currency: str
 
 def approval_route(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
                    risk: RiskDecision, amount: Decimal, currency: str,
-                   action_summary: str) -> dict:
+                   component_quota: dict[str, str], action_summary: str) -> dict:
     """ApprovalRouteSkill：按风险等级创建审批单并路由到对应审批角色。"""
     resp = call_tool(gateway, tracer, "workflow.create_approval", {
         "case_id": case_id,
         "action_summary": action_summary,
         "amount": str(amount),
+        "component_quota": component_quota,
         "currency": currency,
         "risk_level": risk.risk_level,
         "approver_role": risk.approver_role,
@@ -551,7 +552,7 @@ SKILL_REGISTRY: dict[str, dict] = {m["name"]: m for m in [
           ["unknown_policy", "missing_threshold"], {"write_permission": False},
           ["commission_dispute", "batch_reconciliation", "any_write_action"], risk_classify),
     _meta("ApprovalRouteSkill", "1.0.0", "tool", "创建审批单并路由审批角色",
-          ["risk", "amount", "action_summary"], ["approval"],
+          ["risk", "amount", "component_quota", "action_summary"], ["approval"],
           ["workflow.create_approval"], ["workflow_unavailable"],
           {"write_permission": "approval"}, ["any_approval_needed_case"], approval_route),
     _meta("PermissionCheckSkill", "1.0.0", "policy", "执行前权限与审批凭证校验",

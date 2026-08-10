@@ -1,0 +1,54 @@
+{
+  "rg-demo-operator-key": {"actor": "api-operator", "roles": ["viewer", "operator"]},
+  "rg-demo-viewer-key-1": {"actor": "api-viewer", "roles": ["viewer"]},
+  "rg-demo-approver-key": {
+    "actor": "finance.lead",
+    "roles": ["viewer", "approver"],
+    "scopes": ["approval:read", "approval:decide"]
+  },
+  "rg-demo-evidence-key": {
+    "actor": "revguard-evidence",
+    "roles": ["viewer", "worker"],
+    "scopes": ["order:read", "partner:read", "contract:read", "policy:read", "payment:read", "ledger:read"]
+  },
+  "rg-demo-intake-key-1": {
+    "actor": "revguard-intake",
+    "roles": ["viewer", "worker"],
+    "scopes": ["partner:read", "order:read", "ticket:write"]
+  },
+  "rg-demo-policy-key-1": {
+    "actor": "revguard-policy",
+    "roles": ["viewer", "worker"],
+    "scopes": ["policy:read", "partner:read"]
+  },
+  "rg-demo-calculation-key": {
+    "actor": "revguard-calculation",
+    "roles": ["viewer", "worker"],
+    "scopes": ["order:read"]
+  },
+  "rg-demo-rootcause-key": {
+    "actor": "revguard-rootcause",
+    "roles": ["viewer", "worker"],
+    "scopes": []
+  },
+  "rg-demo-risk-key-01": {
+    "actor": "revguard-risk",
+    "roles": ["viewer", "worker"],
+    "scopes": ["approval:write", "approval:read"]
+  },
+  "rg-demo-executor-key": {
+    "actor": "revguard-executor",
+    "roles": ["worker"],
+    "scopes": ["commission:draft", "commission:write", "commission:reverse"]
+  },
+  "rg-demo-verifier-key": {
+    "actor": "revguard-verifier",
+    "roles": ["viewer", "worker"],
+    "scopes": ["ledger:read"]
+  },
+  "rg-demo-knowledge-key": {
+    "actor": "revguard-knowledge",
+    "roles": ["viewer", "worker"],
+    "scopes": ["ticket:write", "mail:draft"]
+  }
+}

@@ -52,3 +52,7 @@ Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 S
 ## Trace
 
 facts 快照与哈希写入审计，支持评委/审计逐笔复算验证。
+
+## Mandatory API Playbook
+
+调用前必须遵循 [`../API_PLAYBOOK.md`](../API_PLAYBOOK.md) 的 5 组 few-shot、关联请求头、错误处理和凭证红线；本角色只使用 calculation 行允许能力。

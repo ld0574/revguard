@@ -21,6 +21,7 @@ from .mocks import ToolError, ToolGateway
 from .models import CaseStatus, new_id, utc_now
 from .report import render_audit_report
 from .store import Store
+from .state_machine import transition_case
 from .trace import Tracer
 from .security import secret_fingerprint
 
@@ -305,16 +306,22 @@ class Orchestrator:
                 self._transition(case, CaseStatus.CLOSED, "L3 高风险，转人工线下处理")
                 return
             if risk.approval_required:
-                # 授权额度按各组件绝对值之和计算，避免正负组件净额相抵后低估写入规模。
-                approval_amount = sum(
-                    (abs(Decimal(item["delta"])) for item in report["diffs"]
-                     if Decimal(item["delta"]) != 0),
-                    Decimal("0"),
-                )
+                # 总额度与逐组件额度同时绑定，禁止在 gross 范围内挪用到其它组件。
+                component_quota: dict[str, Decimal] = {}
+                for item in report["diffs"]:
+                    component = item["component"]
+                    amount = abs(Decimal(item["delta"]))
+                    if amount:
+                        component_quota[component] = component_quota.get(
+                            component, Decimal("0")
+                        ) + amount
+                approval_amount = sum(component_quota.values(), Decimal("0"))
                 with tracer.span("SKILL", "ApprovalRouteSkill", actor="revguard-risk") as span:
                     approval = skills.approval_route(
                         self.gateway, tracer, case_id=case["case_id"], risk=risk,
                         amount=approval_amount,
+                        component_quota={key: str(value)
+                                         for key, value in component_quota.items()},
                         currency=state["calculation_result"]["currency"],
                         action_summary=self._action_summary(state))
                     span["outputs"] = approval
@@ -560,7 +567,11 @@ class Orchestrator:
                     "case_id": case["case_id"], "status": case["status"],
                 }, case_id=case["case_id"], actor="revguard-knowledge",
                     scope=["ticket:write"])
-            if terminal_status in (CaseStatus.ROLLED_BACK.value, CaseStatus.FAILED.value):
+            if terminal_status in (
+                CaseStatus.ROLLED_BACK.value,
+                CaseStatus.FAILED.value,
+                CaseStatus.CLOSED.value,
+            ):
                 # 保留关键失败/回滚终态，避免归档动作覆盖安全结论。
                 self.store.audit(case["case_id"], "revguard-knowledge", "KNOWLEDGE_ARCHIVED",
                                  {"terminal_status_preserved": terminal_status})
@@ -592,13 +603,8 @@ class Orchestrator:
 
     # ------------------------------------------------------------------ 工具
     def _transition(self, case: dict, to: CaseStatus, reason: str) -> None:
-        """状态迁移统一入口：先审计后落库（关键操作留痕）。"""
-        old = case.get("status")
-        case["status"] = to.value
-        case["updated_at"] = utc_now()
-        self.store.audit(case["case_id"], "revguard-orchestrator", "STATE_TRANSITION",
-                         {"from": old, "to": to.value, "reason": reason})
-        self.store.save_case(case)
+        """兼容类内调用；实际校验、审计和落库由统一状态机负责。"""
+        transition_case(self.store, case, to, reason)
 
     def _escalate_to_human(self, case: dict, state: dict, tracer: Tracer, gap: str) -> None:
         """证据不足：挂起补证 + 通知工单系统 + 升级人工（不生成虚假结论）。"""
