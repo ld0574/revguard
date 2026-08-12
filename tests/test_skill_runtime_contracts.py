@@ -5,13 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from revguard.models import Case
 from revguard.mocks import ToolGateway
+from revguard.models import Case
 from revguard.orchestrator import Orchestrator
 from revguard.skill_runtime import invoke_skill
 from revguard.store import Store
 from scripts.seed_demo import seed
-
 
 ROOT = Path(__file__).resolve().parent.parent
 

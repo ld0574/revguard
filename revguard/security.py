@@ -13,9 +13,8 @@ import json
 import re
 import secrets
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
-
 
 _CAPABILITY_TOKEN_RE = re.compile(r"RGC1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
 _BEARER_TOKEN_RE = re.compile(r"\bBearer\s+([A-Za-z0-9._~+/-]+=*)", re.IGNORECASE)

@@ -56,7 +56,7 @@ _FAILURE_SOURCES = frozenset(
 
 
 def transition_case(
-    store: "Store",
+    store: Store,
     case: dict,
     to: CaseStatus,
     reason: str,

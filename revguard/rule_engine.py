@@ -16,7 +16,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP, ROUND_DOWN, ROUND_UP
+from decimal import ROUND_DOWN, ROUND_HALF_UP, ROUND_UP, Decimal
 
 
 class RuleEngineError(Exception):
@@ -153,7 +153,7 @@ def match_condition(when: dict, facts: dict) -> tuple[bool, list[str]]:
             try:
                 if not predicate(actual, expected):
                     failures.append(f"{field_name}={actual!r} 不满足 {key} {expected!r}")
-            except Exception as exc:  # 类型不可比较等情况按不满足处理并说明
+            except (TypeError, ValueError) as exc:  # 类型不可比较等情况按不满足处理并说明
                 failures.append(f"{field_name} 比较失败: {exc}")
     return (not failures), failures
 

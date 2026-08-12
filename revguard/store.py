@@ -8,9 +8,9 @@
 """
 from __future__ import annotations
 
-import json
 import base64
 import binascii
+import json
 import sqlite3
 from pathlib import Path
 from threading import RLock
@@ -114,9 +114,16 @@ class Store:
     def reset(self) -> None:
         """原子清空 Demo 运行状态，保留 Schema。"""
         with self._lock, self.conn:
-            for table in ("trace_spans", "audit_events", "agent_tasks", "verifications",
-                          "executions", "approvals", "evidence", "cases"):
-                self.conn.execute(f"DELETE FROM {table}")
+            self.conn.executescript("""
+                DELETE FROM trace_spans;
+                DELETE FROM audit_events;
+                DELETE FROM agent_tasks;
+                DELETE FROM verifications;
+                DELETE FROM executions;
+                DELETE FROM approvals;
+                DELETE FROM evidence;
+                DELETE FROM cases;
+            """)
             self.conn.execute("DELETE FROM sqlite_sequence WHERE name='audit_events'")
 
     # ------------------------------------------------------------------ cases
@@ -140,7 +147,7 @@ class Store:
 
     @staticmethod
     def _encode_case_cursor(updated_at: str, case_id: str) -> str:
-        raw = f"{updated_at}\0{case_id}".encode("utf-8")
+        raw = f"{updated_at}\0{case_id}".encode()
         return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
     @staticmethod
@@ -159,19 +166,22 @@ class Store:
         """按 updated_at/case_id 做稳定的 keyset 分页，避免全表装入内存。"""
         if not 1 <= limit <= 200:
             raise ValueError("limit 必须在 1..200 之间")
-        params: list[object] = []
-        where = ""
         if cursor:
             updated_at, case_id = self._decode_case_cursor(cursor)
-            where = "WHERE updated_at < ? OR (updated_at = ? AND case_id < ?)"
-            params.extend((updated_at, updated_at, case_id))
-        params.append(limit + 1)
-        with self._lock:
-            rows = self.conn.execute(
-                f"SELECT case_id, data, updated_at FROM cases {where} "
-                "ORDER BY updated_at DESC, case_id DESC LIMIT ?",
-                params,
-            ).fetchall()
+            with self._lock:
+                rows = self.conn.execute(
+                    "SELECT case_id, data, updated_at FROM cases "
+                    "WHERE updated_at < ? OR (updated_at = ? AND case_id < ?) "
+                    "ORDER BY updated_at DESC, case_id DESC LIMIT ?",
+                    (updated_at, updated_at, case_id, limit + 1),
+                ).fetchall()
+        else:
+            with self._lock:
+                rows = self.conn.execute(
+                    "SELECT case_id, data, updated_at FROM cases "
+                    "ORDER BY updated_at DESC, case_id DESC LIMIT ?",
+                    (limit + 1,),
+                ).fetchall()
         has_more = len(rows) > limit
         page = rows[:limit]
         next_cursor = None

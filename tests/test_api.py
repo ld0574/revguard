@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """RevGuard API 冒烟测试（tests/test_api.py）。
 
 覆盖 wait 审批模式下 API 独有的关键路径：
@@ -10,13 +9,14 @@
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
-import asyncio
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -77,6 +77,7 @@ class TestApiSmoke(unittest.TestCase):
         cls.approver = {"Authorization": "Bearer rg-demo-approver-key"}
         cls.evidence = {"Authorization": "Bearer rg-demo-evidence-key"}
         cls.intake = {"Authorization": "Bearer rg-demo-intake-key-1"}
+        cls.executor = {"Authorization": "Bearer rg-demo-executor-key"}
         # 直接以 GOLDEN-001 的输入播种一个案件（等价于 scripts/seed_demo.py）
         spec = json.loads((ROOT / "data" / "golden_cases" / "GOLDEN-001.json")
                           .read_text(encoding="utf-8"))
@@ -122,11 +123,11 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(remote[-1]["actor"], "revguard-evidence")
         self.assertEqual(remote[-1]["inputs"]["agentteams_message_id"], "MATRIX-API-TEST")
 
-        # 未知工具 → 结构化错误而非 500
+        # 未登记工具不属于历史只读白名单，必须在 Gateway 前被拒绝。
         resp = self.client.post("/api/v1/tools/call", json={
             "tool_name": "crm.no_such_tool", "parameters": {},
             "case_id": self.case_id}, headers=self.evidence)
-        self.assertFalse(resp.json()["success"])
+        self.assertEqual(resp.status_code, 403)
 
     def test_03_run_case_suspends_at_approval(self):
         """wait 模式：L2 风险案件必须停在 WAITING_FOR_APPROVAL。"""
@@ -199,6 +200,22 @@ class TestApiSmoke(unittest.TestCase):
                 "tool_name": "crm.get_order", "parameters": {}, "case_id": self.case_id,
             }, headers=self.evidence)
             self.assertEqual(legacy.status_code, 410)
+        finally:
+            api_module.ENABLE_LEGACY_TOOL_API = old_legacy
+
+        try:
+            api_module.ENABLE_LEGACY_TOOL_API = True
+            legacy_write = self.client.post("/api/v1/tools/call", json={
+                "tool_name": "commission.create_adjustment_draft",
+                "parameters": {}, "case_id": self.case_id,
+            }, headers=self.evidence)
+            self.assertEqual(legacy_write.status_code, 403)
+            executor_read = self.client.post("/api/v1/tools/call", json={
+                "tool_name": "finance.get_commission_ledger",
+                "parameters": {"order_id": "EZ202608001"},
+                "case_id": self.case_id,
+            }, headers=self.executor)
+            self.assertEqual(executor_read.status_code, 403)
         finally:
             api_module.ENABLE_LEGACY_TOOL_API = old_legacy
 
@@ -312,8 +329,12 @@ class TestApiSmoke(unittest.TestCase):
                      "X-AgentTeams-Message-ID": "MATRIX-AGENT-BRIDGE"},
         )
         self.assertEqual(completed.status_code, 200, completed.text)
-        tasks = self.client.get(
+        viewer = self.client.get(
             f"/api/v1/cases/{case_id}/agent-tasks", headers=self.viewer
+        )
+        self.assertEqual(viewer.status_code, 403)
+        tasks = self.client.get(
+            f"/api/v1/cases/{case_id}/agent-tasks", headers=self.intake
         ).json()["tasks"]
         self.assertEqual(tasks[0]["status"], "SUCCEEDED")
         self.assertEqual(tasks[0]["skill_receipt"], completed.json()["skill_receipt"])
@@ -345,6 +366,78 @@ class TestApiSmoke(unittest.TestCase):
             headers={**self.intake, "X-RevGuard-Task-ID": stale["task_id"]},
         )
         self.assertEqual(stale_snapshot.status_code, 409)
+
+        dispatcher_tasks = self.client.get(
+            f"/api/v1/cases/{case_id}/agent-tasks", headers=self.orchestrator
+        )
+        self.assertEqual(dispatcher_tasks.status_code, 200)
+        self.assertGreaterEqual(len(dispatcher_tasks.json()["tasks"]), 2)
+
+    def test_13_rejection_finalizes_and_closes(self):
+        spec = json.loads((ROOT / "data" / "golden_cases" / "GOLDEN-002.json")
+                          .read_text(encoding="utf-8"))
+        raw = spec["input"]
+        case_id = "CASE-API-REJECT"
+        case = Case(
+            case_id=case_id, case_type=raw["case_type"], source=raw["source"],
+            partner_id=raw.get("partner_id"), partner_name=raw.get("partner_name"),
+            order_id=raw.get("order_id"), description=raw.get("description", ""),
+            claim=raw.get("claim", {}),
+            entities={"partner_id": raw.get("partner_id"),
+                      "partner_name": raw.get("partner_name"),
+                      "order_id": raw.get("order_id"), "contract_id": None},
+        ).to_dict()
+        store.save_case(case)
+        waiting = self.client.post(
+            f"/api/v1/cases/{case_id}/run", headers={
+                **self.operator, "X-Request-ID": "REQ-REJECT-RUN",
+            },
+        )
+        self.assertEqual(waiting.status_code, 200, waiting.text)
+        self.assertEqual(waiting.headers["X-Request-ID"], "REQ-REJECT-RUN")
+        self.assertEqual(waiting.json()["case"]["status"],
+                         CaseStatus.WAITING_FOR_APPROVAL.value)
+
+        rejected = self.client.post(f"/api/v1/cases/{case_id}/approval", json={
+            "decision": "REJECTED", "comment": "证据不足，驳回",
+        }, headers=self.approver)
+        self.assertEqual(rejected.status_code, 200, rejected.text)
+        body = rejected.json()
+        self.assertEqual(body["case"]["status"], CaseStatus.CLOSED.value)
+        self.assertNotIn("approval_token", body["approval"])
+        self.assertEqual(body["approval"]["approval_token_ref"], "-")
+        self.assertIsNone(body["verification"])
+        self.assertTrue((Path(os.environ["REVGUARD_OUTPUT_DIR"]) / "traces" /
+                         f"{case_id}.json").exists())
+        self.assertTrue((Path(os.environ["REVGUARD_OUTPUT_DIR"]) / "case_memory" /
+                         f"{case_id}.json").exists())
+        self.assertTrue((Path(os.environ["REVGUARD_REPORT_DIR"]) /
+                         f"{case_id}.md").exists())
+
+    def test_14_internal_error_is_stable_and_correlated(self):
+        case_id = "CASE-API-ERROR"
+        store.save_case(Case(
+            case_id=case_id, case_type="COMMISSION_UNDERPAYMENT", source="API",
+        ).to_dict())
+
+        class _BrokenOrchestrator:
+            def run_case(self, _case):
+                raise RuntimeError("sensitive-internal-detail")
+
+        with patch.object(api_module, "_orchestrator", return_value=_BrokenOrchestrator()):
+            failed = self.client.post(
+                f"/api/v1/cases/{case_id}/run",
+                headers={**self.operator, "X-Request-ID": "REQ-STABLE-500"},
+            )
+        self.assertEqual(failed.status_code, 500)
+        self.assertEqual(failed.headers["X-Request-ID"], "REQ-STABLE-500")
+        self.assertEqual(failed.json()["detail"], {
+            "code": "CASE_RUN_FAILED", "request_id": "REQ-STABLE-500",
+        })
+        self.assertNotIn("sensitive-internal-detail", failed.text)
+        event = next(item for item in store.list_audit(case_id)
+                     if item["event"] == "CASE_RUN_FAILED")
+        self.assertIn("RuntimeError", event["detail"])
 
 
 if __name__ == "__main__":

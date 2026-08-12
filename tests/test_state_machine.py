@@ -1,8 +1,8 @@
 """Case 状态机白名单、终态与审计不变量。"""
 from __future__ import annotations
 
-import tempfile
 import json
+import tempfile
 import unittest
 from pathlib import Path
 

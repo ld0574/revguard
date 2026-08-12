@@ -14,7 +14,6 @@ from .models import CaseStatus, TaskStatus, new_id, utc_now
 from .skill_runtime import SKILL_ACTORS
 from .skills import SKILL_REGISTRY
 
-
 SKILL_CASE_STATUSES: dict[str, frozenset[str]] = {
     "CaseNormalizeSkill": frozenset({CaseStatus.CREATED.value,
                                       CaseStatus.WAITING_FOR_EVIDENCE.value}),
@@ -43,6 +42,7 @@ SKILL_CASE_STATUSES: dict[str, frozenset[str]] = {
 
 
 def case_version(case: dict) -> str:
+    """绑定完整案件快照；updated_at 或状态变化会使 pending Task 主动失效。"""
     canonical = json.dumps(case, ensure_ascii=False, sort_keys=True,
                            separators=(",", ":"), default=str).encode("utf-8")
     return "sha256:" + hashlib.sha256(canonical).hexdigest()

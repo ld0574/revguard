@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """从 Skill 注册中心自动生成 Skill 清单文档（docs/skills.md）。
 
 保证文档与代码永远一致——Skill 增删改后重新运行本脚本即可：
@@ -6,19 +5,20 @@
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from revguard.skills import list_skills  # noqa: E402
-from revguard.skill_runtime import SKILL_ACTORS  # noqa: E402
+from revguard.skill_runtime import SKILL_ACTORS
+from revguard.skills import list_skills
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "skills.md"
 
 
-def main() -> None:
+def render() -> str:
     lines = [
         "# RevGuard Skill 清单",
         "",
@@ -65,7 +65,21 @@ def main() -> None:
         lines.append("")
         lines.append("</details>")
         lines.append("")
-    OUT.write_text("\n".join(lines), encoding="utf-8")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="生成或校验 Skill 清单")
+    parser.add_argument("--check", action="store_true", help="只校验，不改写文件")
+    args = parser.parse_args()
+    rendered = render()
+    if args.check:
+        current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
+        if current != rendered:
+            raise SystemExit(f"Skill 文档已漂移，请运行: python {Path(__file__).name}")
+        print(f"verified {OUT} ({len(list_skills())} skills)")
+        return
+    OUT.write_text(rendered, encoding="utf-8")
     print(f"generated {OUT} ({len(list_skills())} skills)")
 
 

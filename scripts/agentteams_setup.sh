@@ -14,13 +14,35 @@ CONTROLLER="${CONTROLLER:-agentteams-controller}"
 MODEL="${MODEL:-moonshotai/kimi-k3}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
+AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
 INSTALL_WORKER_SKILLS="${INSTALL_WORKER_SKILLS:-true}"
+REVGUARD_PRINCIPALS_FILE="${REVGUARD_PRINCIPALS_FILE:-$REVGUARD_HOME/config/demo_principals.json}"
 TEAM="revguard-team"
 WORKERS="orchestrator intake evidence policy calculation rootcause risk executor verifier knowledge"
 SKILL_WORKERS="orchestrator intake evidence policy calculation rootcause risk executor verifier knowledge"
 
 TMP_SOUL_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_SOUL_DIR"' EXIT
+
+principal_for_actor() {
+  python3 - "$1" "$REVGUARD_PRINCIPALS_FILE" <<'PY'
+import json
+import sys
+
+actor, path = sys.argv[1:]
+with open(path, encoding="utf-8") as stream:
+    principals = json.load(stream)
+print(next(key for key, value in principals.items() if value["actor"] == actor))
+PY
+}
+
+echo "==> 0/5 核验 RevGuard API 与 AgentTeams 共用网络"
+docker network inspect "$AGENTTEAMS_NETWORK" >/dev/null
+docker inspect revguard-api >/dev/null
+if ! docker network inspect -f '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}' \
+  "$AGENTTEAMS_NETWORK" | grep -qx 'revguard-api'; then
+  docker network connect --alias revguard-api "$AGENTTEAMS_NETWORK" revguard-api
+fi
 
 echo "==> 1/5 渲染并同步 SOUL 文件到 controller 容器"
 for w in $WORKERS; do
@@ -32,7 +54,7 @@ done
 docker exec "$CONTROLLER" mkdir -p /tmp/agentteams/workers
 docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 
-echo "==> 2/5 创建/更新 10 个 Worker（model=$MODEL）"
+echo "==> 2/5 创建/更新 1 Manager + 9 Worker（model=$MODEL）"
 for w in $WORKERS; do
   docker exec "$CONTROLLER" agt apply worker \
     --name "revguard-$w" \
@@ -62,29 +84,70 @@ fi
 
 echo "==> 4/5 安装 skills-only RevGuard Adapter"
 if [ "$INSTALL_WORKER_SKILLS" = "true" ]; then
+  controller_skill_dir="/tmp/agentteams/skills/revguard-api"
+  docker exec "$CONTROLLER" rm -rf "$controller_skill_dir"
+  docker exec "$CONTROLLER" mkdir -p "$controller_skill_dir"
+  docker cp "$REVGUARD_HOME/agentteams/skills/revguard-api/." \
+    "$CONTROLLER:$controller_skill_dir/"
+  for w in $SKILL_WORKERS; do
+    worker="revguard-$w"
+    # Worker 会以 MinIO 为单一事实源同步 skills；只拷容器临时层会在下一轮
+    # mirror 时被清理，重启后也无法复现。
+    docker exec "$CONTROLLER" mc mirror --overwrite \
+      "$controller_skill_dir/" \
+      "agentteams/agentteams-storage/agents/$worker/skills/revguard-api/" >/dev/null
+
+    api_key=$(principal_for_actor "$worker")
+    printf '%s' "$api_key" | docker exec -i "$CONTROLLER" mc pipe \
+      "agentteams/agentteams-storage/agents/$worker/.copaw.secret/revguard_api_key" \
+      >/dev/null
+    unset api_key
+  done
+
+  echo "等待 Worker 从持久存储同步 Adapter"
   for w in $SKILL_WORKERS; do
     worker="revguard-$w"
     container="${WORKER_CONTAINER_PREFIX}${worker}"
+    skill_script="/root/.copaw-worker/$worker/skills/revguard-api/scripts/revguard_call.py"
+    principal_file="/root/.copaw-worker/$worker/.copaw.secret/revguard_api_key"
     docker exec "$CONTROLLER" agt worker ensure-ready --name "$worker" >/dev/null
-    for _ in $(seq 1 30); do
-      docker inspect "$container" >/dev/null 2>&1 && break
+    for _ in $(seq 1 35); do
+      running=$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null || true)
+      if [ "$running" = "true" ] \
+        && docker exec "$container" test -f "$skill_script" \
+        && docker exec "$container" test -s "$principal_file"; then
+        break
+      fi
       sleep 2
     done
-    docker inspect "$container" >/dev/null 2>&1 || {
-      echo "Worker 容器未就绪: $container" >&2
+    running=$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null || true)
+    if [ "$running" != "true" ] \
+      || ! docker exec "$container" test -f "$skill_script" \
+      || ! docker exec "$container" test -s "$principal_file"; then
+      echo "Adapter 或独立 Principal 未同步到 Worker: $worker" >&2
       exit 1
-    }
-    skill_dir="/root/.copaw-worker/$worker/skills/revguard-api"
-    docker exec "$container" mkdir -p "$skill_dir"
-    docker cp "$REVGUARD_HOME/agentteams/skills/revguard-api/." "$container:$skill_dir/"
-    docker exec "$container" chmod 700 "$skill_dir/scripts/revguard_call.py"
+    fi
+    docker exec "$container" chmod 700 "$skill_script"
   done
 else
   echo "INSTALL_WORKER_SKILLS=false，跳过 Adapter 安装"
 fi
 
 echo "==> 5/5 状态核验"
+for w in $WORKERS; do
+  docker exec "$CONTROLLER" agt worker ensure-ready --name "revguard-$w" >/dev/null &
+done
+wait
 docker exec "$CONTROLLER" agt get workers
+for _ in $(seq 1 24); do
+  ready=$(docker exec "$CONTROLLER" agt get teams 2>/dev/null | awk -v n="$TEAM" '$1==n {print $NF}')
+  [ "$ready" = "9/9" ] && break
+  sleep 5
+done
+[ "$ready" = "9/9" ] || {
+  echo "Team 未在超时内达到 9/9 Ready（当前: ${ready:-unknown}）" >&2
+  exit 1
+}
 docker exec "$CONTROLLER" agt get teams
 
 echo

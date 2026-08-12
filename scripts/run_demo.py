@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """RevGuard 端到端 Demo 入口（scripts/run_demo.py）。
 
 用法：
@@ -23,10 +22,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from revguard.mocks import ToolGateway  # noqa: E402
-from revguard.orchestrator import Orchestrator  # noqa: E402
-from revguard.store import Store  # noqa: E402
-from scripts.seed_demo import seed  # noqa: E402
+from revguard.mocks import ToolGateway
+from revguard.orchestrator import Orchestrator
+from revguard.store import Store
+from scripts.seed_demo import seed
 
 ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = ROOT / "data" / "revguard.db"

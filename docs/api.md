@@ -40,9 +40,9 @@ Authorization: Bearer <api-key>
 |---|---|
 | `viewer` | 案件、报告、Trace、Skill Catalog 只读 |
 | `operator` | 创建并运行案件 |
-| `dispatcher` | 按当前 Case 状态派发绑定 Skill/Worker/case version 的 StageTask |
+| `dispatcher` | 按当前 Case 状态派发 StageTask，并查看案件内全量任务 |
 | `approver` | 对等待审批的案件作出决定 |
-| `worker` | 调用与自身 actor 匹配的 Skill；底层 Tool 不进入 Agent 可见清单 |
+| `worker` | 调用与自身 actor 匹配的 Skill；只能查看分配给自己的任务 |
 
 Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 与 actor 固有权限中。
 即使调用者发送额外 JSON 字段 `actor` 或 `scope`，Pydantic 也会以 422 拒绝。
@@ -67,7 +67,14 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 ### `POST /api/v1/cases/{case_id}/run`
 
 需要 `operator`。仅 `CREATED` 可运行；L2 在 `wait` 模式停在
-`WAITING_FOR_APPROVAL`，L1 只创建不生效草稿，L3 不执行。
+`WAITING_FOR_APPROVAL`，L1 只创建不生效草稿，L3 不执行。调用方可携带
+`X-Request-ID`，成功和失败响应均原样返回。意外错误只暴露稳定结构：
+
+```json
+{"detail": {"code": "CASE_RUN_FAILED", "request_id": "REQ-..."}}
+```
+
+异常类型与脱敏详情只写入 `CASE_RUN_FAILED` Audit，不返回客户端。
 
 ### `POST /api/v1/cases/{case_id}/approval`
 
@@ -81,6 +88,9 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 `component_quota`、用途和 JTI；Executor 自动续跑写入与独立验证。案件/组件不匹配、
 超额、过期或伪造均返回
 `AUTH_FAILED`。
+
+驳回不会停在中间状态：服务端重建 Shared State 并生成 Trace、报告和 case memory，路径为
+`REJECTED → KNOWLEDGE_ARCHIVED → CLOSED`。批准与驳回响应都经过递归脱敏。
 
 ### `POST /api/v1/cases/{case_id}/evidence/resume`
 
@@ -118,7 +128,9 @@ X-RevGuard-Task-ID: TASK-...
 
 成功后任务原子变为 `SUCCEEDED`，结果和 `skill_receipt` 存入 StageResult。错 Worker、错
 Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒绝。任务可通过
-`GET /api/v1/cases/{case_id}/agent-tasks` 查询；Worker 只能看分配给自己的任务。
+`GET /api/v1/cases/{case_id}/agent-tasks` 查询；只有 `operator|dispatcher` 能看全量，Worker
+只能看分配给自己的任务，纯 `viewer` 无权读取任何任务输入或结果。由于 `case_version`
+包含状态和 `updated_at`，任何状态变化都会使先前派发的 pending task 失效，必须重新派发。
 
 ### 只读接口
 
@@ -144,6 +156,10 @@ Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒
 返回 16 个 Skill 的版本、标准 `input_schema` / `output_schema`、MCP-compatible annotations、
 依赖、失败处理、安全边界、复用场景、允许 actor 及调用入口。Catalog、运行时校验与
 `docs/skills.md` 同源。
+
+机器可读快照位于 `docs/openapi.json`：它是 FastAPI OpenAPI 3.1 文档，并附
+`x-revguard-skill-registry`。运行 `make openapi` 可重新生成；CI 的 `generated-check`
+会拒绝注册表、文档与运行时漂移。
 
 ### `POST /api/v1/skills/{skill_name}/invoke`
 
@@ -181,7 +197,9 @@ Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒
 ### `POST /api/v1/tools/call`
 
 该端点为内部状态机和已有证据链保留兼容，不进入新版 Agent skills-only Adapter 的可见
-清单，且默认返回 410；只有显式设置 `REVGUARD_ENABLE_LEGACY_TOOL_API=true` 才启用。
+清单，且默认返回 410；只有显式设置 `REVGUARD_ENABLE_LEGACY_TOOL_API=true` 才启用，
+启动日志会输出醒目警告。启用后也只接受 `revguard-evidence` 身份调用 `*:read`
+工具；所有写工具及其它 Worker 一律拒绝。
 身份和 scope 不在请求体中；遗留跨 AgentTeams 调用还应携带：
 
 ```http

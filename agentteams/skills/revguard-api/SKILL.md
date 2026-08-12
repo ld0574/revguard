@@ -14,7 +14,7 @@ owns the Bearer credential; never read, print, request or place credentials in c
 ```bash
 python /root/.copaw-worker/revguard-orchestrator/skills/revguard-api/scripts/revguard_call.py \
   --dispatch-skill CaseNormalizeSkill \
-  --case-id CASE-2026-0008 \
+  --case-id CASE-STAGE-20260812-001 \
   --input '{"raw_case":{"partner_id":"AGT-10001","order_id":"EZ202608001"}}' \
   --message-id '$MATRIX_EVENT_ID'
 ```
@@ -25,11 +25,11 @@ Worker. Orchestrator must not invoke the domain Skill with another Worker's Prin
 ## Assigned Worker invocation
 
 ```bash
-python /root/.copaw-worker/revguard-evidence/skills/revguard-api/scripts/revguard_call.py \
-  --skill EvidenceCollectSkill \
+python /root/.copaw-worker/revguard-intake/skills/revguard-api/scripts/revguard_call.py \
+  --skill CaseNormalizeSkill \
   --task-id TASK-REPLACE-WITH-DISPATCHED-ID \
-  --case-id CASE-2026-0008 \
-  --input '{"partner":{"partner_id":"AGT-10001"},"order_id":"EZ202608001"}' \
+  --case-id CASE-STAGE-20260812-001 \
+  --input '{"raw_case":{"partner_id":"AGT-10001","order_id":"EZ202608001"}}' \
   --message-id '$MATRIX_EVENT_ID'
 ```
 

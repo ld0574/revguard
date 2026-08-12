@@ -5,8 +5,8 @@
 """
 from __future__ import annotations
 
-from decimal import Decimal
 import hashlib
+from decimal import Decimal
 
 
 def _money(amount, currency="") -> str:

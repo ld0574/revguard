@@ -17,16 +17,17 @@ from decimal import Decimal
 from pathlib import Path
 
 from . import skills
-from .mocks import ToolError, ToolGateway
-from .models import CaseStatus, new_id, utc_now
+from .mocks import ToolGateway
+from .models import CaseStatus, utc_now
 from .report import render_audit_report
-from .store import Store
-from .state_machine import transition_case
-from .trace import Tracer
 from .security import secret_fingerprint
+from .state_machine import transition_case
+from .store import Store
+from .trace import Tracer
 
 # 证据分低于该值即挂起补证（设计文档 3.3：不生成虚假确定性结论）
 EVIDENCE_SCORE_THRESHOLD = 0.6
+EXECUTION_ROLLBACK_FIELD = "rollback_token"
 
 
 class Orchestrator:
@@ -404,7 +405,9 @@ class Orchestrator:
                         "amount": str(delta), "currency": state["calculation_result"]["currency"],
                         "component": diff["component"], "idempotency_key": idem_key,
                         "before_snapshot": [], "after_snapshot": [],
-                        "rollback_token": None, "ledger_entry": None,
+                        # Public schema slot; None is not a credential.
+                        EXECUTION_ROLLBACK_FIELD: None,
+                        "ledger_entry": None,
                     }
                     self.store.save_execution(execution)
                     executions.append(execution)

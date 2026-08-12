@@ -1,5 +1,10 @@
 {
-  "generated_at": "2026-08-11",
+  "generated_at": "2026-08-12T10:26:17Z",
+  "environment": {
+    "python": "3.12.13",
+    "implementation": "CPython",
+    "platform": "macOS-26.6.1-arm64-arm-64bit"
+  },
   "method": "external_expected_matrix_and_golden_holdout",
   "expected_dataset": "data/expected/risk_matrix.csv",
   "total_scenarios": 105,
@@ -30,10 +35,31 @@
     }
   },
   "parallel_benchmark": {
-    "parallel_batch_ms": 56,
+    "method": "median_of_latency_injection_runs",
+    "iterations": 7,
+    "injected_delay_ms_per_tool": 50,
+    "parallel_batch_ms": 55,
+    "parallel_batch_ms_samples": [
+      54,
+      55,
+      55,
+      57,
+      56,
+      55,
+      56
+    ],
     "end_to_end_ms": 57,
+    "end_to_end_ms_samples": [
+      55,
+      55,
+      57,
+      58,
+      57,
+      56,
+      57
+    ],
     "serial_io_baseline_ms": 350,
-    "estimated_speedup": 6.25,
+    "estimated_speedup": 6.36,
     "workers": 7,
     "task_count": 7
   }

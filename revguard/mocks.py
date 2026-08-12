@@ -17,19 +17,25 @@ from __future__ import annotations
 import copy
 import json
 import os
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 from threading import RLock
+from typing import ClassVar
 
 from .models import new_id, utc_now
-from .security import (CapabilityTokenSigner, SecurityError, authorize_tool)
+from .security import CapabilityTokenSigner, SecurityError, authorize_tool
 
 
 class ToolError(Exception):
     """工具调用失败，error_type 必须是约定枚举（设计文档 13.3）。"""
 
-    RETRYABLE = {"TIMEOUT", "TOOL_UNAVAILABLE", "RATE_LIMITED"}
-    FATAL = {"AUTH_FAILED", "NOT_FOUND", "DATA_CONFLICT", "IDEMPOTENCY_CONFLICT", "INVALID_PARAMS"}
+    RETRYABLE: ClassVar[frozenset[str]] = frozenset({
+        "TIMEOUT", "TOOL_UNAVAILABLE", "RATE_LIMITED",
+    })
+    FATAL: ClassVar[frozenset[str]] = frozenset({
+        "AUTH_FAILED", "NOT_FOUND", "DATA_CONFLICT", "IDEMPOTENCY_CONFLICT",
+        "INVALID_PARAMS",
+    })
 
     def __init__(self, error_type: str, message: str):
         super().__init__(f"[{error_type}] {message}")

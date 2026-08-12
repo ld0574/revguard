@@ -7,16 +7,15 @@
 """
 from __future__ import annotations
 
-import enum
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from typing import Any, Optional
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
+from enum import StrEnum
 
 
 def utc_now() -> str:
     """返回 ISO-8601 UTC 时间戳，统一全系统时间格式。"""
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 def new_id(prefix: str) -> str:
@@ -24,7 +23,7 @@ def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
 
 
-class CaseStatus(str, enum.Enum):
+class CaseStatus(StrEnum):
     """Case 状态机（设计文档 11.1）。每个迁移都会被审计记录。"""
     CREATED = "CREATED"
     NORMALIZING = "NORMALIZING"
@@ -47,7 +46,7 @@ class CaseStatus(str, enum.Enum):
     FAILED = "FAILED"  # 系统级失败（工具连续失败等），不产出虚假结论
 
 
-class TaskStatus(str, enum.Enum):
+class TaskStatus(StrEnum):
     """Task 状态（设计文档 11.2）。"""
     PENDING = "PENDING"
     RUNNING = "RUNNING"
@@ -59,7 +58,7 @@ class TaskStatus(str, enum.Enum):
     CANCELLED = "CANCELLED"
 
 
-class RiskLevel(str, enum.Enum):
+class RiskLevel(StrEnum):
     """风险等级（设计文档 14.1）。"""
     L0 = "L0"  # 只读诊断，自动执行
     L1 = "L1"  # 低风险，仅自动创建不生效草稿
@@ -75,15 +74,15 @@ class Case:
     source: str               # EMAIL / TICKET / MANUAL / API
     status: str = CaseStatus.CREATED.value
     priority: str = "P1"
-    partner_id: Optional[str] = None
-    partner_name: Optional[str] = None
-    order_id: Optional[str] = None
-    contract_id: Optional[str] = None
+    partner_id: str | None = None
+    partner_name: str | None = None
+    order_id: str | None = None
+    contract_id: str | None = None
     description: str = ""
     claim: dict = field(default_factory=dict)   # {actual_amount, expected_amount, currency}
     entities: dict = field(default_factory=dict)
     evidence_score: float = 0.0
-    risk_level: Optional[str] = None
+    risk_level: str | None = None
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
 
@@ -102,7 +101,7 @@ class Evidence:
     collected_by: str         # 采集者（Agent / Skill 名）
     payload: dict
     strength: str = "STRONG"  # STRONG / MEDIUM / WEAK（设计文档 16.3）
-    tool_receipt: Optional[str] = None
+    tool_receipt: str | None = None
     collected_at: str = field(default_factory=utc_now)
     content_hash: str = ""
 
@@ -143,7 +142,7 @@ class RiskDecision:
     """风险分级结论（设计文档 14.2 判断因子）。"""
     risk_level: str
     approval_required: bool
-    approver_role: Optional[str]
+    approver_role: str | None
     execution_constraints: dict
     rollback_plan_required: bool
     reason_codes: list
@@ -161,7 +160,7 @@ class ExecutionResult:
     before_snapshot: dict
     after_snapshot: dict
     tool_receipts: list
-    rollback_token: Optional[str] = None
+    rollback_token: str | None = None
 
 
 @dataclass

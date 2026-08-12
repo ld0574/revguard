@@ -21,8 +21,10 @@ revguard-orchestrator ◄── revguard-knowledge ◄── revguard-verifier �
                       （差异归因）          （L0-L3 分级）   （L2 审批；L3 转人工）
 ```
 
-编排原则：`revguard-orchestrator` 只搬运结构化 Artifact，不代替任何职能 Agent 做判断；
-本地 `revguard/orchestrator.py` 是同一链路的确定性参考实现，两者状态机完全一致。
+编排原则：`revguard-orchestrator` 只拆解和派发结构化 StageTask；
+`revguard/orchestrator.py` 是完整业务闭环的服务端确定性参考实现。当前真实 AgentTeams
+证据验证 Orchestrator → Intake 的双 Agent StageTask 桥接，不宣称十个外部 Worker 已逐阶段
+驱动整条状态机。
 
 ## 登记总表
 
@@ -35,18 +37,26 @@ revguard-orchestrator ◄── revguard-knowledge ◄── revguard-verifier �
 | 5 | revguard-calculation | 组装 facts 并调用确定性规则引擎复算 | effective_rule_set、证据中的金额/日期/等级 | components（逐项金额+代入式）、calculation_hash、facts_snapshot | CommissionCalculateSkill | **禁止心算/估算**（ADR-001）；规则缺失返回明确错误，不降级 |
 | 6 | revguard-rootcause | 应有 vs 实有逐项对账，输出确定性根因分类 | calculation_result、台账条目、policy_decision | diffs[]（含 root_cause + explanation）、total_delta | DifferenceExplainSkill | 归因不出 → AMOUNT_MISMATCH 强制人工，不得编造；不承诺处理决策 |
 | 7 | revguard-risk | L0-L3 风险分级与审批路由 | root_cause_report、evidence_score、policy_conflicts | risk_level、approval_required、approver_role、审批单 | RiskClassifySkill / ApprovalRouteSkill；`workflow.create_approval` | 负向调整/超阈值/冲突未消解/证据不足强制升级；不得代替审批人批准 |
-| 8 | revguard-executor | **唯一**允许触碰资金台账的受控执行 Agent | L1 Draft Plan 或已审批 L2 Action Plan | action_id、快照、签名 rollback token、reversal | Draft/Adjust/Reverse 三个 Skill | L1 只建草稿；L2 必须签名审批凭证；L3 禁止执行；不得自行宣布成功 |
+| 8 | revguard-executor | **唯一**持有资金写 scope 的受控执行 Agent | L1 Draft Plan 或已审批 L2 Action Plan | action_id、快照、签名 rollback token、reversal | Draft/Adjust/Reverse 三个 Skill | Draft 不改台账；仅 Adjust/Reverse 改台账；L2 必须签名审批凭证；L3 禁止执行；不得自行宣布成功 |
 | 9 | revguard-verifier | 写后与回滚后独立重新查询源系统复核 | order_id、expected components/snapshot | verification、rollback verification | PostActionVerifySkill / PostRollbackVerifySkill | 不复用 Executor 回执；任一偏差触发真实反向冲销，回滚仍失败则 FAILED |
 | 10 | revguard-knowledge | 沉淀 Case Memory、生成评测样本与回复草稿 | 完整案件轨迹 | GOLDEN/BAD/SAFE_ROLLBACK 样本、审计报告、回复草稿 | `mail.create_reply_draft` / `ticket.update_case` | 只生成草稿不直接发送；保留 ROLLED_BACK/FAILED 终态；沉淀动作入审计 |
 
-## 三条不可逾越的全局边界（ADR）
+## 已采纳 ADR
 
-1. **ADR-001**：LLM 不计算金额。所有金额由 Decimal 规则引擎产出，Agent 只组装 facts 与解释结果。
-2. **ADR-002**：Executor 与 Verifier 分离。执行成功与否由独立查询判定，不由执行方自证。
-3. **写权限最小化**：仅 Executor 持有资金写 scope；正式入账必须携带签名审批凭证和幂等键，冲销必须携带一次性回滚令牌。
+1. 确定性金额内核；
+2. Executor / Verifier 分离；
+3. ToolGateway 统一授权与回执契约；
+4. 19 状态、24 条普通迁移的显式白名单；
+5. 业务绑定、短期、一次性的能力令牌；
+6. Skill Registry / JSON Schema 单一事实源。
+
+决策全文见 [`adr/`](adr/README.md)。当前 Demo 的 Normalize 和 Explain 也是确定性实现，
+不将模型路线图写成已落地能力。
 
 ## Trace 约定
 
 - API 从 Bearer Principal 派生 `actor` + 最小 `scope`，请求体不得自报；每次调用产生 `tool_receipt`；
 - 状态迁移、重试、升级、审批、执行、验证全部写入 `audit_events`（SQLite）与 `data/outputs/traces/CASE-*.json`；
 - 复算输入保存 facts 快照与 `calculation_hash`（sha256），同输入同规则必得同结果，评委可逐笔复算。
+- JSON Trace 同时导出保守的 OpenTelemetry GenAI 属性映射；内部 kind 继续保留，不虚构模型、
+  Token 或供应商字段。详见 [`observability.md`](observability.md)。

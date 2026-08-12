@@ -18,18 +18,22 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from decimal import Decimal
-from typing import Callable
 
 from . import rule_engine
-from .mocks import ToolGateway
-from .models import (CalculationResult, Evidence, PolicyDecision, RiskDecision,
-                     new_id, utc_now)
+from .mocks import ToolError, ToolGateway
+from .models import (
+    CalculationResult,
+    Evidence,
+    PolicyDecision,
+    RiskDecision,
+    new_id,
+    utc_now,
+)
 from .policy_matcher import resolve_tier_at_date, select_policy_version
 from .risk import classify_risk
 from .security import redact_secrets
 from .skill_schemas import SKILL_SCHEMAS
 from .trace import Tracer
-
 
 # ---------------------------------------------------------------------------
 # 工具调用辅助：超时/重试/留痕（设计文档 13.3）
@@ -41,8 +45,6 @@ def call_tool(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
               max_retries: int = 3, retry_backoff: float = 0.05,
               parent_span_id: str | None = None) -> dict:
     """带重试与 Trace 的工具调用。可重试错误按次数退避重试，最终失败抛 ToolError。"""
-    from .mocks import ToolError  # 延迟导入避免循环
-
     attempt = 0
     while True:
         attempt += 1
@@ -190,7 +192,7 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
             try:
                 result_type, source_system, ref, resp = future.result()
                 results[result_type] = (source_system, ref, resp)
-            except Exception as exc:
+            except ToolError as exc:
                 gaps.append(f"{ev_type}: {exc}")
 
     # 固定证据输出顺序，保证报告/哈希在并发完成顺序变化时仍可复现。
@@ -199,11 +201,8 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
         if not result:
             continue
         source_system, ref, resp = result
-        try:
-            collected[ev_type] = resp["data"]
-            _record(ev_type, source_system, ref, resp["data"], resp["tool_receipt"])
-        except Exception as exc:
-            gaps.append(f"{ev_type}: {exc}")
+        collected[ev_type] = resp["data"]
+        _record(ev_type, source_system, ref, resp["data"], resp["tool_receipt"])
     parallel_duration_ms = int((time.monotonic() - started) * 1000)
 
     # 政策库查询依赖合同结果（政策 ID 来自合同）

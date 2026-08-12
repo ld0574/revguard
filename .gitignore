@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
+.coverage
 
 # 运行时产物（可由 seed_demo.py / run_demo.py 重新生成）
 data/revguard.db

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """初始化演示数据库（scripts/seed_demo.py）。
 
 用法：
@@ -16,8 +15,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from revguard.models import Case, CaseStatus  # noqa: E402
-from revguard.store import Store  # noqa: E402
+from revguard.models import Case, CaseStatus
+from revguard.store import Store
 
 ROOT = Path(__file__).resolve().parent.parent
 

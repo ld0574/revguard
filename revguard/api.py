@@ -10,21 +10,29 @@
 """
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Literal
 
-from .models import Case, CaseStatus, TaskStatus
+from .agent_bridge import create_agent_task, validate_task_invocation
 from .mocks import ToolGateway
+from .models import Case, CaseStatus, TaskStatus, new_id
 from .orchestrator import Orchestrator
-from .skills import list_skills
+from .security import (
+    TOOL_REQUIRED_SCOPES,
+    ApiPrincipal,
+    SecurityError,
+    constant_time_lookup,
+    load_api_principals,
+    redact_secrets,
+    secret_fingerprint,
+)
 from .skill_runtime import SKILL_ACTORS, SkillInvocationError, invoke_skill
-from .store import Store
+from .skills import list_skills
 from .state_machine import transition_case
+from .store import Store
 from .trace import Tracer
-from .security import (ApiPrincipal, SecurityError, constant_time_lookup,
-                       load_api_principals, redact_secrets, secret_fingerprint)
-from .agent_bridge import (create_agent_task, validate_task_invocation)
 
 try:
     from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
@@ -33,6 +41,7 @@ except ImportError as exc:  # 本地纯标准库跑 Demo 时允许不安装 Fast
     raise ImportError("API 服务需要安装依赖：pip install -r requirements.txt") from exc
 
 ROOT = Path(__file__).resolve().parent.parent
+LOGGER = logging.getLogger("revguard.api")
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
@@ -48,6 +57,7 @@ ALLOW_INSECURE_DEMO_KEYS = os.getenv("REVGUARD_ALLOW_INSECURE_DEMO_KEYS", "false
 ENABLE_LEGACY_TOOL_API = os.getenv(
     "REVGUARD_ENABLE_LEGACY_TOOL_API", "false"
 ).lower() == "true"
+LEGACY_EVIDENCE_ACTOR = "revguard-evidence"
 DEMO_PRINCIPALS_PATH = Path(os.getenv(
     "REVGUARD_DEMO_PRINCIPALS_PATH", str(ROOT / "config" / "demo_principals.json")
 ))
@@ -67,6 +77,10 @@ if not SIGNING_KEY:
         SIGNING_KEY = "revguard-demo-signing-key-change-before-production-2026"
     else:
         raise RuntimeError("必须配置 REVGUARD_APPROVAL_SIGNING_KEY（至少 32 字节）")
+if ENABLE_LEGACY_TOOL_API:
+    LOGGER.warning(
+        "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"
+    )
 
 app = FastAPI(title="RevGuard API", version="0.2.0",
               description="企业渠道佣金与结算异常多 Agent 协同平台")
@@ -195,7 +209,13 @@ def get_case(case_id: str, _principal: ApiPrincipal = Depends(require_roles("vie
 
 
 @app.post("/api/v1/cases/{case_id}/run")
-def run_case(case_id: str, _principal: ApiPrincipal = Depends(require_roles("operator"))):
+def run_case(case_id: str, response: Response,
+             principal: ApiPrincipal = Depends(require_roles("operator")),
+             request_id: str | None = Header(default=None, alias="X-Request-ID")):
+    correlation_id = request_id or new_id("REQ")
+    if len(correlation_id) > 256:
+        raise HTTPException(400, "X-Request-ID 长度不能超过 256")
+    response.headers["X-Request-ID"] = correlation_id
     case = store.get_case(case_id)
     if not case:
         raise HTTPException(404, f"案件不存在: {case_id}")
@@ -204,7 +224,15 @@ def run_case(case_id: str, _principal: ApiPrincipal = Depends(require_roles("ope
     try:
         state = _orchestrator().run_case(case)
     except Exception as exc:
-        raise HTTPException(500, f"{type(exc).__name__}: {exc}") from exc
+        store.audit(case_id, principal.actor, "CASE_RUN_FAILED", redact_secrets({
+            "request_id": correlation_id,
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        }))
+        raise HTTPException(500, {
+            "code": "CASE_RUN_FAILED",
+            "request_id": correlation_id,
+        }, headers={"X-Request-ID": correlation_id}) from exc
     return {"case": store.get_case(case_id), "state_status": state.get("final_status")}
 
 
@@ -233,19 +261,26 @@ def decide_approval(case_id: str, payload: ApprovalDecision,
     store.audit(case_id, principal.actor, "APPROVAL_DECIDED",
                 {"decision": decided["status"], "simulated_human": False})
 
+    public_approval = {key: value for key, value in decided.items()
+                       if key != "approval_token"}
+    public_approval["approval_token_ref"] = secret_fingerprint(
+        decided.get("approval_token", "")
+    )
+
     if decided["status"] != "APPROVED":
         transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=principal.actor)
-        return {"case": case, "approval": decided}
+        orch = _orchestrator()
+        state = orch._rebuild_state(case)
+        state["approval"] = decided
+        orch._finalize(case, state, Tracer(store, case_id), archived=True)
+        return {"case": store.get_case(case_id), "approval": public_approval,
+                "verification": None}
 
     transition_case(store, case, CaseStatus.READY_TO_EXECUTE,
                     "人工审批通过", actor=principal.actor)
     orch = _orchestrator()
     state = orch.execute_and_verify(case)
     orch._finalize(case, state, Tracer(store, case_id), archived=True)
-    public_approval = {k: v for k, v in decided.items() if k != "approval_token"}
-    public_approval["approval_token_ref"] = secret_fingerprint(
-        decided.get("approval_token", "")
-    )
     return {"case": store.get_case(case_id), "approval": public_approval,
             "verification": state.get("verification")}
 
@@ -301,7 +336,6 @@ def dispatch_agent_task(case_id: str, payload: AgentTaskCreate,
     except ValueError as exc:
         status_code = 409 if "案件状态" in str(exc) else 422
         raise HTTPException(status_code, str(exc)) from exc
-    from .models import new_id
     correlation = {
         "request_id": request_id or new_id("REQ"),
         "agentteams_message_id": agentteams_message_id,
@@ -326,7 +360,7 @@ def list_case_agent_tasks(case_id: str,
     if not store.get_case(case_id):
         raise HTTPException(404, f"案件不存在: {case_id}")
     tasks = store.list_agent_tasks(case_id)
-    privileged = bool({"viewer", "operator", "dispatcher"}.intersection(principal.roles))
+    privileged = bool({"operator", "dispatcher"}.intersection(principal.roles))
     visible = tasks if privileged else [
         task for task in tasks if task["assigned_actor"] == principal.actor
     ]
@@ -361,10 +395,13 @@ def call_tool(payload: ToolCall,
               ),
               traceparent: str | None = Header(default=None, alias="traceparent")):
     """AgentTeams Worker 工具入口；关联消息、HTTP 请求、回执、Trace 与 Audit。"""
-    from .models import new_id
-
     if not ENABLE_LEGACY_TOOL_API:
         raise HTTPException(410, "Agent 裸 Tool API 已关闭；请调用注册 Skill")
+    required_scope = TOOL_REQUIRED_SCOPES.get(payload.tool_name)
+    if principal.actor != LEGACY_EVIDENCE_ACTOR or not (
+        required_scope and required_scope.endswith(":read")
+    ):
+        raise HTTPException(403, "遗留 Tool API 仅允许 Evidence Principal 复放只读工具")
 
     correlation = {
         "request_id": request_id or new_id("REQ"),
@@ -439,7 +476,6 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
                                 default=None, alias="X-RevGuard-Task-ID"
                             )):
     """调用版本化 Skill；身份来自 Bearer principal，不接受自报 actor/scope。"""
-    from .models import new_id
     correlation = {
         "request_id": request_id or new_id("REQ"),
         "agentteams_message_id": agentteams_message_id,

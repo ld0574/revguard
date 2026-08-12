@@ -6,8 +6,13 @@ import unittest
 from decimal import Decimal
 from pathlib import Path
 
-from revguard.rule_engine import (FormulaError, evaluate_formula, match_condition,
-                                  run_policy, to_decimal)
+from revguard.rule_engine import (
+    FormulaError,
+    evaluate_formula,
+    match_condition,
+    run_policy,
+    to_decimal,
+)
 
 FIXTURES = Path(__file__).resolve().parent.parent / "data" / "fixtures"
 

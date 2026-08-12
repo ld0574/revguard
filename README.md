@@ -3,7 +3,8 @@
 RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突与证据不足等企业渠道场景，
 在 AgentTeams 上构建可审批、可验证、可回滚、可审计的多 Agent 闭环。
 
-核心原则：LLM 负责理解与协作，金额、政策匹配、风险分级、权限和状态流转由确定性代码完成。
+核心原则：当前 Demo 的 Normalize、Explain、金额、政策匹配、风险分级、权限和状态流转
+都由确定性代码完成；语言模型是边界明确的后续 Adapter，不把路线图包装成现状。
 
 ## 已验证能力
 
@@ -14,9 +15,12 @@ RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突�
 - L0 只读、L1 仅建不生效草稿、L2 人工审批后写入、L3 禁止自动执行。
 - HMAC-SHA256 能力令牌绑定案件、币种、总额、逐组件额度、用途、过期时间与唯一 JTI。
 - 验证失败时真实创建反向台账，再由 Verifier 独立确认恢复执行前净额。
-- 8 个端到端 Golden Case；105 个确定性评测场景；77 项单元、集成与 API 测试。
-- 显式状态迁移白名单；SQLite WAL + keyset 分页；支持干净重置、重复 seed 与容器重启。
-- 真实 Matrix → AgentTeams Worker → RevGuard API 调用已用 request ID、receipt、Trace 与 Audit 四方对账。
+- 8 个端到端 Golden Case；105 个确定性场景（8 Golden + 80 风险 + 8 政策 + 9 安全）；
+  83 项单元、集成与 API 测试，实测 91% 行覆盖率，门禁为 90%。
+- 19 状态、24 条普通迁移的显式白名单；SQLite WAL + keyset 分页；支持干净重置、
+  重复 seed 与容器重启。
+- 真实 Matrix → Orchestrator StageTask → Intake Skill 已用 message/request/task/receipt ID、
+  Trace 与 Audit 对账；旧 Matrix → Evidence → Tool 链保留为历史证据。
 - 持久化 StageTask/StageResult 桥接绑定 case version、Skill、Worker actor 和输入快照；
   支持补证后从 `WAITING_FOR_EVIDENCE` 恢复。
 
@@ -41,7 +45,8 @@ RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突�
 ```bash
 cd revguard
 make setup
-make verify-ci    # 静态检查 + 77 项测试 + 覆盖率门禁 + 105 场景评测
+make verify-ci    # 固定 Ruff + 83 项测试 + 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
+make security     # pip-audit + Bandit；CI 另执行 Trivy 文件系统与镜像扫描
 make demo         # 干净重置并运行 8 个 Golden Case
 ```
 
@@ -50,7 +55,8 @@ make demo         # 干净重置并运行 8 个 Golden Case
 - `docs/reports/CASE-*.md`：证据、政策、公式、审批、执行、回滚与审计报告；
 - `data/outputs/traces/CASE-*.json`：Agent / Skill / Tool / Approval / Execution Trace；
 - `data/outputs/case_memory/*.json`：Golden、Bad 与 Safe-Rollback 评测样本；
-- `data/outputs/evaluation_summary.json`：105 场景指标、9 个安全探针与并行基准。
+- `data/outputs/evaluation_summary.json`：运行时评测产物（忽略目录）；
+- `docs/evaluation-summary.json`：含 UTC、环境、重复次数、中位数与样本的发布快照。
 
 核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
@@ -84,12 +90,17 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
 - `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
 - `POST /api/v1/skills/{skill}/invoke`：版本化 Skill 调用入口；
-- `POST /api/v1/tools/call`：服务端/遗留 Adapter 兼容入口，不进入 Agent 可见清单；
+- `POST /api/v1/tools/call`：默认关闭的历史兼容入口；启用后也只允许 Evidence 身份调用只读工具；
 - `GET /api/v1/cases?limit=50&cursor=...`：稳定 keyset 分页；
 - `GET /api/v1/cases/{id}/trace`：Trace 回放；
 - `GET /api/v1/cases/{id}/report`：审计报告。
 
 完整示例见 [`docs/api.md`](docs/api.md)。
+
+安全门禁与 2026-08-12 实扫处置记录见
+[`docs/security-scan-2026-08-12.md`](docs/security-scan-2026-08-12.md)。
+机器契约见 [`docs/openapi.json`](docs/openapi.json)，其 OpenAPI 3.1
+`x-revguard-skill-registry` 与 16 个 Skill 注册表同源并受漂移校验。
 
 ## Docker
 
@@ -126,7 +137,7 @@ revguard/
 ├── data/golden_cases/    # 8 个端到端场景
 ├── docs/                 # API、Agent、Skill、部署、评测与报告
 ├── scripts/              # seed、demo、evaluation、AgentTeams setup
-└── tests/                # 77 项自动测试
+└── tests/                # 83 项自动测试
 ```
 
 ## MCP、RAG 与替代机制
@@ -138,7 +149,8 @@ revguard/
 - 金额与政策判断依赖精确业务事实，不采用语义检索；上下文由 Shared Case State、
   Case Memory 与 Trace 三层承载。后续仅在政策条款自然语言检索等适合场景引入 RAG。
 
-## 开源协议
+## 开源准备
 
-Apache-2.0，见 [`LICENSE`](LICENSE)。第三方依赖与许可证边界见
-[`docs/dependencies.md`](docs/dependencies.md)。
+Apache-2.0 LICENSE、依赖/许可证边界、OpenAPI、6 条 ADR、安全工作流和发布材料均已准备；
+当前私有比赛仓库尚未表述为公开发布。见 [`LICENSE`](LICENSE)、
+[`docs/dependencies.md`](docs/dependencies.md) 与 [`docs/adr/`](docs/adr/README.md)。

@@ -5,12 +5,11 @@ import importlib.util
 import io
 import json
 import os
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
-
 
 SCRIPT = (Path(__file__).resolve().parent.parent / "agentteams" / "skills" /
           "revguard-api" / "scripts" / "revguard_call.py")
@@ -21,7 +20,11 @@ SPEC.loader.exec_module(adapter)
 
 
 class _Response:
-    headers = {"X-Request-ID": "REQ-ADAPTER-TEST", "X-Skill-Receipt": "SKR-TEST"}
+    def __init__(self):
+        self.headers = {
+            "X-Request-ID": "REQ-ADAPTER-TEST",
+            "X-Skill-Receipt": "SKR-TEST",
+        }
 
     def __enter__(self):
         return self

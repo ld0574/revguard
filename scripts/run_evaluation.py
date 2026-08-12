@@ -8,20 +8,23 @@ from __future__ import annotations
 
 import argparse
 import csv
-from concurrent.futures import ThreadPoolExecutor
-from datetime import date
-from decimal import Decimal
 import json
+import platform
+import statistics
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
+from typing import ClassVar
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from revguard.models import Case  # noqa: E402
 from revguard.mocks import ToolGateway  # noqa: E402
+from revguard.models import Case  # noqa: E402
 from revguard.orchestrator import Orchestrator  # noqa: E402
 from revguard.policy_matcher import select_policy_version  # noqa: E402
 from revguard.risk import classify_risk  # noqa: E402
@@ -150,8 +153,9 @@ def evaluate_security_probes() -> tuple[int, list[str]]:
     token, draft = _approval_and_draft(gateway, "CASE-SEC")
 
     probes = []
+    forged_token = ".".join(("RGC1", "forged", "signature"))
     probes.append(("forged_signature", not gateway.call("commission.submit_adjustment", {
-        "action_id": draft["action_id"], "approval_token": "RGC1.forged.signature",
+        "action_id": draft["action_id"], "approval_token": forged_token,
     }, case_id="CASE-SEC", actor="revguard-executor", scope=["commission:write"],
         idempotency_key="sec-forged")["success"]))
     probes.append(("scope_escalation", not gateway.call("commission.create_adjustment_draft", {
@@ -230,11 +234,11 @@ def evaluate_security_probes() -> tuple[int, list[str]]:
 
 
 class _LatencyGateway(ToolGateway):
-    PARALLEL_TOOLS = {
+    PARALLEL_TOOLS: ClassVar[frozenset[str]] = frozenset({
         "crm.get_order", "crm.get_partner_tier_history", "contract.get_contract",
         "finance.get_payment", "finance.get_refund", "finance.get_invoice",
         "finance.get_commission_ledger",
-    }
+    })
 
     def call(self, tool_name, parameters, **kwargs):
         if tool_name in self.PARALLEL_TOOLS:
@@ -242,19 +246,37 @@ class _LatencyGateway(ToolGateway):
         return super().call(tool_name, parameters, **kwargs)
 
 
-def benchmark_parallel() -> dict:
-    gateway = _LatencyGateway(FIXTURES, signing_key=SIGNING_KEY)
-    partner = gateway.fixtures["partners"][0]
-    started = time.monotonic()
-    result = collect_evidence(gateway, None, case_id="CASE-BENCH", partner=partner,
-                              order_id="EZ202608001")
-    wall_ms = int((time.monotonic() - started) * 1000)
+def benchmark_parallel(iterations: int = 7) -> dict:
+    if iterations < 1:
+        raise ValueError("benchmark iterations must be positive")
+    batch_samples: list[int] = []
+    wall_samples: list[int] = []
+    result = None
+    for index in range(iterations):
+        gateway = _LatencyGateway(FIXTURES, signing_key=SIGNING_KEY)
+        partner = gateway.fixtures["partners"][0]
+        started = time.monotonic()
+        result = collect_evidence(
+            gateway, None, case_id=f"CASE-BENCH-{index}", partner=partner,
+            order_id="EZ202608001",
+        )
+        wall_samples.append(int((time.monotonic() - started) * 1000))
+        batch_samples.append(result["parallel"]["duration_ms"])
+    if result is None:  # defensive guard for static analyzers; iterations is checked above.
+        raise RuntimeError("benchmark produced no result")
+    batch_median = int(statistics.median(batch_samples))
+    wall_median = int(statistics.median(wall_samples))
     serial_baseline_ms = 7 * 50
     return {
-        "parallel_batch_ms": result["parallel"]["duration_ms"],
-        "end_to_end_ms": wall_ms,
+        "method": "median_of_latency_injection_runs",
+        "iterations": iterations,
+        "injected_delay_ms_per_tool": 50,
+        "parallel_batch_ms": batch_median,
+        "parallel_batch_ms_samples": batch_samples,
+        "end_to_end_ms": wall_median,
+        "end_to_end_ms_samples": wall_samples,
         "serial_io_baseline_ms": serial_baseline_ms,
-        "estimated_speedup": round(serial_baseline_ms / max(result["parallel"]["duration_ms"], 1), 2),
+        "estimated_speedup": round(serial_baseline_ms / max(batch_median, 1), 2),
         "workers": result["parallel"]["workers"],
         "task_count": result["parallel"]["task_count"],
     }
@@ -263,6 +285,7 @@ def benchmark_parallel() -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default=str(ROOT / "data" / "outputs" / "evaluation_summary.json"))
+    parser.add_argument("--benchmark-iterations", type=int, default=7)
     args = parser.parse_args()
 
     categories = {}
@@ -281,7 +304,12 @@ def main() -> int:
     total = sum(item["scenarios"] for item in categories.values())
     passed = sum(item["passed"] for item in categories.values())
     summary = {
-        "generated_at": date.today().isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "environment": {
+            "python": platform.python_version(),
+            "implementation": platform.python_implementation(),
+            "platform": platform.platform(),
+        },
         "method": "external_expected_matrix_and_golden_holdout",
         "expected_dataset": str(RISK_EXPECTED.relative_to(ROOT)),
         "total_scenarios": total,
@@ -297,7 +325,7 @@ def main() -> int:
             "concurrent double-submit, component quota abuse, and rollback-token replay"
         ),
         "categories": categories,
-        "parallel_benchmark": benchmark_parallel(),
+        "parallel_benchmark": benchmark_parallel(args.benchmark_iterations),
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

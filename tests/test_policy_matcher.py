@@ -5,8 +5,11 @@ import json
 import unittest
 from pathlib import Path
 
-from revguard.policy_matcher import (PolicyMatchError, resolve_tier_at_date,
-                                     select_policy_version)
+from revguard.policy_matcher import (
+    PolicyMatchError,
+    resolve_tier_at_date,
+    select_policy_version,
+)
 
 FIXTURES = Path(__file__).resolve().parent.parent / "data" / "fixtures"
 

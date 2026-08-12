@@ -14,6 +14,36 @@ from .models import new_id, utc_now
 from .security import redact_secrets
 from .store import Store
 
+OTEL_SEMANTIC_CONVENTIONS = {
+    "name": "OpenTelemetry GenAI semantic conventions",
+    "version": "1.43.0",
+    "status": "development",
+    "reference": "https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/",
+}
+
+
+def semantic_attributes(span: dict) -> dict:
+    """把内部 span 投影为保守、可验证的 OpenTelemetry GenAI 属性。"""
+    attributes = {
+        "revguard.case.id": span["case_id"],
+        "revguard.span.kind": span["kind"],
+    }
+    actor = span.get("actor")
+    if actor:
+        attributes["gen_ai.agent.name"] = actor
+    if span["kind"] == "AGENT":
+        attributes.update({
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.workflow.name": "revguard",
+        })
+    elif span["kind"] in {"SKILL", "TOOL", "REMOTE_TOOL"}:
+        attributes.update({
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": span["name"],
+            "gen_ai.tool.type": "function",
+        })
+    return attributes
+
 
 class Tracer:
     """按案件记录 span。用法：
@@ -85,6 +115,8 @@ class Tracer:
     def export(self) -> dict:
         """导出该案件完整 Trace（平铺 span 列表 + 汇总）。"""
         spans = self.store.list_spans(self.case_id)
+        for span in spans:
+            span["attributes"] = semantic_attributes(span)
         root_duration = sum(
             s.get("duration_ms") or 0 for s in spans if not s.get("parent_span_id")
         )
@@ -100,6 +132,7 @@ class Tracer:
         span_duration_sum = sum(s.get("duration_ms") or 0 for s in spans)
         return {
             "trace_id": self.case_id,
+            "semantic_conventions": OTEL_SEMANTIC_CONVENTIONS,
             "span_count": len(spans),
             "wall_duration_ms": root_duration,
             "span_duration_sum_ms": span_duration_sum,

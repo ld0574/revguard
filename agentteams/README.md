@@ -14,6 +14,10 @@ RevGuard 以 AgentTeams 为多 Agent 协同基点。本目录提供 1 个 Orches
 只通过 `POST /api/v1/skills/{name}/invoke` 调用按身份允许的领域 Skill；底层 Tool 只由
 Skill/状态机在服务端调用，不进入 Agent 可见清单。
 
+当前正式证据验证 Matrix 上 Orchestrator 派发与 Intake 执行的双 Agent StageTask 桥接；
+完整十阶段业务闭环由服务端确定性参考编排真实执行。两者互补，但不混称外部十 Agent
+已逐阶段推进。
+
 ## 部署
 
 ```bash
@@ -25,7 +29,8 @@ bash scripts/agentteams_setup.sh
 ```
 
 SOUL 使用 `{{REVGUARD_API_BASE_URL}}`，setup 脚本在临时目录渲染后复制到 controller，
-并把 `agentteams/skills/revguard-api/` skills-only Adapter 安装到 10 个 Worker 容器。
+并把 `agentteams/skills/revguard-api/` skills-only Adapter 安装到 1 个 Manager 与 9 个
+Worker 容器。
 API key 不能出现在 SOUL、Prompt、聊天或 Trace 中，必须由 AgentTeams Secret/Tool
 Adapter 注入 `Authorization: Bearer ...`。
 
@@ -34,7 +39,7 @@ Adapter 注入 `Authorization: Bearer ...`。
 | 赛道关注 | RevGuard 实现 |
 |---|---|
 | ≥3 个不同职能 Agent | 1 Manager + 9 Worker，共 10 Agent |
-| 任务拆解 | Orchestrator 按 Case 状态机拆成 10 个阶段 |
+| 任务拆解 | Orchestrator 按 Case 状态派发版本绑定的 StageTask |
 | 上下文传递 | Shared Case State，传递结构化 Artifact 而非聊天长文本 |
 | 并行协作 | Evidence 7 路独立 I/O 真并行；政策查询等待合同依赖 |
 | 人工节点 | L2 挂起等待独立 Approver Principal |
@@ -67,7 +72,7 @@ Adapter 注入 `Authorization: Bearer ...`。
 | revguard-calculation | Decimal 规则复算 | 无 |
 | revguard-rootcause | 差异与根因解释 | 无 |
 | revguard-risk | 风险分级与审批单 | 仅审批工作流 |
-| revguard-executor | 草稿、写入、反向冲销 | 唯一资金写主体 |
+| revguard-executor | 草稿、写入、反向冲销 | 唯一资金写主体；Draft 不改台账，仅 Adjust/Reverse 改台账 |
 | revguard-verifier | 写后/回滚后独立验证 | 无，仅 ledger read |
 | revguard-knowledge | 报告、回复草稿、数据集 | 无资金权限 |
 

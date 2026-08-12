@@ -6,7 +6,8 @@ WORKDIR /app
 
 # 先装依赖，利用镜像层缓存
 COPY requirements.txt requirements.lock ./
-RUN pip install --no-cache-dir -r requirements.lock
+RUN pip install --no-cache-dir -r requirements.lock && \
+    pip uninstall --yes setuptools
 
 # 拷贝代码与数据（fixtures / golden_cases 为只读演示数据）
 COPY revguard/ ./revguard/

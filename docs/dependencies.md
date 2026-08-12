@@ -7,6 +7,10 @@
 | FastAPI | 0.141.1 | HTTP API 与 OpenAPI | MIT | 可替换为任意 ASGI/HTTP 层，核心闭环不依赖 |
 | Uvicorn | 0.52.1 | ASGI Server | BSD-3-Clause | 可替换为 Hypercorn/Gunicorn Worker |
 | httpx | 0.28.1 | 仅开发期 ASGI API 测试 | BSD-3-Clause | 不进入核心运行路径 |
+| Coverage.py | 7.15.2 | 90% 行覆盖率门禁 | Apache-2.0 | 仅开发/CI |
+| Ruff | 0.15.22 | 固定规则静态检查 | MIT | 仅开发/CI |
+| pip-audit | 2.10.1 | 锁定依赖漏洞审计 | Apache-2.0 | 仅开发/CI |
+| Bandit | 1.9.4 | Python 安全静态扫描 | Apache-2.0 | 仅开发/CI |
 
 核心规则、政策匹配、风险、权限、编排、评测、SQLite 和 Mock Adapter 均使用 Python 标准库。
 
@@ -26,4 +30,10 @@ httptools、uvloop、watchfiles、websockets、PyYAML 等。构建镜像从 lock
 ## 数据与授权
 
 `data/fixtures` 和 `data/golden_cases` 均为合成演示数据，不包含真实客户、员工或交易记录。
-开源发布前应对仓库执行 secret/PII 扫描，并只发布 `revguard/` 目录。
+开源发布前应对仓库执行 secret/PII 扫描，并只发布 `revguard/` 目录。CI 使用 Aqua
+安全公告明确列出的不可变安全提交
+`57a97c7e7821a5776cebc9bb87c984fa69cba8f1`（Trivy 0.69.3）扫描文件系统与构建镜像；
+禁止使用可变 `latest`，Trivy 不进入 Python 运行时依赖。
+
+容器构建完成后会移除仅用于构建、运行时不需要的 `setuptools`，避免把其 vendored
+工具链及相关攻击面带入最终镜像；该约束由镜像 Trivy HIGH/CRITICAL 门禁验证。

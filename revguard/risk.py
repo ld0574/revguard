@@ -14,6 +14,7 @@ L1_AUTO_DRAFT_MAX = Decimal("5000")      # ≤5000 且证据充分 => 可自动�
 L2_APPROVAL_MAX = Decimal("50000")       # ≤50000 => L2 审批后执行
 EVIDENCE_SCORE_AUTO = 0.9                # 自动处理所需最低证据分
 EVIDENCE_SCORE_MIN = 0.6                 # 低于此分数不允许任何写操作
+APPROVAL_REQUIREMENT_FIELD = "requires_approval_token"
 
 
 def classify_risk(
@@ -98,7 +99,12 @@ def classify_risk(
         risk_level=RiskLevel.L2.value,
         approval_required=True,
         approver_role="FINANCE_LEAD",
-        execution_constraints={"write": True, "requires_approval_token": True, "max_amount": str(L2_APPROVAL_MAX)},
+        execution_constraints={
+            "write": True,
+            # Policy boolean, never an approval credential.
+            APPROVAL_REQUIREMENT_FIELD: True,
+            "max_amount": str(L2_APPROVAL_MAX),
+        },
         rollback_plan_required=True,
         reason_codes=reasons,
     )

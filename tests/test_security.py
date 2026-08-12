@@ -1,10 +1,10 @@
 """能力令牌、业务绑定、防重放与并发写安全评测。"""
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import json
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from revguard.mocks import ToolGateway
@@ -63,11 +63,12 @@ class TestCapabilityTokenSigner(unittest.TestCase):
         token = self.signer.issue("ledger_adjust", {"case_id": "CASE-A"})
         redacted = redact_secrets({
             "message": f"upstream failed; token={token}; AUTHORIZATION: bEaReR abc.def-123",
+            "raw_approval": {"token_used": f"prefix {token} suffix"},
         })
         rendered = json.dumps(redacted)
         self.assertNotIn(token, rendered)
         self.assertNotIn("abc.def-123", rendered)
-        self.assertGreaterEqual(rendered.count("<redacted:sha256:"), 2)
+        self.assertGreaterEqual(rendered.count("<redacted:sha256:"), 3)
 
 
 class TestGatewaySecurity(unittest.TestCase):

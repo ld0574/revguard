@@ -33,7 +33,7 @@ make evaluate
 6. **写入与独立验证（60 秒）**：Executor 提交两项调整；Verifier 重新查询，不复用执行回执。
 7. **故障与真实回滚（90 秒）**：运行 CASE-0008，展示首次验证 FAILED、两笔反向台账、
    `PostRollbackVerifySkill=PASSED`，最终状态保留 `ROLLED_BACK`。
-8. **评测与复现（50 秒）**：运行 `make verify-ci`，展示 77 项测试、90% 覆盖率和
+8. **评测与复现（50 秒）**：运行 `make verify-ci`，展示 83 项测试、91% 实测覆盖率（门禁 90%）和
    105/105 场景评测；
    指向 `docs/evaluation-summary.json`、Trace、报告和 Case Memory。
 

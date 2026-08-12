@@ -101,7 +101,7 @@ bash scripts/agentteams_setup.sh
 脚本会：
 
 1. 在临时目录渲染 SOUL 中的 API Base URL；
-2. `agt apply worker` 创建或更新 10 个 Agent；
+2. `agt apply worker` 创建或更新 1 个 Manager（Orchestrator）与 9 个职能 Worker；
 3. 以 `revguard-orchestrator` 为 leader 组建 Team；
 4. 等待 Worker Ready，并向各 Worker 安装 skills-only `revguard-api` Adapter；
 5. 输出 Worker 和 Team 状态。设置 `INSTALL_WORKER_SKILLS=false` 可只更新 Worker/Team。
@@ -115,7 +115,7 @@ for worker in revguard-orchestrator revguard-intake revguard-evidence \
   revguard-executor revguard-verifier revguard-knowledge; do
   agt worker ensure-ready --name "$worker"
 done
-agt get teams   # 预期 revguard-team Active / 9/9
+agt get teams   # 预期 revguard-team Active / 1 Manager + 9 Worker Ready
 ```
 
 API key 不写入 SOUL。所有 Worker 使用 `agentteams/skills/revguard-api/` 中的 skills-only
@@ -127,8 +127,8 @@ Adapter，并从各自 `.copaw.secret/revguard_api_key` 注入专属 Principal�
 Authorization: Bearer <worker-specific-key>
 ```
 
-至少配置 Orchestrator dispatcher、Intake、Evidence、Policy、Calculation、RootCause、Risk、
-Executor、Verifier、Knowledge 十个独立 Principal；Executor 仅有
+至少配置 Orchestrator dispatcher 与 Intake、Evidence、Policy、Calculation、RootCause、Risk、
+Executor、Verifier、Knowledge 九个 Worker 的独立 Principal；Executor 仅有
 `commission:draft/write/reverse`，Verifier 仅有 `ledger:read`，Approver 使用独立的人类
 Principal。
 
@@ -148,13 +148,14 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 需要逐项核验：
 
-- [ ] `make verify-ci`：自动测试、覆盖率 ≥75%、105/105 场景、9/9 安全探针；
+- [ ] `make verify-ci`：固定 Ruff、自动测试、覆盖率 ≥90%、105/105 场景、9/9 安全探针、生成物无漂移；
+- [ ] `make security`：锁定依赖无已知漏洞，Bandit 无未解释问题；CI 另跑 Trivy 文件系统与镜像扫描；
 - [ ] 容器状态 healthy，重启后案件与幂等状态一致；
 - [ ] 无认证为 401，错误角色为 403，自报 actor/scope 为 422；
 - [ ] L2 在 `WAITING_FOR_APPROVAL` 挂起；
 - [ ] 可信 Approver 批准后写入并验证；
 - [ ] CASE-0008 首次验证失败后真实冲销，最终 `ROLLED_BACK`；
-- [ ] AgentTeams Team Active，9 个 Worker Ready；
+- [ ] AgentTeams Team Active，1 Manager + 9 Worker Ready；
 - [ ] Matrix 任务事件、StageTask、Worker 回执、SKILL span 与审计事件的 task ID / request ID / receipt 一致；
 - [ ] Trace、报告、evaluation summary 和视频中的 case_id 一致。
 
@@ -163,7 +164,12 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 一次性启动全部 Worker 可能造成演示主机资源尖峰。现场建议预热 Team，或分批 apply；
 比赛只要求至少 3 个不同职能 Agent，不应为了数量牺牲 5–8 分钟内的稳定闭环。
 
-2026-08-10 的正式链路证据位于 `submission/evidence/formal-20260810/`。当前 Worker 的
+2026-08-10 的正式链路证据位于 `submission/evidence/formal-20260810/`，只作为历史
+Matrix → Evidence → legacy Tool 调用事实。2026-08-12 的新版证据位于
+`submission/evidence/formal-20260812-stagetask/`，用于验证 Matrix → Orchestrator 派发 →
+Intake StageTask → Skill receipt → Trace/Audit → Matrix response；它不被扩大表述为外部十阶段推进。
+
+历史 Worker 的
 MinIO Matrix password 对象仍缺失，但已持久化 access token 在关闭 E2EE 的部署中完成了
 真实消息收发；token 失效前应补齐 password Secret，确保自动重新登录。旧版 2026-08-08
 内网实录仅作为历史证据。

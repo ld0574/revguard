@@ -1,0 +1,3214 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RevGuard API",
+    "description": "企业渠道佣金与结算异常多 Agent 协同平台",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/api/v1/cases": {
+      "post": {
+        "summary": "Create Case",
+        "operationId": "create_case_api_v1_cases_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Cases",
+        "operationId": "list_cases_api_v1_cases_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}": {
+      "get": {
+        "summary": "Get Case",
+        "operationId": "get_case_api_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/run": {
+      "post": {
+        "summary": "Run Case",
+        "operationId": "run_case_api_v1_cases__case_id__run_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/approval": {
+      "post": {
+        "summary": "Decide Approval",
+        "description": "人工审批节点：审批通过后自动续跑执行与独立验证。",
+        "operationId": "decide_approval_api_v1_cases__case_id__approval_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/evidence/resume": {
+      "post": {
+        "summary": "Resume With Evidence",
+        "description": "补充案件定位字段后，从 WAITING_FOR_EVIDENCE 重新进入确定性状态机。",
+        "operationId": "resume_with_evidence_api_v1_cases__case_id__evidence_resume_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceResume"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/agent-tasks": {
+      "post": {
+        "summary": "Dispatch Agent Task",
+        "description": "把一个状态绑定的 Skill 工作项派发给服务端指定的 Worker actor。",
+        "operationId": "dispatch_agent_task_api_v1_cases__case_id__agent_tasks_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-AgentTeams-Message-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Agentteams-Message-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentTaskCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Case Agent Tasks",
+        "operationId": "list_case_agent_tasks_api_v1_cases__case_id__agent_tasks_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/trace": {
+      "get": {
+        "summary": "Get Trace",
+        "operationId": "get_trace_api_v1_cases__case_id__trace_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/report": {
+      "get": {
+        "summary": "Get Report",
+        "operationId": "get_report_api_v1_cases__case_id__report_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/call": {
+      "post": {
+        "summary": "Call Tool",
+        "description": "AgentTeams Worker 工具入口；关联消息、HTTP 请求、回执、Trace 与 Audit。",
+        "operationId": "call_tool_api_v1_tools_call_post",
+        "parameters": [
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-AgentTeams-Message-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Agentteams-Message-Id"
+            }
+          },
+          {
+            "name": "traceparent",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Traceparent"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolCall"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/skills": {
+      "get": {
+        "summary": "Get Skills",
+        "description": "Skill 清单（设计文档 9.1：输入输出/依赖/失败处理/安全边界/复用价值）。",
+        "operationId": "get_skills_api_v1_skills_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/skills/{skill_name}/invoke": {
+      "post": {
+        "summary": "Invoke Registered Skill",
+        "description": "调用版本化 Skill；身份来自 Bearer principal，不接受自报 actor/scope。",
+        "operationId": "invoke_registered_skill_api_v1_skills__skill_name__invoke_post",
+        "parameters": [
+          {
+            "name": "skill_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Skill Name"
+            }
+          },
+          {
+            "name": "X-Request-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "X-AgentTeams-Message-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Agentteams-Message-Id"
+            }
+          },
+          {
+            "name": "traceparent",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Traceparent"
+            }
+          },
+          {
+            "name": "X-RevGuard-Task-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Revguard-Task-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillInvoke"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentTaskCreate": {
+        "properties": {
+          "skill_name": {
+            "type": "string",
+            "title": "Skill Name"
+          },
+          "input": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "skill_name"
+        ],
+        "title": "AgentTaskCreate"
+      },
+      "ApprovalDecision": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ],
+            "title": "Decision"
+          },
+          "comment": {
+            "type": "string",
+            "title": "Comment",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ApprovalDecision"
+      },
+      "CaseCreate": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "MANUAL"
+          },
+          "case_type": {
+            "type": "string",
+            "title": "Case Type",
+            "default": "COMMISSION_UNDERPAYMENT"
+          },
+          "partner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Id"
+          },
+          "partner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Name"
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "claim": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Claim"
+          }
+        },
+        "type": "object",
+        "title": "CaseCreate"
+      },
+      "EvidenceResume": {
+        "properties": {
+          "partner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Id"
+          },
+          "partner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Name"
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id"
+          },
+          "contract_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Id"
+          },
+          "claim": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "EvidenceResume"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SkillInvoke": {
+        "properties": {
+          "input": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SkillInvoke"
+      },
+      "ToolCall": {
+        "properties": {
+          "tool_name": {
+            "type": "string",
+            "title": "Tool Name"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id",
+            "default": ""
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tool_name"
+        ],
+        "title": "ToolCall"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "x-revguard-skill-registry": [
+    {
+      "name": "CaseNormalizeSkill",
+      "version": "1.0.0",
+      "type": "deterministic",
+      "description": "申诉/工单解析为标准化案件实体",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "raw_case": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "raw_case"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "raw_case": {
+              "partner_id": "AGT-10001",
+              "order_id": "EZ202608001"
+            }
+          }
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "missing_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "claim": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "entities",
+          "missing_fields",
+          "claim"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "raw_case"
+      ],
+      "outputs": [
+        "entities",
+        "missing_fields",
+        "claim"
+      ],
+      "dependencies": [],
+      "failure_handling": [
+        "missing_entity"
+      ],
+      "security": {
+        "read_only": true,
+        "pii": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "ticket_intake"
+      ],
+      "invoke_endpoint": "/api/v1/skills/CaseNormalizeSkill/invoke",
+      "allowed_actors": [
+        "revguard-intake"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "raw_case": {
+            "partner_id": "AGT-10001",
+            "order_id": "EZ202608001"
+          }
+        }
+      }
+    },
+    {
+      "name": "EntityResolveSkill",
+      "version": "1.0.0",
+      "type": "tool",
+      "description": "解析代理商为唯一系统实体",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "entities"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "partner": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "resolved_by": {
+            "type": "string",
+            "enum": [
+              "partner_id",
+              "partner_name"
+            ]
+          }
+        },
+        "required": [
+          "partner",
+          "resolved_by"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "entities"
+      ],
+      "outputs": [
+        "partner",
+        "resolved_by"
+      ],
+      "dependencies": [
+        "crm.get_partner"
+      ],
+      "failure_handling": [
+        "not_found",
+        "ambiguous"
+      ],
+      "security": {
+        "read_only": true,
+        "pii": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "partner_lookup"
+      ],
+      "invoke_endpoint": "/api/v1/skills/EntityResolveSkill/invoke",
+      "allowed_actors": [
+        "revguard-intake"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "entities": {}
+        }
+      }
+    },
+    {
+      "name": "EvidenceCollectSkill",
+      "version": "1.1.0",
+      "type": "tool",
+      "description": "跨系统真实并行证据采集与完整度评分",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "partner": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "order_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "partner",
+          "order_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "collected": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "evidence_gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "parallel": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "evidence",
+          "collected",
+          "evidence_gaps",
+          "evidence_score",
+          "parallel"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "partner",
+        "order_id"
+      ],
+      "outputs": [
+        "evidence",
+        "collected",
+        "evidence_gaps",
+        "evidence_score",
+        "parallel"
+      ],
+      "dependencies": [
+        "crm.*",
+        "contract.*",
+        "policy.*",
+        "finance.*"
+      ],
+      "failure_handling": [
+        "tool_unavailable_retry",
+        "evidence_gap"
+      ],
+      "security": {
+        "read_only": true,
+        "pii": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "batch_reconciliation",
+        "audit"
+      ],
+      "invoke_endpoint": "/api/v1/skills/EvidenceCollectSkill/invoke",
+      "allowed_actors": [
+        "revguard-evidence"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "partner": {},
+          "order_id": "example-order-id"
+        }
+      }
+    },
+    {
+      "name": "PolicyVersionMatchSkill",
+      "version": "1.0.0",
+      "type": "deterministic",
+      "description": "按业务时点匹配政策版本",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "facts": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "time_basis": {
+            "type": "string",
+            "enum": [
+              "order_date",
+              "payment_date"
+            ]
+          }
+        },
+        "required": [
+          "versions",
+          "facts"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "policy_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "time_basis": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decision_date": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effective_rule_set": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "cited_clauses": {
+            "type": "array"
+          },
+          "excluded_versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "unresolved_conflicts": {
+            "type": "array"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "policy_id",
+          "policy_version",
+          "time_basis",
+          "decision_date",
+          "effective_rule_set",
+          "cited_clauses",
+          "excluded_versions",
+          "unresolved_conflicts",
+          "confidence"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "versions",
+        "facts",
+        "time_basis"
+      ],
+      "outputs": [
+        "policy_id",
+        "policy_version",
+        "time_basis",
+        "decision_date",
+        "effective_rule_set",
+        "cited_clauses",
+        "excluded_versions",
+        "unresolved_conflicts",
+        "confidence"
+      ],
+      "dependencies": [],
+      "failure_handling": [
+        "no_effective_version",
+        "version_conflict"
+      ],
+      "security": {
+        "read_only": true,
+        "pii": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "policy_simulation"
+      ],
+      "invoke_endpoint": "/api/v1/skills/PolicyVersionMatchSkill/invoke",
+      "allowed_actors": [
+        "revguard-policy"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "versions": [
+            {}
+          ],
+          "facts": {}
+        }
+      }
+    },
+    {
+      "name": "CommissionCalculateSkill",
+      "version": "1.0.0",
+      "type": "deterministic",
+      "description": "规则引擎确定性佣金复算",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "rule_dsl": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "facts": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "rule_dsl",
+          "facts",
+          "currency"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "total_commission": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "rounding_rule": {
+            "type": "string"
+          },
+          "calculation_hash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "eligibility_failures": {
+            "type": "array"
+          },
+          "facts_snapshot": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "eligible",
+          "total_commission",
+          "currency",
+          "components",
+          "rounding_rule",
+          "calculation_hash",
+          "policy_version",
+          "eligibility_failures",
+          "facts_snapshot"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "rule_dsl",
+        "facts",
+        "currency"
+      ],
+      "outputs": [
+        "eligible",
+        "total_commission",
+        "currency",
+        "components",
+        "rounding_rule",
+        "calculation_hash",
+        "policy_version",
+        "eligibility_failures",
+        "facts_snapshot"
+      ],
+      "dependencies": [
+        "rule_engine"
+      ],
+      "failure_handling": [
+        "invalid_schema",
+        "missing_rule",
+        "conflicting_rule"
+      ],
+      "security": {
+        "read_only": true,
+        "pii": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "policy_simulation",
+        "batch_reconciliation"
+      ],
+      "invoke_endpoint": "/api/v1/skills/CommissionCalculateSkill/invoke",
+      "allowed_actors": [
+        "revguard-calculation"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "rule_dsl": {},
+          "facts": {},
+          "currency": "example-currency"
+        }
+      }
+    },
+    {
+      "name": "DifferenceExplainSkill",
+      "version": "1.0.0",
+      "type": "deterministic",
+      "description": "差异解释与根因判定",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "calculation": {
+            "type": "object",
+            "properties": {
+              "eligible": {
+                "type": "boolean"
+              },
+              "total_commission": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 1
+              },
+              "components": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "rounding_rule": {
+                "type": "string"
+              },
+              "calculation_hash": {
+                "type": "string",
+                "minLength": 1
+              },
+              "policy_version": {
+                "type": "string"
+              },
+              "eligibility_failures": {
+                "type": "array"
+              },
+              "facts_snapshot": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "eligible",
+              "total_commission",
+              "currency",
+              "components",
+              "rounding_rule",
+              "calculation_hash",
+              "policy_version",
+              "eligibility_failures",
+              "facts_snapshot"
+            ],
+            "additionalProperties": false
+          },
+          "ledger_entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "matched_policy_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tier_conflict": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "calculation",
+          "ledger_entries",
+          "matched_policy_version"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "diffs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "total_expected": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "total_posted": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "total_delta": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "root_causes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "diffs",
+          "total_expected",
+          "total_posted",
+          "total_delta",
+          "root_causes",
+          "confidence"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "calculation",
+        "ledger_entries",
+        "matched_policy_version",
+        "tier_conflict"
+      ],
+      "outputs": [
+        "diffs",
+        "total_expected",
+        "total_posted",
+        "total_delta",
+        "root_causes",
+        "confidence"
+      ],
+      "dependencies": [],
+      "failure_handling": [
+        "evidence_conflict"
+      ],
+      "security": {
+        "read_only": true,
+        "pii": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "audit"
+      ],
+      "invoke_endpoint": "/api/v1/skills/DifferenceExplainSkill/invoke",
+      "allowed_actors": [
+        "revguard-rootcause"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "calculation": {
+            "eligible": false,
+            "total_commission": "example-total-commission",
+            "currency": "example-currency",
+            "components": [
+              {}
+            ],
+            "rounding_rule": "example-rounding-rule",
+            "calculation_hash": "example-calculation-hash",
+            "policy_version": "example-policy-version",
+            "eligibility_failures": [
+              "example-eligibility-failures"
+            ],
+            "facts_snapshot": {}
+          },
+          "ledger_entries": [
+            {}
+          ],
+          "matched_policy_version": "example-matched-policy-version"
+        }
+      }
+    },
+    {
+      "name": "RiskClassifySkill",
+      "version": "1.0.0",
+      "type": "policy",
+      "description": "L0-L3 风险分级与审批路由判定",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "adjustment_amount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "case_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_conflict": {
+            "type": "boolean"
+          },
+          "order_count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "action_type",
+          "adjustment_amount",
+          "currency",
+          "evidence_score",
+          "case_type"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "L0",
+              "L1",
+              "L2",
+              "L3"
+            ]
+          },
+          "approval_required": {
+            "type": "boolean"
+          },
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "execution_constraints": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "rollback_plan_required": {
+            "type": "boolean"
+          },
+          "reason_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "risk_level",
+          "approval_required",
+          "approver_role",
+          "execution_constraints",
+          "rollback_plan_required",
+          "reason_codes"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "action_type",
+        "adjustment_amount",
+        "currency",
+        "evidence_score",
+        "case_type",
+        "policy_conflict",
+        "order_count"
+      ],
+      "outputs": [
+        "risk_level",
+        "approval_required",
+        "approver_role",
+        "execution_constraints",
+        "rollback_plan_required",
+        "reason_codes"
+      ],
+      "dependencies": [],
+      "failure_handling": [
+        "unknown_policy",
+        "missing_threshold"
+      ],
+      "security": {
+        "write_permission": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "batch_reconciliation",
+        "any_write_action"
+      ],
+      "invoke_endpoint": "/api/v1/skills/RiskClassifySkill/invoke",
+      "allowed_actors": [
+        "revguard-risk"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "action_type": "example-action-type",
+          "adjustment_amount": "example-adjustment-amount",
+          "currency": "example-currency",
+          "evidence_score": 0,
+          "case_type": "example-case-type"
+        }
+      }
+    },
+    {
+      "name": "ApprovalRouteSkill",
+      "version": "1.0.0",
+      "type": "tool",
+      "description": "创建审批单并路由审批角色",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "risk": {
+            "type": "object",
+            "properties": {
+              "risk_level": {
+                "type": "string",
+                "enum": [
+                  "L0",
+                  "L1",
+                  "L2",
+                  "L3"
+                ]
+              },
+              "approval_required": {
+                "type": "boolean"
+              },
+              "approver_role": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "execution_constraints": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "rollback_plan_required": {
+                "type": "boolean"
+              },
+              "reason_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "risk_level",
+              "approval_required",
+              "approver_role",
+              "execution_constraints",
+              "rollback_plan_required",
+              "reason_codes"
+            ],
+            "additionalProperties": false
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "component_quota": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action_summary": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "risk",
+          "amount",
+          "component_quota",
+          "currency",
+          "action_summary"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "approval_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action_summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "component_quota": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "L1",
+              "L2",
+              "L3"
+            ]
+          },
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "approval_id",
+          "case_id",
+          "action_summary",
+          "amount",
+          "component_quota",
+          "currency",
+          "risk_level",
+          "approver_role",
+          "status",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "risk",
+        "amount",
+        "component_quota",
+        "currency",
+        "action_summary"
+      ],
+      "outputs": [
+        "approval_id",
+        "case_id",
+        "action_summary",
+        "amount",
+        "component_quota",
+        "currency",
+        "risk_level",
+        "approver_role",
+        "status",
+        "created_at"
+      ],
+      "dependencies": [
+        "workflow.create_approval"
+      ],
+      "failure_handling": [
+        "workflow_unavailable"
+      ],
+      "security": {
+        "write_permission": "approval"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "any_approval_needed_case"
+      ],
+      "invoke_endpoint": "/api/v1/skills/ApprovalRouteSkill/invoke",
+      "allowed_actors": [
+        "revguard-risk"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "risk": {
+            "risk_level": "L0",
+            "approval_required": false,
+            "approver_role": "example-approver-role",
+            "execution_constraints": {},
+            "rollback_plan_required": false,
+            "reason_codes": [
+              "example-reason-codes"
+            ]
+          },
+          "amount": "example-amount",
+          "component_quota": {},
+          "currency": "example-currency",
+          "action_summary": "example-action-summary"
+        }
+      }
+    },
+    {
+      "name": "PermissionCheckSkill",
+      "version": "1.0.0",
+      "type": "policy",
+      "description": "执行前权限与审批凭证校验",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "LEDGER_ADJUST",
+              "LEDGER_REVERSE"
+            ]
+          },
+          "risk": {
+            "type": "object",
+            "properties": {
+              "risk_level": {
+                "type": "string",
+                "enum": [
+                  "L0",
+                  "L1",
+                  "L2",
+                  "L3"
+                ]
+              },
+              "approval_required": {
+                "type": "boolean"
+              },
+              "approver_role": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "execution_constraints": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "rollback_plan_required": {
+                "type": "boolean"
+              },
+              "reason_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "risk_level",
+              "approval_required",
+              "approver_role",
+              "execution_constraints",
+              "rollback_plan_required",
+              "reason_codes"
+            ],
+            "additionalProperties": false
+          },
+          "approval": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "action_type",
+          "risk"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "authorized": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "authorized"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "action_type",
+        "risk",
+        "approval"
+      ],
+      "outputs": [
+        "authorized"
+      ],
+      "dependencies": [],
+      "failure_handling": [
+        "auth_failed",
+        "missing_token"
+      ],
+      "security": {
+        "write_permission": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "any_write_action"
+      ],
+      "invoke_endpoint": "/api/v1/skills/PermissionCheckSkill/invoke",
+      "allowed_actors": [
+        "revguard-executor"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "action_type": "DRAFT",
+          "risk": {
+            "risk_level": "L0",
+            "approval_required": false,
+            "approver_role": "example-approver-role",
+            "execution_constraints": {},
+            "rollback_plan_required": false,
+            "reason_codes": [
+              "example-reason-codes"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "IdempotencyGuardSkill",
+      "version": "1.0.0",
+      "type": "policy",
+      "description": "幂等键冲突检查",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "additionalProperties": true
+      },
+      "inputs": [
+        "idempotency_key"
+      ],
+      "outputs": [],
+      "dependencies": [
+        "store"
+      ],
+      "failure_handling": [
+        "idempotency_conflict"
+      ],
+      "security": {
+        "write_permission": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "any_write_action"
+      ],
+      "invoke_endpoint": "/api/v1/skills/IdempotencyGuardSkill/invoke",
+      "allowed_actors": [
+        "revguard-executor"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "idempotency_key": "example-idempotency-key"
+        }
+      }
+    },
+    {
+      "name": "AdjustmentDraftSkill",
+      "version": "1.0.0",
+      "type": "tool",
+      "description": "创建不生效的佣金调整草稿",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "component": {
+            "type": "string",
+            "minLength": 1
+          },
+          "delta": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "component",
+          "delta",
+          "currency"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "component": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "action_id",
+          "order_id",
+          "case_id",
+          "component",
+          "amount",
+          "currency",
+          "reason",
+          "status",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "order_id",
+        "component",
+        "delta",
+        "currency",
+        "reason"
+      ],
+      "outputs": [
+        "action_id",
+        "order_id",
+        "case_id",
+        "component",
+        "amount",
+        "currency",
+        "reason",
+        "status",
+        "created_at"
+      ],
+      "dependencies": [
+        "commission.create_adjustment_draft"
+      ],
+      "failure_handling": [
+        "tool_unavailable"
+      ],
+      "security": {
+        "write_permission": "commission_draft"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute"
+      ],
+      "invoke_endpoint": "/api/v1/skills/AdjustmentDraftSkill/invoke",
+      "allowed_actors": [
+        "revguard-executor"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "order_id": "example-order-id",
+          "component": "example-component",
+          "delta": "example-delta",
+          "currency": "example-currency"
+        }
+      }
+    },
+    {
+      "name": "LedgerAdjustSkill",
+      "version": "2.0.0",
+      "type": "tool",
+      "description": "提交调整写入台账（签名审批凭证+幂等）",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approval_token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "action_id",
+          "approval_token",
+          "policy_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUBMITTED"
+            ]
+          },
+          "ledger_entry": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "before_snapshot": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "after_snapshot": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "rollback_token": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "action_id",
+          "status",
+          "ledger_entry",
+          "before_snapshot",
+          "after_snapshot",
+          "rollback_token"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "action_id",
+        "approval_token",
+        "policy_version",
+        "idempotency_key"
+      ],
+      "outputs": [
+        "action_id",
+        "status",
+        "ledger_entry",
+        "before_snapshot",
+        "after_snapshot",
+        "rollback_token"
+      ],
+      "dependencies": [
+        "commission.submit_adjustment"
+      ],
+      "failure_handling": [
+        "auth_failed",
+        "idempotency_conflict"
+      ],
+      "security": {
+        "write_permission": "commission_post"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute"
+      ],
+      "invoke_endpoint": "/api/v1/skills/LedgerAdjustSkill/invoke",
+      "allowed_actors": [
+        "revguard-executor"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "action_id": "example-action-id",
+          "approval_token": "example-approval-token",
+          "policy_version": "example-policy-version",
+          "idempotency_key": "example-idempotency-key"
+        }
+      }
+    },
+    {
+      "name": "LedgerReverseSkill",
+      "version": "1.0.0",
+      "type": "tool",
+      "description": "验证失败后以一次性能力令牌反向冲销",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ledger_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rollback_token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "ledger_id",
+          "rollback_token",
+          "idempotency_key"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reversal_entry": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "reversed_entry": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "reversal_entry",
+          "reversed_entry"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "ledger_id",
+        "rollback_token",
+        "idempotency_key"
+      ],
+      "outputs": [
+        "reversal_entry",
+        "reversed_entry"
+      ],
+      "dependencies": [
+        "commission.reverse_adjustment"
+      ],
+      "failure_handling": [
+        "auth_failed",
+        "token_replayed",
+        "idempotency_conflict"
+      ],
+      "security": {
+        "write_permission": "commission_reverse"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "commission_dispute",
+        "any_reversible_write"
+      ],
+      "invoke_endpoint": "/api/v1/skills/LedgerReverseSkill/invoke",
+      "allowed_actors": [
+        "revguard-executor"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "ledger_id": "example-ledger-id",
+          "rollback_token": "example-rollback-token",
+          "idempotency_key": "example-idempotency-key"
+        }
+      }
+    },
+    {
+      "name": "PostActionVerifySkill",
+      "version": "1.0.0",
+      "type": "tool",
+      "description": "独立查询验证执行结果",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected_components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "order_id",
+          "expected_components"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "PASSED",
+              "FAILED"
+            ]
+          },
+          "expected_amount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "actual_amount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "variance": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "component_checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rollback_required": {
+            "type": "boolean"
+          },
+          "checked_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "verification_status",
+          "expected_amount",
+          "actual_amount",
+          "variance",
+          "component_checks",
+          "evidence_refs",
+          "rollback_required",
+          "checked_at"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "order_id",
+        "expected_components"
+      ],
+      "outputs": [
+        "verification_status",
+        "expected_amount",
+        "actual_amount",
+        "variance",
+        "component_checks",
+        "evidence_refs",
+        "rollback_required",
+        "checked_at"
+      ],
+      "dependencies": [
+        "finance.get_commission_ledger"
+      ],
+      "failure_handling": [
+        "tool_unavailable"
+      ],
+      "security": {
+        "read_only": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "any_executed_case"
+      ],
+      "invoke_endpoint": "/api/v1/skills/PostActionVerifySkill/invoke",
+      "allowed_actors": [
+        "revguard-verifier"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "order_id": "example-order-id",
+          "expected_components": [
+            {}
+          ]
+        }
+      }
+    },
+    {
+      "name": "PostRollbackVerifySkill",
+      "version": "1.0.0",
+      "type": "tool",
+      "description": "独立确认回滚后恢复执行前净额",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected_snapshot": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "order_id",
+          "expected_snapshot"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "PASSED",
+              "FAILED"
+            ]
+          },
+          "component_checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checked_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "verification_status",
+          "component_checks",
+          "evidence_refs",
+          "checked_at"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "order_id",
+        "expected_snapshot"
+      ],
+      "outputs": [
+        "verification_status",
+        "component_checks",
+        "evidence_refs",
+        "checked_at"
+      ],
+      "dependencies": [
+        "finance.get_commission_ledger"
+      ],
+      "failure_handling": [
+        "tool_unavailable",
+        "rollback_variance"
+      ],
+      "security": {
+        "read_only": true
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "any_reversible_write"
+      ],
+      "invoke_endpoint": "/api/v1/skills/PostRollbackVerifySkill/invoke",
+      "allowed_actors": [
+        "revguard-verifier"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "order_id": "example-order-id",
+          "expected_snapshot": [
+            {}
+          ]
+        }
+      }
+    },
+    {
+      "name": "CaseToDatasetSkill",
+      "version": "1.0.0",
+      "type": "deterministic",
+      "description": "案件轨迹沉淀为评测样本",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "case": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "shared_state": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "verification": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "case",
+          "shared_state"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "GOLDEN",
+              "BAD",
+              "SAFE_ROLLBACK"
+            ]
+          },
+          "case_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "expected_policy_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_amount": {
+            "type": [
+              "string",
+              "number",
+              "null"
+            ]
+          },
+          "root_causes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "verification": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "archived_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "case_id",
+          "label",
+          "case_type",
+          "input",
+          "expected_policy_version",
+          "expected_amount",
+          "root_causes",
+          "verification",
+          "archived_at"
+        ],
+        "additionalProperties": false
+      },
+      "inputs": [
+        "case",
+        "shared_state",
+        "verification"
+      ],
+      "outputs": [
+        "case_id",
+        "label",
+        "case_type",
+        "input",
+        "expected_policy_version",
+        "expected_amount",
+        "root_causes",
+        "verification",
+        "archived_at"
+      ],
+      "dependencies": [],
+      "failure_handling": [
+        "incomplete_trace"
+      ],
+      "security": {
+        "read_only": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "reusability": [
+        "evaluation",
+        "knowledge_base"
+      ],
+      "invoke_endpoint": "/api/v1/skills/CaseToDatasetSkill/invoke",
+      "allowed_actors": [
+        "revguard-knowledge"
+      ],
+      "example": {
+        "case_id": "CASE-EXAMPLE-001",
+        "input": {
+          "case": {},
+          "shared_state": {}
+        }
+      }
+    }
+  ]
+}
