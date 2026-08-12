@@ -5,6 +5,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from threading import Lock
 
 from revguard.mocks import ToolGateway
 from revguard.skills import collect_evidence
@@ -23,9 +24,22 @@ class SlowGateway(ToolGateway):
         "finance.get_commission_ledger",
     }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._inflight_lock = Lock()
+        self._inflight = 0
+        self.max_inflight = 0
+
     def call(self, tool_name, parameters, **kwargs):
         if tool_name in self.PARALLEL_TOOLS:
-            time.sleep(0.08)
+            with self._inflight_lock:
+                self._inflight += 1
+                self.max_inflight = max(self.max_inflight, self._inflight)
+            try:
+                time.sleep(0.08)
+            finally:
+                with self._inflight_lock:
+                    self._inflight -= 1
         return super().call(tool_name, parameters, **kwargs)
 
 
@@ -45,8 +59,9 @@ class TestParallelEvidenceAndTrace(unittest.TestCase):
             exported = tracer.export()
             store.close()
 
-        # 串行下 7*80ms=560ms；真实并行批次应显著低于该值。
-        self.assertLess(result["parallel"]["duration_ms"], 350)
+        # 直接观察同时在途调用，避免共享 CI 主机的调度抖动让固定毫秒阈值误报。
+        self.assertGreaterEqual(gateway.max_inflight, 5)
+        self.assertLess(result["parallel"]["duration_ms"], 800)
         self.assertEqual(result["parallel"]["task_count"], 7)
         self.assertEqual(result["evidence_score"], 1.0)
         self.assertTrue(all(e["content_hash"].startswith("sha256:")

@@ -8,40 +8,44 @@ AgentTeams Secret/Adapter 在传输层注入；模型输入、Matrix 消息、�
 
 - `X-AgentTeams-Message-ID`：触发任务的 Matrix event/message ID；
 - `X-Request-ID`：本次调用唯一 ID，例如 `REQ-MATRIX-20260810-001`；
+- `X-RevGuard-Task-ID`：Orchestrator 已派发且绑定当前 Worker/Skill 的 Task ID；
 - `case_id`：已有案件必须填写；
 - `Authorization`：只由 Adapter 注入，Worker 不生成、不猜测、不回显。
 
-API 返回 `X-Request-ID`、`X-Tool-Receipt`；Worker 在聊天中只报告这两个不可授权
+API 返回 `X-Request-ID`、`X-Skill-Receipt`；Worker 在聊天中只报告这两个不可授权
 的引用和结构化业务结论。
 
-## Few-shot 1：正确的只读工具调用
+## Few-shot 1：正确的只读 Skill 调用
 
 用户消息：`请核对 CASE-2026-0008 的订单 EZ202608001。`
 
 Worker 调用（省略由 Adapter 注入的 Authorization）：
 
 ```http
-POST /api/v1/tools/call
+POST /api/v1/skills/EvidenceCollectSkill/invoke
 X-AgentTeams-Message-ID: $matrix-event-0008
 X-Request-ID: REQ-EVIDENCE-0008-01
+X-RevGuard-Task-ID: TASK-EVIDENCE-0008-01
 Content-Type: application/json
 
 {
-  "tool_name": "crm.get_order",
   "case_id": "CASE-2026-0008",
-  "parameters": {"order_id": "EZ202608001"}
+  "input": {
+    "partner": {"partner_id": "AGT-10001"},
+    "order_id": "EZ202608001"
+  }
 }
 ```
 
-成功响应后只报告：`已取得订单证据，tool_receipt=RCPT-...，request_id=REQ-EVIDENCE-0008-01。`
+成功响应后只报告：`已取得证据包，skill_receipt=SKR-...，request_id=REQ-EVIDENCE-0008-01。`
 不要把 HTTP Header、凭证或整份含敏感字段的响应贴回 Matrix。
 
 ## Few-shot 2：可重试工具错误
 
-响应：
+Skill 内部 Tool 不可用时的响应：
 
 ```json
-{"success": false, "error": {"type": "TOOL_UNAVAILABLE", "retryable": true}, "tool_receipt": "RCPT-..."}
+{"success": false, "error": {"type": "TOOL_UNAVAILABLE", "retryable": true}, "skill": "EvidenceCollectSkill"}
 ```
 
 正确行为：保留同一 `X-AgentTeams-Message-ID`，生成新的 `X-Request-ID`，按退避策略
@@ -57,7 +61,7 @@ Secret 映射。禁止在聊天中索要、猜测或测试其它 key，禁止重
 
 ## Few-shot 4：403 越权拒绝
 
-Evidence Worker 尝试 `commission.submit_adjustment`，响应 403。
+Evidence Worker 尝试 `LedgerAdjustSkill`，响应 403。
 
 正确行为：承认该动作不属于 Evidence 权限，把任务退回 Orchestrator，由 Executor 在
 审批完成后执行。禁止修改 actor、scope 或请求体来绕过授权。
@@ -77,14 +81,15 @@ request_id、tool_receipt 和错误类型交给 Risk/Approver 重新审批。不
 
 | Worker | 典型允许调用 | 必须拒绝 |
 |---|---|---|
-| intake | `crm.get_partner`、`crm.get_order` | 台账写入、审批 |
-| evidence | CRM/合同/政策/财务只读工具 | 所有写工具 |
-| policy | 政策与等级只读工具 | 金额计算、审批、写入 |
+| intake | `CaseNormalizeSkill`、`EntityResolveSkill` | 台账写入、审批 |
+| evidence | `EvidenceCollectSkill` | 所有写 Skill |
+| policy | `PolicyVersionMatchSkill` | 金额计算、审批、写入 |
 | calculation | `CommissionCalculateSkill`、订单只读 | 自行更改政策、台账写入 |
 | rootcause | `DifferenceExplainSkill` | 修改证据或金额 |
-| risk | `RiskClassifySkill`、创建/查询审批 | 代替人工批准、台账写入 |
-| executor | 审批约束内的 draft/submit/reverse | 越组件/越额度/无审批写入 |
-| verifier | 重新查询 ledger 并独立验证 | 信任 Executor 回执代替查询 |
-| knowledge | ticket 更新、mail draft | 直接发送邮件、修改资金数据 |
+| risk | `RiskClassifySkill`、`ApprovalRouteSkill` | 代替人工批准、台账写入 |
+| executor | `PermissionCheckSkill`、`AdjustmentDraftSkill`、`LedgerAdjustSkill`、`LedgerReverseSkill` | 越组件/越额度/无审批写入 |
+| verifier | `PostActionVerifySkill`、`PostRollbackVerifySkill` | 信任 Executor 回执代替查询 |
+| knowledge | `CaseToDatasetSkill` | 直接发送邮件、修改资金数据 |
 
-Orchestrator 只拆解、路由和推进合法状态；它不得借用其它 Worker 的 Principal。
+Agent 可见清单只包含 `Skill`；底层 Tool 由 Skill/状态机在服务端调用。Orchestrator
+只拆解、路由和推进合法状态；它不得借用其它 Worker 的 Principal。

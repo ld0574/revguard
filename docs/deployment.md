@@ -103,8 +103,8 @@ bash scripts/agentteams_setup.sh
 1. 在临时目录渲染 SOUL 中的 API Base URL；
 2. `agt apply worker` 创建或更新 10 个 Agent；
 3. 以 `revguard-orchestrator` 为 leader 组建 Team；
-4. 等待异步删除完成，避免重复部署 409；
-5. 输出 Worker 和 Team 状态。
+4. 等待 Worker Ready，并向各 Worker 安装 skills-only `revguard-api` Adapter；
+5. 输出 Worker 和 Team 状态。设置 `INSTALL_WORKER_SKILLS=false` 可只更新 Worker/Team。
 
 当前 CoPaw 运行时会在约 30 分钟空闲后把 Worker 自动置为 `Sleeping`，这是资源回收而非
 故障。现场演示前可显式预热：
@@ -118,8 +118,8 @@ done
 agt get teams   # 预期 revguard-team Active / 9/9
 ```
 
-API key 不写入 SOUL。Evidence Worker 使用 `agentteams/skills/revguard-api/` 中的只读
-Adapter，并从 Worker 的 `.copaw.secret/revguard_api_key` 注入专属 Principal。调用必须携带
+API key 不写入 SOUL。所有 Worker 使用 `agentteams/skills/revguard-api/` 中的 skills-only
+Adapter，并从各自 `.copaw.secret/revguard_api_key` 注入专属 Principal。调用必须携带
 `X-AgentTeams-Message-ID` 与 `X-Request-ID`；聊天、日志和 Trace 均不得回显 Bearer 值。
 其他 Worker 也应按相同模式各自注入：
 
@@ -127,9 +127,13 @@ Adapter，并从 Worker 的 `.copaw.secret/revguard_api_key` 注入专属 Princi
 Authorization: Bearer <worker-specific-key>
 ```
 
-建议至少配置 Evidence、Intake、Policy、Calculation、Risk、Executor、Verifier、Knowledge
-八个独立 Principal；Executor 仅有 `commission:draft/write/reverse`，Verifier 仅有
-`ledger:read`，Approver 使用独立的人类 Principal。
+至少配置 Orchestrator dispatcher、Intake、Evidence、Policy、Calculation、RootCause、Risk、
+Executor、Verifier、Knowledge 十个独立 Principal；Executor 仅有
+`commission:draft/write/reverse`，Verifier 仅有 `ledger:read`，Approver 使用独立的人类
+Principal。
+
+新版部署保持 `REVGUARD_ENABLE_LEGACY_TOOL_API=false`。只有复放 2026-08-10 的历史
+`Matrix → /tools/call` 证据时才临时设为 `true`；复放结束应恢复关闭。
 
 ## 5. 验收命令
 
@@ -144,14 +148,14 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 需要逐项核验：
 
-- [ ] `make verify-ci`：70 项测试、覆盖率 ≥75%、105/105 场景、9/9 安全探针；
+- [ ] `make verify-ci`：自动测试、覆盖率 ≥75%、105/105 场景、9/9 安全探针；
 - [ ] 容器状态 healthy，重启后案件与幂等状态一致；
 - [ ] 无认证为 401，错误角色为 403，自报 actor/scope 为 422；
 - [ ] L2 在 `WAITING_FOR_APPROVAL` 挂起；
 - [ ] 可信 Approver 批准后写入并验证；
 - [ ] CASE-0008 首次验证失败后真实冲销，最终 `ROLLED_BACK`；
 - [ ] AgentTeams Team Active，9 个 Worker Ready；
-- [ ] Matrix 任务事件、Worker 回执、REMOTE_TOOL span 与审计事件的 request ID / receipt 一致；
+- [ ] Matrix 任务事件、StageTask、Worker 回执、SKILL span 与审计事件的 task ID / request ID / receipt 一致；
 - [ ] Trace、报告、evaluation summary 和视频中的 case_id 一致。
 
 ## 6. 已知资源风险

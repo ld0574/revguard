@@ -39,8 +39,9 @@
 
 ## Dependencies
 
-- RiskClassifySkill / ApprovalRouteSkill
-- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`workflow.create_approval` / `workflow.get_approval_status`
+- RiskClassifySkill：`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/RiskClassifySkill/invoke`
+- ApprovalRouteSkill：`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/ApprovalRouteSkill/invoke`
+- 审批状态由案件状态机和 HumanApprovalGate 推进；底层 `workflow.*` Tool 不进入 Agent 工具清单。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：HumanApprovalGate → revguard-executor

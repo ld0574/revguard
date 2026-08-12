@@ -42,7 +42,8 @@
 
 ## Dependencies
 
-- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`policy.search_versions` / `policy.get_rule_dsl` / `contract.get_effective_terms`
+- PolicyVersionMatchSkill（`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/PolicyVersionMatchSkill/invoke`）
+- 政策版本和合同证据由 Evidence Package 提供；底层 `policy.*` / `contract.*` Tool 不进入 Agent 工具清单。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：revguard-calculation

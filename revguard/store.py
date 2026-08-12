@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS verifications (
     case_id TEXT PRIMARY KEY,
     data TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS agent_tasks (
+    task_id TEXT PRIMARY KEY,
+    case_id TEXT NOT NULL,
+    skill_name TEXT NOT NULL,
+    assigned_actor TEXT NOT NULL,
+    status TEXT NOT NULL,
+    data TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_tasks_case ON agent_tasks(case_id, updated_at);
 CREATE TABLE IF NOT EXISTS audit_events (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
     case_id TEXT NOT NULL,
@@ -104,8 +114,8 @@ class Store:
     def reset(self) -> None:
         """原子清空 Demo 运行状态，保留 Schema。"""
         with self._lock, self.conn:
-            for table in ("trace_spans", "audit_events", "verifications", "executions",
-                          "approvals", "evidence", "cases"):
+            for table in ("trace_spans", "audit_events", "agent_tasks", "verifications",
+                          "executions", "approvals", "evidence", "cases"):
                 self.conn.execute(f"DELETE FROM {table}")
             self.conn.execute("DELETE FROM sqlite_sequence WHERE name='audit_events'")
 
@@ -244,6 +254,55 @@ class Store:
                 "SELECT data FROM verifications WHERE case_id=?", (case_id,)
             ).fetchone()
         return json.loads(row["data"]) if row else None
+
+    # ------------------------------------------------------------- agent tasks
+    def save_agent_task(self, task: dict) -> None:
+        with self._lock, self.conn:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO agent_tasks
+                   (task_id, case_id, skill_name, assigned_actor, status, data, updated_at)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (task["task_id"], task["case_id"], task["skill_name"],
+                 task["assigned_actor"], task["status"],
+                 json.dumps(task, ensure_ascii=False), utc_now()),
+            )
+
+    def get_agent_task(self, task_id: str) -> dict | None:
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT data FROM agent_tasks WHERE task_id=?", (task_id,)
+            ).fetchone()
+        return json.loads(row["data"]) if row else None
+
+    def list_agent_tasks(self, case_id: str) -> list[dict]:
+        with self._lock:
+            rows = self.conn.execute(
+                "SELECT data FROM agent_tasks WHERE case_id=? ORDER BY rowid", (case_id,)
+            ).fetchall()
+        return [json.loads(row["data"]) for row in rows]
+
+    def transition_agent_task(self, task_id: str, *, expected: set[str],
+                              status: str, updates: dict | None = None) -> dict:
+        """Atomically change a task only from an explicitly allowed status."""
+        with self._lock, self.conn:
+            row = self.conn.execute(
+                "SELECT data FROM agent_tasks WHERE task_id=?", (task_id,)
+            ).fetchone()
+            if not row:
+                raise KeyError(task_id)
+            task = json.loads(row["data"])
+            if task["status"] not in expected:
+                raise ValueError(
+                    f"Agent task {task_id} 状态 {task['status']} 不允许转为 {status}"
+                )
+            task.update(updates or {})
+            task["status"] = status
+            task["updated_at"] = utc_now()
+            self.conn.execute(
+                "UPDATE agent_tasks SET status=?, data=?, updated_at=? WHERE task_id=?",
+                (status, json.dumps(task, ensure_ascii=False), task["updated_at"], task_id),
+            )
+        return task
 
     # ------------------------------------------------------------------ audit
     def audit(self, case_id: str, actor: str, event: str, detail: dict | None = None) -> None:

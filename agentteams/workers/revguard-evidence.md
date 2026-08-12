@@ -36,9 +36,10 @@
 }
 ```
 
-## 可用工具（POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call）
+## Dependency
 
-`crm.get_order` / `crm.get_partner_tier_history` / `contract.get_contract` / `policy.search_versions` / `finance.get_payment` / `finance.get_refund` / `finance.get_invoice` / `finance.get_commission_ledger`
+- EvidenceCollectSkill（`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/EvidenceCollectSkill/invoke`）
+- 底层 CRM、合同、政策和财务 Tool 只由该 Skill 在服务端调用，不进入 Agent 工具清单。
 
 ## Decision Boundary
 

@@ -29,128 +29,1480 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
 
 ### CaseNormalizeSkill
 
-- 输入：`raw_case`
+- 必填输入：`raw_case`
+- 可选输入：-
 - 输出：`entities`, `missing_fields`, `claim`
 - 调用：`POST /api/v1/skills/CaseNormalizeSkill/invoke`
 - 允许身份：`revguard-intake`
 - 说明：申诉/工单解析为标准化案件实体
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "raw_case": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "raw_case"
+    ],
+    "additionalProperties": false,
+    "examples": [
+      {
+        "raw_case": {
+          "partner_id": "AGT-10001",
+          "order_id": "EZ202608001"
+        }
+      }
+    ]
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "entities": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "missing_fields": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "claim": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "entities",
+      "missing_fields",
+      "claim"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### EntityResolveSkill
 
-- 输入：`entities`
+- 必填输入：`entities`
+- 可选输入：-
 - 输出：`partner`, `resolved_by`
 - 调用：`POST /api/v1/skills/EntityResolveSkill/invoke`
 - 允许身份：`revguard-intake`
 - 说明：解析代理商为唯一系统实体
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "entities": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "entities"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "partner": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "resolved_by": {
+        "type": "string",
+        "enum": [
+          "partner_id",
+          "partner_name"
+        ]
+      }
+    },
+    "required": [
+      "partner",
+      "resolved_by"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### EvidenceCollectSkill
 
-- 输入：`partner`, `order_id`
-- 输出：`evidence`, `evidence_gaps`, `evidence_score`
+- 必填输入：`partner`, `order_id`
+- 可选输入：-
+- 输出：`evidence`, `collected`, `evidence_gaps`, `evidence_score`, `parallel`
 - 调用：`POST /api/v1/skills/EvidenceCollectSkill/invoke`
 - 允许身份：`revguard-evidence`
 - 说明：跨系统真实并行证据采集与完整度评分
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "partner": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "order_id": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "partner",
+      "order_id"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "collected": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "evidence_gaps": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "evidence_score": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "parallel": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "evidence",
+      "collected",
+      "evidence_gaps",
+      "evidence_score",
+      "parallel"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### PolicyVersionMatchSkill
 
-- 输入：`versions`, `facts`, `time_basis`
-- 输出：`policy_id`, `policy_version`, `excluded_versions`, `conflicts`
+- 必填输入：`versions`, `facts`
+- 可选输入：`time_basis`
+- 输出：`policy_id`, `policy_version`, `time_basis`, `decision_date`, `effective_rule_set`, `cited_clauses`, `excluded_versions`, `unresolved_conflicts`, `confidence`
 - 调用：`POST /api/v1/skills/PolicyVersionMatchSkill/invoke`
 - 允许身份：`revguard-policy`
 - 说明：按业务时点匹配政策版本
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "versions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "facts": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "time_basis": {
+        "type": "string",
+        "enum": [
+          "order_date",
+          "payment_date"
+        ]
+      }
+    },
+    "required": [
+      "versions",
+      "facts"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "policy_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "policy_version": {
+        "type": "string",
+        "minLength": 1
+      },
+      "time_basis": {
+        "type": "string",
+        "minLength": 1
+      },
+      "decision_date": {
+        "type": "string",
+        "minLength": 1
+      },
+      "effective_rule_set": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "cited_clauses": {
+        "type": "array"
+      },
+      "excluded_versions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "unresolved_conflicts": {
+        "type": "array"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "required": [
+      "policy_id",
+      "policy_version",
+      "time_basis",
+      "decision_date",
+      "effective_rule_set",
+      "cited_clauses",
+      "excluded_versions",
+      "unresolved_conflicts",
+      "confidence"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### CommissionCalculateSkill
 
-- 输入：`rule_dsl`, `facts`, `currency`
-- 输出：`total_commission`, `components`, `calculation_hash`
+- 必填输入：`rule_dsl`, `facts`, `currency`
+- 可选输入：-
+- 输出：`eligible`, `total_commission`, `currency`, `components`, `rounding_rule`, `calculation_hash`, `policy_version`, `eligibility_failures`, `facts_snapshot`
 - 调用：`POST /api/v1/skills/CommissionCalculateSkill/invoke`
 - 允许身份：`revguard-calculation`
 - 说明：规则引擎确定性佣金复算
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "rule_dsl": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "facts": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "rule_dsl",
+      "facts",
+      "currency"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "eligible": {
+        "type": "boolean"
+      },
+      "total_commission": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      },
+      "components": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "rounding_rule": {
+        "type": "string"
+      },
+      "calculation_hash": {
+        "type": "string",
+        "minLength": 1
+      },
+      "policy_version": {
+        "type": "string"
+      },
+      "eligibility_failures": {
+        "type": "array"
+      },
+      "facts_snapshot": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "eligible",
+      "total_commission",
+      "currency",
+      "components",
+      "rounding_rule",
+      "calculation_hash",
+      "policy_version",
+      "eligibility_failures",
+      "facts_snapshot"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### DifferenceExplainSkill
 
-- 输入：`calculation`, `ledger_entries`, `matched_policy_version`
-- 输出：`diffs`, `total_delta`, `root_causes`
+- 必填输入：`calculation`, `ledger_entries`, `matched_policy_version`
+- 可选输入：`tier_conflict`
+- 输出：`diffs`, `total_expected`, `total_posted`, `total_delta`, `root_causes`, `confidence`
 - 调用：`POST /api/v1/skills/DifferenceExplainSkill/invoke`
 - 允许身份：`revguard-rootcause`
 - 说明：差异解释与根因判定
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "calculation": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "total_commission": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "rounding_rule": {
+            "type": "string"
+          },
+          "calculation_hash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "eligibility_failures": {
+            "type": "array"
+          },
+          "facts_snapshot": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "eligible",
+          "total_commission",
+          "currency",
+          "components",
+          "rounding_rule",
+          "calculation_hash",
+          "policy_version",
+          "eligibility_failures",
+          "facts_snapshot"
+        ],
+        "additionalProperties": false
+      },
+      "ledger_entries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "matched_policy_version": {
+        "type": "string",
+        "minLength": 1
+      },
+      "tier_conflict": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "calculation",
+      "ledger_entries",
+      "matched_policy_version"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "diffs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "total_expected": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "total_posted": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "total_delta": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "root_causes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "required": [
+      "diffs",
+      "total_expected",
+      "total_posted",
+      "total_delta",
+      "root_causes",
+      "confidence"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### RiskClassifySkill
 
-- 输入：`adjustment_amount`, `evidence_score`, `action_type`
-- 输出：`risk_level`, `approval_required`, `approver_role`, `reason_codes`
+- 必填输入：`action_type`, `adjustment_amount`, `currency`, `evidence_score`, `case_type`
+- 可选输入：`policy_conflict`, `order_count`
+- 输出：`risk_level`, `approval_required`, `approver_role`, `execution_constraints`, `rollback_plan_required`, `reason_codes`
 - 调用：`POST /api/v1/skills/RiskClassifySkill/invoke`
 - 允许身份：`revguard-risk`
 - 说明：L0-L3 风险分级与审批路由判定
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "action_type": {
+        "type": "string",
+        "minLength": 1
+      },
+      "adjustment_amount": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      },
+      "evidence_score": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "case_type": {
+        "type": "string",
+        "minLength": 1
+      },
+      "policy_conflict": {
+        "type": "boolean"
+      },
+      "order_count": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "required": [
+      "action_type",
+      "adjustment_amount",
+      "currency",
+      "evidence_score",
+      "case_type"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "L0",
+          "L1",
+          "L2",
+          "L3"
+        ]
+      },
+      "approval_required": {
+        "type": "boolean"
+      },
+      "approver_role": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "execution_constraints": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "rollback_plan_required": {
+        "type": "boolean"
+      },
+      "reason_codes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "risk_level",
+      "approval_required",
+      "approver_role",
+      "execution_constraints",
+      "rollback_plan_required",
+      "reason_codes"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### ApprovalRouteSkill
 
-- 输入：`risk`, `amount`, `action_summary`
-- 输出：`approval`
+- 必填输入：`risk`, `amount`, `component_quota`, `currency`, `action_summary`
+- 可选输入：-
+- 输出：`approval_id`, `case_id`, `action_summary`, `amount`, `component_quota`, `currency`, `risk_level`, `approver_role`, `status`, `created_at`
 - 调用：`POST /api/v1/skills/ApprovalRouteSkill/invoke`
 - 允许身份：`revguard-risk`
 - 说明：创建审批单并路由审批角色
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "risk": {
+        "type": "object",
+        "properties": {
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "L0",
+              "L1",
+              "L2",
+              "L3"
+            ]
+          },
+          "approval_required": {
+            "type": "boolean"
+          },
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "execution_constraints": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "rollback_plan_required": {
+            "type": "boolean"
+          },
+          "reason_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "risk_level",
+          "approval_required",
+          "approver_role",
+          "execution_constraints",
+          "rollback_plan_required",
+          "reason_codes"
+        ],
+        "additionalProperties": false
+      },
+      "amount": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "component_quota": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      },
+      "action_summary": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "risk",
+      "amount",
+      "component_quota",
+      "currency",
+      "action_summary"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "approval_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "case_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "action_summary": {
+        "type": "string",
+        "minLength": 1
+      },
+      "amount": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "component_quota": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "L1",
+          "L2",
+          "L3"
+        ]
+      },
+      "approver_role": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "PENDING"
+        ]
+      },
+      "created_at": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "approval_id",
+      "case_id",
+      "action_summary",
+      "amount",
+      "component_quota",
+      "currency",
+      "risk_level",
+      "approver_role",
+      "status",
+      "created_at"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### PermissionCheckSkill
 
-- 输入：`actor`, `risk`, `approval`
-- 输出：`pass_or_raise`
+- 必填输入：`action_type`, `risk`
+- 可选输入：`approval`
+- 输出：`authorized`
 - 调用：`POST /api/v1/skills/PermissionCheckSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：执行前权限与审批凭证校验
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "action_type": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "LEDGER_ADJUST",
+          "LEDGER_REVERSE"
+        ]
+      },
+      "risk": {
+        "type": "object",
+        "properties": {
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "L0",
+              "L1",
+              "L2",
+              "L3"
+            ]
+          },
+          "approval_required": {
+            "type": "boolean"
+          },
+          "approver_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "execution_constraints": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "rollback_plan_required": {
+            "type": "boolean"
+          },
+          "reason_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "risk_level",
+          "approval_required",
+          "approver_role",
+          "execution_constraints",
+          "rollback_plan_required",
+          "reason_codes"
+        ],
+        "additionalProperties": false
+      },
+      "approval": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "action_type",
+      "risk"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "authorized": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "authorized"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### IdempotencyGuardSkill
 
-- 输入：`idempotency_key`
-- 输出：`existing_or_none`
+- 必填输入：`idempotency_key`
+- 可选输入：-
+- 输出：
 - 调用：`POST /api/v1/skills/IdempotencyGuardSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：幂等键冲突检查
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "idempotency_key": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "idempotency_key"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": [
+      "object",
+      "null"
+    ],
+    "additionalProperties": true
+  }
+}
+```
+
+</details>
+
 ### AdjustmentDraftSkill
 
-- 输入：`order_id`, `component`, `delta`
-- 输出：`draft`
+- 必填输入：`order_id`, `component`, `delta`, `currency`
+- 可选输入：`reason`
+- 输出：`action_id`, `order_id`, `case_id`, `component`, `amount`, `currency`, `reason`, `status`, `created_at`
 - 调用：`POST /api/v1/skills/AdjustmentDraftSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：创建不生效的佣金调整草稿
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "order_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "component": {
+        "type": "string",
+        "minLength": 1
+      },
+      "delta": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "order_id",
+      "component",
+      "delta",
+      "currency"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "action_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "order_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "case_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "component": {
+        "type": "string",
+        "minLength": 1
+      },
+      "amount": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "currency": {
+        "type": "string",
+        "minLength": 1
+      },
+      "reason": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "DRAFT"
+        ]
+      },
+      "created_at": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "action_id",
+      "order_id",
+      "case_id",
+      "component",
+      "amount",
+      "currency",
+      "reason",
+      "status",
+      "created_at"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### LedgerAdjustSkill
 
-- 输入：`action_id`, `approval_token`, `idempotency_key`
-- 输出：`execution`, `snapshots`, `rollback_token`
+- 必填输入：`action_id`, `approval_token`, `policy_version`, `idempotency_key`
+- 可选输入：-
+- 输出：`action_id`, `status`, `ledger_entry`, `before_snapshot`, `after_snapshot`, `rollback_token`
 - 调用：`POST /api/v1/skills/LedgerAdjustSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：提交调整写入台账（签名审批凭证+幂等）
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "action_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "approval_token": {
+        "type": "string",
+        "minLength": 1
+      },
+      "policy_version": {
+        "type": "string",
+        "minLength": 1
+      },
+      "idempotency_key": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "action_id",
+      "approval_token",
+      "policy_version",
+      "idempotency_key"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "action_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "SUBMITTED"
+        ]
+      },
+      "ledger_entry": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "before_snapshot": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "after_snapshot": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "rollback_token": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "action_id",
+      "status",
+      "ledger_entry",
+      "before_snapshot",
+      "after_snapshot",
+      "rollback_token"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### LedgerReverseSkill
 
-- 输入：`ledger_id`, `rollback_token`, `idempotency_key`
+- 必填输入：`ledger_id`, `rollback_token`, `idempotency_key`
+- 可选输入：-
 - 输出：`reversal_entry`, `reversed_entry`
 - 调用：`POST /api/v1/skills/LedgerReverseSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：验证失败后以一次性能力令牌反向冲销
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "ledger_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "rollback_token": {
+        "type": "string",
+        "minLength": 1
+      },
+      "idempotency_key": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "ledger_id",
+      "rollback_token",
+      "idempotency_key"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "reversal_entry": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "reversed_entry": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "reversal_entry",
+      "reversed_entry"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### PostActionVerifySkill
 
-- 输入：`order_id`, `expected_components`
-- 输出：`verification`
+- 必填输入：`order_id`, `expected_components`
+- 可选输入：-
+- 输出：`verification_status`, `expected_amount`, `actual_amount`, `variance`, `component_checks`, `evidence_refs`, `rollback_required`, `checked_at`
 - 调用：`POST /api/v1/skills/PostActionVerifySkill/invoke`
 - 允许身份：`revguard-verifier`
 - 说明：独立查询验证执行结果
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "order_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "expected_components": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "required": [
+      "order_id",
+      "expected_components"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "verification_status": {
+        "type": "string",
+        "enum": [
+          "PASSED",
+          "FAILED"
+        ]
+      },
+      "expected_amount": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "actual_amount": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "variance": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "component_checks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "evidence_refs": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "rollback_required": {
+        "type": "boolean"
+      },
+      "checked_at": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "verification_status",
+      "expected_amount",
+      "actual_amount",
+      "variance",
+      "component_checks",
+      "evidence_refs",
+      "rollback_required",
+      "checked_at"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### PostRollbackVerifySkill
 
-- 输入：`order_id`, `expected_snapshot`
-- 输出：`rollback_verification`
+- 必填输入：`order_id`, `expected_snapshot`
+- 可选输入：-
+- 输出：`verification_status`, `component_checks`, `evidence_refs`, `checked_at`
 - 调用：`POST /api/v1/skills/PostRollbackVerifySkill/invoke`
 - 允许身份：`revguard-verifier`
 - 说明：独立确认回滚后恢复执行前净额
 
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "order_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "expected_snapshot": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "required": [
+      "order_id",
+      "expected_snapshot"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "verification_status": {
+        "type": "string",
+        "enum": [
+          "PASSED",
+          "FAILED"
+        ]
+      },
+      "component_checks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "evidence_refs": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "checked_at": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "verification_status",
+      "component_checks",
+      "evidence_refs",
+      "checked_at"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>
+
 ### CaseToDatasetSkill
 
-- 输入：`case`, `shared_state`, `verification`
-- 输出：`dataset_record`
+- 必填输入：`case`, `shared_state`
+- 可选输入：`verification`
+- 输出：`case_id`, `label`, `case_type`, `input`, `expected_policy_version`, `expected_amount`, `root_causes`, `verification`, `archived_at`
 - 调用：`POST /api/v1/skills/CaseToDatasetSkill/invoke`
 - 允许身份：`revguard-knowledge`
 - 说明：案件轨迹沉淀为评测样本
+
+<details><summary>Input / Output JSON Schema</summary>
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "case": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "shared_state": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "verification": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "required": [
+      "case",
+      "shared_state"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "case_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "label": {
+        "type": "string",
+        "enum": [
+          "GOLDEN",
+          "BAD",
+          "SAFE_ROLLBACK"
+        ]
+      },
+      "case_type": {
+        "type": "string",
+        "minLength": 1
+      },
+      "input": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "expected_policy_version": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "expected_amount": {
+        "type": [
+          "string",
+          "number",
+          "null"
+        ]
+      },
+      "root_causes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "verification": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "archived_at": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "case_id",
+      "label",
+      "case_type",
+      "input",
+      "expected_policy_version",
+      "expected_amount",
+      "root_causes",
+      "verification",
+      "archived_at"
+    ],
+    "additionalProperties": false
+  }
+}
+```
+
+</details>

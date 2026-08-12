@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Least-privilege AgentTeams → RevGuard Evidence API adapter."""
+"""Least-privilege AgentTeams → RevGuard Skills-only API adapter."""
 from __future__ import annotations
 
 import argparse
@@ -12,17 +12,20 @@ import urllib.request
 import uuid
 
 
-ALLOWED_TOOLS = frozenset({
-    "crm.get_order",
-    "crm.get_partner",
-    "crm.get_partner_tier_history",
-    "contract.get_contract",
-    "policy.search_versions",
-    "finance.get_payment",
-    "finance.get_refund",
-    "finance.get_invoice",
-    "finance.get_commission_ledger",
-})
+ALLOWED_SKILLS_BY_WORKER = {
+    "revguard-intake": frozenset({"CaseNormalizeSkill", "EntityResolveSkill"}),
+    "revguard-evidence": frozenset({"EvidenceCollectSkill"}),
+    "revguard-policy": frozenset({"PolicyVersionMatchSkill"}),
+    "revguard-calculation": frozenset({"CommissionCalculateSkill"}),
+    "revguard-rootcause": frozenset({"DifferenceExplainSkill"}),
+    "revguard-risk": frozenset({"RiskClassifySkill", "ApprovalRouteSkill"}),
+    "revguard-executor": frozenset({
+        "PermissionCheckSkill", "IdempotencyGuardSkill", "AdjustmentDraftSkill",
+        "LedgerAdjustSkill", "LedgerReverseSkill",
+    }),
+    "revguard-verifier": frozenset({"PostActionVerifySkill", "PostRollbackVerifySkill"}),
+    "revguard-knowledge": frozenset({"CaseToDatasetSkill"}),
+}
 
 
 def _credential_path() -> Path:
@@ -30,60 +33,91 @@ def _credential_path() -> Path:
     return Path(f"/root/.copaw-worker/{worker}/.copaw.secret/revguard_api_key")
 
 
+def _worker_name() -> str:
+    return os.getenv("AGENTTEAMS_WORKER_NAME", "").strip()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tool", required=True, choices=sorted(ALLOWED_TOOLS))
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument("--skill")
+    action.add_argument("--dispatch-skill")
     parser.add_argument("--case-id", required=True)
-    parser.add_argument("--parameters", required=True)
+    parser.add_argument("--input", required=True)
     parser.add_argument("--message-id", required=True)
     parser.add_argument("--request-id")
+    parser.add_argument("--task-id")
     args = parser.parse_args()
 
     try:
-        parameters = json.loads(args.parameters)
-        if not isinstance(parameters, dict):
-            raise ValueError("parameters must be an object")
+        skill_input = json.loads(args.input)
+        if not isinstance(skill_input, dict):
+            raise ValueError("input must be an object")
     except (json.JSONDecodeError, ValueError) as exc:
         print(json.dumps({"success": False, "error": {"type": "INVALID_PARAMS",
                          "message": str(exc)}}))
         return 2
+
+    worker = _worker_name()
+    if args.dispatch_skill:
+        if worker != "revguard-orchestrator":
+            print(json.dumps({"success": False, "error": {"type": "DISPATCH_NOT_ALLOWED",
+                             "message": f"{worker or '<unknown>'} cannot dispatch tasks"}}))
+            return 4
+    else:
+        allowed = ALLOWED_SKILLS_BY_WORKER.get(worker)
+        if allowed is None or args.skill not in allowed:
+            print(json.dumps({"success": False, "error": {"type": "SKILL_NOT_ALLOWED",
+                             "message": f"{worker or '<unknown>'} cannot invoke {args.skill}"}}))
+            return 4
+        if not args.task_id:
+            print(json.dumps({"success": False, "error": {"type": "TASK_ID_REQUIRED",
+                             "message": "Worker Skill invocation requires --task-id"}}))
+            return 4
 
     secret_path = _credential_path()
     try:
         api_key = secret_path.read_text(encoding="utf-8").strip()
     except OSError:
         print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
-                         "message": "RevGuard Evidence Principal is unavailable"}}))
+                         "message": "RevGuard Worker Principal is unavailable"}}))
         return 3
     if not api_key:
         print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
-                         "message": "RevGuard Evidence Principal is empty"}}))
+                         "message": "RevGuard Worker Principal is empty"}}))
         return 3
 
     request_id = args.request_id or f"REQ-AGT-{uuid.uuid4().hex[:12].upper()}"
-    body = json.dumps({
-        "tool_name": args.tool,
-        "parameters": parameters,
-        "case_id": args.case_id,
-    }).encode("utf-8")
+    api_base = os.getenv("REVGUARD_API_BASE_URL", "http://revguard-api:9000").rstrip("/")
+    if args.dispatch_skill:
+        body_data = {"skill_name": args.dispatch_skill, "input": skill_input}
+        url = f"{api_base}/api/v1/cases/{args.case_id}/agent-tasks"
+    else:
+        body_data = {"input": skill_input, "case_id": args.case_id}
+        url = f"{api_base}/api/v1/skills/{args.skill}/invoke"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "X-AgentTeams-Message-ID": args.message_id,
+        "X-Request-ID": request_id,
+    }
+    if args.task_id:
+        headers["X-RevGuard-Task-ID"] = args.task_id
     request = urllib.request.Request(
-        os.getenv("REVGUARD_API_URL", "http://revguard-api:9000/api/v1/tools/call"),
-        data=body,
+        url,
+        data=json.dumps(body_data).encode("utf-8"),
         method="POST",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "X-AgentTeams-Message-ID": args.message_id,
-            "X-Request-ID": request_id,
-        },
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
             result = json.load(response)
+            result.setdefault("success", True)
             result["request_id"] = response.headers.get("X-Request-ID", request_id)
-            result["tool_receipt"] = response.headers.get(
-                "X-Tool-Receipt", result.get("tool_receipt")
-            )
+            if not args.dispatch_skill:
+                result["skill_receipt"] = response.headers.get(
+                    "X-Skill-Receipt", result.get("skill_receipt")
+                )
     except urllib.error.HTTPError as exc:
         result = {
             "success": False,

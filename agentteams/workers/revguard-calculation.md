@@ -39,7 +39,7 @@
 
 ## Dependencies
 
-- CommissionCalculateSkill（`POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call` 或平台 Skill 层）
+- CommissionCalculateSkill（`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/CommissionCalculateSkill/invoke`）
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：revguard-rootcause

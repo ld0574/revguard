@@ -11,8 +11,8 @@ RevGuard 以 AgentTeams 为多 Agent 协同基点。本目录提供 1 个 Orches
 | AgentTeams 协同 | 任务拆解、Worker 协作、人工审批、现场展示 | Element / AgentTeams Team |
 
 两条路径共享同一套 16 个 Skill、ToolGateway、状态机与 Trace 语义。AgentTeams Worker
-优先调用 `POST /api/v1/skills/{name}/invoke`；需要底层系统操作时调用
-`POST /api/v1/tools/call`。
+只通过 `POST /api/v1/skills/{name}/invoke` 调用按身份允许的领域 Skill；底层 Tool 只由
+Skill/状态机在服务端调用，不进入 Agent 可见清单。
 
 ## 部署
 
@@ -24,7 +24,8 @@ REVGUARD_API_BASE_URL=http://revguard-api:9000 \
 bash scripts/agentteams_setup.sh
 ```
 
-SOUL 使用 `{{REVGUARD_API_BASE_URL}}`，setup 脚本在临时目录渲染后复制到 controller。
+SOUL 使用 `{{REVGUARD_API_BASE_URL}}`，setup 脚本在临时目录渲染后复制到 controller，
+并把 `agentteams/skills/revguard-api/` skills-only Adapter 安装到 10 个 Worker 容器。
 API key 不能出现在 SOUL、Prompt、聊天或 Trace 中，必须由 AgentTeams Secret/Tool
 Adapter 注入 `Authorization: Bearer ...`。
 
@@ -42,6 +43,18 @@ Adapter 注入 `Authorization: Bearer ...`。
 | 结果验证 | Verifier 独立新查询，不使用 Executor 回执自证 |
 | 回滚 | 验证失败 → 反向台账 → 回滚后独立验证 |
 | 经验沉淀 | Trace、Markdown 报告、Case Memory、Evaluation Dataset |
+
+## 状态机与 Agent 桥接
+
+1. Orchestrator 使用 `dispatcher` Principal 调用
+   `POST /api/v1/cases/{case_id}/agent-tasks`；
+2. 服务端按当前 Case 状态绑定 `skill_name`、唯一 `assigned_actor`、输入和
+   `case_version`，返回 `task_id`；
+3. Worker 用自己的 Principal 调 Skill，并携带 `X-RevGuard-Task-ID`；
+4. 服务端拒绝错 Worker、错 Skill、输入被改、案件快照过期和已完成任务重放；
+5. Skill 成功后 StageResult 与 `skill_receipt` 自动写入 `agent_tasks` 和 Audit。
+
+聊天中的“已完成”不推进状态；只有服务端 `SUCCEEDED` StageTask 才是可验证完成信号。
 
 ## Worker 清单
 

@@ -10,7 +10,7 @@
 
 ## 执行前置条件
 
-1. L1：只允许 `commission.create_adjustment_draft`，草稿不生效，无需审批凭证；
+1. L1：只允许调用 AdjustmentDraftSkill，草稿不生效，无需审批凭证；
 2. L2 入账：审批状态 APPROVED，签名令牌有效且绑定 case/currency/gross 额度；
 3. 幂等键未使用，执行前快照已保存，回滚路径可用；
 4. L3：禁止所有系统自动执行。
@@ -46,7 +46,9 @@
 
 ## Dependencies
 
-- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`commission.create_adjustment_draft` / `commission.submit_adjustment` / `commission.reverse_adjustment`
+- PermissionCheckSkill / IdempotencyGuardSkill / AdjustmentDraftSkill / LedgerAdjustSkill / LedgerReverseSkill
+- 统一入口：`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/{skill_name}/invoke`
+- 底层 `commission.*` Tool 只由 Skill/状态机在服务端调用，不进入 Agent 工具清单。
 - 下游：revguard-verifier
 
 ## Trace

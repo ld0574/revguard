@@ -39,7 +39,8 @@
 
 ## Dependencies
 
-- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`mail.create_reply_draft` / `ticket.update_case`
+- CaseToDatasetSkill（`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/CaseToDatasetSkill/invoke`）
+- 回复草稿和工单更新由服务端归档阶段完成，底层 `mail.*` / `ticket.*` Tool 不进入 Agent 工具清单。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 沉淀位置：data/outputs/case_memory/、docs/reports/

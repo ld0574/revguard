@@ -14,7 +14,7 @@
 
 ## Capabilities
 
-1. 重新查询佣金台账（finance.get_commission_ledger），与 Executor 完全隔离；
+1. 通过 PostActionVerifySkill 重新查询佣金台账，与 Executor 完全隔离；
 2. 按组件逐项核对"应有 vs 实有"，并核对总额偏差；
 3. 验证失败时输出 rollback_required 与差异明细，触发 LedgerReverseSkill；冲销后再次独立查询，只有恢复执行前净额才裁决 ROLLED_BACK。
 
@@ -43,7 +43,9 @@
 
 ## Dependencies
 
-- 工具（统一入口 `POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`）：`finance.get_commission_ledger`（独立新查询）
+- PostActionVerifySkill / PostRollbackVerifySkill
+- 统一入口：`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/{skill_name}/invoke`
+- 独立新查询由验证 Skill 在服务端发起，底层 `finance.*` Tool 不进入 Agent 工具清单。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：revguard-knowledge（沉淀）

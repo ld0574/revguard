@@ -50,6 +50,7 @@ TOOL_REQUIRED_SCOPES: dict[str, str] = {
 
 
 ACTOR_ALLOWED_SCOPES: dict[str, frozenset[str]] = {
+    "revguard-orchestrator": frozenset(),
     "revguard-intake": frozenset({"partner:read", "order:read", "ticket:write"}),
     "revguard-evidence": frozenset({
         "order:read", "partner:read", "contract:read", "policy:read",

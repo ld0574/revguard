@@ -6,6 +6,7 @@ from decimal import Decimal
 from . import skills
 from .models import CalculationResult, RiskDecision, new_id
 from .mocks import ToolError, ToolGateway
+from .json_schema import SchemaValidationError, validate_json
 from .store import Store
 from .trace import Tracer
 from .security import redact_secrets
@@ -13,6 +14,10 @@ from .security import redact_secrets
 
 class SkillInvocationError(ValueError):
     pass
+
+
+class SkillContractError(RuntimeError):
+    """A Skill implementation returned data that violates its public contract."""
 
 
 SKILL_ACTORS: dict[str, frozenset[str]] = {
@@ -42,15 +47,23 @@ def _required(payload: dict, name: str):
 
 
 def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
-                 gateway: ToolGateway, store: Store) -> dict:
+                 gateway: ToolGateway, store: Store,
+                 correlation: dict | None = None) -> dict:
     """按统一契约调用一个注册 Skill，并记录 Skill span 与调用回执。"""
     meta = skills.SKILL_REGISTRY.get(name)
     if not meta:
         raise SkillInvocationError(f"未知 Skill: {name}")
     if actor not in SKILL_ACTORS.get(name, frozenset()):
         raise ToolError("AUTH_FAILED", f"actor {actor} 无权调用 {name}")
+    try:
+        validate_json(payload, meta["input_schema"], path=f"{name}.input")
+    except SchemaValidationError as exc:
+        raise SkillInvocationError(str(exc)) from exc
     tracer = Tracer(store, case_id or "SKILL-NO-CASE")
-    with tracer.span("SKILL", name, actor=actor, inputs=redact_secrets(payload)) as span:
+    trace_inputs = {"input": redact_secrets(payload)}
+    if correlation:
+        trace_inputs["correlation"] = correlation
+    with tracer.span("SKILL", name, actor=actor, inputs=trace_inputs) as span:
         if name == "CaseNormalizeSkill":
             result = skills.case_normalize(_required(payload, "raw_case"))
         elif name == "EntityResolveSkill":
@@ -154,14 +167,23 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
         if hasattr(result, "__dataclass_fields__"):
             from dataclasses import asdict
             result = asdict(result)
+        try:
+            validate_json(result, meta["output_schema"], path=f"{name}.output")
+        except SchemaValidationError as exc:
+            raise SkillContractError(str(exc)) from exc
         span["outputs"] = result
-    store.audit(case_id or "SKILL-NO-CASE", actor, "SKILL_INVOKED",
-                {"skill": name, "version": meta["version"]})
+    skill_receipt = new_id("SKR")
+    audit_detail = {
+        "skill": name, "version": meta["version"], "skill_receipt": skill_receipt,
+    }
+    if correlation:
+        audit_detail.update(correlation)
+    store.audit(case_id or "SKILL-NO-CASE", actor, "SKILL_INVOKED", audit_detail)
     return {
         "success": True,
         "data": result,
         "error": None,
-        "skill_receipt": new_id("SKR"),
+        "skill_receipt": skill_receipt,
         "skill": name,
         "version": meta["version"],
     }

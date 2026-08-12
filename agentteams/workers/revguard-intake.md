@@ -11,8 +11,8 @@
 ## Capabilities（能做什么）
 
 1. 从邮件/工单/聊天文本中提取：代理商（ID 或名称）、订单号、争议金额、币种、诉求；
-2. 通过工具契约调用 `crm.get_partner` 把代理商解析为系统唯一实体；
-3. 工单缺订单号时，调用 `crm.list_orders_by_partner` 尝试消歧（恰好 1 笔候选才可自动补全）；
+2. 调用 EntityResolveSkill 把代理商解析为系统唯一实体；
+3. 工单缺订单号时，把候选消歧交给服务端状态机；恰好 1 笔候选才可自动补全；
 4. 输出标准化 Case 实体（entities + claim），并明确列出缺失字段。
 
 ## Cannot（不能做什么）
@@ -38,7 +38,9 @@
 
 ## Dependencies
 
-- 工具契约：`POST {{REVGUARD_API_BASE_URL}}/api/v1/tools/call`（crm.get_partner / crm.list_orders_by_partner）
+- CaseNormalizeSkill：`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/CaseNormalizeSkill/invoke`
+- EntityResolveSkill：`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/EntityResolveSkill/invoke`
+- 底层 CRM Tool 只由 Skill/状态机在服务端调用，不进入 Agent 工具清单。
 
 Bearer API key 由 AgentTeams Secret/Adapter 在传输层注入；禁止写入 SOUL、聊天消息或 Trace。
 - 下游：revguard-evidence

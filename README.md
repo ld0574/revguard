@@ -8,14 +8,17 @@ RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突�
 ## 已验证能力
 
 - 1 Manager + 9 个职能 Worker，共 10 Agent；Executor 与 Verifier 强制分离。
-- 16 个版本化 Skill，均有统一调用入口、允许身份、输入输出、失败处理与复用说明。
+- 16 个版本化 Skill，均有统一调用入口、允许身份、运行时 JSON Schema 输入/输出校验、
+  失败处理与复用说明。
 - 7 路独立 I/O 真实并行采集，政策查询在合同返回后按依赖继续执行。
 - L0 只读、L1 仅建不生效草稿、L2 人工审批后写入、L3 禁止自动执行。
 - HMAC-SHA256 能力令牌绑定案件、币种、总额、逐组件额度、用途、过期时间与唯一 JTI。
 - 验证失败时真实创建反向台账，再由 Verifier 独立确认恢复执行前净额。
-- 8 个端到端 Golden Case；105 个确定性评测场景；70 项单元、集成与 API 测试。
+- 8 个端到端 Golden Case；105 个确定性评测场景；77 项单元、集成与 API 测试。
 - 显式状态迁移白名单；SQLite WAL + keyset 分页；支持干净重置、重复 seed 与容器重启。
 - 真实 Matrix → AgentTeams Worker → RevGuard API 调用已用 request ID、receipt、Trace 与 Audit 四方对账。
+- 持久化 StageTask/StageResult 桥接绑定 case version、Skill、Worker actor 和输入快照；
+  支持补证后从 `WAITING_FOR_EVIDENCE` 恢复。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
 可直接审阅正常闭环报告 [`CASE-2026-0001.md`](docs/reports/CASE-2026-0001.md)
@@ -38,7 +41,7 @@ RevGuard 面向佣金少算、多算、政策版本错配、等级时点冲突�
 ```bash
 cd revguard
 make setup
-make verify-ci    # 静态检查 + 70 项测试 + 覆盖率门禁 + 105 场景评测
+make verify-ci    # 静态检查 + 77 项测试 + 覆盖率门禁 + 105 场景评测
 make demo         # 干净重置并运行 8 个 Golden Case
 ```
 
@@ -78,8 +81,10 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 - `POST /api/v1/cases/{id}/run`：运行确定性闭环；
 - `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
+- `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
+- `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
 - `POST /api/v1/skills/{skill}/invoke`：版本化 Skill 调用入口；
-- `POST /api/v1/tools/call`：最小权限 Tool Adapter 入口；
+- `POST /api/v1/tools/call`：服务端/遗留 Adapter 兼容入口，不进入 Agent 可见清单；
 - `GET /api/v1/cases?limit=50&cursor=...`：稳定 keyset 分页；
 - `GET /api/v1/cases/{id}/trace`：Trace 回放；
 - `GET /api/v1/cases/{id}/report`：审计报告。
@@ -107,6 +112,8 @@ revguard/
 │   ├── security.py       # RBAC、API Principal、签名能力令牌
 │   ├── skill_runtime.py  # 16 个 Skill 的版本化运行时
 │   ├── skills.py         # Skill 实现与注册中心
+│   ├── skill_schemas.py  # 16 个 Skill 的 JSON Schema 单一事实源
+│   ├── agent_bridge.py   # StageTask/StageResult 与 case version 绑定
 │   ├── state_machine.py  # 状态迁移白名单与终态不变量
 │   ├── orchestrator.py   # 阶段编排、审批、执行、验证与回滚
 │   ├── rule_engine.py    # Decimal 确定性规则引擎
@@ -115,11 +122,11 @@ revguard/
 │   ├── store.py          # 线程安全 SQLite Store
 │   ├── trace.py          # 可回放 Trace
 │   └── api.py            # FastAPI 服务
-├── agentteams/           # Worker SOUL、few-shot Playbook 与只读 API Skill
+├── agentteams/           # Worker SOUL、few-shot Playbook 与 skills-only API Adapter
 ├── data/golden_cases/    # 8 个端到端场景
 ├── docs/                 # API、Agent、Skill、部署、评测与报告
 ├── scripts/              # seed、demo、evaluation、AgentTeams setup
-└── tests/                # 70 项自动测试
+└── tests/                # 77 项自动测试
 ```
 
 ## MCP、RAG 与替代机制

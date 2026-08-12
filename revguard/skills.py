@@ -27,6 +27,7 @@ from .models import (CalculationResult, Evidence, PolicyDecision, RiskDecision,
 from .policy_matcher import resolve_tier_at_date, select_policy_version
 from .risk import classify_risk
 from .security import redact_secrets
+from .skill_schemas import SKILL_SCHEMAS
 from .trace import Tracer
 
 
@@ -506,90 +507,81 @@ def case_to_dataset(case: dict, shared_state: dict, verification: dict) -> dict:
 # Skill 注册表：元数据（设计文档 9.1 要求的清单字段）
 # ---------------------------------------------------------------------------
 
-def _meta(name, version, stype, desc, inputs, outputs, deps, failures,
-          security, reusability, func):
+def _meta(name, version, stype, desc, deps, failures, security, reusability, func):
+    contract = SKILL_SCHEMAS[name]
+    write_permission = security.get("write_permission")
     return {
         "name": name, "version": version, "type": stype, "description": desc,
-        "inputs": inputs, "outputs": outputs, "dependencies": deps,
+        "input_schema": contract["input"], "output_schema": contract["output"],
+        # 兼容现有文档/API 消费者；字段名从 Schema 派生，不再单独维护。
+        "inputs": list(contract["input"].get("properties", {})),
+        "outputs": list(contract["output"].get("properties", {})),
+        "dependencies": deps,
         "failure_handling": failures, "security": security,
+        "annotations": {
+            "readOnlyHint": bool(security.get("read_only")
+                                 or write_permission is False),
+            "destructiveHint": write_permission in {"commission_post", "commission_reverse"},
+            "openWorldHint": False,
+        },
         "reusability": reusability, "func": func,
     }
 
 
 SKILL_REGISTRY: dict[str, dict] = {m["name"]: m for m in [
     _meta("CaseNormalizeSkill", "1.0.0", "deterministic", "申诉/工单解析为标准化案件实体",
-          ["raw_case"], ["entities", "missing_fields", "claim"], [],
-          ["missing_entity"], {"read_only": True, "pii": True},
+          [], ["missing_entity"], {"read_only": True, "pii": True},
           ["commission_dispute", "ticket_intake"], case_normalize),
     _meta("EntityResolveSkill", "1.0.0", "tool", "解析代理商为唯一系统实体",
-          ["entities"], ["partner", "resolved_by"], ["crm.get_partner"],
-          ["not_found", "ambiguous"], {"read_only": True, "pii": True},
+          ["crm.get_partner"], ["not_found", "ambiguous"],
+          {"read_only": True, "pii": True},
           ["commission_dispute", "partner_lookup"], entity_resolve),
     _meta("EvidenceCollectSkill", "1.1.0", "tool", "跨系统真实并行证据采集与完整度评分",
-          ["partner", "order_id"], ["evidence", "evidence_gaps", "evidence_score"],
           ["crm.*", "contract.*", "policy.*", "finance.*"],
           ["tool_unavailable_retry", "evidence_gap"], {"read_only": True, "pii": False},
           ["commission_dispute", "batch_reconciliation", "audit"], collect_evidence),
     _meta("PolicyVersionMatchSkill", "1.0.0", "deterministic", "按业务时点匹配政策版本",
-          ["versions", "facts", "time_basis"],
-          ["policy_id", "policy_version", "excluded_versions", "conflicts"], [],
-          ["no_effective_version", "version_conflict"], {"read_only": True, "pii": False},
+          [], ["no_effective_version", "version_conflict"],
+          {"read_only": True, "pii": False},
           ["commission_dispute", "policy_simulation"], policy_version_match),
     _meta("CommissionCalculateSkill", "1.0.0", "deterministic", "规则引擎确定性佣金复算",
-          ["rule_dsl", "facts", "currency"],
-          ["total_commission", "components", "calculation_hash"], ["rule_engine"],
-          ["invalid_schema", "missing_rule", "conflicting_rule"],
+          ["rule_engine"], ["invalid_schema", "missing_rule", "conflicting_rule"],
           {"read_only": True, "pii": False},
           ["commission_dispute", "policy_simulation", "batch_reconciliation"], commission_calculate),
     _meta("DifferenceExplainSkill", "1.0.0", "deterministic", "差异解释与根因判定",
-          ["calculation", "ledger_entries", "matched_policy_version"],
-          ["diffs", "total_delta", "root_causes"], [],
-          ["evidence_conflict"], {"read_only": True, "pii": False},
+          [], ["evidence_conflict"], {"read_only": True, "pii": False},
           ["commission_dispute", "audit"], difference_explain),
     _meta("RiskClassifySkill", "1.0.0", "policy", "L0-L3 风险分级与审批路由判定",
-          ["adjustment_amount", "evidence_score", "action_type"],
-          ["risk_level", "approval_required", "approver_role", "reason_codes"], [],
-          ["unknown_policy", "missing_threshold"], {"write_permission": False},
+          [], ["unknown_policy", "missing_threshold"], {"write_permission": False},
           ["commission_dispute", "batch_reconciliation", "any_write_action"], risk_classify),
     _meta("ApprovalRouteSkill", "1.0.0", "tool", "创建审批单并路由审批角色",
-          ["risk", "amount", "component_quota", "action_summary"], ["approval"],
           ["workflow.create_approval"], ["workflow_unavailable"],
           {"write_permission": "approval"}, ["any_approval_needed_case"], approval_route),
     _meta("PermissionCheckSkill", "1.0.0", "policy", "执行前权限与审批凭证校验",
-          ["actor", "risk", "approval"], ["pass_or_raise"], [],
-          ["auth_failed", "missing_token"], {"write_permission": False},
+          [], ["auth_failed", "missing_token"], {"write_permission": False},
           ["any_write_action"], permission_check),
     _meta("IdempotencyGuardSkill", "1.0.0", "policy", "幂等键冲突检查",
-          ["idempotency_key"], ["existing_or_none"], ["store"],
-          ["idempotency_conflict"], {"write_permission": False},
+          ["store"], ["idempotency_conflict"], {"write_permission": False},
           ["any_write_action"], idempotency_guard),
     _meta("AdjustmentDraftSkill", "1.0.0", "tool", "创建不生效的佣金调整草稿",
-          ["order_id", "component", "delta"], ["draft"],
           ["commission.create_adjustment_draft"], ["tool_unavailable"],
           {"write_permission": "commission_draft"}, ["commission_dispute"], adjustment_draft),
     _meta("LedgerAdjustSkill", "2.0.0", "tool", "提交调整写入台账（签名审批凭证+幂等）",
-          ["action_id", "approval_token", "idempotency_key"],
-          ["execution", "snapshots", "rollback_token"],
           ["commission.submit_adjustment"], ["auth_failed", "idempotency_conflict"],
           {"write_permission": "commission_post"}, ["commission_dispute"], ledger_adjust),
     _meta("LedgerReverseSkill", "1.0.0", "tool", "验证失败后以一次性能力令牌反向冲销",
-          ["ledger_id", "rollback_token", "idempotency_key"],
-          ["reversal_entry", "reversed_entry"],
           ["commission.reverse_adjustment"],
           ["auth_failed", "token_replayed", "idempotency_conflict"],
           {"write_permission": "commission_reverse"},
           ["commission_dispute", "any_reversible_write"], ledger_reverse),
     _meta("PostActionVerifySkill", "1.0.0", "tool", "独立查询验证执行结果",
-          ["order_id", "expected_components"], ["verification"],
           ["finance.get_commission_ledger"], ["tool_unavailable"],
           {"read_only": True}, ["any_executed_case"], post_action_verify),
     _meta("PostRollbackVerifySkill", "1.0.0", "tool", "独立确认回滚后恢复执行前净额",
-          ["order_id", "expected_snapshot"], ["rollback_verification"],
           ["finance.get_commission_ledger"], ["tool_unavailable", "rollback_variance"],
           {"read_only": True}, ["any_reversible_write"], post_rollback_verify),
     _meta("CaseToDatasetSkill", "1.0.0", "deterministic", "案件轨迹沉淀为评测样本",
-          ["case", "shared_state", "verification"], ["dataset_record"], [],
-          ["incomplete_trace"], {"read_only": False},
+          [], ["incomplete_trace"], {"read_only": False},
           ["evaluation", "knowledge_base"], case_to_dataset),
 ]}
 

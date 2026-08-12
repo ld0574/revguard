@@ -17,6 +17,7 @@ services:
       REVGUARD_APPROVAL_SIGNING_KEY: "${REVGUARD_APPROVAL_SIGNING_KEY:-revguard-demo-signing-key-change-before-production-2026}"
       REVGUARD_API_KEYS_JSON: "${REVGUARD_API_KEYS_JSON:-}"
       REVGUARD_ALLOW_INSECURE_DEMO_KEYS: "${REVGUARD_ALLOW_INSECURE_DEMO_KEYS:-true}" # 本地默认可一键运行；正式环境在 .env 中设为 false
+      REVGUARD_ENABLE_LEGACY_TOOL_API: "${REVGUARD_ENABLE_LEGACY_TOOL_API:-false}" # 新版 Worker 只暴露 Skill；旧证据复放时显式开启
       REVGUARD_RESET_ON_START: "${REVGUARD_RESET_ON_START:-false}"
     read_only: true
     tmpfs:

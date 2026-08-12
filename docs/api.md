@@ -27,6 +27,7 @@ Principal 映射；缺失时 API fail-closed，不会退回匿名模式。
 | `REVGUARD_APPROVAL_SIGNING_KEY` | 无 | 至少 32 字节；缺失时拒绝启动 |
 | `REVGUARD_API_KEYS_JSON` | 无 | API key → actor/roles/scopes |
 | `REVGUARD_ALLOW_INSECURE_DEMO_KEYS` | `false` | 仅本地评测可设为 `true` |
+| `REVGUARD_ENABLE_LEGACY_TOOL_API` | `false` | 仅复放旧 `/tools/call` 证据链时显式开启 |
 | `REVGUARD_DEMO_PRINCIPALS_PATH` | `config/demo_principals.json` | 显式启用 Demo 模式时读取；生产不要启用 |
 
 ## 身份与角色
@@ -39,8 +40,9 @@ Authorization: Bearer <api-key>
 |---|---|
 | `viewer` | 案件、报告、Trace、Skill Catalog 只读 |
 | `operator` | 创建并运行案件 |
+| `dispatcher` | 按当前 Case 状态派发绑定 Skill/Worker/case version 的 StageTask |
 | `approver` | 对等待审批的案件作出决定 |
-| `worker` | 调用与自身 actor 匹配的 Skill/Tool |
+| `worker` | 调用与自身 actor 匹配的 Skill；底层 Tool 不进入 Agent 可见清单 |
 
 Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 与 actor 固有权限中。
 即使调用者发送额外 JSON 字段 `actor` 或 `scope`，Pydantic 也会以 422 拒绝。
@@ -80,6 +82,44 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 超额、过期或伪造均返回
 `AUTH_FAILED`。
 
+### `POST /api/v1/cases/{case_id}/evidence/resume`
+
+需要 `operator`，且案件必须处于 `WAITING_FOR_EVIDENCE`。可补充
+`partner_id`、`partner_name`、`order_id`、`contract_id` 或 `claim`；服务端记录
+`EVIDENCE_SUPPLIED` 后从合法的 `WAITING_FOR_EVIDENCE → NORMALIZING` 迁移重新运行。
+
+```json
+{"order_id": "EZ202607101"}
+```
+
+### Agent StageTask 桥接
+
+Orchestrator 使用 `dispatcher` Principal 派发：
+
+```http
+POST /api/v1/cases/CASE-2026-0001/agent-tasks
+X-AgentTeams-Message-ID: $matrix-event-id
+X-Request-ID: REQ-DISPATCH-001
+```
+
+```json
+{
+  "skill_name": "CaseNormalizeSkill",
+  "input": {"raw_case": {"partner_id": "AGT-10001", "order_id": "EZ202608001"}}
+}
+```
+
+服务端返回 `task_id`、`assigned_actor`、`case_status`、`case_version` 和 `PENDING`。
+Worker 必须使用完全相同的输入调用 Skill，并增加：
+
+```http
+X-RevGuard-Task-ID: TASK-...
+```
+
+成功后任务原子变为 `SUCCEEDED`，结果和 `skill_receipt` 存入 StageResult。错 Worker、错
+Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒绝。任务可通过
+`GET /api/v1/cases/{case_id}/agent-tasks` 查询；Worker 只能看分配给自己的任务。
+
 ### 只读接口
 
 - `GET /api/v1/cases?limit=50&cursor=...`
@@ -101,8 +141,9 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 
 ### `GET /api/v1/skills`
 
-返回 16 个 Skill 的版本、输入输出、依赖、失败处理、安全边界、复用场景、允许 actor
-及调用入口。Catalog 与 `docs/skills.md` 同源。
+返回 16 个 Skill 的版本、标准 `input_schema` / `output_schema`、MCP-compatible annotations、
+依赖、失败处理、安全边界、复用场景、允许 actor 及调用入口。Catalog、运行时校验与
+`docs/skills.md` 同源。
 
 ### `POST /api/v1/skills/{skill_name}/invoke`
 
@@ -130,13 +171,18 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 }
 ```
 
-每次调用写入 Skill span 与 `SKILL_INVOKED` 审计事件。
+输入调用前、输出返回前均执行 JSON Schema 校验。每次调用写入 Skill span 与
+`SKILL_INVOKED` 审计事件；AgentTeams 调用可携带 `X-AgentTeams-Message-ID`、
+`X-Request-ID`、`traceparent` 和 `X-RevGuard-Task-ID`，响应头返回
+`X-Request-ID` 与 `X-Skill-Receipt`。
 
-## Tool Adapter
+## 服务端 / 遗留 Tool Adapter
 
 ### `POST /api/v1/tools/call`
 
-需要 `worker`。身份和 scope 不在请求体中。跨 AgentTeams 调用还应携带：
+该端点为内部状态机和已有证据链保留兼容，不进入新版 Agent skills-only Adapter 的可见
+清单，且默认返回 410；只有显式设置 `REVGUARD_ENABLE_LEGACY_TOOL_API=true` 才启用。
+身份和 scope 不在请求体中；遗留跨 AgentTeams 调用还应携带：
 
 ```http
 X-AgentTeams-Message-ID: $matrix-event-id

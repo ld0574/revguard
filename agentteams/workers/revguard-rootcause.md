@@ -41,7 +41,7 @@
 
 ## Dependencies
 
-- DifferenceExplainSkill
+- DifferenceExplainSkill（`POST {{REVGUARD_API_BASE_URL}}/api/v1/skills/DifferenceExplainSkill/invoke`）
 - 下游：revguard-risk
 
 ## Trace

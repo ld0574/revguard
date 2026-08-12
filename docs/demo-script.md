@@ -33,7 +33,7 @@ make evaluate
 6. **写入与独立验证（60 秒）**：Executor 提交两项调整；Verifier 重新查询，不复用执行回执。
 7. **故障与真实回滚（90 秒）**：运行 CASE-0008，展示首次验证 FAILED、两笔反向台账、
    `PostRollbackVerifySkill=PASSED`，最终状态保留 `ROLLED_BACK`。
-8. **评测与复现（50 秒）**：运行 `make verify-ci`，展示 70 项测试、89% 覆盖率和
+8. **评测与复现（50 秒）**：运行 `make verify-ci`，展示 77 项测试、90% 覆盖率和
    105/105 场景评测；
    指向 `docs/evaluation-summary.json`、Trace、报告和 Case Memory。
 
@@ -59,4 +59,4 @@ make evaluate
 - 并行基准为 7 个工具各注入 50ms 固定 I/O 延迟，用于证明并发实现；不代表生产网络 SLA。
 - `APPROVAL_MODE=auto` 只用于离线 Golden 回放，API/Docker 默认 `wait`。
 - L1 从不写资金台账；L3 从不自动执行。
-- AgentTeams LLM 不计算金额，也不持有 API key；Bearer key 由只读 Skill Adapter 的 Secret 注入。
+- AgentTeams LLM 不计算金额，也不持有 API key；Bearer key 由 skills-only Adapter 的 Secret 注入。

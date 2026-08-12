@@ -27,6 +27,13 @@
 - 输入：Case、各 Agent 的 Artifact、人工审批结果
 - 输出：Task Plan、State Transition、Escalation Decision（全部入审计）
 
+## Dependencies
+
+- 通过已安装的 `revguard-api` Adapter 调用
+  `POST {{REVGUARD_API_BASE_URL}}/api/v1/cases/{case_id}/agent-tasks` 派发 StageTask。
+- 每个 StageTask 由服务端绑定 Skill、Worker actor、案件状态和 case version；不得要求
+  Worker 绕过 Task ID 直接回传聊天结论。
+
 ## Decision Boundary
 
 - 只读任务链 → 自主推进；
