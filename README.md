@@ -149,8 +149,10 @@ revguard/
 - 金额与政策判断依赖精确业务事实，不采用语义检索；上下文由 Shared Case State、
   Case Memory 与 Trace 三层承载。后续仅在政策条款自然语言检索等适合场景引入 RAG。
 
-## 开源准备
+## 开源状态
 
-Apache-2.0 LICENSE、依赖/许可证边界、OpenAPI、6 条 ADR、安全工作流和发布材料均已准备；
-当前私有比赛仓库尚未表述为公开发布。见 [`LICENSE`](LICENSE)、
+本项目已作为公开仓库发布，采用 Apache-2.0 LICENSE。依赖/许可证边界、OpenAPI、6 条 ADR、
+安全工作流和发布材料均已纳入仓库。见 [`LICENSE`](LICENSE)、
 [`docs/dependencies.md`](docs/dependencies.md) 与 [`docs/adr/`](docs/adr/README.md)。
+
+公开地址：<https://github.com/ld0574/revguard>。
