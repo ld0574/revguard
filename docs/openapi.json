@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RevGuard API",
-    "description": "企业渠道佣金与结算异常多 Agent 协同平台",
+    "description": "面向企业渠道佣金结算异常的多智能体治理平台",
     "version": "0.2.0"
   },
   "paths": {

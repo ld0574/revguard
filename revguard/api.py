@@ -83,7 +83,7 @@ if ENABLE_LEGACY_TOOL_API:
     )
 
 app = FastAPI(title="RevGuard API", version="0.2.0",
-              description="企业渠道佣金与结算异常多 Agent 协同平台")
+              description="面向企业渠道佣金结算异常的多智能体治理平台")
 
 # Demo 单进程即可：共享一份 Store / Mock 系统状态
 store = Store(DB_PATH)
