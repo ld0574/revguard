@@ -53,7 +53,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 - HMAC-SHA256 能力令牌把案件、币种、总额、逐组件额度、用途、有效期和唯一编号绑定在一起。
 - 执行后验证失败时，系统会创建反向台账，再由 Verifier 独立确认金额恢复到执行前状态。
 - 8 个端到端 Golden Case；105 个确定性场景（8 Golden + 80 风险 + 8 政策 + 9 安全）；
-  83 项单元、集成与 API 测试，实测 91% 行覆盖率，门禁为 90%。
+  85 项单元、集成与 API 测试，实测 91% 行覆盖率，门禁为 90%。
 - 19 状态、24 条普通迁移的显式白名单；SQLite WAL + keyset 分页；支持干净重置、
   重复 seed 与容器重启。
 - 真实 Matrix → Orchestrator StageTask → Intake Skill 已用 message/request/task/receipt ID、
@@ -85,7 +85,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 ```bash
 cd revguard
 make setup
-make verify-ci    # 固定 Ruff + 83 项测试 + 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
+make verify-ci    # 固定 Ruff + 85 项测试 + 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
 make security     # pip-audit + Bandit；CI 另执行 Trivy 文件系统与镜像扫描
 make demo         # 干净重置并运行 8 个 Golden Case
 ```
@@ -177,7 +177,7 @@ revguard/
 ├── data/golden_cases/    # 8 个端到端场景
 ├── docs/                 # API、Agent、Skill、部署、评测与报告
 ├── scripts/              # seed、demo、evaluation、AgentTeams setup
-└── tests/                # 83 项自动测试
+└── tests/                # 85 项自动测试
 ```
 
 ## MCP、RAG 与替代机制

@@ -32,6 +32,7 @@ os.environ["REVGUARD_ALLOW_INSECURE_DEMO_KEYS"] = "true"
 os.environ["REVGUARD_APPROVAL_SIGNING_KEY"] = "revguard-api-test-signing-key-at-least-32-bytes"
 os.environ["REVGUARD_GATEWAY_STATE_PATH"] = str(Path(_TMP) / "gateway.json")
 os.environ["REVGUARD_ENABLE_LEGACY_TOOL_API"] = "true"
+os.environ["REVGUARD_ENABLE_RECORDING_UI"] = "true"
 
 try:
     import httpx
@@ -169,6 +170,29 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn(self.case_id, resp.json()["markdown"])
         self.assertNotIn(approval_token, resp.json()["markdown"])
+
+    def test_06a_dashboard_projection_is_complete_and_sanitized(self):
+        resp = self.client.get(
+            f"/api/v1/cases/{self.case_id}/dashboard", headers=self.viewer
+        )
+        self.assertEqual(resp.status_code, 200, resp.text)
+        body = resp.json()
+        self.assertEqual(body["case"]["case_id"], self.case_id)
+        self.assertEqual(body["disclosure"]["business_data"], "synthetic")
+        self.assertEqual(body["disclosure"]["ledger"], "simulated")
+        self.assertGreater(len(body["evidence"]), 0)
+        self.assertGreater(body["trace"]["span_count"], 0)
+        self.assertTrue(body["report_available"])
+        self.assertTrue(body["approval"]["approval_token_ref"].startswith("sha256:"))
+        raw_approval_token = store.get_approval(self.case_id)["approval_token"]
+        raw_rollback_tokens = [
+            item.get("rollback_token") for item in store.list_executions(self.case_id)
+            if item.get("rollback_token")
+        ]
+        serialized = json.dumps(body, ensure_ascii=False)
+        self.assertNotIn(raw_approval_token, serialized)
+        for token in raw_rollback_tokens:
+            self.assertNotIn(token, serialized)
 
     def test_07_not_found(self):
         self.assertEqual(self.client.get("/api/v1/cases/CASE-NOPE", headers=self.viewer).status_code, 404)
@@ -438,6 +462,25 @@ class TestApiSmoke(unittest.TestCase):
         event = next(item for item in store.list_audit(case_id)
                      if item["event"] == "CASE_RUN_FAILED")
         self.assertIn("RuntimeError", event["detail"])
+
+    def test_15_recording_reset_is_explicit_and_role_guarded(self):
+        forbidden = self.client.post("/api/v1/demo/reset", headers=self.viewer)
+        self.assertEqual(forbidden.status_code, 403)
+
+        reset = self.client.post("/api/v1/demo/reset", headers=self.operator)
+        self.assertEqual(reset.status_code, 200, reset.text)
+        snapshot = reset.json()["snapshot"]
+        self.assertEqual(snapshot["case"]["case_id"], "CASE-2026-0008")
+        self.assertEqual(snapshot["case"]["status"], CaseStatus.CREATED.value)
+        self.assertEqual(snapshot["trace"]["span_count"], 0)
+
+        old_recording = api_module.ENABLE_RECORDING_UI
+        try:
+            api_module.ENABLE_RECORDING_UI = False
+            disabled = self.client.post("/api/v1/demo/reset", headers=self.operator)
+            self.assertEqual(disabled.status_code, 404)
+        finally:
+            api_module.ENABLE_RECORDING_UI = old_recording
 
 
 if __name__ == "__main__":

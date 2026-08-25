@@ -8,6 +8,9 @@ __pycache__/
 # 运行时产物（可由 seed_demo.py / run_demo.py 重新生成）
 data/revguard.db
 data/revguard.db-journal
+data/revguard.db-shm
+data/revguard.db-wal
+data/revguard.gateway.json
 data/outputs/
 docs/reports/CASE-*.md
 !docs/reports/CASE-2026-0001.md

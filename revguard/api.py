@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Literal
 
 from .agent_bridge import create_agent_task, validate_task_invocation
+from .demo_dashboard import build_dashboard_snapshot
 from .mocks import ToolGateway
 from .models import Case, CaseStatus, TaskStatus, new_id
 from .orchestrator import Orchestrator
@@ -57,6 +58,9 @@ ALLOW_INSECURE_DEMO_KEYS = os.getenv("REVGUARD_ALLOW_INSECURE_DEMO_KEYS", "false
 ENABLE_LEGACY_TOOL_API = os.getenv(
     "REVGUARD_ENABLE_LEGACY_TOOL_API", "false"
 ).lower() == "true"
+ENABLE_RECORDING_UI = os.getenv(
+    "REVGUARD_ENABLE_RECORDING_UI", "false"
+).lower() == "true"
 LEGACY_EVIDENCE_ACTOR = "revguard-evidence"
 DEMO_PRINCIPALS_PATH = Path(os.getenv(
     "REVGUARD_DEMO_PRINCIPALS_PATH", str(ROOT / "config" / "demo_principals.json")
@@ -87,9 +91,19 @@ app = FastAPI(title="RevGuard API", version="0.2.0",
 
 # Demo 单进程即可：共享一份 Store / Mock 系统状态
 store = Store(DB_PATH)
-gateway = ToolGateway(FIXTURES, finance_fail_times=FINANCE_FAIL_TIMES,
-                      signing_key=SIGNING_KEY, state_path=GATEWAY_STATE_PATH,
-                      verification_tamper_amount=VERIFICATION_TAMPER_AMOUNT)
+
+
+def _new_gateway() -> ToolGateway:
+    return ToolGateway(
+        FIXTURES,
+        finance_fail_times=FINANCE_FAIL_TIMES,
+        signing_key=SIGNING_KEY,
+        state_path=GATEWAY_STATE_PATH,
+        verification_tamper_amount=VERIFICATION_TAMPER_AMOUNT,
+    )
+
+
+gateway = _new_gateway()
 
 
 def authenticate(authorization: str | None = Header(default=None)) -> ApiPrincipal:
@@ -206,6 +220,47 @@ def get_case(case_id: str, _principal: ApiPrincipal = Depends(require_roles("vie
     case["evidence"] = store.list_evidence(case_id)
     case["audit_events"] = store.list_audit(case_id)
     return case
+
+
+@app.get("/api/v1/cases/{case_id}/dashboard")
+def get_case_dashboard(
+    case_id: str,
+    _principal: ApiPrincipal = Depends(require_roles("viewer")),
+):
+    """Sanitized projection for the recording cockpit and finance review UI."""
+    snapshot = build_dashboard_snapshot(store, case_id, report_dir=REPORT_DIR)
+    if snapshot is None:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    return snapshot
+
+
+@app.post("/api/v1/demo/reset")
+def reset_recording_demo(
+    principal: ApiPrincipal = Depends(require_roles("operator")),
+):
+    """Reset deterministic fixtures for another local recording take.
+
+    This endpoint is absent by default and can only be enabled explicitly with
+    ``REVGUARD_ENABLE_RECORDING_UI=true``.
+    """
+    if not ENABLE_RECORDING_UI:
+        raise HTTPException(404, "录制模式未启用")
+    from scripts.seed_demo import seed
+
+    global gateway
+    state_path = Path(GATEWAY_STATE_PATH)
+    if state_path.exists() and state_path.is_file():
+        state_path.unlink()
+    seed(DB_PATH, reset=True, quiet=True)
+    gateway = _new_gateway()
+    store.audit("CASE-2026-0008", principal.actor, "DEMO_RESET", {
+        "synthetic_business_data": True,
+        "verification_tamper_amount": VERIFICATION_TAMPER_AMOUNT,
+    })
+    snapshot = build_dashboard_snapshot(
+        store, "CASE-2026-0008", report_dir=REPORT_DIR
+    )
+    return {"case_id": "CASE-2026-0008", "snapshot": snapshot}
 
 
 @app.post("/api/v1/cases/{case_id}/run")
@@ -559,3 +614,15 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
 @app.get("/api/v1/health")
 def health():
     return {"status": "ok", "cases": store.count_cases()}
+
+
+if ENABLE_RECORDING_UI:
+    try:
+        from fastapi.staticfiles import StaticFiles
+    except ImportError:  # pragma: no cover - FastAPI already guards this path
+        StaticFiles = None
+    ui_dir = ROOT / "demo-ui" / "dist" / "client"
+    if StaticFiles is not None and ui_dir.exists():
+        app.mount("/demo", StaticFiles(directory=ui_dir, html=True), name="recording-ui")
+    else:
+        LOGGER.warning("录制 WebUI 尚未构建：%s", ui_dir)
