@@ -1,0 +1,28 @@
+version: 1
+source_endpoint: /api/v1/ops/metrics/prometheus
+rules:
+  - name: RevGuardAuditChainBroken
+    expression: revguard_audit_chain_valid < 1
+    for: 0m
+    severity: critical
+    action: 立即冻结写入，保留数据库现场并启动安全事件流程
+  - name: RevGuardTraceErrorBurst
+    expression: increase(revguard_trace_error_spans_total[5m]) >= 3
+    for: 2m
+    severity: high
+    action: 暂停灰度扩容，核对 Worker、Skill 和下游 Tool 错误类型
+  - name: RevGuardFinalTaskFailure
+    expression: revguard_agent_tasks_by_status{status="FAILED_FINAL"} > 0
+    for: 5m
+    severity: high
+    action: 调度员确认是否重派，不得自动跳过失败阶段
+  - name: RevGuardRollbackBacklog
+    expression: revguard_cases_by_status{status="ROLLBACK_REQUIRED"} > 0
+    for: 5m
+    severity: critical
+    action: 冻结相同资金通道新写入，执行冲销与独立复核
+  - name: RevGuardApprovalBacklog
+    expression: revguard_cases_by_status{status="WAITING_FOR_APPROVAL"} >= 20
+    for: 15m
+    severity: warning
+    action: 通知财务审批组增加排班，保持写入门禁不变

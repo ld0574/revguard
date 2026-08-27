@@ -53,10 +53,24 @@ revguard-orchestrator ◄── revguard-knowledge ◄── revguard-verifier �
 决策全文见 [`adr/`](adr/README.md)。当前 Demo 的 Normalize 和 Explain 也是确定性实现，
 不将模型路线图写成已落地能力。
 
+## 上下文、冲突与恢复协议
+
+| 问题 | 服务端裁决 |
+|---|---|
+| 上下文怎样传 | Orchestrator 持久化 StageTask，绑定 case ID、case status、完整 case version 哈希、Skill、唯一 Worker actor 和 JSON-Schema 校验后的输入快照。Worker 不从聊天历史自由推断资金操作参数。 |
+| 政策冲突 | 重叠生效版本会被显式记入 `unresolved_conflicts`，系统可为说明性输出选取最新生效版本，但风险一律升为 L3，禁止自动写入。 |
+| 金额冲突 | 一律重新通过 Decimal 规则引擎计算，并对照台账逐组件输出差异。无法归因时不允许 Agent 投票，而是升级人工。 |
+| 谁能批准 | 只有独立 `approver` Principal 能决策；Risk 只路由，Executor 只验签后写，Verifier 不拥有写 scope。 |
+| 证据不足 | 案件挂起在 `WAITING_FOR_EVIDENCE`，记录 gap；补证后仅能经白名单迁移回 `NORMALIZING`。 |
+| 重复写 | 写工具同时校验签名能力令牌、幂等键、案件/币种/金额/组件限额和一次性 JTI。重放返回已有结果或显式冲突，不再写第二笔。 |
+| Worker 失败/离线 | 每次 attempt 的 StageTask 终态与 StageResult 同事务提交。retryable 可原任务重试；final/retryable 任务也可由 dispatcher 显式重派，旧新 task ID 双向留痕。 |
+| 人工驳回 | 不执行写入，按 `REJECTED → KNOWLEDGE_ARCHIVED → CLOSED` 生成 Trace、报告与 Case Memory。 |
+| 写后异常 | Verifier 独立重查来源台账；差额非零则使用一次性 rollback token 反向冲销，再由 Verifier 复核，失败则保留 FAILED/现场。 |
+
 ## Trace 约定
 
 - API 从 Bearer Principal 派生 `actor` + 最小 `scope`，请求体不得自报；每次调用产生 `tool_receipt`；
-- 状态迁移、重试、升级、审批、执行、验证全部写入 `audit_events`（SQLite）与 `data/outputs/traces/CASE-*.json`；
+- 状态迁移、重试、升级、审批、执行、验证全部写入 `audit_events`；本地为 SQLite，正式 PolarDB 由库层 append-only 哈希链约束，并导出 `data/outputs/traces/CASE-*.json`；
 - 复算输入保存 facts 快照与 `calculation_hash`（sha256），同输入同规则必得同结果，评委可逐笔复算。
 - JSON Trace 同时导出保守的 OpenTelemetry GenAI 属性映射；内部 kind 继续保留，不虚构模型、
   Token 或供应商字段。详见 [`observability.md`](observability.md)。

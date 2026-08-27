@@ -6,13 +6,15 @@
 |---|---:|---|---|---|
 | FastAPI | 0.141.1 | HTTP API 与 OpenAPI | MIT | 可替换为任意 ASGI/HTTP 层，核心闭环不依赖 |
 | Uvicorn | 0.52.1 | ASGI Server | BSD-3-Clause | 可替换为 Hypercorn/Gunicorn Worker |
+| psycopg / psycopg-binary | 3.3.4 | PostgreSQL/PolarDB 协议、JSONB/NUMERIC 类型适配 | LGPL-3.0 | 仅正式 DB 路径；本地 SQLite Demo 不调用 |
+| psycopg-pool | 3.3.1 | primary/read endpoint 连接池 | LGPL-3.0 | 可替换为部署层连接池，但需保留事务语义 |
 | httpx | 0.28.1 | 仅开发期 ASGI API 测试 | BSD-3-Clause | 不进入核心运行路径 |
 | Coverage.py | 7.15.2 | 90% 行覆盖率门禁 | Apache-2.0 | 仅开发/CI |
 | Ruff | 0.15.22 | 固定规则静态检查 | MIT | 仅开发/CI |
 | pip-audit | 2.10.1 | 锁定依赖漏洞审计 | Apache-2.0 | 仅开发/CI |
 | Bandit | 1.9.4 | Python 安全静态扫描 | Apache-2.0 | 仅开发/CI |
 
-核心规则、政策匹配、风险、权限、编排、评测、SQLite 和 Mock Adapter 均使用 Python 标准库。
+核心规则、政策匹配、风险、权限、编排、评测、SQLite 和 Mock Adapter 均使用 Python 标准库；只有 PostgreSQL/PolarDB 路径需要 psycopg。
 
 ## 传递依赖
 
@@ -25,7 +27,7 @@ httptools、uvloop、watchfiles、websockets、PyYAML 等。构建镜像从 lock
 - AgentTeams 是多 Agent 协同设计基点；仓库不包含其源码或镜像。
 - Demo 默认使用本地 Fixture 与 ToolGateway，不调用商业 API，不产生模型费用。
 - AgentTeams 现场路径所用 LLM/网关由部署方选择，必须另行披露模型、版本、费用与数据边界。
-- 当前无 MCP Server、无向量数据库、无 RAG、无云数据库强依赖；迁移路径见 `README.md`。
+- 当前无 MCP Server、无 RAG；PolarDB 为正式存储适配但仍保留 SQLite 本地复现。pgvector 为独立可选迁移，未达规模门槛前不引入运行时依赖。
 
 ## 数据与授权
 

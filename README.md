@@ -53,15 +53,21 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 - HMAC-SHA256 能力令牌把案件、币种、总额、逐组件额度、用途、有效期和唯一编号绑定在一起。
 - 执行后验证失败时，系统会创建反向台账，再由 Verifier 独立确认金额恢复到执行前状态。
 - 8 个端到端 Golden Case；105 个确定性场景（8 Golden + 80 风险 + 8 政策 + 9 安全）；
-  85 项单元、集成与 API 测试，实测 91% 行覆盖率，门禁为 90%。
+  95 项单元、集成与 API 测试（默认执行 94，1 项需一次性 PostgreSQL），核心路径实测 91% 行覆盖率，门禁为 90%。
 - 19 状态、24 条普通迁移的显式白名单；SQLite WAL + keyset 分页；支持干净重置、
   重复 seed 与容器重启。
 - 真实 Matrix → Orchestrator StageTask → Intake Skill 已用 message/request/task/receipt ID、
   Trace 与 Audit 对账；旧 Matrix → Evidence → Tool 链保留为历史证据。
 - 持久化 StageTask/StageResult 桥接绑定 case version、Skill、Worker actor 和输入快照；
-  支持补证后从 `WAITING_FOR_EVIDENCE` 恢复。
+  Task 终态与每次 StageResult 同事务落库，支持失败重试、显式重派和 lineage。
+- 正式持久化可切换到 PostgreSQL/PolarDB：金额使用 `NUMERIC(18,2)`，审计事件由
+  DB trigger 强制 append-only 哈希链，列表/Trace/Metrics 可分流到只读端点。
+- 可查询 JSON/Prometheus Metrics、JSON 访问日志、liveness/readiness、灰度/回滚策略、
+  告警规则、容量探针和 PolarDB PITR 证据捕获脚本。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
+评委意见的逐条实施状态见 [`docs/reviewer-remediation.md`](docs/reviewer-remediation.md)；
+合成价值数据只验证指标口径，文件内强制标记“不得作为企业真实收益”。
 可直接审阅正常闭环报告 [`CASE-2026-0001.md`](docs/reports/CASE-2026-0001.md)
 与故障回滚报告 [`CASE-2026-0008.md`](docs/reports/CASE-2026-0008.md)；完整 Trace 可由
 `make demo-reset` 同步重建。
@@ -85,7 +91,9 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 ```bash
 cd revguard
 make setup
-make verify-ci    # 固定 Ruff + 85 项测试 + 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
+make verify-ci    # 固定 Ruff + 95 项测试（1 项 PG 条件跳过）+ 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
+make value-evaluate # 运行五类业务价值指标口径（当前为明确标注的合成数据）
+make capacity     # 本地合成容量回归，不冒充 PolarDB 生产 SLO
 make security     # pip-audit + Bandit；CI 另执行 Trivy 文件系统与镜像扫描
 make demo         # 干净重置并运行 8 个 Golden Case
 ```
@@ -100,6 +108,9 @@ make demo         # 干净重置并运行 8 个 Golden Case
 
 核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
+90% 行覆盖率门禁覆盖默认可复现的内核与 SQLite/API 路径；
+`postgres_store.py` 需真实 PostgreSQL 事务/触发器，不纳入无 DB 的行覆盖率分母，改由
+`make postgres-integration REVGUARD_TEST_POSTGRES_DSN='...'` 在一次性数据库上单独门禁。
 
 ## API 与身份边界
 
@@ -134,8 +145,15 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - `GET /api/v1/cases?limit=50&cursor=...`：稳定 keyset 分页；
 - `GET /api/v1/cases/{id}/trace`：Trace 回放；
 - `GET /api/v1/cases/{id}/report`：审计报告。
+- `GET /api/v1/agent-tasks/{task_id}/results`：查询每次 StageResult；
+- `POST /api/v1/agent-tasks/{task_id}/reassign`：受权调度员重派失败任务；
+- `GET /api/v1/ops/metrics[ /prometheus]`：可查询运营与审计链指标。
+- `GET /api/v1/ops/evidence`：录制 WebUI 使用的工程门禁、价值口径与外部验收状态。
 
 完整示例见 [`docs/api.md`](docs/api.md)。
+正式 PolarDB 迁移、主/只读路由、pgvector 决策门槛和 PITR 验收见
+[`docs/polardb-production.md`](docs/polardb-production.md)；发布与运维见
+[`docs/operations.md`](docs/operations.md)。
 
 安全门禁与 2026-08-12 实扫处置记录见
 [`docs/security-scan-2026-08-12.md`](docs/security-scan-2026-08-12.md)。
@@ -152,7 +170,7 @@ curl http://127.0.0.1:19000/api/v1/health
 与 AgentTeams 同机时使用 `docker-compose.agentteams.yml` 把 API 接入 Worker 网络，详见
 [`docs/deployment.md`](docs/deployment.md)。
 
-容器使用非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
+本地 Compose 仍使用 SQLite Demo Store；正式环境配置 `REVGUARD_DATABASE_URL`后切换为 PolarDB Store。容器使用非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
 设置 `REVGUARD_RESET_ON_START=true` 可在评审前原子清空全部 Demo 状态再 seed；默认保留状态。
 
 ## 目录结构
@@ -170,14 +188,16 @@ revguard/
 │   ├── rule_engine.py    # Decimal 确定性规则引擎
 │   ├── policy_matcher.py # 严格日期解析与政策 Time Travel
 │   ├── mocks.py          # 最小权限 ToolGateway 与持久化 Mock
-│   ├── store.py          # 线程安全 SQLite Store
+  │   ├── store.py          # 本地 SQLite Store + 存储工厂
+  │   ├── postgres_store.py # PostgreSQL/PolarDB 主/只读连接池适配
 │   ├── trace.py          # 可回放 Trace
 │   └── api.py            # FastAPI 服务
 ├── agentteams/           # Worker SOUL、few-shot Playbook 与 skills-only API Adapter
 ├── data/golden_cases/    # 8 个端到端场景
-├── docs/                 # API、Agent、Skill、部署、评测与报告
+├── migrations/polardb/  # 核心 Schema 与可选 pgvector 迁移
+├── docs/                 # API、Agent、PolarDB、运维、评测与报告
 ├── scripts/              # seed、demo、evaluation、AgentTeams setup
-└── tests/                # 85 项自动测试
+└── tests/                # 95 项自动测试（含 1 项需一次性 PostgreSQL）
 ```
 
 ## MCP、RAG 与替代机制

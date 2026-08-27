@@ -39,7 +39,7 @@ try:
 
     from revguard import api as api_module
     from revguard.api import app, store
-    from revguard.models import Case, CaseStatus
+    from revguard.models import Case, CaseStatus, TaskStatus
     from revguard.trace import Tracer
     _IMPORT_ERROR = None
 except ImportError as exc:  # pragma: no cover - 纯标准库环境跳过
@@ -363,6 +363,11 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(tasks[0]["status"], "SUCCEEDED")
         self.assertEqual(tasks[0]["skill_receipt"], completed.json()["skill_receipt"])
         self.assertEqual(tasks[0]["result"]["entities"]["partner_id"], "AGT-10001")
+        results = self.client.get(
+            f"/api/v1/agent-tasks/{task['task_id']}/results", headers=self.intake
+        )
+        self.assertEqual(results.status_code, 200)
+        self.assertEqual(results.json()["results"][0]["status"], "SUCCEEDED")
 
         replay = self.client.post(
             "/api/v1/skills/CaseNormalizeSkill/invoke",
@@ -396,6 +401,25 @@ class TestApiSmoke(unittest.TestCase):
         )
         self.assertEqual(dispatcher_tasks.status_code, 200)
         self.assertGreaterEqual(len(dispatcher_tasks.json()["tasks"]), 2)
+
+        failed = self.client.post(f"/api/v1/cases/{case_id}/agent-tasks", json={
+            "skill_name": "CaseNormalizeSkill", "input": skill_input,
+        }, headers=self.orchestrator).json()
+        store.transition_agent_task(
+            failed["task_id"], expected={TaskStatus.PENDING.value},
+            status=TaskStatus.RUNNING.value,
+        )
+        store.complete_agent_task(
+            failed["task_id"], status=TaskStatus.FAILED_FINAL.value,
+            error={"type": "WorkerLost", "message": "lease expired"},
+        )
+        reassigned = self.client.post(
+            f"/api/v1/agent-tasks/{failed['task_id']}/reassign",
+            json={"reason": "Worker 已离线，转交同职能备用实例"},
+            headers=self.orchestrator,
+        )
+        self.assertEqual(reassigned.status_code, 201, reassigned.text)
+        self.assertEqual(reassigned.json()["supersedes_task_id"], failed["task_id"])
 
     def test_13_rejection_finalizes_and_closes(self):
         spec = json.loads((ROOT / "data" / "golden_cases" / "GOLDEN-002.json")
@@ -481,6 +505,31 @@ class TestApiSmoke(unittest.TestCase):
             self.assertEqual(disabled.status_code, 404)
         finally:
             api_module.ENABLE_RECORDING_UI = old_recording
+
+    def test_16_health_and_queryable_metrics(self):
+        live = self.client.get("/api/v1/health/live")
+        self.assertEqual(live.status_code, 200)
+        ready = self.client.get("/api/v1/health/ready")
+        self.assertEqual(ready.status_code, 200)
+        self.assertEqual(ready.json()["backend"], "sqlite-demo")
+        metrics = self.client.get("/api/v1/ops/metrics", headers=self.viewer)
+        self.assertEqual(metrics.status_code, 200)
+        self.assertIn("cases_by_status", metrics.json())
+        prometheus = self.client.get(
+            "/api/v1/ops/metrics/prometheus", headers=self.viewer
+        )
+        self.assertEqual(prometheus.status_code, 200)
+        self.assertIn("revguard_cases_total", prometheus.text)
+        evidence = self.client.get("/api/v1/ops/evidence", headers=self.viewer)
+        self.assertEqual(evidence.status_code, 200)
+        self.assertEqual(evidence.json()["release"], "0.3.0")
+        self.assertFalse(
+            evidence.json()["business_value"]["production_claim_allowed"]
+        )
+        self.assertEqual(
+            evidence.json()["external_validation"]["polardb_pitr_drill"],
+            "PENDING_CLOUD_INSTANCE",
+        )
 
 
 if __name__ == "__main__":

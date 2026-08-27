@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "case_count": 8,
+  "data_classifications": [
+    "synthetic_demonstration"
+  ],
+  "production_claim_allowed": false,
+  "methodology_only": true,
+  "metrics": {
+    "median_manual_processing_minutes": 127.5,
+    "median_revguard_processing_minutes": 19.5,
+    "median_processing_time_reduction_rate": 0.8471,
+    "wrong_payment_rate_before": 0.75,
+    "wrong_payment_rate_after": 0.0,
+    "recovery_cost_before": "37200.00",
+    "recovery_cost_after": "1800.00",
+    "manual_escalation_rate": 0.5,
+    "audit_exception_rate_before": 0.875,
+    "audit_exception_rate_after": 0.0
+  },
+  "guardrail": "包含合成数据：只验证指标口径与计算链，不得宣称为企业真实收益。"
+}

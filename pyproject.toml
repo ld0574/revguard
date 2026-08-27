@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "revguard-agent-infra"
-version = "0.2.0"
+version = "0.3.0"
 description = "Auditable multi-agent commission dispute resolution on AgentTeams"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,6 +13,8 @@ authors = [{name = "RevGuard Team"}]
 dependencies = [
   "fastapi==0.141.1",
   "uvicorn[standard]==0.52.1",
+  "psycopg[binary]==3.3.4",
+  "psycopg-pool==3.3.1",
 ]
 
 [project.optional-dependencies]

@@ -347,6 +347,46 @@ function Permissions({ snapshot }) {
   );
 }
 
+function EngineeringEvidence({ evidence }) {
+  const runtime = evidence?.runtime || {};
+  const evaluation = evidence?.deterministic_evaluation || {};
+  const value = evidence?.business_value || {};
+  const metrics = value.metrics || {};
+  const external = evidence?.external_validation || {};
+  const rows = [
+    ["存储后端", runtime.storage_backend || "等待 API", runtime.read_replica_enabled ? "主/只读已分流" : "本地 Demo / 单端点"],
+    ["审计链", runtime.audit_chain?.enforced ? (runtime.audit_chain.valid ? "VALID" : "BROKEN") : "DEMO ONLY", runtime.audit_chain?.enforced ? `${runtime.audit_chain.rows_checked || 0} 条已校验` : "PolarDB 模式由 DB trigger 强制"],
+    ["Trace 错误", String(runtime.trace_error_spans_total ?? 0), `${runtime.trace_spans_total || 0} spans 已持久化`],
+    ["StageResult", String(runtime.agent_task_attempts_total ?? 0), "Task 终态与 Result 同事务"],
+    ["确定性评测", `${evaluation.passed || 0}/${evaluation.total_scenarios || 0}`, `通过率 ${Number(evaluation.pass_rate || 0) * 100}%`],
+    ["发布版本", evidence?.release || "—", "0 → 5% → 25% → 100% 灰度"],
+  ];
+  const valueRows = [
+    ["处理时长中位数", `${metrics.median_manual_processing_minutes ?? "—"} → ${metrics.median_revguard_processing_minutes ?? "—"} min`],
+    ["错付率口径", `${Number(metrics.wrong_payment_rate_before || 0) * 100}% → ${Number(metrics.wrong_payment_rate_after || 0) * 100}%`],
+    ["追回成本口径", `${metrics.recovery_cost_before || "—"} → ${metrics.recovery_cost_after || "—"}`],
+    ["人工升级率", `${Number(metrics.manual_escalation_rate || 0) * 100}%`],
+    ["审计异常率口径", `${Number(metrics.audit_exception_rate_before || 0) * 100}% → ${Number(metrics.audit_exception_rate_after || 0) * 100}%`],
+  ];
+  return (
+    <div className="engineering-grid">
+      <section className="detail-section engineering-section">
+        <div className="section-title"><Gauge weight="duotone" /><strong>可查询工程证据</strong><span>来自当前 API / Trace / Store</span></div>
+        <div className="evidence-ledger">{rows.map(([label, primary, note]) => <div className="evidence-row" key={label}><span>{label}</span><strong>{primary}</strong><small>{note}</small></div>)}</div>
+      </section>
+      <section className="detail-section engineering-section">
+        <div className="section-title"><ClipboardText weight="duotone" /><strong>业务价值口径</strong><span>时长 / 错付 / 追回 / 升级 / 审计</span></div>
+        <div className="classification-banner"><WarningCircle weight="fill" /><div><strong>合成数据·仅验证指标方法</strong><small>{value.guardrail || "不得声称为企真实收益"}</small></div></div>
+        <div className="value-ledger">{valueRows.map(([label, result]) => <div key={label}><span>{label}</span><strong>{result}</strong></div>)}</div>
+      </section>
+      <section className="detail-section pending-section">
+        <div className="section-title"><Database weight="duotone" /><strong>外部环境验收</strong><span>不伪造完成状态</span></div>
+        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong>{state || "PENDING"}</strong></div>)}</div>
+      </section>
+    </div>
+  );
+}
+
 function SafetyRail({ snapshot, onExport }) {
   const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
@@ -365,6 +405,7 @@ function DecisionView({ snapshot }) {
 
 export function App() {
   const [snapshot, setSnapshot] = useState(null);
+  const [engineering, setEngineering] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -372,8 +413,11 @@ export function App() {
 
   const load = useCallback(async () => {
     try {
-      const data = await api(`/api/v1/cases/${CASE_ID}/dashboard`, API_KEYS.viewer);
-      setSnapshot(data); setError("");
+      const [data, evidence] = await Promise.all([
+        api(`/api/v1/cases/${CASE_ID}/dashboard`, API_KEYS.viewer),
+        api("/api/v1/ops/evidence", API_KEYS.viewer),
+      ]);
+      setSnapshot(data); setEngineering(evidence); setError("");
     } catch (err) { setError(`无法连接 RevGuard API：${err.message}`); }
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -396,14 +440,14 @@ export function App() {
       anchor.href = url; anchor.download = `${CASE_ID}-audit-report.md`; anchor.click(); URL.revokeObjectURL(url);
     } catch (err) { setError(err.message); }
   };
-  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey]], []);
+  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["engineering", "工程证据", Gauge]], []);
 
   return (
     <div className="app-shell"><Header snapshot={snapshot} busy={busy} onReset={onReset} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
-        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
+        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
       </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-25</span></footer>
     </div>
   );

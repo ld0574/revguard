@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "data_classification": "synthetic_local_capacity_probe",
+  "production_slo_claim_allowed": false,
+  "backend": "sqlite-demo",
+  "environment": {
+    "python": "3.12.13",
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  },
+  "load": {
+    "cases": 200,
+    "concurrency": 20
+  },
+  "results": {
+    "write_throughput_cases_per_second": 9780.45,
+    "write_latency_ms": {
+      "median": 1.617,
+      "p95": 2.424,
+      "max": 3.524
+    },
+    "keyset_page_latency_ms": {
+      "median": 5.238,
+      "p95": 6.061,
+      "max": 6.368
+    }
+  },
+  "guardrail": "本地 SQLite 合成探针只用于防止性能回归；PolarDB 容量结论必须在目标规格重测。"
+}

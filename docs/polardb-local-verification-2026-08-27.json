@@ -1,0 +1,18 @@
+{
+  "verified_at": "2026-08-27",
+  "environment": "local PostgreSQL 18.6 on macOS arm64",
+  "classification": "local_compatibility_test_not_polardb_cloud_acceptance",
+  "checks": {
+    "numeric_18_2_roundtrip": "112.34",
+    "audit_chain_rows_checked": 2,
+    "audit_chain_valid": true,
+    "audit_update_rejected_by_trigger": true,
+    "stage_task_result_same_transaction": true,
+    "stage_results_persisted": 1
+  },
+  "limitations": [
+    "未验证 PolarProxy 主从路由",
+    "未验证 PolarDB 扩展版本",
+    "未执行云端自动备份或 PITR"
+  ]
+}

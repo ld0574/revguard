@@ -1,10 +1,11 @@
-"""SQLite 持久化层。
+"""RevGuard 本地 SQLite 持久化层与生产 Store 工厂。
 
 存储案件、证据、审批、执行、验证、审计事件与 Trace span。
 设计约定：
 - 复杂结构一律 JSON 序列化存储，字段含义以 models.py 为准；
 - 所有写操作先记审计事件再改状态，保证「关键操作留痕」；
-- 复赛可整体替换为 PostgreSQL/PolarDB（仅本文件需要改动）。
+- 本地演示保留 SQLite；正式环境通过 ``REVGUARD_DATABASE_URL`` 选择
+  PostgreSQL/PolarDB Store，不再把 SQLite 当作生产审计库。
 """
 from __future__ import annotations
 
@@ -57,6 +58,18 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
     updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_agent_tasks_case ON agent_tasks(case_id, updated_at);
+CREATE TABLE IF NOT EXISTS agent_task_results (
+    result_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    attempt INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    data TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(task_id, attempt)
+);
+CREATE INDEX IF NOT EXISTS idx_agent_task_results_task
+    ON agent_task_results(task_id, attempt);
 CREATE TABLE IF NOT EXISTS audit_events (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
     case_id TEXT NOT NULL,
@@ -90,6 +103,7 @@ class Store:
     """对 SQLite 的轻量封装；每个方法即一个审计友好的读写单元。"""
 
     def __init__(self, db_path: str | Path):
+        self.backend = "sqlite-demo"
         self.db_path = str(db_path)
         self._lock = RLock()
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -117,6 +131,7 @@ class Store:
             self.conn.executescript("""
                 DELETE FROM trace_spans;
                 DELETE FROM audit_events;
+                DELETE FROM agent_task_results;
                 DELETE FROM agent_tasks;
                 DELETE FROM verifications;
                 DELETE FROM executions;
@@ -306,6 +321,8 @@ class Store:
                     f"Agent task {task_id} 状态 {task['status']} 不允许转为 {status}"
                 )
             task.update(updates or {})
+            if status == "RUNNING":
+                task["attempt"] = int(task.get("attempt", 0)) + 1
             task["status"] = status
             task["updated_at"] = utc_now()
             self.conn.execute(
@@ -313,6 +330,141 @@ class Store:
                 (status, json.dumps(task, ensure_ascii=False), task["updated_at"], task_id),
             )
         return task
+
+    def complete_agent_task(self, task_id: str, *, status: str,
+                            result: dict | None = None,
+                            skill_receipt: str | None = None,
+                            error: dict | None = None) -> tuple[dict, dict]:
+        """StageTask 状态与 StageResult 在同一个数据库事务中落库。"""
+        terminal_statuses = {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL"}
+        if status not in terminal_statuses:
+            raise ValueError(f"非法 StageResult 状态: {status}")
+        with self._lock, self.conn:
+            row = self.conn.execute(
+                "SELECT data FROM agent_tasks WHERE task_id=?", (task_id,)
+            ).fetchone()
+            if not row:
+                raise KeyError(task_id)
+            task = json.loads(row["data"])
+            if task["status"] != "RUNNING":
+                raise ValueError(
+                    f"Agent task {task_id} 状态 {task['status']} 不允许完成"
+                )
+            now = utc_now()
+            task.update({
+                "status": status,
+                "result": result,
+                "skill_receipt": skill_receipt,
+                "error": error,
+                "updated_at": now,
+            })
+            attempt = int(task.get("attempt", 1))
+            stage_result = {
+                "result_id": f"RESULT-{task_id.removeprefix('TASK-')}-{attempt}",
+                "task_id": task_id,
+                "case_id": task["case_id"],
+                "attempt": attempt,
+                "status": status,
+                "result": result,
+                "skill_receipt": skill_receipt,
+                "error": error,
+                "created_at": now,
+            }
+            self.conn.execute(
+                "UPDATE agent_tasks SET status=?, data=?, updated_at=? WHERE task_id=?",
+                (status, json.dumps(task, ensure_ascii=False), now, task_id),
+            )
+            self.conn.execute(
+                """INSERT INTO agent_task_results
+                   (result_id, task_id, case_id, attempt, status, data, created_at)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (stage_result["result_id"], task_id, task["case_id"], attempt,
+                 status, json.dumps(stage_result, ensure_ascii=False), now),
+            )
+        return task, stage_result
+
+    def list_agent_task_results(self, task_id: str) -> list[dict]:
+        with self._lock:
+            rows = self.conn.execute(
+                "SELECT data FROM agent_task_results WHERE task_id=? ORDER BY attempt",
+                (task_id,),
+            ).fetchall()
+        return [json.loads(row["data"]) for row in rows]
+
+    def replace_agent_task(self, old_task_id: str, replacement: dict, *,
+                           actor: str, reason: str) -> tuple[dict, dict]:
+        """Cancel a failed task and persist its replacement atomically."""
+        allowed = {"FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}
+        with self._lock, self.conn:
+            row = self.conn.execute(
+                "SELECT data FROM agent_tasks WHERE task_id=?", (old_task_id,)
+            ).fetchone()
+            if not row:
+                raise KeyError(old_task_id)
+            old = json.loads(row["data"])
+            if old["status"] not in allowed:
+                raise ValueError(
+                    f"Agent task {old_task_id} 状态 {old['status']} 不允许重派"
+                )
+            now = utc_now()
+            old.update({"status": "CANCELLED", "updated_at": now,
+                        "replaced_by_task_id": replacement["task_id"]})
+            replacement.update({"supersedes_task_id": old_task_id,
+                                "reassignment_reason": reason})
+            self.conn.execute(
+                "UPDATE agent_tasks SET status=?, data=?, updated_at=? WHERE task_id=?",
+                (old["status"], json.dumps(old, ensure_ascii=False), now, old_task_id),
+            )
+            self.conn.execute(
+                """INSERT INTO agent_tasks
+                   (task_id, case_id, skill_name, assigned_actor, status, data, updated_at)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (replacement["task_id"], replacement["case_id"],
+                 replacement["skill_name"], replacement["assigned_actor"],
+                 replacement["status"], json.dumps(replacement, ensure_ascii=False), now),
+            )
+            self.conn.execute(
+                "INSERT INTO audit_events(case_id, actor, event, detail, created_at) "
+                "VALUES (?,?,?,?,?)",
+                (replacement["case_id"], actor, "AGENT_TASK_REASSIGNED",
+                 json.dumps({"old_task_id": old_task_id,
+                             "new_task_id": replacement["task_id"],
+                             "reason": reason}, ensure_ascii=False), now),
+            )
+        return old, replacement
+
+    def cancel_open_agent_tasks(self, case_id: str, *, actor: str,
+                                reason: str) -> list[str]:
+        """Cancel tasks that must not outlive a case pause or human rejection."""
+        open_statuses = {"PENDING", "RUNNING", "WAITING_TOOL", "WAITING_HUMAN",
+                         "FAILED_RETRYABLE"}
+        cancelled: list[str] = []
+        with self._lock, self.conn:
+            rows = self.conn.execute(
+                "SELECT task_id, data FROM agent_tasks WHERE case_id=?", (case_id,)
+            ).fetchall()
+            now = utc_now()
+            for row in rows:
+                task = json.loads(row["data"])
+                if task["status"] not in open_statuses:
+                    continue
+                task.update({"status": "CANCELLED", "updated_at": now,
+                             "cancellation_reason": reason})
+                self.conn.execute(
+                    "UPDATE agent_tasks SET status='CANCELLED', data=?, updated_at=? "
+                    "WHERE task_id=?", (json.dumps(task, ensure_ascii=False), now,
+                                        task["task_id"]),
+                )
+                cancelled.append(task["task_id"])
+            if cancelled:
+                self.conn.execute(
+                    "INSERT INTO audit_events(case_id, actor, event, detail, created_at) "
+                    "VALUES (?,?,?,?,?)",
+                    (case_id, actor, "AGENT_TASKS_CANCELLED",
+                     json.dumps({"task_ids": cancelled, "reason": reason},
+                                ensure_ascii=False), now),
+                )
+        return cancelled
 
     # ------------------------------------------------------------------ audit
     def audit(self, case_id: str, actor: str, event: str, detail: dict | None = None) -> None:
@@ -370,3 +522,54 @@ class Store:
             d["outputs"] = json.loads(d["outputs"]) if d["outputs"] else None
             result.append(d)
         return result
+
+    # --------------------------------------------------------- health/metrics
+    def readiness(self) -> dict:
+        with self._lock:
+            self.conn.execute("SELECT 1").fetchone()
+        return {"ready": True, "backend": self.backend, "read_replica": False}
+
+    def operational_metrics(self) -> dict:
+        """Return queryable low-cardinality operational counters."""
+        with self._lock:
+            case_rows = self.conn.execute(
+                "SELECT status, COUNT(*) AS count FROM cases GROUP BY status"
+            ).fetchall()
+            task_rows = self.conn.execute(
+                "SELECT status, COUNT(*) AS count FROM agent_tasks GROUP BY status"
+            ).fetchall()
+            span_row = self.conn.execute(
+                "SELECT COUNT(*) AS total, "
+                "SUM(CASE WHEN status='ERROR' THEN 1 ELSE 0 END) AS errors "
+                "FROM trace_spans"
+            ).fetchone()
+            audit_row = self.conn.execute(
+                "SELECT COUNT(*) AS total FROM audit_events"
+            ).fetchone()
+            result_row = self.conn.execute(
+                "SELECT COUNT(*) AS total FROM agent_task_results"
+            ).fetchone()
+        return {
+            "storage_backend": self.backend,
+            "read_replica_enabled": False,
+            "cases_total": sum(int(row["count"]) for row in case_rows),
+            "cases_by_status": {row["status"]: int(row["count"]) for row in case_rows},
+            "agent_tasks_by_status": {
+                row["status"]: int(row["count"]) for row in task_rows
+            },
+            "agent_task_attempts_total": int(result_row["total"]),
+            "trace_spans_total": int(span_row["total"]),
+            "trace_error_spans_total": int(span_row["errors"] or 0),
+            "audit_events_total": int(audit_row["total"]),
+            "audit_chain": {"enforced": False, "reason": "SQLite demo backend"},
+        }
+
+
+def create_store(db_path: str | Path, *, database_url: str | None = None,
+                 read_database_url: str | None = None):
+    """Select the demo or production persistence implementation explicitly."""
+    if database_url:
+        from .postgres_store import PostgresStore
+
+        return PostgresStore(database_url, read_database_url=read_database_url)
+    return Store(db_path)

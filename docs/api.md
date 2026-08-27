@@ -17,7 +17,11 @@ Principal 映射；缺失时 API fail-closed，不会退回匿名模式。
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `REVGUARD_DB_PATH` | `data/revguard.db` | SQLite 案件库 |
+| `REVGUARD_DB_PATH` | `data/revguard.db` | 未配置 PolarDB 时的本地 SQLite Demo 库 |
+| `REVGUARD_DATABASE_URL` | 无 | PostgreSQL/PolarDB primary DSN；配置后禁用 SQLite |
+| `REVGUARD_READ_DATABASE_URL` | 无 | 可选只读端点；列表、Trace、Metrics 走该连接池 |
+| `REVGUARD_AUTO_MIGRATE` | `false` | 生产保持 false；使用独立迁移账号 |
+| `REVGUARD_DB_POOL_MIN/MAX` | `1/10` | PolarDB 主/只读连接池上下限 |
 | `REVGUARD_GATEWAY_STATE_PATH` | DB 同目录 `.gateway.json` | Mock 台账、审批、幂等与回执 |
 | `REVGUARD_FIXTURES_DIR` | `data/fixtures` | 合成 Fixture |
 | `REVGUARD_OUTPUT_DIR` | `data/outputs` | Trace / Case Memory |
@@ -126,11 +130,15 @@ Worker 必须使用完全相同的输入调用 Skill，并增加：
 X-RevGuard-Task-ID: TASK-...
 ```
 
-成功后任务原子变为 `SUCCEEDED`，结果和 `skill_receipt` 存入 StageResult。错 Worker、错
+成功后 StageTask 状态与 StageResult 在同一个数据库事务中提交为 `SUCCEEDED`，结果和 `skill_receipt` 按 attempt 存档。错 Worker、错
 Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒绝。任务可通过
 `GET /api/v1/cases/{case_id}/agent-tasks` 查询；只有 `operator|dispatcher` 能看全量，Worker
 只能看分配给自己的任务，纯 `viewer` 无权读取任何任务输入或结果。由于 `case_version`
 包含状态和 `updated_at`，任何状态变化都会使先前派发的 pending task 失效，必须重新派发。
+
+任务结果历史使用 `GET /api/v1/agent-tasks/{task_id}/results`。失败任务可由
+`operator|dispatcher` 调用 `POST /api/v1/agent-tasks/{task_id}/reassign`，请求体必须说明
+`reason`；旧任务变为 `CANCELLED`，新任务保留 `supersedes_task_id` 和新的 case version。
 
 ### 只读接口
 
@@ -138,8 +146,14 @@ Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒
 - `GET /api/v1/cases/{case_id}`
 - `GET /api/v1/cases/{case_id}/trace`
 - `GET /api/v1/cases/{case_id}/report`
+- `GET /api/v1/ops/metrics`
+- `GET /api/v1/ops/metrics/prometheus`
+- `GET /api/v1/ops/evidence`
 
 均需要 `viewer`。
+
+`/api/v1/health/live`与 `/api/v1/health/ready` 不需要身份，分别用于进程存活和数据库就绪探测。
+`/api/v1/ops/evidence` 将当前 Store/Trace/StageResult 指标、105 场景评测和带数据分类的价值报告组合为录制安全视图；外部环境未验收项始终返回 `PENDING_*`。
 
 案件列表使用 `(updated_at, case_id)` keyset 分页，返回：
 

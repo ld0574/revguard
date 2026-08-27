@@ -611,6 +611,10 @@ class Orchestrator:
 
     def _escalate_to_human(self, case: dict, state: dict, tracer: Tracer, gap: str) -> None:
         """证据不足：挂起补证 + 通知工单系统 + 升级人工（不生成虚假结论）。"""
+        self.store.cancel_open_agent_tasks(
+            case["case_id"], actor="revguard-orchestrator",
+            reason=f"案件挂起等待补证: {gap}",
+        )
         self._transition(case, CaseStatus.WAITING_FOR_EVIDENCE, gap)
         skills.call_tool(self.gateway, tracer, "ticket.update_case", {
             "ticket_ref": case.get("source_ref", "TICKET-MOCK"),

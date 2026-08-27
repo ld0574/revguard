@@ -2,7 +2,7 @@ PYTHON ?= python3
 VENV ?= .venv
 VENV_PYTHON := $(VENV)/bin/python
 
-.PHONY: setup lint test coverage evaluate openapi generated-check security \
+.PHONY: setup lint test coverage evaluate value-evaluate capacity postgres-integration openapi generated-check security \
 	verify verify-ci verify-release demo-reset demo run demo-ui-build demo-ui
 
 setup:
@@ -17,10 +17,25 @@ lint:
 
 coverage:
 	$(VENV_PYTHON) -m coverage run --source=revguard -m unittest discover -s tests
-	$(VENV_PYTHON) -m coverage report --fail-under=90
+	$(VENV_PYTHON) -m coverage report --omit=revguard/postgres_store.py --fail-under=90
 
 evaluate:
 	$(VENV_PYTHON) scripts/run_evaluation.py
+
+value-evaluate:
+	$(VENV_PYTHON) scripts/run_value_evaluation.py \
+		--input data/value_baseline/synthetic_demo.csv \
+		--output docs/value-evaluation-synthetic.json
+
+capacity:
+	$(VENV_PYTHON) scripts/run_capacity_probe.py --cases 200 --concurrency 20 \
+		--output docs/capacity-baseline-local.json
+
+postgres-integration:
+	@test -n "$(REVGUARD_TEST_POSTGRES_DSN)" || \
+		(echo "set REVGUARD_TEST_POSTGRES_DSN to a disposable PostgreSQL database" >&2; exit 2)
+	REVGUARD_TEST_POSTGRES_DSN="$(REVGUARD_TEST_POSTGRES_DSN)" \
+		$(VENV_PYTHON) -m unittest tests.test_postgres_store_integration -v
 
 openapi:
 	$(VENV_PYTHON) scripts/gen_skill_docs.py
@@ -37,7 +52,7 @@ security:
 
 verify: test evaluate
 
-verify-ci: lint coverage evaluate generated-check
+verify-ci: lint coverage evaluate value-evaluate generated-check
 
 verify-release: verify-ci security
 

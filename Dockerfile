@@ -2,6 +2,10 @@
 # 与 AgentTeams 同机部署时，Worker 通过 http://revguard-api:9000 调用 Skill 层
 FROM python:3.11-slim
 
+ARG REVGUARD_VERSION=0.3.0
+LABEL org.opencontainers.image.title="RevGuard" \
+      org.opencontainers.image.version="$REVGUARD_VERSION"
+
 WORKDIR /app
 
 # 先装依赖，利用镜像层缓存
@@ -12,9 +16,11 @@ RUN pip install --no-cache-dir -r requirements.lock && \
 # 拷贝代码与数据（fixtures / golden_cases 为只读演示数据）
 COPY revguard/ ./revguard/
 COPY scripts/ ./scripts/
+COPY migrations/ ./migrations/
 COPY config/demo_principals.json ./config/demo_principals.json
 COPY data/fixtures/ ./data/fixtures/
 COPY data/golden_cases/ ./data/golden_cases/
+COPY docs/evaluation-summary.json docs/value-evaluation-synthetic.json ./docs/
 
 RUN addgroup --system revguard && adduser --system --ingroup revguard revguard
 
@@ -26,6 +32,7 @@ ENV REVGUARD_DB_PATH=/app/runtime/revguard.db \
     REVGUARD_APPROVAL_MODE=wait \
     REVGUARD_FINANCE_FAIL_TIMES=1 \
     REVGUARD_RESET_ON_START=false \
+    REVGUARD_RELEASE_VERSION=$REVGUARD_VERSION \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 

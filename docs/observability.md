@@ -1,6 +1,6 @@
 # RevGuard 可观测与 OpenTelemetry 语义映射
 
-RevGuard 当前以每案 JSON Trace + SQLite Audit + Markdown 报告提供可回放证据。它不是 OTLP exporter；为降低后续接入成本，Trace 导出在保留内部字段的同时增加一层向后兼容的 OpenTelemetry GenAI 属性投影。
+RevGuard 以每案 JSON Trace + Store Audit + Markdown 报告提供可回放证据。本地 Demo 使用 SQLite，正式 PostgreSQL/PolarDB 由数据库触发器强制 append-only 哈希链。Trace 导出在保留内部字段的同时增加一层向后兼容的 OpenTelemetry GenAI 属性投影。
 
 ## 映射
 
@@ -22,6 +22,10 @@ RevGuard 当前以每案 JSON Trace + SQLite Audit + Markdown 报告提供可回
 
 ## 边界与路线
 
-当前实现证明“语义可映射、证据可回放”，不证明生产观测后端、采样策略或跨进程传播已经完成。后续接入 OTLP 时，以本映射为 Adapter 输入，并新增 exporter 背压、采样与租户隔离设计。
+当前已增加 JSON 结构化访问日志、`/api/v1/ops/metrics` JSON 端点、
+`/api/v1/ops/metrics/prometheus` Prometheus text 端点、liveness/readiness 探针和
+`config/alerts.yaml` 告警规则。日志不记录请求体或凭证。
+
+这仍不表示生产观测后端、OTLP exporter、采样策略或跨进程传播已经验收。后续接入 OTLP 时，以本映射为 Adapter 输入，并新增 exporter 背压、采样与租户隔离设计。运维约定见 [`operations.md`](operations.md)。
 
 参考：[OpenTelemetry GenAI attributes registry](https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/)（该语义约定仍标记为 Development）。

@@ -69,6 +69,7 @@ def create_agent_task(case: dict, skill_name: str, skill_input: dict) -> dict:
         "case_status": case["status"],
         "case_version": case_version(case),
         "status": TaskStatus.PENDING.value,
+        "attempt": 0,
         "input": skill_input,
         "result": None,
         "skill_receipt": None,

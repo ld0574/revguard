@@ -8,7 +8,8 @@ AgentTeams Manager / Workers
         ▼
 RevGuard API :9000
         ├── Skill Runtime / ToolGateway
-        ├── SQLite Case / Trace / Audit
+        ├── PolarDB primary：Case / Task / StageResult / Audit 写入
+        ├── PolarDB read endpoint：列表 / Trace / Metrics / 评测读
         ├── persistent gateway state
         └── reports / case memory
 ```
@@ -17,7 +18,7 @@ RevGuard API :9000
 TLS Gateway 暴露，并配置限流、访问日志与网络白名单。SOUL 使用
 `{{REVGUARD_API_BASE_URL}}`，`agentteams_setup.sh` 在部署时渲染，不再硬编码 IP。
 
-## 2. 本地 Docker
+## 2. 本地 Docker（SQLite Demo）
 
 ```bash
 cd revguard
@@ -34,7 +35,7 @@ docker exec agentteams-worker-revguard-evidence \
   python -c 'import urllib.request; print(urllib.request.urlopen("http://revguard-api:9000/api/v1/health").status)'
 ```
 
-默认保留 volume 中的案件、Mock 台账、审批、幂等、回执、报告与 Trace。需要评委从
+默认保留 volume 中的案件、Mock 台账、审批、幂等、回执、报告与 Trace。这一模式专为录屏和评委本地复现，不当作正式审计库。需要评委从
 完全相同的干净状态复现时：
 
 ```bash
@@ -59,7 +60,15 @@ docker compose up -d --build
 独立验证失败 → 自动反向冲销 → 回滚后验证通过”。取证完成后把两个变量恢复为 `false`
 和 `0`，已有 Trace 与报告仍保留。
 
-## 3. 生产安全配置
+## 3. PolarDB 正式存储
+
+先以独立 migration principal 运行 `scripts/migrate_polardb.py`，再为应用配置
+`REVGUARD_DATABASE_URL` 和可选的 `REVGUARD_READ_DATABASE_URL`。生产必须保持
+`REVGUARD_AUTO_MIGRATE=false`，不得向应用账号授予 DDL 或禁用审计触发器的权限。
+
+PolarDB 模式下 `REVGUARD_RESET_ON_START=true` 会直接拒绝启动，以防演示重置语义进入正式审计库。金额的 Decimal → `NUMERIC(18,2)` 语义保持、哈希链、读写路由和 PITR 验收见 [`polardb-production.md`](polardb-production.md)。
+
+## 4. 生产安全配置
 
 复制 `.env.example` 并生成真实值：
 
@@ -90,7 +99,7 @@ for VOLUME in revguard_revguard-db revguard_revguard-outputs revguard_revguard-r
 done
 ```
 
-## 4. AgentTeams Worker 与 Team
+## 5. AgentTeams Worker 与 Team
 
 ```bash
 REVGUARD_HOME=/absolute/path/to/revguard \
@@ -135,7 +144,7 @@ Principal。
 新版部署保持 `REVGUARD_ENABLE_LEGACY_TOOL_API=false`。只有复放 2026-08-10 的历史
 `Matrix → /tools/call` 证据时才临时设为 `true`；复放结束应恢复关闭。
 
-## 5. 验收命令
+## 6. 验收命令
 
 ```bash
 make verify-ci
@@ -158,8 +167,10 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - [ ] AgentTeams Team Active，1 Manager + 9 Worker Ready；
 - [ ] Matrix 任务事件、StageTask、Worker 回执、SKILL span 与审计事件的 task ID / request ID / receipt 一致；
 - [ ] Trace、报告、evaluation summary 和视频中的 case_id 一致。
+- [ ] PolarDB 模式的 `/health/ready` 返回 primary/read endpoint 就绪，Metrics 的 audit chain valid=1；
+- [ ] 目标集群完成过一次有任务 ID、expected/actual 指纹和签署的 PITR 演练。
 
-## 6. 已知资源风险
+## 7. 已知资源风险
 
 一次性启动全部 Worker 可能造成演示主机资源尖峰。现场建议预热 Team，或分批 apply；
 比赛只要求至少 3 个不同职能 Agent，不应为了数量牺牲 5–8 分钟内的稳定闭环。

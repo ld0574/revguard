@@ -1,0 +1,9 @@
+case_id,data_classification,source_reference,manual_processing_minutes,revguard_processing_minutes,wrong_payment_before,wrong_payment_after,recovery_cost_before,recovery_cost_after,manual_escalation_required,audit_exception_before,audit_exception_after
+GOLDEN-001,synthetic_demonstration,synthetic-fixture:GOLDEN-001,120,18,true,false,4800,0,false,true,false
+GOLDEN-002,synthetic_demonstration,synthetic-fixture:GOLDEN-002,150,25,true,false,7600,0,true,true,false
+GOLDEN-003,synthetic_demonstration,synthetic-fixture:GOLDEN-003,90,12,false,false,0,0,true,true,false
+GOLDEN-004,synthetic_demonstration,synthetic-fixture:GOLDEN-004,110,17,true,false,3200,0,false,true,false
+GOLDEN-005,synthetic_demonstration,synthetic-fixture:GOLDEN-005,135,21,true,false,5600,0,false,true,false
+GOLDEN-006,synthetic_demonstration,synthetic-fixture:GOLDEN-006,105,16,false,false,0,0,false,false,false
+GOLDEN-007,synthetic_demonstration,synthetic-fixture:GOLDEN-007,180,28,true,false,9200,1200,true,true,false
+GOLDEN-008,synthetic_demonstration,synthetic-fixture:GOLDEN-008,165,31,true,false,6800,600,true,true,false

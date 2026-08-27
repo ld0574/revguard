@@ -10,8 +10,10 @@
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Literal
 
@@ -19,6 +21,7 @@ from .agent_bridge import create_agent_task, validate_task_invocation
 from .demo_dashboard import build_dashboard_snapshot
 from .mocks import ToolGateway
 from .models import Case, CaseStatus, TaskStatus, new_id
+from .observability import configure_structured_logging, prometheus_text
 from .orchestrator import Orchestrator
 from .security import (
     TOOL_REQUIRED_SCOPES,
@@ -32,18 +35,31 @@ from .security import (
 from .skill_runtime import SKILL_ACTORS, SkillInvocationError, invoke_skill
 from .skills import list_skills
 from .state_machine import transition_case
-from .store import Store
+from .store import create_store
 from .trace import Tracer
 
 try:
-    from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
+    from fastapi import (
+        Depends,
+        FastAPI,
+        Header,
+        HTTPException,
+        Query,
+        Request,
+        Response,
+    )
+    from fastapi.responses import PlainTextResponse
     from pydantic import BaseModel, ConfigDict, Field
 except ImportError as exc:  # 本地纯标准库跑 Demo 时允许不安装 FastAPI
     raise ImportError("API 服务需要安装依赖：pip install -r requirements.txt") from exc
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGGER = logging.getLogger("revguard.api")
+configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
+DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
+READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.3.0")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -86,11 +102,13 @@ if ENABLE_LEGACY_TOOL_API:
         "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"
     )
 
-app = FastAPI(title="RevGuard API", version="0.2.0",
+app = FastAPI(title="RevGuard API", version=RELEASE_VERSION,
               description="面向企业渠道佣金结算异常的多智能体治理平台")
 
 # Demo 单进程即可：共享一份 Store / Mock 系统状态
-store = Store(DB_PATH)
+store = create_store(
+    DB_PATH, database_url=DATABASE_URL, read_database_url=READ_DATABASE_URL
+)
 
 
 def _new_gateway() -> ToolGateway:
@@ -104,6 +122,29 @@ def _new_gateway() -> ToolGateway:
 
 
 gateway = _new_gateway()
+
+
+@app.middleware("http")
+async def structured_access_log(request: Request, call_next):
+    """Log correlation and latency only; never log bodies or credentials."""
+    started = time.monotonic()
+    request_id = request.headers.get("X-Request-ID") or new_id("REQ")
+    try:
+        response = await call_next(request)
+    except Exception:
+        LOGGER.exception("http_request_failed", extra={"revguard_fields": {
+            "request_id": request_id, "method": request.method,
+            "path": request.url.path,
+            "duration_ms": int((time.monotonic() - started) * 1000),
+        }})
+        raise
+    response.headers.setdefault("X-Request-ID", request_id)
+    LOGGER.info("http_request", extra={"revguard_fields": {
+        "request_id": request_id, "method": request.method,
+        "path": request.url.path, "status_code": response.status_code,
+        "duration_ms": int((time.monotonic() - started) * 1000),
+    }})
+    return response
 
 
 def authenticate(authorization: str | None = Header(default=None)) -> ApiPrincipal:
@@ -179,6 +220,11 @@ class AgentTaskCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     skill_name: str
     input: dict = Field(default_factory=dict)
+
+
+class AgentTaskReassign(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(min_length=3, max_length=500)
 
 
 # --------------------------------------------------------------------- 案件
@@ -323,6 +369,9 @@ def decide_approval(case_id: str, payload: ApprovalDecision,
     )
 
     if decided["status"] != "APPROVED":
+        store.cancel_open_agent_tasks(
+            case_id, actor=principal.actor, reason="人工审批驳回，禁止继续执行"
+        )
         transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=principal.actor)
         orch = _orchestrator()
         state = orch._rebuild_state(case)
@@ -422,6 +471,49 @@ def list_case_agent_tasks(case_id: str,
     if not privileged and not visible:
         raise HTTPException(403, "无权查看该案件的 Agent tasks")
     return {"tasks": [_public_agent_task(task) for task in visible]}
+
+
+@app.get("/api/v1/agent-tasks/{task_id}/results")
+def list_agent_task_results(
+    task_id: str,
+    principal: ApiPrincipal = Depends(authenticate),
+):
+    task = store.get_agent_task(task_id)
+    if not task:
+        raise HTTPException(404, f"Agent task 不存在: {task_id}")
+    privileged = bool({"operator", "dispatcher"}.intersection(principal.roles))
+    if not privileged and task["assigned_actor"] != principal.actor:
+        raise HTTPException(403, "无权查看该 Agent task 结果")
+    return {
+        "task_id": task_id,
+        "results": [redact_secrets(item)
+                    for item in store.list_agent_task_results(task_id)],
+    }
+
+
+@app.post("/api/v1/agent-tasks/{task_id}/reassign", status_code=201)
+def reassign_agent_task(
+    task_id: str,
+    payload: AgentTaskReassign,
+    response: Response,
+    principal: ApiPrincipal = Depends(require_roles("operator", "dispatcher")),
+):
+    """Cancel a failed StageTask and create a fresh case-version-bound task."""
+    old = store.get_agent_task(task_id)
+    if not old:
+        raise HTTPException(404, f"Agent task 不存在: {task_id}")
+    case = store.get_case(old["case_id"])
+    if not case:
+        raise HTTPException(404, f"案件不存在: {old['case_id']}")
+    try:
+        replacement = create_agent_task(case, old["skill_name"], old["input"])
+        _, replacement = store.replace_agent_task(
+            task_id, replacement, actor=principal.actor, reason=payload.reason
+        )
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    response.headers["X-RevGuard-Task-ID"] = replacement["task_id"]
+    return _public_agent_task(replacement)
 
 
 @app.get("/api/v1/cases/{case_id}/trace")
@@ -572,11 +664,9 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
         response.headers["X-Request-ID"] = correlation["request_id"]
         response.headers["X-Skill-Receipt"] = result["skill_receipt"]
         if active_task:
-            store.transition_agent_task(
-                active_task["task_id"], expected={TaskStatus.RUNNING.value},
-                status=TaskStatus.SUCCEEDED.value,
-                updates={"result": result["data"],
-                         "skill_receipt": result["skill_receipt"], "error": None},
+            store.complete_agent_task(
+                active_task["task_id"], status=TaskStatus.SUCCEEDED.value,
+                result=result["data"], skill_receipt=result["skill_receipt"],
             )
             store.audit(payload.case_id, principal.actor, "AGENT_TASK_SUCCEEDED", {
                 "task_id": active_task["task_id"], "skill": skill_name,
@@ -585,10 +675,9 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
         return result
     except SkillInvocationError as exc:
         if active_task:
-            store.transition_agent_task(
-                active_task["task_id"], expected={TaskStatus.RUNNING.value},
-                status=TaskStatus.FAILED_FINAL.value,
-                updates={"error": {"type": type(exc).__name__, "message": str(exc)}},
+            store.complete_agent_task(
+                active_task["task_id"], status=TaskStatus.FAILED_FINAL.value,
+                error={"type": type(exc).__name__, "message": str(exc)},
             )
         raise HTTPException(422, str(exc)) from exc
     except Exception as exc:
@@ -599,10 +688,9 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
                 if isinstance(exc, ToolError) and exc.retryable
                 else TaskStatus.FAILED_FINAL.value
             )
-            store.transition_agent_task(
-                active_task["task_id"], expected={TaskStatus.RUNNING.value},
-                status=failed_status,
-                updates={"error": {"type": type(exc).__name__, "message": str(exc)}},
+            store.complete_agent_task(
+                active_task["task_id"], status=failed_status,
+                error={"type": type(exc).__name__, "message": str(exc)},
             )
         if isinstance(exc, ToolError) and exc.error_type == "AUTH_FAILED":
             raise HTTPException(403, exc.message) from exc
@@ -613,7 +701,61 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
 
 @app.get("/api/v1/health")
 def health():
-    return {"status": "ok", "cases": store.count_cases()}
+    ready = store.readiness()
+    return {"status": "ok", "release": RELEASE_VERSION,
+            "cases": store.count_cases(), **ready}
+
+
+@app.get("/api/v1/health/live")
+def liveness():
+    return {"status": "alive", "release": RELEASE_VERSION}
+
+
+@app.get("/api/v1/health/ready")
+def readiness():
+    try:
+        return {"status": "ready", **store.readiness()}
+    except Exception as exc:
+        raise HTTPException(503, {"status": "not_ready",
+                                  "error_type": type(exc).__name__}) from exc
+
+
+@app.get("/api/v1/ops/metrics")
+def operational_metrics(
+    _principal: ApiPrincipal = Depends(require_roles("viewer")),
+):
+    return store.operational_metrics()
+
+
+@app.get("/api/v1/ops/metrics/prometheus", response_class=PlainTextResponse)
+def prometheus_metrics(
+    _principal: ApiPrincipal = Depends(require_roles("viewer")),
+):
+    return prometheus_text(store.operational_metrics())
+
+
+@app.get("/api/v1/ops/evidence")
+def engineering_evidence(
+    _principal: ApiPrincipal = Depends(require_roles("viewer")),
+):
+    """Recording-safe engineering and value evidence with data provenance."""
+    def read_json(name: str) -> dict | None:
+        path = ROOT / "docs" / name
+        if not path.exists():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    return {
+        "release": RELEASE_VERSION,
+        "runtime": store.operational_metrics(),
+        "deterministic_evaluation": read_json("evaluation-summary.json"),
+        "business_value": read_json("value-evaluation-synthetic.json"),
+        "external_validation": {
+            "production_business_baseline": "PENDING_COMPANY_DATA",
+            "polardb_cloud_acceptance": "PENDING_CLOUD_INSTANCE",
+            "polardb_pitr_drill": "PENDING_CLOUD_INSTANCE",
+        },
+    }
 
 
 if ENABLE_RECORDING_UI:
