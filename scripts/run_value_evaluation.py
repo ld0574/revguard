@@ -57,6 +57,18 @@ def evaluate_rows(rows: list[dict[str, str]]) -> dict:
     recovery_after = sum(Decimal(row["recovery_cost_after"]) for row in rows)
     median_manual = statistics.median(manual)
     median_assisted = statistics.median(assisted)
+    median_minutes_saved = median_manual - median_assisted
+    processing_time_reduction_rate = (
+        round(median_minutes_saved / median_manual, 4) if median_manual else None
+    )
+    throughput_capacity_multiplier = (
+        round(median_manual / median_assisted, 4) if median_assisted else None
+    )
+    recovery_cost_avoided = recovery_before - recovery_after
+    recovery_cost_reduction_rate = (
+        round(float(recovery_cost_avoided / recovery_before), 4)
+        if recovery_before else None
+    )
 
     def rate(values: list[bool]) -> float:
         return round(sum(values) / len(values), 4)
@@ -71,17 +83,44 @@ def evaluate_rows(rows: list[dict[str, str]]) -> dict:
         "metrics": {
             "median_manual_processing_minutes": round(median_manual, 2),
             "median_revguard_processing_minutes": round(median_assisted, 2),
-            "median_processing_time_reduction_rate": (
-                round((median_manual - median_assisted) / median_manual, 4)
-                if median_manual else None
-            ),
+            "median_minutes_saved_per_case": round(median_minutes_saved, 2),
+            "median_processing_time_reduction_rate": processing_time_reduction_rate,
+            "throughput_capacity_multiplier": throughput_capacity_multiplier,
             "wrong_payment_rate_before": rate(before_wrong),
             "wrong_payment_rate_after": rate(after_wrong),
             "recovery_cost_before": str(recovery_before.quantize(Decimal("0.01"))),
             "recovery_cost_after": str(recovery_after.quantize(Decimal("0.01"))),
+            "recovery_cost_avoided": str(
+                recovery_cost_avoided.quantize(Decimal("0.01"))
+            ),
+            "recovery_cost_reduction_rate": recovery_cost_reduction_rate,
             "manual_escalation_rate": rate(escalated),
             "audit_exception_rate_before": rate(audit_before),
             "audit_exception_rate_after": rate(audit_after),
+        },
+        "simulation_contract": {
+            "default_assumptions": {
+                "monthly_case_volume": 500,
+                "loaded_hourly_labor_cost": 100,
+                "currency": "CNY",
+                "working_hours_per_fte_month": 160,
+                "months_per_year": 12,
+            },
+            "formulas": {
+                "monthly_hours_released": (
+                    "median_minutes_saved_per_case * monthly_case_volume / 60"
+                ),
+                "monthly_labor_capacity_value": (
+                    "monthly_hours_released * loaded_hourly_labor_cost"
+                ),
+                "annual_labor_capacity_value": (
+                    "monthly_labor_capacity_value * months_per_year"
+                ),
+            },
+            "claim_boundary": (
+                "用户输入情景 × 合成样本中位数，仅作预算讨论；"
+                "不是现金节省承诺，也不得替代企业实测基线。"
+            ),
         },
         "guardrail": (
             "包含合成数据：只验证指标口径与计算链，不得宣称为企业真实收益。"

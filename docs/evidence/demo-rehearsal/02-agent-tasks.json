@@ -1,11 +1,11 @@
 [
   {
-    "task_id": "TASK-49B6F51D",
+    "task_id": "TASK-78143CC4",
     "case_id": "CASE-2026-0008",
     "skill_name": "CaseNormalizeSkill",
     "assigned_actor": "revguard-intake",
     "case_status": "CREATED",
-    "case_version": "sha256:be186c60052820d1e5d6915ada99fdebe5ee5a9cef9e1c6a961194ca9d34cc59",
+    "case_version": "sha256:9b067c1c41fd7962a09d0c318b5f523808ffb48e623a1767dfd76e9616fc52e5",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -33,8 +33,8 @@
         },
         "evidence_score": 0.0,
         "risk_level": null,
-        "created_at": "2026-08-28T00:21:36.218637Z",
-        "updated_at": "2026-08-28T00:21:36.218827Z",
+        "created_at": "2026-08-28T10:07:13.490469Z",
+        "updated_at": "2026-08-28T10:07:13.490628Z",
         "execution_mode": "MCP_TEAM",
         "workflow_provenance": {
           "business_data": "synthetic",
@@ -59,18 +59,18 @@
         "currency": "KES"
       }
     },
-    "skill_receipt": "SKR-D6DA3EFF",
+    "skill_receipt": "SKR-7D0ED310",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.219163Z",
-    "updated_at": "2026-08-28T00:21:36.225728Z"
+    "created_at": "2026-08-28T10:07:13.490923Z",
+    "updated_at": "2026-08-28T10:07:13.496425Z"
   },
   {
-    "task_id": "TASK-5C6D266B",
+    "task_id": "TASK-DDD704FC",
     "case_id": "CASE-2026-0008",
     "skill_name": "EntityResolveSkill",
     "assigned_actor": "revguard-intake",
     "case_status": "NORMALIZING",
-    "case_version": "sha256:3385e42b9e707243180dd0142db8fb035dc803f789a7c33878476c14aceeabc2",
+    "case_version": "sha256:d13601b527cafdd00daf16a62c8a4e9f4179852353bbc642b32b08d73f5ad164",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -99,18 +99,18 @@
       },
       "resolved_by": "partner_id"
     },
-    "skill_receipt": "SKR-35439A65",
+    "skill_receipt": "SKR-42447F99",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.280908Z",
-    "updated_at": "2026-08-28T00:21:36.283281Z"
+    "created_at": "2026-08-28T10:07:13.544899Z",
+    "updated_at": "2026-08-28T10:07:13.546996Z"
   },
   {
-    "task_id": "TASK-02F24117",
+    "task_id": "TASK-6A72E224",
     "case_id": "CASE-2026-0008",
     "skill_name": "EvidenceCollectSkill",
     "assigned_actor": "revguard-evidence",
     "case_status": "EVIDENCE_COLLECTING",
-    "case_version": "sha256:dd3e8b65dd3eeb8e776e1afba916545c200ad43245037bad9f64291d329233b0",
+    "case_version": "sha256:f6f30bd5fb791f6cd9bbe4ddb5638479b9e9bf553e512400fbd1dbd90e65d6b6",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -134,7 +134,7 @@
     "result": {
       "evidence": [
         {
-          "evidence_id": "EV-1F4EF996",
+          "evidence_id": "EV-4F1D1310",
           "case_id": "CASE-2026-0008",
           "type": "ORDER",
           "source_system": "CRM_MOCK",
@@ -152,12 +152,12 @@
             "sales_owner": "j.mwangi"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-69526F7B",
-          "collected_at": "2026-08-28T00:21:36.345472Z",
+          "tool_receipt": "RCPT-ECEEFE63",
+          "collected_at": "2026-08-28T10:07:13.618122Z",
           "content_hash": "sha256:54a741652c8b6e86ac8fcb0c8eabae6d6c65651a94b0c7cbfcd6b08a5d1e5897"
         },
         {
-          "evidence_id": "EV-8AF47086",
+          "evidence_id": "EV-2D648FF0",
           "case_id": "CASE-2026-0008",
           "type": "TIER_HISTORY",
           "source_system": "CRM_MOCK",
@@ -177,12 +177,12 @@
             ]
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-C1BCF8B6",
-          "collected_at": "2026-08-28T00:21:36.345505Z",
+          "tool_receipt": "RCPT-8844F857",
+          "collected_at": "2026-08-28T10:07:13.618154Z",
           "content_hash": "sha256:5608d13fed5130d8446c0b54e32df9b7764cd57b0b1d854f58dd2a463cafd61d"
         },
         {
-          "evidence_id": "EV-692903F9",
+          "evidence_id": "EV-D7E69911",
           "case_id": "CASE-2026-0008",
           "type": "CONTRACT",
           "source_system": "CONTRACT_MOCK",
@@ -200,12 +200,12 @@
             }
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-F313A444",
-          "collected_at": "2026-08-28T00:21:36.345536Z",
+          "tool_receipt": "RCPT-01765C40",
+          "collected_at": "2026-08-28T10:07:13.618178Z",
           "content_hash": "sha256:faae19846969d0ca62c731b9568f55231f1dfc30fddd54f2086b93cfaf5a4a07"
         },
         {
-          "evidence_id": "EV-6D5C8189",
+          "evidence_id": "EV-B1922BEE",
           "case_id": "CASE-2026-0008",
           "type": "PAYMENT_RECORD",
           "source_system": "FINANCE_MOCK",
@@ -220,12 +220,12 @@
             "payment_date": "2026-07-28"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-FD5E5FD6",
-          "collected_at": "2026-08-28T00:21:36.345554Z",
+          "tool_receipt": "RCPT-F399020F",
+          "collected_at": "2026-08-28T10:07:13.618193Z",
           "content_hash": "sha256:48a02fc111e991cf0b3d142d9f025fd24ae476e656dd1562aa09cb700597928f"
         },
         {
-          "evidence_id": "EV-706B25A9",
+          "evidence_id": "EV-5E519A4C",
           "case_id": "CASE-2026-0008",
           "type": "REFUND_RECORD",
           "source_system": "FINANCE_MOCK",
@@ -236,12 +236,12 @@
             "refund_amount": "0"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-11DFF98F",
-          "collected_at": "2026-08-28T00:21:36.345568Z",
+          "tool_receipt": "RCPT-3F4990BC",
+          "collected_at": "2026-08-28T10:07:13.618206Z",
           "content_hash": "sha256:275422447ff010cdaaa862401935c61dfe07a449f19fc2ca4337841366fa015b"
         },
         {
-          "evidence_id": "EV-02305729",
+          "evidence_id": "EV-112A30B1",
           "case_id": "CASE-2026-0008",
           "type": "INVOICE",
           "source_system": "FINANCE_MOCK",
@@ -256,12 +256,12 @@
             "invoice_date": "2026-07-12"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-6D493B24",
-          "collected_at": "2026-08-28T00:21:36.345586Z",
+          "tool_receipt": "RCPT-938DEB86",
+          "collected_at": "2026-08-28T10:07:13.618220Z",
           "content_hash": "sha256:d0f129d5ada4425f2ef0806b13cdbb5bad1a42024a9135e9f6daeb737b62d9f9"
         },
         {
-          "evidence_id": "EV-1032DC2B",
+          "evidence_id": "EV-A30C5A48",
           "case_id": "CASE-2026-0008",
           "type": "COMMISSION_LEDGER",
           "source_system": "FINANCE_MOCK",
@@ -285,12 +285,12 @@
             "posted_total": "18000.00"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-F51381E6",
-          "collected_at": "2026-08-28T00:21:36.345614Z",
+          "tool_receipt": "RCPT-191C1167",
+          "collected_at": "2026-08-28T10:07:13.618242Z",
           "content_hash": "sha256:294c72859b146bacac5956284d1929429f9275bf116934d76e9adf53d40441d2"
         },
         {
-          "evidence_id": "EV-3F58341E",
+          "evidence_id": "EV-B6B66BA1",
           "case_id": "CASE-2026-0008",
           "type": "POLICY_VERSIONS",
           "source_system": "CONTRACT_MOCK",
@@ -518,8 +518,8 @@
             ]
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-FFE006F1",
-          "collected_at": "2026-08-28T00:21:36.346762Z",
+          "tool_receipt": "RCPT-F562D13C",
+          "collected_at": "2026-08-28T10:07:13.619310Z",
           "content_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994"
         }
       ],
@@ -823,22 +823,22 @@
       "parallel": {
         "enabled": true,
         "workers": 7,
-        "duration_ms": 56,
+        "duration_ms": 64,
         "task_count": 7
       }
     },
-    "skill_receipt": "SKR-A0667FB3",
+    "skill_receipt": "SKR-AE801967",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.287911Z",
-    "updated_at": "2026-08-28T00:21:36.348014Z"
+    "created_at": "2026-08-28T10:07:13.551905Z",
+    "updated_at": "2026-08-28T10:07:13.620471Z"
   },
   {
-    "task_id": "TASK-76DCE957",
+    "task_id": "TASK-75E05829",
     "case_id": "CASE-2026-0008",
     "skill_name": "PolicyVersionMatchSkill",
     "assigned_actor": "revguard-policy",
     "case_status": "POLICY_MATCHING",
-    "case_version": "sha256:177090842f1ea448104c970376415a34658a81b7c52283743e7ea9e774faaa7b",
+    "case_version": "sha256:eb13ad5bcf5b766e8a5633ea718839f19d2315b53f9383e7fad051e0518b88b6",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1164,18 +1164,18 @@
       "unresolved_conflicts": [],
       "confidence": 1.0
     },
-    "skill_receipt": "SKR-5A97D581",
+    "skill_receipt": "SKR-1DF4D5ED",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.356541Z",
-    "updated_at": "2026-08-28T00:21:36.359198Z"
+    "created_at": "2026-08-28T10:07:13.628030Z",
+    "updated_at": "2026-08-28T10:07:13.630625Z"
   },
   {
-    "task_id": "TASK-835A93EE",
+    "task_id": "TASK-6CCA06DD",
     "case_id": "CASE-2026-0008",
     "skill_name": "CommissionCalculateSkill",
     "assigned_actor": "revguard-calculation",
     "case_status": "CALCULATING",
-    "case_version": "sha256:ad79cef0874c4d98087886ec4422a37b037bd45050c876d45d651cc45dfa338c",
+    "case_version": "sha256:c965470cd873ff7a136c410720a67ce6ad516f55e3e2773c96a7f8a99bdf5c3d",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1321,18 +1321,18 @@
         "monthly_completed_orders": "1"
       }
     },
-    "skill_receipt": "SKR-A3A9BF63",
+    "skill_receipt": "SKR-2128A899",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.368158Z",
-    "updated_at": "2026-08-28T00:21:36.370267Z"
+    "created_at": "2026-08-28T10:07:13.638741Z",
+    "updated_at": "2026-08-28T10:07:13.640635Z"
   },
   {
-    "task_id": "TASK-358984ED",
+    "task_id": "TASK-807D12C6",
     "case_id": "CASE-2026-0008",
     "skill_name": "DifferenceExplainSkill",
     "assigned_actor": "revguard-rootcause",
     "case_status": "ROOT_CAUSE_ANALYZING",
-    "case_version": "sha256:6543538d2adc61af37ca24809d422396e0ab7b0a28bd815219e148a8d1ff26ef",
+    "case_version": "sha256:f70069c2b078e134343bbad031da25cb299acf219f0d785085781556a077adc4",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1451,18 +1451,18 @@
       ],
       "confidence": 1.0
     },
-    "skill_receipt": "SKR-CC6D9593",
+    "skill_receipt": "SKR-FB3CD856",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.378005Z",
-    "updated_at": "2026-08-28T00:21:36.380957Z"
+    "created_at": "2026-08-28T10:07:13.646974Z",
+    "updated_at": "2026-08-28T10:07:13.648977Z"
   },
   {
-    "task_id": "TASK-F09680D9",
+    "task_id": "TASK-F1064124",
     "case_id": "CASE-2026-0008",
     "skill_name": "RiskClassifySkill",
     "assigned_actor": "revguard-risk",
     "case_status": "RISK_REVIEW",
-    "case_version": "sha256:8bf1b588328f02402e49be1cfe6b2d37fa4a7b5e3b0b9a98e21c12adc9d79b48",
+    "case_version": "sha256:40c8f6cf311fb4d377fc095ee996fc12be215f5a8c40925474e81c19361ab138",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1487,18 +1487,18 @@
         "REQUIRES_HUMAN_APPROVAL"
       ]
     },
-    "skill_receipt": "SKR-051B77FF",
+    "skill_receipt": "SKR-1D4D5C7D",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.387610Z",
-    "updated_at": "2026-08-28T00:21:36.389237Z"
+    "created_at": "2026-08-28T10:07:13.655345Z",
+    "updated_at": "2026-08-28T10:07:13.656857Z"
   },
   {
-    "task_id": "TASK-28EF9099",
+    "task_id": "TASK-3DAFF809",
     "case_id": "CASE-2026-0008",
     "skill_name": "ApprovalRouteSkill",
     "assigned_actor": "revguard-risk",
     "case_status": "RISK_REVIEW",
-    "case_version": "sha256:ef614e68ceb99a4dc91116a413e31071d6e28a3541336a24aa541570789c91c8",
+    "case_version": "sha256:d18b06d63b0833d30ca3deb226df85a250be6d9756b05cdf128e704fcb79f3a3",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1525,7 +1525,7 @@
       "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION"
     },
     "result": {
-      "approval_id": "APR-EF696B51",
+      "approval_id": "APR-A8B074AF",
       "case_id": "CASE-2026-0008",
       "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
       "amount": "14400.00",
@@ -1537,20 +1537,20 @@
       "risk_level": "L2",
       "approver_role": "FINANCE_LEAD",
       "status": "PENDING",
-      "created_at": "2026-08-28T00:21:36.397850Z"
+      "created_at": "2026-08-28T10:07:13.663365Z"
     },
-    "skill_receipt": "SKR-39EC8362",
+    "skill_receipt": "SKR-9549F5E2",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.395690Z",
-    "updated_at": "2026-08-28T00:21:36.400490Z"
+    "created_at": "2026-08-28T10:07:13.662067Z",
+    "updated_at": "2026-08-28T10:07:13.665695Z"
   },
   {
-    "task_id": "TASK-3C596FD1",
+    "task_id": "TASK-0AD599C5",
     "case_id": "CASE-2026-0008",
     "skill_name": "PermissionCheckSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "READY_TO_EXECUTE",
-    "case_version": "sha256:13bda30efadab37110bd31c5937a2a48904c0b0b0f634c99fba94861feb0f96d",
+    "case_version": "sha256:8534ff09838b069dc367e32e61a004e2a35b1426408549aaac016f36bc9d3f6e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1571,7 +1571,7 @@
       },
       "approval": {
         "case_id": "CASE-2026-0008",
-        "approval_id": "APR-EF696B51",
+        "approval_id": "APR-A8B074AF",
         "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
         "amount": "14400.00",
         "component_quota": {
@@ -1582,46 +1582,46 @@
         "risk_level": "L2",
         "approver_role": "FINANCE_LEAD",
         "status": "APPROVED",
-        "created_at": "2026-08-28T00:21:36.397850Z",
+        "created_at": "2026-08-28T10:07:13.663365Z",
         "approver": "finance.lead",
         "comment": "",
-        "decided_at": "2026-08-28T00:21:36.414714Z",
+        "decided_at": "2026-08-28T10:07:13.678003Z",
         "approval_token": "<redacted:sha256:a1ae0804e02cd0b4>"
       }
     },
     "result": {
       "authorized": true
     },
-    "skill_receipt": "SKR-AF40E44B",
+    "skill_receipt": "SKR-62B7FD3C",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.416603Z",
-    "updated_at": "2026-08-28T00:21:36.418753Z"
+    "created_at": "2026-08-28T10:07:13.679788Z",
+    "updated_at": "2026-08-28T10:07:13.681724Z"
   },
   {
-    "task_id": "TASK-FC54C519",
+    "task_id": "TASK-2B7D0F3F",
     "case_id": "CASE-2026-0008",
     "skill_name": "IdempotencyGuardSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "EXECUTING",
-    "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+    "case_version": "sha256:c7f6241602b27971bd164a5033683fbc2693108da4844e11ad448431f306251e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
       "idempotency_key": "CASE-2026-0008:SALES_COMMISSION"
     },
     "result": null,
-    "skill_receipt": "SKR-EE45606E",
+    "skill_receipt": "SKR-4C59AB1C",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.423357Z",
-    "updated_at": "2026-08-28T00:21:36.425037Z"
+    "created_at": "2026-08-28T10:07:13.686285Z",
+    "updated_at": "2026-08-28T10:07:13.687879Z"
   },
   {
-    "task_id": "TASK-CEBBB80B",
+    "task_id": "TASK-CB44F6AD",
     "case_id": "CASE-2026-0008",
     "skill_name": "AdjustmentDraftSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "EXECUTING",
-    "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+    "case_version": "sha256:c7f6241602b27971bd164a5033683fbc2693108da4844e11ad448431f306251e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1632,7 +1632,7 @@
       "reason": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
     },
     "result": {
-      "action_id": "ACT-314A117B",
+      "action_id": "ACT-8A6730F1",
       "order_id": "EZ202608001",
       "case_id": "CASE-2026-0008",
       "component": "SALES_COMMISSION",
@@ -1640,33 +1640,33 @@
       "currency": "KES",
       "reason": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00",
       "status": "DRAFT",
-      "created_at": "2026-08-28T00:21:36.431640Z"
+      "created_at": "2026-08-28T10:07:13.692859Z"
     },
-    "skill_receipt": "SKR-57653DA0",
+    "skill_receipt": "SKR-1B5986DD",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.429880Z",
-    "updated_at": "2026-08-28T00:21:36.433268Z"
+    "created_at": "2026-08-28T10:07:13.691625Z",
+    "updated_at": "2026-08-28T10:07:13.694285Z"
   },
   {
-    "task_id": "TASK-4079B214",
+    "task_id": "TASK-C455F89A",
     "case_id": "CASE-2026-0008",
     "skill_name": "LedgerAdjustSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "EXECUTING",
-    "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+    "case_version": "sha256:c7f6241602b27971bd164a5033683fbc2693108da4844e11ad448431f306251e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
-      "action_id": "ACT-314A117B",
+      "action_id": "ACT-8A6730F1",
       "approval_token": "<redacted:sha256:a1ae0804e02cd0b4>",
       "policy_version": "2026-Q3",
       "idempotency_key": "CASE-2026-0008:SALES_COMMISSION"
     },
     "result": {
-      "action_id": "ACT-314A117B",
+      "action_id": "ACT-8A6730F1",
       "status": "SUBMITTED",
       "ledger_entry": {
-        "ledger_id": "LED-64C2A5F8",
+        "ledger_id": "LED-01BBB830",
         "order_id": "EZ202608001",
         "component": "SALES_COMMISSION",
         "amount": "9000.00",
@@ -1674,7 +1674,7 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.441609Z"
+        "posted_at": "2026-08-28T10:07:13.702333Z"
       },
       "before_snapshot": [
         {
@@ -1704,7 +1704,7 @@
           "comment": "7月佣金批处理（误用 2026-Q2 版本）"
         },
         {
-          "ledger_id": "LED-64C2A5F8",
+          "ledger_id": "LED-01BBB830",
           "order_id": "EZ202608001",
           "component": "SALES_COMMISSION",
           "amount": "9000.00",
@@ -1712,41 +1712,41 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.441609Z"
+          "posted_at": "2026-08-28T10:07:13.702333Z"
         }
       ],
-      "rollback_token": "<redacted:sha256:a609e683dafa9b19>"
+      "rollback_token": "<redacted:sha256:fd8f47415eba6586>"
     },
-    "skill_receipt": "SKR-8210367A",
+    "skill_receipt": "SKR-28A2F78D",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.439709Z",
-    "updated_at": "2026-08-28T00:21:36.443404Z"
+    "created_at": "2026-08-28T10:07:13.700501Z",
+    "updated_at": "2026-08-28T10:07:13.703984Z"
   },
   {
-    "task_id": "TASK-5E7F19C2",
+    "task_id": "TASK-ECF99DA1",
     "case_id": "CASE-2026-0008",
     "skill_name": "IdempotencyGuardSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "EXECUTING",
-    "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+    "case_version": "sha256:c7f6241602b27971bd164a5033683fbc2693108da4844e11ad448431f306251e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
       "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION"
     },
     "result": null,
-    "skill_receipt": "SKR-93AB91B0",
+    "skill_receipt": "SKR-CB67B1B0",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.451037Z",
-    "updated_at": "2026-08-28T00:21:36.452787Z"
+    "created_at": "2026-08-28T10:07:13.710220Z",
+    "updated_at": "2026-08-28T10:07:13.711583Z"
   },
   {
-    "task_id": "TASK-63952ADE",
+    "task_id": "TASK-B8C87231",
     "case_id": "CASE-2026-0008",
     "skill_name": "AdjustmentDraftSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "EXECUTING",
-    "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+    "case_version": "sha256:c7f6241602b27971bd164a5033683fbc2693108da4844e11ad448431f306251e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1757,7 +1757,7 @@
       "reason": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
     },
     "result": {
-      "action_id": "ACT-8BF7F41E",
+      "action_id": "ACT-C0769C87",
       "order_id": "EZ202608001",
       "case_id": "CASE-2026-0008",
       "component": "COLLECTION_COMMISSION",
@@ -1765,33 +1765,33 @@
       "currency": "KES",
       "reason": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）",
       "status": "DRAFT",
-      "created_at": "2026-08-28T00:21:36.458622Z"
+      "created_at": "2026-08-28T10:07:13.716378Z"
     },
-    "skill_receipt": "SKR-432AF294",
+    "skill_receipt": "SKR-AB1E45EB",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.456953Z",
-    "updated_at": "2026-08-28T00:21:36.460643Z"
+    "created_at": "2026-08-28T10:07:13.715161Z",
+    "updated_at": "2026-08-28T10:07:13.718368Z"
   },
   {
-    "task_id": "TASK-046DC667",
+    "task_id": "TASK-39537448",
     "case_id": "CASE-2026-0008",
     "skill_name": "LedgerAdjustSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "EXECUTING",
-    "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+    "case_version": "sha256:c7f6241602b27971bd164a5033683fbc2693108da4844e11ad448431f306251e",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
-      "action_id": "ACT-8BF7F41E",
+      "action_id": "ACT-C0769C87",
       "approval_token": "<redacted:sha256:a1ae0804e02cd0b4>",
       "policy_version": "2026-Q3",
       "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION"
     },
     "result": {
-      "action_id": "ACT-8BF7F41E",
+      "action_id": "ACT-C0769C87",
       "status": "SUBMITTED",
       "ledger_entry": {
-        "ledger_id": "LED-0C1A0E71",
+        "ledger_id": "LED-0EE3564C",
         "order_id": "EZ202608001",
         "component": "COLLECTION_COMMISSION",
         "amount": "5400.00",
@@ -1799,7 +1799,7 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.469203Z"
+        "posted_at": "2026-08-28T10:07:13.726009Z"
       },
       "before_snapshot": [
         {
@@ -1815,7 +1815,7 @@
           "comment": "7月佣金批处理（误用 2026-Q2 版本）"
         },
         {
-          "ledger_id": "LED-64C2A5F8",
+          "ledger_id": "LED-01BBB830",
           "order_id": "EZ202608001",
           "component": "SALES_COMMISSION",
           "amount": "9000.00",
@@ -1823,7 +1823,7 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.441609Z"
+          "posted_at": "2026-08-28T10:07:13.702333Z"
         }
       ],
       "after_snapshot": [
@@ -1840,7 +1840,7 @@
           "comment": "7月佣金批处理（误用 2026-Q2 版本）"
         },
         {
-          "ledger_id": "LED-64C2A5F8",
+          "ledger_id": "LED-01BBB830",
           "order_id": "EZ202608001",
           "component": "SALES_COMMISSION",
           "amount": "9000.00",
@@ -1848,10 +1848,10 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.441609Z"
+          "posted_at": "2026-08-28T10:07:13.702333Z"
         },
         {
-          "ledger_id": "LED-0C1A0E71",
+          "ledger_id": "LED-0EE3564C",
           "order_id": "EZ202608001",
           "component": "COLLECTION_COMMISSION",
           "amount": "5400.00",
@@ -1859,23 +1859,23 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.469203Z"
+          "posted_at": "2026-08-28T10:07:13.726009Z"
         }
       ],
-      "rollback_token": "<redacted:sha256:ca953a3874f8d840>"
+      "rollback_token": "<redacted:sha256:7a8f8c7428768063>"
     },
-    "skill_receipt": "SKR-7B27DCA3",
+    "skill_receipt": "SKR-E5F974BC",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.467453Z",
-    "updated_at": "2026-08-28T00:21:36.471240Z"
+    "created_at": "2026-08-28T10:07:13.724538Z",
+    "updated_at": "2026-08-28T10:07:13.727723Z"
   },
   {
-    "task_id": "TASK-374A1089",
+    "task_id": "TASK-374CB476",
     "case_id": "CASE-2026-0008",
     "skill_name": "PostActionVerifySkill",
     "assigned_actor": "revguard-verifier",
     "case_status": "VERIFYING",
-    "case_version": "sha256:8a69331b447606a68b18449abf151405f0a5ae550b537d1754c5e5aa5cdd1b74",
+    "case_version": "sha256:e12f2b33614756ec3fa66f06a1ba014d244cbd2920f61529e4d2ff1688da0fa1",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -1949,33 +1949,33 @@
         }
       ],
       "evidence_refs": [
-        "RCPT-C535B8F4"
+        "RCPT-D938E59D"
       ],
       "rollback_required": true,
-      "checked_at": "2026-08-28T00:21:36.482336Z"
+      "checked_at": "2026-08-28T10:07:13.737247Z"
     },
-    "skill_receipt": "SKR-57CE06C6",
+    "skill_receipt": "SKR-70A6C42C",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.479292Z",
-    "updated_at": "2026-08-28T00:21:36.482689Z"
+    "created_at": "2026-08-28T10:07:13.734860Z",
+    "updated_at": "2026-08-28T10:07:13.737541Z"
   },
   {
-    "task_id": "TASK-E711BA5E",
+    "task_id": "TASK-4BA08F81",
     "case_id": "CASE-2026-0008",
     "skill_name": "LedgerReverseSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "ROLLBACK_REQUIRED",
-    "case_version": "sha256:473c51d70c190904847c2038ceadfc844e7c8c6ca499549300fe22e59773b939",
+    "case_version": "sha256:a92d680b6c8510065dde308d7328a8075dee963cd455bedfe95515f65b74ebe6",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
-      "ledger_id": "LED-0C1A0E71",
+      "ledger_id": "LED-0EE3564C",
       "rollback_token": "<redacted:sha256:a1ae0804e02cd0b4>",
       "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION:rollback"
     },
     "result": {
       "reversal_entry": {
-        "ledger_id": "LED-9D10A320",
+        "ledger_id": "LED-63B47999",
         "order_id": "EZ202608001",
         "component": "COLLECTION_COMMISSION",
         "amount": "-5400.00",
@@ -1983,11 +1983,11 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.491568Z",
-        "reversal_of": "LED-0C1A0E71"
+        "posted_at": "2026-08-28T10:07:13.745168Z",
+        "reversal_of": "LED-0EE3564C"
       },
       "reversed_entry": {
-        "ledger_id": "LED-0C1A0E71",
+        "ledger_id": "LED-0EE3564C",
         "order_id": "EZ202608001",
         "component": "COLLECTION_COMMISSION",
         "amount": "5400.00",
@@ -1995,32 +1995,32 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.469203Z",
-        "reversed_by": "LED-9D10A320"
+        "posted_at": "2026-08-28T10:07:13.726009Z",
+        "reversed_by": "LED-63B47999"
       }
     },
-    "skill_receipt": "SKR-A8C49195",
+    "skill_receipt": "SKR-F17CC7A2",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.489640Z",
-    "updated_at": "2026-08-28T00:21:36.493413Z"
+    "created_at": "2026-08-28T10:07:13.743659Z",
+    "updated_at": "2026-08-28T10:07:13.746679Z"
   },
   {
-    "task_id": "TASK-B8A4B7BD",
+    "task_id": "TASK-51A69480",
     "case_id": "CASE-2026-0008",
     "skill_name": "LedgerReverseSkill",
     "assigned_actor": "revguard-executor",
     "case_status": "ROLLBACK_REQUIRED",
-    "case_version": "sha256:473c51d70c190904847c2038ceadfc844e7c8c6ca499549300fe22e59773b939",
+    "case_version": "sha256:a92d680b6c8510065dde308d7328a8075dee963cd455bedfe95515f65b74ebe6",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
-      "ledger_id": "LED-64C2A5F8",
+      "ledger_id": "LED-01BBB830",
       "rollback_token": "<redacted:sha256:a1ae0804e02cd0b4>",
       "idempotency_key": "CASE-2026-0008:SALES_COMMISSION:rollback"
     },
     "result": {
       "reversal_entry": {
-        "ledger_id": "LED-DE8DC04C",
+        "ledger_id": "LED-BEE46026",
         "order_id": "EZ202608001",
         "component": "SALES_COMMISSION",
         "amount": "-9000.00",
@@ -2028,11 +2028,11 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.501247Z",
-        "reversal_of": "LED-64C2A5F8"
+        "posted_at": "2026-08-28T10:07:13.753505Z",
+        "reversal_of": "LED-01BBB830"
       },
       "reversed_entry": {
-        "ledger_id": "LED-64C2A5F8",
+        "ledger_id": "LED-01BBB830",
         "order_id": "EZ202608001",
         "component": "SALES_COMMISSION",
         "amount": "9000.00",
@@ -2040,22 +2040,22 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.441609Z",
-        "reversed_by": "LED-DE8DC04C"
+        "posted_at": "2026-08-28T10:07:13.702333Z",
+        "reversed_by": "LED-BEE46026"
       }
     },
-    "skill_receipt": "SKR-117E1DAC",
+    "skill_receipt": "SKR-3093D9CF",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.499496Z",
-    "updated_at": "2026-08-28T00:21:36.503140Z"
+    "created_at": "2026-08-28T10:07:13.751783Z",
+    "updated_at": "2026-08-28T10:07:13.755255Z"
   },
   {
-    "task_id": "TASK-31B8A544",
+    "task_id": "TASK-5DCDF45E",
     "case_id": "CASE-2026-0008",
     "skill_name": "PostRollbackVerifySkill",
     "assigned_actor": "revguard-verifier",
     "case_status": "ROLLBACK_REQUIRED",
-    "case_version": "sha256:473c51d70c190904847c2038ceadfc844e7c8c6ca499549300fe22e59773b939",
+    "case_version": "sha256:a92d680b6c8510065dde308d7328a8075dee963cd455bedfe95515f65b74ebe6",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -2092,22 +2092,22 @@
         }
       ],
       "evidence_refs": [
-        "RCPT-2EA4B1DF"
+        "RCPT-536BAA29"
       ],
-      "checked_at": "2026-08-28T00:21:36.511828Z"
+      "checked_at": "2026-08-28T10:07:13.762126Z"
     },
-    "skill_receipt": "SKR-BE9EFED6",
+    "skill_receipt": "SKR-DA8443A6",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.508795Z",
-    "updated_at": "2026-08-28T00:21:36.512145Z"
+    "created_at": "2026-08-28T10:07:13.760093Z",
+    "updated_at": "2026-08-28T10:07:13.762365Z"
   },
   {
-    "task_id": "TASK-26015B61",
+    "task_id": "TASK-686B46F7",
     "case_id": "CASE-2026-0008",
     "skill_name": "CaseToDatasetSkill",
     "assigned_actor": "revguard-knowledge",
     "case_status": "ROLLED_BACK",
-    "case_version": "sha256:c32922f1b33788facfa8486e8e2cf495adce3e073b0291084bbaf82d778e06af",
+    "case_version": "sha256:5bdeac6027f9555862e130c33ce20845d00cb38fbf378622d91627eeb28fdeff",
     "status": "SUCCEEDED",
     "attempt": 1,
     "input": {
@@ -2135,8 +2135,8 @@
         },
         "evidence_score": 1.0,
         "risk_level": "L2",
-        "created_at": "2026-08-28T00:21:36.218637Z",
-        "updated_at": "2026-08-28T00:21:36.517954Z",
+        "created_at": "2026-08-28T10:07:13.490469Z",
+        "updated_at": "2026-08-28T10:07:13.767402Z",
         "execution_mode": "MCP_TEAM",
         "workflow_provenance": {
           "business_data": "synthetic",
@@ -2685,7 +2685,7 @@
         },
         "approval": {
           "case_id": "CASE-2026-0008",
-          "approval_id": "APR-EF696B51",
+          "approval_id": "APR-A8B074AF",
           "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
           "amount": "14400.00",
           "component_quota": {
@@ -2696,11 +2696,11 @@
           "risk_level": "L2",
           "approver_role": "FINANCE_LEAD",
           "status": "APPROVED",
-          "created_at": "2026-08-28T00:21:36.397850Z",
+          "created_at": "2026-08-28T10:07:13.663365Z",
           "approver": "finance.lead",
           "comment": "",
-          "decided_at": "2026-08-28T00:21:36.414714Z",
-          "approval_token": "<redacted:sha256:4ea5d18d2f6509cd>"
+          "decided_at": "2026-08-28T10:07:13.678003Z",
+          "approval_token": "<redacted:sha256:5b699a3db73a8bc2>"
         },
         "policy_decision": {
           "policy_id": "KE-COMMISSION-2026",
@@ -2919,7 +2919,7 @@
         "errors": [],
         "executions": [
           {
-            "action_id": "ACT-314A117B",
+            "action_id": "ACT-8A6730F1",
             "case_id": "CASE-2026-0008",
             "action_type": "LEDGER_ADJUST",
             "status": "ROLLED_BACK",
@@ -2955,7 +2955,7 @@
                 "comment": "7月佣金批处理（误用 2026-Q2 版本）"
               },
               {
-                "ledger_id": "LED-64C2A5F8",
+                "ledger_id": "LED-01BBB830",
                 "order_id": "EZ202608001",
                 "component": "SALES_COMMISSION",
                 "amount": "9000.00",
@@ -2963,12 +2963,12 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.441609Z"
+                "posted_at": "2026-08-28T10:07:13.702333Z"
               }
             ],
-            "rollback_token": "<redacted:sha256:1c5bdf156d125335>",
+            "rollback_token": "<redacted:sha256:983777f7caa36118>",
             "ledger_entry": {
-              "ledger_id": "LED-64C2A5F8",
+              "ledger_id": "LED-01BBB830",
               "order_id": "EZ202608001",
               "component": "SALES_COMMISSION",
               "amount": "9000.00",
@@ -2976,10 +2976,10 @@
               "policy_version": "2026-Q3",
               "status": "POSTED",
               "source": "REVGUARD:CASE-2026-0008",
-              "posted_at": "2026-08-28T00:21:36.441609Z"
+              "posted_at": "2026-08-28T10:07:13.702333Z"
             },
             "reversal": {
-              "ledger_id": "LED-DE8DC04C",
+              "ledger_id": "LED-BEE46026",
               "order_id": "EZ202608001",
               "component": "SALES_COMMISSION",
               "amount": "-9000.00",
@@ -2987,12 +2987,12 @@
               "policy_version": "2026-Q3",
               "status": "POSTED",
               "source": "REVGUARD:CASE-2026-0008",
-              "posted_at": "2026-08-28T00:21:36.501247Z",
-              "reversal_of": "LED-64C2A5F8"
+              "posted_at": "2026-08-28T10:07:13.753505Z",
+              "reversal_of": "LED-01BBB830"
             }
           },
           {
-            "action_id": "ACT-8BF7F41E",
+            "action_id": "ACT-C0769C87",
             "case_id": "CASE-2026-0008",
             "action_type": "LEDGER_ADJUST",
             "status": "ROLLED_BACK",
@@ -3014,7 +3014,7 @@
                 "comment": "7月佣金批处理（误用 2026-Q2 版本）"
               },
               {
-                "ledger_id": "LED-64C2A5F8",
+                "ledger_id": "LED-01BBB830",
                 "order_id": "EZ202608001",
                 "component": "SALES_COMMISSION",
                 "amount": "9000.00",
@@ -3022,7 +3022,7 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.441609Z"
+                "posted_at": "2026-08-28T10:07:13.702333Z"
               }
             ],
             "after_snapshot": [
@@ -3039,7 +3039,7 @@
                 "comment": "7月佣金批处理（误用 2026-Q2 版本）"
               },
               {
-                "ledger_id": "LED-64C2A5F8",
+                "ledger_id": "LED-01BBB830",
                 "order_id": "EZ202608001",
                 "component": "SALES_COMMISSION",
                 "amount": "9000.00",
@@ -3047,10 +3047,10 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.441609Z"
+                "posted_at": "2026-08-28T10:07:13.702333Z"
               },
               {
-                "ledger_id": "LED-0C1A0E71",
+                "ledger_id": "LED-0EE3564C",
                 "order_id": "EZ202608001",
                 "component": "COLLECTION_COMMISSION",
                 "amount": "5400.00",
@@ -3058,12 +3058,12 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.469203Z"
+                "posted_at": "2026-08-28T10:07:13.726009Z"
               }
             ],
-            "rollback_token": "<redacted:sha256:6a975d54ce7521c3>",
+            "rollback_token": "<redacted:sha256:26c3124ec1fd8a12>",
             "ledger_entry": {
-              "ledger_id": "LED-0C1A0E71",
+              "ledger_id": "LED-0EE3564C",
               "order_id": "EZ202608001",
               "component": "COLLECTION_COMMISSION",
               "amount": "5400.00",
@@ -3071,10 +3071,10 @@
               "policy_version": "2026-Q3",
               "status": "POSTED",
               "source": "REVGUARD:CASE-2026-0008",
-              "posted_at": "2026-08-28T00:21:36.469203Z"
+              "posted_at": "2026-08-28T10:07:13.726009Z"
             },
             "reversal": {
-              "ledger_id": "LED-9D10A320",
+              "ledger_id": "LED-63B47999",
               "order_id": "EZ202608001",
               "component": "COLLECTION_COMMISSION",
               "amount": "-5400.00",
@@ -3082,8 +3082,8 @@
               "policy_version": "2026-Q3",
               "status": "POSTED",
               "source": "REVGUARD:CASE-2026-0008",
-              "posted_at": "2026-08-28T00:21:36.491568Z",
-              "reversal_of": "LED-0C1A0E71"
+              "posted_at": "2026-08-28T10:07:13.745168Z",
+              "reversal_of": "LED-0EE3564C"
             }
           }
         ],
@@ -3107,15 +3107,15 @@
             }
           ],
           "evidence_refs": [
-            "RCPT-C535B8F4"
+            "RCPT-D938E59D"
           ],
           "rollback_required": true,
-          "checked_at": "2026-08-28T00:21:36.482336Z"
+          "checked_at": "2026-08-28T10:07:13.737247Z"
         },
         "rollback": {
           "reversals": [
             {
-              "ledger_id": "LED-9D10A320",
+              "ledger_id": "LED-63B47999",
               "order_id": "EZ202608001",
               "component": "COLLECTION_COMMISSION",
               "amount": "-5400.00",
@@ -3123,11 +3123,11 @@
               "policy_version": "2026-Q3",
               "status": "POSTED",
               "source": "REVGUARD:CASE-2026-0008",
-              "posted_at": "2026-08-28T00:21:36.491568Z",
-              "reversal_of": "LED-0C1A0E71"
+              "posted_at": "2026-08-28T10:07:13.745168Z",
+              "reversal_of": "LED-0EE3564C"
             },
             {
-              "ledger_id": "LED-DE8DC04C",
+              "ledger_id": "LED-BEE46026",
               "order_id": "EZ202608001",
               "component": "SALES_COMMISSION",
               "amount": "-9000.00",
@@ -3135,8 +3135,8 @@
               "policy_version": "2026-Q3",
               "status": "POSTED",
               "source": "REVGUARD:CASE-2026-0008",
-              "posted_at": "2026-08-28T00:21:36.501247Z",
-              "reversal_of": "LED-64C2A5F8"
+              "posted_at": "2026-08-28T10:07:13.753505Z",
+              "reversal_of": "LED-01BBB830"
             }
           ],
           "verification": {
@@ -3156,9 +3156,9 @@
               }
             ],
             "evidence_refs": [
-              "RCPT-2EA4B1DF"
+              "RCPT-536BAA29"
             ],
-            "checked_at": "2026-08-28T00:21:36.511828Z"
+            "checked_at": "2026-08-28T10:07:13.762126Z"
           }
         }
       },
@@ -3182,10 +3182,10 @@
           }
         ],
         "evidence_refs": [
-          "RCPT-C535B8F4"
+          "RCPT-D938E59D"
         ],
         "rollback_required": true,
-        "checked_at": "2026-08-28T00:21:36.482336Z"
+        "checked_at": "2026-08-28T10:07:13.737247Z"
       }
     },
     "result": {
@@ -3231,16 +3231,16 @@
           }
         ],
         "evidence_refs": [
-          "RCPT-C535B8F4"
+          "RCPT-D938E59D"
         ],
         "rollback_required": true,
-        "checked_at": "2026-08-28T00:21:36.482336Z"
+        "checked_at": "2026-08-28T10:07:13.737247Z"
       },
-      "archived_at": "2026-08-28T00:21:36.523207Z"
+      "archived_at": "2026-08-28T10:07:13.772380Z"
     },
-    "skill_receipt": "SKR-ED33564B",
+    "skill_receipt": "SKR-47CE72A2",
     "error": null,
-    "created_at": "2026-08-28T00:21:36.518924Z",
-    "updated_at": "2026-08-28T00:21:36.524902Z"
+    "created_at": "2026-08-28T10:07:13.768304Z",
+    "updated_at": "2026-08-28T10:07:13.773752Z"
   }
 ]

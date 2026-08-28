@@ -168,7 +168,7 @@ ToolGateway、StageResult 事务和 Audit；底层 Tool 不会进入 MCP 清单�
 均需要 `viewer`。
 
 `/api/v1/health/live`与 `/api/v1/health/ready` 不需要身份，分别用于进程存活和数据库就绪探测。
-`/api/v1/ops/evidence` 将当前 Store/Trace/StageResult 指标、105 场景评测和带数据分类的价值报告组合为录制安全视图；外部环境未验收项始终返回 `PENDING_*`。
+`/api/v1/ops/evidence` 将当前 Store/Trace/StageResult 指标、105 场景评测和带数据分类的价值报告组合为录制安全视图。`business_value.simulation_contract` 同时返回价值模拟的默认假设、公式和声明边界；WebUI 只在浏览器侧按用户输入试算，不把结果写回案件或冒充生产收益。外部环境未验收项始终返回 `PENDING_*`。
 
 案件列表使用 `(updated_at, case_id)` keyset 分页，返回：
 

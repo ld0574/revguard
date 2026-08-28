@@ -22,6 +22,14 @@ class TestValueEvaluation(unittest.TestCase):
             report["metrics"]["median_manual_processing_minutes"],
             report["metrics"]["median_revguard_processing_minutes"],
         )
+        self.assertEqual(report["metrics"]["median_minutes_saved_per_case"], 108.0)
+        self.assertEqual(report["metrics"]["throughput_capacity_multiplier"], 6.5385)
+        self.assertEqual(report["metrics"]["recovery_cost_avoided"], "35400.00")
+        self.assertEqual(
+            report["simulation_contract"]["default_assumptions"]["monthly_case_volume"],
+            500,
+        )
+        self.assertIn("不是现金节省承诺", report["simulation_contract"]["claim_boundary"])
 
     def test_production_rows_require_source_reference(self):
         row = {

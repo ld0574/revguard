@@ -32,11 +32,11 @@
   },
   "artifact_sha256": {
     "00-data-provenance.json": "100de3e9a638a92dc612bf79134ebf67b8c9481af1a8cc523cc8fa43d8dccf55",
-    "01-human-gate.json": "f97fb55fc65eec9857d3bd8022867d28a8846aaeffe0b93b7ad2faadc775076f",
-    "02-agent-tasks.json": "96c95168d938af30ca3635bd424f4e116c194560e25487cb06ed209ca9bccb13",
-    "03-audit-events.json": "7f7cba37ecb4b42eb1411166f3dd8d9cc0e4d16f716ae909d79c7dcb256a9b61",
-    "04-trace-spans.json": "1090d26a28ec7439b90a5806f0e3b5ae211e7b483ecb55a499a68102a4bcc507",
-    "05-final-case.json": "91ff4f378838209670b0de9ffd1521dbe08182acd658d83b439321eb7a50dc85",
-    "06-audit-report.md": "500c5f6491858515c7686509896b38a7edbfc5a5730b20f779b781309ccee6a9"
+    "01-human-gate.json": "ebf715dd59e50afc48ee8a85ff98262810c457f30122dd05217d33d4ad1e466a",
+    "02-agent-tasks.json": "1fa4167cec6c0704ab74c7a166ee30b54bad33b24f58cf5b5de64d107f9bff9a",
+    "03-audit-events.json": "40320e0118897ce03fcde77b8336f095338681463ecb7e50208437542a32cf7a",
+    "04-trace-spans.json": "4da322d174ac5872270fff9343b9cb763c03f5078ca43b7f8c884450638f7d35",
+    "05-final-case.json": "44190b8b366ac8096a66a296ce08a89bc24b2ff7e4523018996d617448804ff3",
+    "06-audit-report.md": "5c82431c7ec96cbebe9a40d77425cfa5d2574ad405485c4f3754cca6c831f50b"
   }
 }

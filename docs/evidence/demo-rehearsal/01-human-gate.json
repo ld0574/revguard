@@ -23,8 +23,8 @@
     },
     "evidence_score": 1.0,
     "risk_level": "L2",
-    "created_at": "2026-08-28T00:21:36.218637Z",
-    "updated_at": "2026-08-28T00:21:36.407177Z",
+    "created_at": "2026-08-28T10:07:13.490469Z",
+    "updated_at": "2026-08-28T10:07:13.672245Z",
     "execution_mode": "MCP_TEAM",
     "workflow_provenance": {
       "business_data": "synthetic",
@@ -262,7 +262,7 @@
     }
   },
   "approval": {
-    "approval_id": "APR-EF696B51",
+    "approval_id": "APR-A8B074AF",
     "case_id": "CASE-2026-0008",
     "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
     "amount": "14400.00",
@@ -274,7 +274,7 @@
     "risk_level": "L2",
     "approver_role": "FINANCE_LEAD",
     "status": "PENDING",
-    "created_at": "2026-08-28T00:21:36.397850Z"
+    "created_at": "2026-08-28T10:07:13.663365Z"
   },
   "task_count": 8,
   "task_statuses": [

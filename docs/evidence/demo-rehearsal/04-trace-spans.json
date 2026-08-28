@@ -1,7 +1,7 @@
 [
   {
     "trace_sequence": 1,
-    "span_id": "SPAN-BC9E025F",
+    "span_id": "SPAN-02769E01",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -9,8 +9,8 @@
     "actor": "revguard-intake",
     "status": "OK",
     "sequence": 1,
-    "started_at": "2026-08-28T00:21:36.225384Z",
-    "ended_at": "2026-08-28T00:21:36.225412Z",
+    "started_at": "2026-08-28T10:07:13.496153Z",
+    "ended_at": "2026-08-28T10:07:13.496174Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -38,8 +38,8 @@
           },
           "evidence_score": 0.0,
           "risk_level": null,
-          "created_at": "2026-08-28T00:21:36.218637Z",
-          "updated_at": "2026-08-28T00:21:36.218827Z",
+          "created_at": "2026-08-28T10:07:13.490469Z",
+          "updated_at": "2026-08-28T10:07:13.490628Z",
           "execution_mode": "MCP_TEAM",
           "workflow_provenance": {
             "business_data": "synthetic",
@@ -53,10 +53,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-57F2A7E1",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-49B6F51D",
+        "request_id": "REQ-MCP-C654396A",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-78143CC4",
         "traceparent": null,
-        "agent_task_id": "TASK-49B6F51D"
+        "agent_task_id": "TASK-78143CC4"
       }
     },
     "outputs": {
@@ -77,7 +77,7 @@
   },
   {
     "trace_sequence": 2,
-    "span_id": "SPAN-1C05F2D1",
+    "span_id": "SPAN-3EE9ED8F",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -85,8 +85,8 @@
     "actor": "revguard-intake",
     "status": "OK",
     "sequence": 2,
-    "started_at": "2026-08-28T00:21:36.282324Z",
-    "ended_at": "2026-08-28T00:21:36.283061Z",
+    "started_at": "2026-08-28T10:07:13.546117Z",
+    "ended_at": "2026-08-28T10:07:13.546801Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -100,10 +100,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-383C6BC7",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5C6D266B",
+        "request_id": "REQ-MCP-7823683D",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-DDD704FC",
         "traceparent": null,
-        "agent_task_id": "TASK-5C6D266B"
+        "agent_task_id": "TASK-DDD704FC"
       }
     },
     "outputs": {
@@ -128,16 +128,16 @@
   },
   {
     "trace_sequence": 3,
-    "span_id": "SPAN-ABEC9D7C",
+    "span_id": "SPAN-66FB78B6",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-1C05F2D1",
+    "parent_span_id": "SPAN-3EE9ED8F",
     "kind": "TOOL",
     "name": "crm.get_partner",
     "actor": "revguard-intake",
     "status": "OK",
     "sequence": 3,
-    "started_at": "2026-08-28T00:21:36.282347Z",
-    "ended_at": "2026-08-28T00:21:36.282938Z",
+    "started_at": "2026-08-28T10:07:13.546136Z",
+    "ended_at": "2026-08-28T10:07:13.546690Z",
     "duration_ms": 0,
     "inputs": {
       "parameters": {
@@ -148,13 +148,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-51574CC5"
+      "tool_receipt": "RCPT-0C4AE4B6"
     },
     "error": null
   },
   {
     "trace_sequence": 4,
-    "span_id": "SPAN-89C9CD57",
+    "span_id": "SPAN-F95A9C0A",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -162,9 +162,9 @@
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 4,
-    "started_at": "2026-08-28T00:21:36.289027Z",
-    "ended_at": "2026-08-28T00:21:36.347026Z",
-    "duration_ms": 57,
+    "started_at": "2026-08-28T10:07:13.553333Z",
+    "ended_at": "2026-08-28T10:07:13.619554Z",
+    "duration_ms": 66,
     "inputs": {
       "input": {
         "partner": {
@@ -187,16 +187,16 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-A8D64383",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-02F24117",
+        "request_id": "REQ-MCP-17AAF409",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-6A72E224",
         "traceparent": null,
-        "agent_task_id": "TASK-02F24117"
+        "agent_task_id": "TASK-6A72E224"
       }
     },
     "outputs": {
       "evidence": [
         {
-          "evidence_id": "EV-1F4EF996",
+          "evidence_id": "EV-4F1D1310",
           "case_id": "CASE-2026-0008",
           "type": "ORDER",
           "source_system": "CRM_MOCK",
@@ -214,12 +214,12 @@
             "sales_owner": "j.mwangi"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-69526F7B",
-          "collected_at": "2026-08-28T00:21:36.345472Z",
+          "tool_receipt": "RCPT-ECEEFE63",
+          "collected_at": "2026-08-28T10:07:13.618122Z",
           "content_hash": "sha256:54a741652c8b6e86ac8fcb0c8eabae6d6c65651a94b0c7cbfcd6b08a5d1e5897"
         },
         {
-          "evidence_id": "EV-8AF47086",
+          "evidence_id": "EV-2D648FF0",
           "case_id": "CASE-2026-0008",
           "type": "TIER_HISTORY",
           "source_system": "CRM_MOCK",
@@ -239,12 +239,12 @@
             ]
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-C1BCF8B6",
-          "collected_at": "2026-08-28T00:21:36.345505Z",
+          "tool_receipt": "RCPT-8844F857",
+          "collected_at": "2026-08-28T10:07:13.618154Z",
           "content_hash": "sha256:5608d13fed5130d8446c0b54e32df9b7764cd57b0b1d854f58dd2a463cafd61d"
         },
         {
-          "evidence_id": "EV-692903F9",
+          "evidence_id": "EV-D7E69911",
           "case_id": "CASE-2026-0008",
           "type": "CONTRACT",
           "source_system": "CONTRACT_MOCK",
@@ -262,12 +262,12 @@
             }
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-F313A444",
-          "collected_at": "2026-08-28T00:21:36.345536Z",
+          "tool_receipt": "RCPT-01765C40",
+          "collected_at": "2026-08-28T10:07:13.618178Z",
           "content_hash": "sha256:faae19846969d0ca62c731b9568f55231f1dfc30fddd54f2086b93cfaf5a4a07"
         },
         {
-          "evidence_id": "EV-6D5C8189",
+          "evidence_id": "EV-B1922BEE",
           "case_id": "CASE-2026-0008",
           "type": "PAYMENT_RECORD",
           "source_system": "FINANCE_MOCK",
@@ -282,12 +282,12 @@
             "payment_date": "2026-07-28"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-FD5E5FD6",
-          "collected_at": "2026-08-28T00:21:36.345554Z",
+          "tool_receipt": "RCPT-F399020F",
+          "collected_at": "2026-08-28T10:07:13.618193Z",
           "content_hash": "sha256:48a02fc111e991cf0b3d142d9f025fd24ae476e656dd1562aa09cb700597928f"
         },
         {
-          "evidence_id": "EV-706B25A9",
+          "evidence_id": "EV-5E519A4C",
           "case_id": "CASE-2026-0008",
           "type": "REFUND_RECORD",
           "source_system": "FINANCE_MOCK",
@@ -298,12 +298,12 @@
             "refund_amount": "0"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-11DFF98F",
-          "collected_at": "2026-08-28T00:21:36.345568Z",
+          "tool_receipt": "RCPT-3F4990BC",
+          "collected_at": "2026-08-28T10:07:13.618206Z",
           "content_hash": "sha256:275422447ff010cdaaa862401935c61dfe07a449f19fc2ca4337841366fa015b"
         },
         {
-          "evidence_id": "EV-02305729",
+          "evidence_id": "EV-112A30B1",
           "case_id": "CASE-2026-0008",
           "type": "INVOICE",
           "source_system": "FINANCE_MOCK",
@@ -318,12 +318,12 @@
             "invoice_date": "2026-07-12"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-6D493B24",
-          "collected_at": "2026-08-28T00:21:36.345586Z",
+          "tool_receipt": "RCPT-938DEB86",
+          "collected_at": "2026-08-28T10:07:13.618220Z",
           "content_hash": "sha256:d0f129d5ada4425f2ef0806b13cdbb5bad1a42024a9135e9f6daeb737b62d9f9"
         },
         {
-          "evidence_id": "EV-1032DC2B",
+          "evidence_id": "EV-A30C5A48",
           "case_id": "CASE-2026-0008",
           "type": "COMMISSION_LEDGER",
           "source_system": "FINANCE_MOCK",
@@ -347,12 +347,12 @@
             "posted_total": "18000.00"
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-F51381E6",
-          "collected_at": "2026-08-28T00:21:36.345614Z",
+          "tool_receipt": "RCPT-191C1167",
+          "collected_at": "2026-08-28T10:07:13.618242Z",
           "content_hash": "sha256:294c72859b146bacac5956284d1929429f9275bf116934d76e9adf53d40441d2"
         },
         {
-          "evidence_id": "EV-3F58341E",
+          "evidence_id": "EV-B6B66BA1",
           "case_id": "CASE-2026-0008",
           "type": "POLICY_VERSIONS",
           "source_system": "CONTRACT_MOCK",
@@ -580,8 +580,8 @@
             ]
           },
           "strength": "STRONG",
-          "tool_receipt": "RCPT-FFE006F1",
-          "collected_at": "2026-08-28T00:21:36.346762Z",
+          "tool_receipt": "RCPT-F562D13C",
+          "collected_at": "2026-08-28T10:07:13.619310Z",
           "content_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994"
         }
       ],
@@ -885,7 +885,7 @@
       "parallel": {
         "enabled": true,
         "workers": 7,
-        "duration_ms": 56,
+        "duration_ms": 64,
         "task_count": 7
       }
     },
@@ -893,17 +893,17 @@
   },
   {
     "trace_sequence": 5,
-    "span_id": "SPAN-64BE8813",
+    "span_id": "SPAN-DF0FCC1F",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "crm.get_order",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 5,
-    "started_at": "2026-08-28T00:21:36.289437Z",
-    "ended_at": "2026-08-28T00:21:36.290381Z",
-    "duration_ms": 0,
+    "started_at": "2026-08-28T10:07:13.553737Z",
+    "ended_at": "2026-08-28T10:07:13.555274Z",
+    "duration_ms": 1,
     "inputs": {
       "parameters": {
         "order_id": "EZ202608001",
@@ -914,22 +914,22 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-69526F7B"
+      "tool_receipt": "RCPT-ECEEFE63"
     },
     "error": null
   },
   {
     "trace_sequence": 6,
-    "span_id": "SPAN-AE289820",
+    "span_id": "SPAN-C6ABE04F",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "crm.get_partner_tier_history",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 6,
-    "started_at": "2026-08-28T00:21:36.289551Z",
-    "ended_at": "2026-08-28T00:21:36.290925Z",
+    "started_at": "2026-08-28T10:07:13.553797Z",
+    "ended_at": "2026-08-28T10:07:13.554849Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
@@ -941,22 +941,22 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-C1BCF8B6"
+      "tool_receipt": "RCPT-8844F857"
     },
     "error": null
   },
   {
     "trace_sequence": 7,
-    "span_id": "SPAN-DA916BB1",
+    "span_id": "SPAN-C2F290C5",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "contract.get_contract",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 7,
-    "started_at": "2026-08-28T00:21:36.289811Z",
-    "ended_at": "2026-08-28T00:21:36.291525Z",
+    "started_at": "2026-08-28T10:07:13.553981Z",
+    "ended_at": "2026-08-28T10:07:13.555657Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
@@ -968,22 +968,22 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-F313A444"
+      "tool_receipt": "RCPT-01765C40"
     },
     "error": null
   },
   {
     "trace_sequence": 8,
-    "span_id": "SPAN-7C0E8997",
+    "span_id": "SPAN-958F8190",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "finance.get_payment",
     "actor": "revguard-evidence",
     "status": "ERROR",
     "sequence": 8,
-    "started_at": "2026-08-28T00:21:36.289937Z",
-    "ended_at": "2026-08-28T00:21:36.292181Z",
+    "started_at": "2026-08-28T10:07:13.554249Z",
+    "ended_at": "2026-08-28T10:07:13.556936Z",
     "duration_ms": 2,
     "inputs": {
       "parameters": {
@@ -999,22 +999,22 @@
         "message": "财务系统暂时不可用（故障注入）",
         "retryable": true
       },
-      "tool_receipt": "RCPT-4949C336"
+      "tool_receipt": "RCPT-564481A4"
     },
     "error": "财务系统暂时不可用（故障注入）"
   },
   {
     "trace_sequence": 9,
-    "span_id": "SPAN-1755A1B7",
+    "span_id": "SPAN-6913EA5A",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "finance.get_refund",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 9,
-    "started_at": "2026-08-28T00:21:36.290090Z",
-    "ended_at": "2026-08-28T00:21:36.292651Z",
+    "started_at": "2026-08-28T10:07:13.554367Z",
+    "ended_at": "2026-08-28T10:07:13.557367Z",
     "duration_ms": 2,
     "inputs": {
       "parameters": {
@@ -1026,22 +1026,22 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-11DFF98F"
+      "tool_receipt": "RCPT-3F4990BC"
     },
     "error": null
   },
   {
     "trace_sequence": 10,
-    "span_id": "SPAN-F6FBD00C",
+    "span_id": "SPAN-2F39B426",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "finance.get_invoice",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 10,
-    "started_at": "2026-08-28T00:21:36.290212Z",
-    "ended_at": "2026-08-28T00:21:36.293165Z",
+    "started_at": "2026-08-28T10:07:13.554416Z",
+    "ended_at": "2026-08-28T10:07:13.556548Z",
     "duration_ms": 2,
     "inputs": {
       "parameters": {
@@ -1053,23 +1053,23 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-6D493B24"
+      "tool_receipt": "RCPT-938DEB86"
     },
     "error": null
   },
   {
     "trace_sequence": 11,
-    "span_id": "SPAN-0592548F",
+    "span_id": "SPAN-08C91586",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "finance.get_commission_ledger",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 11,
-    "started_at": "2026-08-28T00:21:36.290299Z",
-    "ended_at": "2026-08-28T00:21:36.293673Z",
-    "duration_ms": 3,
+    "started_at": "2026-08-28T10:07:13.554539Z",
+    "ended_at": "2026-08-28T10:07:13.556179Z",
+    "duration_ms": 1,
     "inputs": {
       "parameters": {
         "order_id": "EZ202608001",
@@ -1080,23 +1080,23 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-F51381E6"
+      "tool_receipt": "RCPT-191C1167"
     },
     "error": null
   },
   {
     "trace_sequence": 12,
-    "span_id": "SPAN-C557F2EB",
+    "span_id": "SPAN-8B9FBD80",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "finance.get_payment",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 12,
-    "started_at": "2026-08-28T00:21:36.343919Z",
-    "ended_at": "2026-08-28T00:21:36.344824Z",
-    "duration_ms": 0,
+    "started_at": "2026-08-28T10:07:13.616463Z",
+    "ended_at": "2026-08-28T10:07:13.617518Z",
+    "duration_ms": 1,
     "inputs": {
       "parameters": {
         "order_id": "EZ202608001",
@@ -1107,22 +1107,22 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-FD5E5FD6"
+      "tool_receipt": "RCPT-F399020F"
     },
     "error": null
   },
   {
     "trace_sequence": 13,
-    "span_id": "SPAN-11B5F3DF",
+    "span_id": "SPAN-EF57C362",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-89C9CD57",
+    "parent_span_id": "SPAN-F95A9C0A",
     "kind": "TOOL",
     "name": "policy.search_versions",
     "actor": "revguard-evidence",
     "status": "OK",
     "sequence": 13,
-    "started_at": "2026-08-28T00:21:36.345645Z",
-    "ended_at": "2026-08-28T00:21:36.346492Z",
+    "started_at": "2026-08-28T10:07:13.618267Z",
+    "ended_at": "2026-08-28T10:07:13.619003Z",
     "duration_ms": 0,
     "inputs": {
       "parameters": {
@@ -1133,13 +1133,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-FFE006F1"
+      "tool_receipt": "RCPT-F562D13C"
     },
     "error": null
   },
   {
     "trace_sequence": 14,
-    "span_id": "SPAN-007C0041",
+    "span_id": "SPAN-953E054C",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -1147,8 +1147,8 @@
     "actor": "revguard-policy",
     "status": "OK",
     "sequence": 14,
-    "started_at": "2026-08-28T00:21:36.358477Z",
-    "ended_at": "2026-08-28T00:21:36.358609Z",
+    "started_at": "2026-08-28T10:07:13.630024Z",
+    "ended_at": "2026-08-28T10:07:13.630127Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -1380,10 +1380,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-2A228620",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-76DCE957",
+        "request_id": "REQ-MCP-997EF6D8",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-75E05829",
         "traceparent": null,
-        "agent_task_id": "TASK-76DCE957"
+        "agent_task_id": "TASK-75E05829"
       }
     },
     "outputs": {
@@ -1487,7 +1487,7 @@
   },
   {
     "trace_sequence": 15,
-    "span_id": "SPAN-2F4E853E",
+    "span_id": "SPAN-568136AC",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "TOOL",
@@ -1495,8 +1495,8 @@
     "actor": "revguard-calculation",
     "status": "OK",
     "sequence": 15,
-    "started_at": "2026-08-28T00:21:36.367292Z",
-    "ended_at": "2026-08-28T00:21:36.368008Z",
+    "started_at": "2026-08-28T10:07:13.637926Z",
+    "ended_at": "2026-08-28T10:07:13.638613Z",
     "duration_ms": 0,
     "inputs": {
       "parameters": {
@@ -1507,13 +1507,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-6804E418"
+      "tool_receipt": "RCPT-ADFE220A"
     },
     "error": null
   },
   {
     "trace_sequence": 16,
-    "span_id": "SPAN-5E016737",
+    "span_id": "SPAN-9358C94E",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -1521,8 +1521,8 @@
     "actor": "revguard-calculation",
     "status": "OK",
     "sequence": 16,
-    "started_at": "2026-08-28T00:21:36.369668Z",
-    "ended_at": "2026-08-28T00:21:36.369904Z",
+    "started_at": "2026-08-28T10:07:13.640104Z",
+    "ended_at": "2026-08-28T10:07:13.640317Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -1601,10 +1601,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-2F7B0431",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-835A93EE",
+        "request_id": "REQ-MCP-7EFC6835",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-6CCA06DD",
         "traceparent": null,
-        "agent_task_id": "TASK-835A93EE"
+        "agent_task_id": "TASK-6CCA06DD"
       }
     },
     "outputs": {
@@ -1681,7 +1681,7 @@
   },
   {
     "trace_sequence": 17,
-    "span_id": "SPAN-5993205A",
+    "span_id": "SPAN-21839C02",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -1689,8 +1689,8 @@
     "actor": "revguard-rootcause",
     "status": "OK",
     "sequence": 17,
-    "started_at": "2026-08-28T00:21:36.380185Z",
-    "ended_at": "2026-08-28T00:21:36.380274Z",
+    "started_at": "2026-08-28T10:07:13.648425Z",
+    "ended_at": "2026-08-28T10:07:13.648485Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -1784,10 +1784,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-8934A3E4",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-358984ED",
+        "request_id": "REQ-MCP-D0C3D475",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-807D12C6",
         "traceparent": null,
-        "agent_task_id": "TASK-358984ED"
+        "agent_task_id": "TASK-807D12C6"
       }
     },
     "outputs": {
@@ -1822,7 +1822,7 @@
   },
   {
     "trace_sequence": 18,
-    "span_id": "SPAN-FE10FDCB",
+    "span_id": "SPAN-DC0452A6",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -1830,8 +1830,8 @@
     "actor": "revguard-risk",
     "status": "OK",
     "sequence": 18,
-    "started_at": "2026-08-28T00:21:36.388969Z",
-    "ended_at": "2026-08-28T00:21:36.389028Z",
+    "started_at": "2026-08-28T10:07:13.656624Z",
+    "ended_at": "2026-08-28T10:07:13.656676Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -1845,10 +1845,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-C312AFAF",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-F09680D9",
+        "request_id": "REQ-MCP-130D581C",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-F1064124",
         "traceparent": null,
-        "agent_task_id": "TASK-F09680D9"
+        "agent_task_id": "TASK-F1064124"
       }
     },
     "outputs": {
@@ -1869,7 +1869,7 @@
   },
   {
     "trace_sequence": 19,
-    "span_id": "SPAN-AD50E64D",
+    "span_id": "SPAN-70F37B9E",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -1877,8 +1877,8 @@
     "actor": "revguard-risk",
     "status": "OK",
     "sequence": 19,
-    "started_at": "2026-08-28T00:21:36.397771Z",
-    "ended_at": "2026-08-28T00:21:36.400201Z",
+    "started_at": "2026-08-28T10:07:13.663304Z",
+    "ended_at": "2026-08-28T10:07:13.665443Z",
     "duration_ms": 2,
     "inputs": {
       "input": {
@@ -1907,14 +1907,14 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-53F04DF2",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-28EF9099",
+        "request_id": "REQ-MCP-1BBA5FE5",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-3DAFF809",
         "traceparent": null,
-        "agent_task_id": "TASK-28EF9099"
+        "agent_task_id": "TASK-3DAFF809"
       }
     },
     "outputs": {
-      "approval_id": "APR-EF696B51",
+      "approval_id": "APR-A8B074AF",
       "case_id": "CASE-2026-0008",
       "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
       "amount": "14400.00",
@@ -1926,23 +1926,23 @@
       "risk_level": "L2",
       "approver_role": "FINANCE_LEAD",
       "status": "PENDING",
-      "created_at": "2026-08-28T00:21:36.397850Z"
+      "created_at": "2026-08-28T10:07:13.663365Z"
     },
     "error": null
   },
   {
     "trace_sequence": 20,
-    "span_id": "SPAN-F3DE8406",
+    "span_id": "SPAN-3F02B129",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-AD50E64D",
+    "parent_span_id": "SPAN-70F37B9E",
     "kind": "TOOL",
     "name": "workflow.create_approval",
     "actor": "revguard-risk",
     "status": "OK",
     "sequence": 20,
-    "started_at": "2026-08-28T00:21:36.397812Z",
-    "ended_at": "2026-08-28T00:21:36.400011Z",
-    "duration_ms": 2,
+    "started_at": "2026-08-28T10:07:13.663336Z",
+    "ended_at": "2026-08-28T10:07:13.665288Z",
+    "duration_ms": 1,
     "inputs": {
       "parameters": {
         "case_id": "CASE-2026-0008",
@@ -1961,13 +1961,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-BAC2B3BC"
+      "tool_receipt": "RCPT-1A193117"
     },
     "error": null
   },
   {
     "trace_sequence": 21,
-    "span_id": "SPAN-76821FEB",
+    "span_id": "SPAN-64BBD72B",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -1975,8 +1975,8 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 21,
-    "started_at": "2026-08-28T00:21:36.418488Z",
-    "ended_at": "2026-08-28T00:21:36.418511Z",
+    "started_at": "2026-08-28T10:07:13.681488Z",
+    "ended_at": "2026-08-28T10:07:13.681509Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -1997,7 +1997,7 @@
         },
         "approval": {
           "case_id": "CASE-2026-0008",
-          "approval_id": "APR-EF696B51",
+          "approval_id": "APR-A8B074AF",
           "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
           "amount": "14400.00",
           "component_quota": {
@@ -2008,20 +2008,20 @@
           "risk_level": "L2",
           "approver_role": "FINANCE_LEAD",
           "status": "APPROVED",
-          "created_at": "2026-08-28T00:21:36.397850Z",
+          "created_at": "2026-08-28T10:07:13.663365Z",
           "approver": "finance.lead",
           "comment": "",
-          "decided_at": "2026-08-28T00:21:36.414714Z",
-          "approval_token": "<redacted:sha256:bc64fa574e54a0f3>"
+          "decided_at": "2026-08-28T10:07:13.678003Z",
+          "approval_token": "<redacted:sha256:e1e79474062e9afe>"
         }
       },
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-4A806B90",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-3C596FD1",
+        "request_id": "REQ-MCP-3EE924B3",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-0AD599C5",
         "traceparent": null,
-        "agent_task_id": "TASK-3C596FD1"
+        "agent_task_id": "TASK-0AD599C5"
       }
     },
     "outputs": {
@@ -2031,7 +2031,7 @@
   },
   {
     "trace_sequence": 22,
-    "span_id": "SPAN-47CFCBEC",
+    "span_id": "SPAN-C07E9ED1",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2039,8 +2039,8 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 22,
-    "started_at": "2026-08-28T00:21:36.424769Z",
-    "ended_at": "2026-08-28T00:21:36.424833Z",
+    "started_at": "2026-08-28T10:07:13.687654Z",
+    "ended_at": "2026-08-28T10:07:13.687701Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -2049,10 +2049,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-48993870",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-FC54C519",
+        "request_id": "REQ-MCP-08A663ED",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-2B7D0F3F",
         "traceparent": null,
-        "agent_task_id": "TASK-FC54C519"
+        "agent_task_id": "TASK-2B7D0F3F"
       }
     },
     "outputs": null,
@@ -2060,7 +2060,7 @@
   },
   {
     "trace_sequence": 23,
-    "span_id": "SPAN-E759B083",
+    "span_id": "SPAN-0D9F858C",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2068,8 +2068,8 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 23,
-    "started_at": "2026-08-28T00:21:36.431581Z",
-    "ended_at": "2026-08-28T00:21:36.433034Z",
+    "started_at": "2026-08-28T10:07:13.692810Z",
+    "ended_at": "2026-08-28T10:07:13.694092Z",
     "duration_ms": 1,
     "inputs": {
       "input": {
@@ -2082,14 +2082,14 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-968A3392",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-CEBBB80B",
+        "request_id": "REQ-MCP-26E4E4CF",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-CB44F6AD",
         "traceparent": null,
-        "agent_task_id": "TASK-CEBBB80B"
+        "agent_task_id": "TASK-CB44F6AD"
       }
     },
     "outputs": {
-      "action_id": "ACT-314A117B",
+      "action_id": "ACT-8A6730F1",
       "order_id": "EZ202608001",
       "case_id": "CASE-2026-0008",
       "component": "SALES_COMMISSION",
@@ -2097,22 +2097,22 @@
       "currency": "KES",
       "reason": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00",
       "status": "DRAFT",
-      "created_at": "2026-08-28T00:21:36.431640Z"
+      "created_at": "2026-08-28T10:07:13.692859Z"
     },
     "error": null
   },
   {
     "trace_sequence": 24,
-    "span_id": "SPAN-6AF996A8",
+    "span_id": "SPAN-237901AC",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-E759B083",
+    "parent_span_id": "SPAN-0D9F858C",
     "kind": "TOOL",
     "name": "commission.create_adjustment_draft",
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 24,
-    "started_at": "2026-08-28T00:21:36.431615Z",
-    "ended_at": "2026-08-28T00:21:36.432856Z",
+    "started_at": "2026-08-28T10:07:13.692839Z",
+    "ended_at": "2026-08-28T10:07:13.693947Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
@@ -2128,13 +2128,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-1AF798E3"
+      "tool_receipt": "RCPT-2B904240"
     },
     "error": null
   },
   {
     "trace_sequence": 25,
-    "span_id": "SPAN-53D6C1E2",
+    "span_id": "SPAN-9DFBA955",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2142,30 +2142,30 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 25,
-    "started_at": "2026-08-28T00:21:36.441472Z",
-    "ended_at": "2026-08-28T00:21:36.443125Z",
+    "started_at": "2026-08-28T10:07:13.702211Z",
+    "ended_at": "2026-08-28T10:07:13.703743Z",
     "duration_ms": 1,
     "inputs": {
       "input": {
-        "action_id": "ACT-314A117B",
-        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "action_id": "ACT-8A6730F1",
+        "approval_token": "<redacted:sha256:e1e79474062e9afe>",
         "policy_version": "2026-Q3",
         "idempotency_key": "CASE-2026-0008:SALES_COMMISSION"
       },
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-8A901A70",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-4079B214",
+        "request_id": "REQ-MCP-2E24712B",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-C455F89A",
         "traceparent": null,
-        "agent_task_id": "TASK-4079B214"
+        "agent_task_id": "TASK-C455F89A"
       }
     },
     "outputs": {
-      "action_id": "ACT-314A117B",
+      "action_id": "ACT-8A6730F1",
       "status": "SUBMITTED",
       "ledger_entry": {
-        "ledger_id": "LED-64C2A5F8",
+        "ledger_id": "LED-01BBB830",
         "order_id": "EZ202608001",
         "component": "SALES_COMMISSION",
         "amount": "9000.00",
@@ -2173,7 +2173,7 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.441609Z"
+        "posted_at": "2026-08-28T10:07:13.702333Z"
       },
       "before_snapshot": [
         {
@@ -2203,7 +2203,7 @@
           "comment": "7月佣金批处理（误用 2026-Q2 版本）"
         },
         {
-          "ledger_id": "LED-64C2A5F8",
+          "ledger_id": "LED-01BBB830",
           "order_id": "EZ202608001",
           "component": "SALES_COMMISSION",
           "amount": "9000.00",
@@ -2211,31 +2211,31 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.441609Z"
+          "posted_at": "2026-08-28T10:07:13.702333Z"
         }
       ],
-      "rollback_token": "<redacted:sha256:1c5bdf156d125335>"
+      "rollback_token": "<redacted:sha256:983777f7caa36118>"
     },
     "error": null
   },
   {
     "trace_sequence": 26,
-    "span_id": "SPAN-7D465455",
+    "span_id": "SPAN-BC376832",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-53D6C1E2",
+    "parent_span_id": "SPAN-9DFBA955",
     "kind": "TOOL",
     "name": "commission.submit_adjustment",
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 26,
-    "started_at": "2026-08-28T00:21:36.441501Z",
-    "ended_at": "2026-08-28T00:21:36.442972Z",
+    "started_at": "2026-08-28T10:07:13.702235Z",
+    "ended_at": "2026-08-28T10:07:13.703610Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
-        "action_id": "ACT-314A117B",
+        "action_id": "ACT-8A6730F1",
         "case_id": "CASE-2026-0008",
-        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "approval_token": "<redacted:sha256:e1e79474062e9afe>",
         "policy_version": "2026-Q3"
       },
       "attempt": 1
@@ -2243,13 +2243,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-E537A54A"
+      "tool_receipt": "RCPT-01CAFA37"
     },
     "error": null
   },
   {
     "trace_sequence": 27,
-    "span_id": "SPAN-8E218E00",
+    "span_id": "SPAN-FED01864",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2257,8 +2257,8 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 27,
-    "started_at": "2026-08-28T00:21:36.452537Z",
-    "ended_at": "2026-08-28T00:21:36.452558Z",
+    "started_at": "2026-08-28T10:07:13.711376Z",
+    "ended_at": "2026-08-28T10:07:13.711395Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -2267,10 +2267,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-12F26E01",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5E7F19C2",
+        "request_id": "REQ-MCP-9F2FAB48",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-ECF99DA1",
         "traceparent": null,
-        "agent_task_id": "TASK-5E7F19C2"
+        "agent_task_id": "TASK-ECF99DA1"
       }
     },
     "outputs": null,
@@ -2278,7 +2278,7 @@
   },
   {
     "trace_sequence": 28,
-    "span_id": "SPAN-5B74B3D6",
+    "span_id": "SPAN-69A18A10",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2286,8 +2286,8 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 28,
-    "started_at": "2026-08-28T00:21:36.458550Z",
-    "ended_at": "2026-08-28T00:21:36.460378Z",
+    "started_at": "2026-08-28T10:07:13.716321Z",
+    "ended_at": "2026-08-28T10:07:13.718127Z",
     "duration_ms": 1,
     "inputs": {
       "input": {
@@ -2300,14 +2300,14 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-3176D558",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-63952ADE",
+        "request_id": "REQ-MCP-5725E118",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-B8C87231",
         "traceparent": null,
-        "agent_task_id": "TASK-63952ADE"
+        "agent_task_id": "TASK-B8C87231"
       }
     },
     "outputs": {
-      "action_id": "ACT-8BF7F41E",
+      "action_id": "ACT-C0769C87",
       "order_id": "EZ202608001",
       "case_id": "CASE-2026-0008",
       "component": "COLLECTION_COMMISSION",
@@ -2315,22 +2315,22 @@
       "currency": "KES",
       "reason": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）",
       "status": "DRAFT",
-      "created_at": "2026-08-28T00:21:36.458622Z"
+      "created_at": "2026-08-28T10:07:13.716378Z"
     },
     "error": null
   },
   {
     "trace_sequence": 29,
-    "span_id": "SPAN-746FEFAC",
+    "span_id": "SPAN-26B1A7DA",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-5B74B3D6",
+    "parent_span_id": "SPAN-69A18A10",
     "kind": "TOOL",
     "name": "commission.create_adjustment_draft",
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 29,
-    "started_at": "2026-08-28T00:21:36.458585Z",
-    "ended_at": "2026-08-28T00:21:36.460081Z",
+    "started_at": "2026-08-28T10:07:13.716347Z",
+    "ended_at": "2026-08-28T10:07:13.717938Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
@@ -2346,13 +2346,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-D12BD895"
+      "tool_receipt": "RCPT-1285F27F"
     },
     "error": null
   },
   {
     "trace_sequence": 30,
-    "span_id": "SPAN-9B57135B",
+    "span_id": "SPAN-2A85E6AE",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2360,30 +2360,30 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 30,
-    "started_at": "2026-08-28T00:21:36.469087Z",
-    "ended_at": "2026-08-28T00:21:36.470907Z",
+    "started_at": "2026-08-28T10:07:13.725906Z",
+    "ended_at": "2026-08-28T10:07:13.727435Z",
     "duration_ms": 1,
     "inputs": {
       "input": {
-        "action_id": "ACT-8BF7F41E",
-        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "action_id": "ACT-C0769C87",
+        "approval_token": "<redacted:sha256:e1e79474062e9afe>",
         "policy_version": "2026-Q3",
         "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION"
       },
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-344A1618",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-046DC667",
+        "request_id": "REQ-MCP-EFCFCAAE",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-39537448",
         "traceparent": null,
-        "agent_task_id": "TASK-046DC667"
+        "agent_task_id": "TASK-39537448"
       }
     },
     "outputs": {
-      "action_id": "ACT-8BF7F41E",
+      "action_id": "ACT-C0769C87",
       "status": "SUBMITTED",
       "ledger_entry": {
-        "ledger_id": "LED-0C1A0E71",
+        "ledger_id": "LED-0EE3564C",
         "order_id": "EZ202608001",
         "component": "COLLECTION_COMMISSION",
         "amount": "5400.00",
@@ -2391,7 +2391,7 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.469203Z"
+        "posted_at": "2026-08-28T10:07:13.726009Z"
       },
       "before_snapshot": [
         {
@@ -2407,7 +2407,7 @@
           "comment": "7月佣金批处理（误用 2026-Q2 版本）"
         },
         {
-          "ledger_id": "LED-64C2A5F8",
+          "ledger_id": "LED-01BBB830",
           "order_id": "EZ202608001",
           "component": "SALES_COMMISSION",
           "amount": "9000.00",
@@ -2415,7 +2415,7 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.441609Z"
+          "posted_at": "2026-08-28T10:07:13.702333Z"
         }
       ],
       "after_snapshot": [
@@ -2432,7 +2432,7 @@
           "comment": "7月佣金批处理（误用 2026-Q2 版本）"
         },
         {
-          "ledger_id": "LED-64C2A5F8",
+          "ledger_id": "LED-01BBB830",
           "order_id": "EZ202608001",
           "component": "SALES_COMMISSION",
           "amount": "9000.00",
@@ -2440,10 +2440,10 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.441609Z"
+          "posted_at": "2026-08-28T10:07:13.702333Z"
         },
         {
-          "ledger_id": "LED-0C1A0E71",
+          "ledger_id": "LED-0EE3564C",
           "order_id": "EZ202608001",
           "component": "COLLECTION_COMMISSION",
           "amount": "5400.00",
@@ -2451,31 +2451,31 @@
           "policy_version": "2026-Q3",
           "status": "POSTED",
           "source": "REVGUARD:CASE-2026-0008",
-          "posted_at": "2026-08-28T00:21:36.469203Z"
+          "posted_at": "2026-08-28T10:07:13.726009Z"
         }
       ],
-      "rollback_token": "<redacted:sha256:6a975d54ce7521c3>"
+      "rollback_token": "<redacted:sha256:26c3124ec1fd8a12>"
     },
     "error": null
   },
   {
     "trace_sequence": 31,
-    "span_id": "SPAN-38458881",
+    "span_id": "SPAN-692D9112",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-9B57135B",
+    "parent_span_id": "SPAN-2A85E6AE",
     "kind": "TOOL",
     "name": "commission.submit_adjustment",
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 31,
-    "started_at": "2026-08-28T00:21:36.469113Z",
-    "ended_at": "2026-08-28T00:21:36.470756Z",
+    "started_at": "2026-08-28T10:07:13.725929Z",
+    "ended_at": "2026-08-28T10:07:13.727305Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
-        "action_id": "ACT-8BF7F41E",
+        "action_id": "ACT-C0769C87",
         "case_id": "CASE-2026-0008",
-        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "approval_token": "<redacted:sha256:e1e79474062e9afe>",
         "policy_version": "2026-Q3"
       },
       "attempt": 1
@@ -2483,13 +2483,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-D809C716"
+      "tool_receipt": "RCPT-411FF01D"
     },
     "error": null
   },
   {
     "trace_sequence": 32,
-    "span_id": "SPAN-DBC721BB",
+    "span_id": "SPAN-9C2DF827",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2497,9 +2497,9 @@
     "actor": "revguard-verifier",
     "status": "OK",
     "sequence": 32,
-    "started_at": "2026-08-28T00:21:36.481314Z",
-    "ended_at": "2026-08-28T00:21:36.482375Z",
-    "duration_ms": 1,
+    "started_at": "2026-08-28T10:07:13.736321Z",
+    "ended_at": "2026-08-28T10:07:13.737279Z",
+    "duration_ms": 0,
     "inputs": {
       "input": {
         "order_id": "EZ202608001",
@@ -2555,10 +2555,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-C287D60E",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-374A1089",
+        "request_id": "REQ-MCP-2F16025B",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-374CB476",
         "traceparent": null,
-        "agent_task_id": "TASK-374A1089"
+        "agent_task_id": "TASK-374CB476"
       }
     },
     "outputs": {
@@ -2581,25 +2581,25 @@
         }
       ],
       "evidence_refs": [
-        "RCPT-C535B8F4"
+        "RCPT-D938E59D"
       ],
       "rollback_required": true,
-      "checked_at": "2026-08-28T00:21:36.482336Z"
+      "checked_at": "2026-08-28T10:07:13.737247Z"
     },
     "error": null
   },
   {
     "trace_sequence": 33,
-    "span_id": "SPAN-C59F307E",
+    "span_id": "SPAN-6038D6E2",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-DBC721BB",
+    "parent_span_id": "SPAN-9C2DF827",
     "kind": "TOOL",
     "name": "finance.get_commission_ledger",
     "actor": "revguard-verifier",
     "status": "OK",
     "sequence": 33,
-    "started_at": "2026-08-28T00:21:36.481336Z",
-    "ended_at": "2026-08-28T00:21:36.482208Z",
+    "started_at": "2026-08-28T10:07:13.736339Z",
+    "ended_at": "2026-08-28T10:07:13.737142Z",
     "duration_ms": 0,
     "inputs": {
       "parameters": {
@@ -2610,13 +2610,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-C535B8F4"
+      "tool_receipt": "RCPT-D938E59D"
     },
     "error": null
   },
   {
     "trace_sequence": 34,
-    "span_id": "SPAN-D8D9F823",
+    "span_id": "SPAN-890139BA",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2624,27 +2624,27 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 34,
-    "started_at": "2026-08-28T00:21:36.491434Z",
-    "ended_at": "2026-08-28T00:21:36.493167Z",
+    "started_at": "2026-08-28T10:07:13.745077Z",
+    "ended_at": "2026-08-28T10:07:13.746479Z",
     "duration_ms": 1,
     "inputs": {
       "input": {
-        "ledger_id": "LED-0C1A0E71",
-        "rollback_token": "<redacted:sha256:cd3ad809cbeefd46>",
+        "ledger_id": "LED-0EE3564C",
+        "rollback_token": "<redacted:sha256:6d4bd5f950e8ab1a>",
         "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION:rollback"
       },
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-873D0B7B",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-E711BA5E",
+        "request_id": "REQ-MCP-3CACC6B7",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-4BA08F81",
         "traceparent": null,
-        "agent_task_id": "TASK-E711BA5E"
+        "agent_task_id": "TASK-4BA08F81"
       }
     },
     "outputs": {
       "reversal_entry": {
-        "ledger_id": "LED-9D10A320",
+        "ledger_id": "LED-63B47999",
         "order_id": "EZ202608001",
         "component": "COLLECTION_COMMISSION",
         "amount": "-5400.00",
@@ -2652,11 +2652,11 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.491568Z",
-        "reversal_of": "LED-0C1A0E71"
+        "posted_at": "2026-08-28T10:07:13.745168Z",
+        "reversal_of": "LED-0EE3564C"
       },
       "reversed_entry": {
-        "ledger_id": "LED-0C1A0E71",
+        "ledger_id": "LED-0EE3564C",
         "order_id": "EZ202608001",
         "component": "COLLECTION_COMMISSION",
         "amount": "5400.00",
@@ -2664,43 +2664,43 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.469203Z",
-        "reversed_by": "LED-9D10A320"
+        "posted_at": "2026-08-28T10:07:13.726009Z",
+        "reversed_by": "LED-63B47999"
       }
     },
     "error": null
   },
   {
     "trace_sequence": 35,
-    "span_id": "SPAN-1DC26F47",
+    "span_id": "SPAN-2FDB4449",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-D8D9F823",
+    "parent_span_id": "SPAN-890139BA",
     "kind": "TOOL",
     "name": "commission.reverse_adjustment",
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 35,
-    "started_at": "2026-08-28T00:21:36.491461Z",
-    "ended_at": "2026-08-28T00:21:36.493033Z",
+    "started_at": "2026-08-28T10:07:13.745098Z",
+    "ended_at": "2026-08-28T10:07:13.746369Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
         "case_id": "CASE-2026-0008",
-        "ledger_id": "LED-0C1A0E71",
-        "rollback_token": "<redacted:sha256:cd3ad809cbeefd46>"
+        "ledger_id": "LED-0EE3564C",
+        "rollback_token": "<redacted:sha256:6d4bd5f950e8ab1a>"
       },
       "attempt": 1
     },
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-36DBD152"
+      "tool_receipt": "RCPT-6C3739C1"
     },
     "error": null
   },
   {
     "trace_sequence": 36,
-    "span_id": "SPAN-854272B4",
+    "span_id": "SPAN-A11BE066",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2708,27 +2708,27 @@
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 36,
-    "started_at": "2026-08-28T00:21:36.501138Z",
-    "ended_at": "2026-08-28T00:21:36.502878Z",
+    "started_at": "2026-08-28T10:07:13.753398Z",
+    "ended_at": "2026-08-28T10:07:13.755028Z",
     "duration_ms": 1,
     "inputs": {
       "input": {
-        "ledger_id": "LED-64C2A5F8",
-        "rollback_token": "<redacted:sha256:d2a81c6e8b0d79c8>",
+        "ledger_id": "LED-01BBB830",
+        "rollback_token": "<redacted:sha256:d42fc36d10f5f277>",
         "idempotency_key": "CASE-2026-0008:SALES_COMMISSION:rollback"
       },
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-5E13108B",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-B8A4B7BD",
+        "request_id": "REQ-MCP-063D6A82",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-51A69480",
         "traceparent": null,
-        "agent_task_id": "TASK-B8A4B7BD"
+        "agent_task_id": "TASK-51A69480"
       }
     },
     "outputs": {
       "reversal_entry": {
-        "ledger_id": "LED-DE8DC04C",
+        "ledger_id": "LED-BEE46026",
         "order_id": "EZ202608001",
         "component": "SALES_COMMISSION",
         "amount": "-9000.00",
@@ -2736,11 +2736,11 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.501247Z",
-        "reversal_of": "LED-64C2A5F8"
+        "posted_at": "2026-08-28T10:07:13.753505Z",
+        "reversal_of": "LED-01BBB830"
       },
       "reversed_entry": {
-        "ledger_id": "LED-64C2A5F8",
+        "ledger_id": "LED-01BBB830",
         "order_id": "EZ202608001",
         "component": "SALES_COMMISSION",
         "amount": "9000.00",
@@ -2748,43 +2748,43 @@
         "policy_version": "2026-Q3",
         "status": "POSTED",
         "source": "REVGUARD:CASE-2026-0008",
-        "posted_at": "2026-08-28T00:21:36.441609Z",
-        "reversed_by": "LED-DE8DC04C"
+        "posted_at": "2026-08-28T10:07:13.702333Z",
+        "reversed_by": "LED-BEE46026"
       }
     },
     "error": null
   },
   {
     "trace_sequence": 37,
-    "span_id": "SPAN-561D10D0",
+    "span_id": "SPAN-82FC97B5",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-854272B4",
+    "parent_span_id": "SPAN-A11BE066",
     "kind": "TOOL",
     "name": "commission.reverse_adjustment",
     "actor": "revguard-executor",
     "status": "OK",
     "sequence": 37,
-    "started_at": "2026-08-28T00:21:36.501162Z",
-    "ended_at": "2026-08-28T00:21:36.502750Z",
+    "started_at": "2026-08-28T10:07:13.753421Z",
+    "ended_at": "2026-08-28T10:07:13.754914Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
         "case_id": "CASE-2026-0008",
-        "ledger_id": "LED-64C2A5F8",
-        "rollback_token": "<redacted:sha256:d2a81c6e8b0d79c8>"
+        "ledger_id": "LED-01BBB830",
+        "rollback_token": "<redacted:sha256:d42fc36d10f5f277>"
       },
       "attempt": 1
     },
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-C27EF292"
+      "tool_receipt": "RCPT-59DD7118"
     },
     "error": null
   },
   {
     "trace_sequence": 38,
-    "span_id": "SPAN-AF62635A",
+    "span_id": "SPAN-DA4C525B",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2792,9 +2792,9 @@
     "actor": "revguard-verifier",
     "status": "OK",
     "sequence": 38,
-    "started_at": "2026-08-28T00:21:36.510538Z",
-    "ended_at": "2026-08-28T00:21:36.511863Z",
-    "duration_ms": 1,
+    "started_at": "2026-08-28T10:07:13.761278Z",
+    "ended_at": "2026-08-28T10:07:13.762153Z",
+    "duration_ms": 0,
     "inputs": {
       "input": {
         "order_id": "EZ202608001",
@@ -2816,10 +2816,10 @@
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-283384D3",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-31B8A544",
+        "request_id": "REQ-MCP-B403CAD7",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5DCDF45E",
         "traceparent": null,
-        "agent_task_id": "TASK-31B8A544"
+        "agent_task_id": "TASK-5DCDF45E"
       }
     },
     "outputs": {
@@ -2839,25 +2839,25 @@
         }
       ],
       "evidence_refs": [
-        "RCPT-2EA4B1DF"
+        "RCPT-536BAA29"
       ],
-      "checked_at": "2026-08-28T00:21:36.511828Z"
+      "checked_at": "2026-08-28T10:07:13.762126Z"
     },
     "error": null
   },
   {
     "trace_sequence": 39,
-    "span_id": "SPAN-39E0042C",
+    "span_id": "SPAN-57777BD7",
     "case_id": "CASE-2026-0008",
-    "parent_span_id": "SPAN-AF62635A",
+    "parent_span_id": "SPAN-DA4C525B",
     "kind": "TOOL",
     "name": "finance.get_commission_ledger",
     "actor": "revguard-verifier",
     "status": "OK",
     "sequence": 39,
-    "started_at": "2026-08-28T00:21:36.510561Z",
-    "ended_at": "2026-08-28T00:21:36.511648Z",
-    "duration_ms": 1,
+    "started_at": "2026-08-28T10:07:13.761295Z",
+    "ended_at": "2026-08-28T10:07:13.762013Z",
+    "duration_ms": 0,
     "inputs": {
       "parameters": {
         "order_id": "EZ202608001"
@@ -2867,13 +2867,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-2EA4B1DF"
+      "tool_receipt": "RCPT-536BAA29"
     },
     "error": null
   },
   {
     "trace_sequence": 40,
-    "span_id": "SPAN-4670F6A0",
+    "span_id": "SPAN-0CB9406C",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "SKILL",
@@ -2881,8 +2881,8 @@
     "actor": "revguard-knowledge",
     "status": "OK",
     "sequence": 40,
-    "started_at": "2026-08-28T00:21:36.523191Z",
-    "ended_at": "2026-08-28T00:21:36.523245Z",
+    "started_at": "2026-08-28T10:07:13.772368Z",
+    "ended_at": "2026-08-28T10:07:13.772412Z",
     "duration_ms": 0,
     "inputs": {
       "input": {
@@ -2910,8 +2910,8 @@
           },
           "evidence_score": 1.0,
           "risk_level": "L2",
-          "created_at": "2026-08-28T00:21:36.218637Z",
-          "updated_at": "2026-08-28T00:21:36.517954Z",
+          "created_at": "2026-08-28T10:07:13.490469Z",
+          "updated_at": "2026-08-28T10:07:13.767402Z",
           "execution_mode": "MCP_TEAM",
           "workflow_provenance": {
             "business_data": "synthetic",
@@ -3460,7 +3460,7 @@
           },
           "approval": {
             "case_id": "CASE-2026-0008",
-            "approval_id": "APR-EF696B51",
+            "approval_id": "APR-A8B074AF",
             "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
             "amount": "14400.00",
             "component_quota": {
@@ -3471,11 +3471,11 @@
             "risk_level": "L2",
             "approver_role": "FINANCE_LEAD",
             "status": "APPROVED",
-            "created_at": "2026-08-28T00:21:36.397850Z",
+            "created_at": "2026-08-28T10:07:13.663365Z",
             "approver": "finance.lead",
             "comment": "",
-            "decided_at": "2026-08-28T00:21:36.414714Z",
-            "approval_token": "<redacted:sha256:e0ff134ced563ecb>"
+            "decided_at": "2026-08-28T10:07:13.678003Z",
+            "approval_token": "<redacted:sha256:aacef18e9efac280>"
           },
           "policy_decision": {
             "policy_id": "KE-COMMISSION-2026",
@@ -3694,7 +3694,7 @@
           "errors": [],
           "executions": [
             {
-              "action_id": "ACT-314A117B",
+              "action_id": "ACT-8A6730F1",
               "case_id": "CASE-2026-0008",
               "action_type": "LEDGER_ADJUST",
               "status": "ROLLED_BACK",
@@ -3730,7 +3730,7 @@
                   "comment": "7月佣金批处理（误用 2026-Q2 版本）"
                 },
                 {
-                  "ledger_id": "LED-64C2A5F8",
+                  "ledger_id": "LED-01BBB830",
                   "order_id": "EZ202608001",
                   "component": "SALES_COMMISSION",
                   "amount": "9000.00",
@@ -3738,12 +3738,12 @@
                   "policy_version": "2026-Q3",
                   "status": "POSTED",
                   "source": "REVGUARD:CASE-2026-0008",
-                  "posted_at": "2026-08-28T00:21:36.441609Z"
+                  "posted_at": "2026-08-28T10:07:13.702333Z"
                 }
               ],
-              "rollback_token": "<redacted:sha256:14dfac7422cd3b9c>",
+              "rollback_token": "<redacted:sha256:762f82e46649dcef>",
               "ledger_entry": {
-                "ledger_id": "LED-64C2A5F8",
+                "ledger_id": "LED-01BBB830",
                 "order_id": "EZ202608001",
                 "component": "SALES_COMMISSION",
                 "amount": "9000.00",
@@ -3751,10 +3751,10 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.441609Z"
+                "posted_at": "2026-08-28T10:07:13.702333Z"
               },
               "reversal": {
-                "ledger_id": "LED-DE8DC04C",
+                "ledger_id": "LED-BEE46026",
                 "order_id": "EZ202608001",
                 "component": "SALES_COMMISSION",
                 "amount": "-9000.00",
@@ -3762,12 +3762,12 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.501247Z",
-                "reversal_of": "LED-64C2A5F8"
+                "posted_at": "2026-08-28T10:07:13.753505Z",
+                "reversal_of": "LED-01BBB830"
               }
             },
             {
-              "action_id": "ACT-8BF7F41E",
+              "action_id": "ACT-C0769C87",
               "case_id": "CASE-2026-0008",
               "action_type": "LEDGER_ADJUST",
               "status": "ROLLED_BACK",
@@ -3789,7 +3789,7 @@
                   "comment": "7月佣金批处理（误用 2026-Q2 版本）"
                 },
                 {
-                  "ledger_id": "LED-64C2A5F8",
+                  "ledger_id": "LED-01BBB830",
                   "order_id": "EZ202608001",
                   "component": "SALES_COMMISSION",
                   "amount": "9000.00",
@@ -3797,7 +3797,7 @@
                   "policy_version": "2026-Q3",
                   "status": "POSTED",
                   "source": "REVGUARD:CASE-2026-0008",
-                  "posted_at": "2026-08-28T00:21:36.441609Z"
+                  "posted_at": "2026-08-28T10:07:13.702333Z"
                 }
               ],
               "after_snapshot": [
@@ -3814,7 +3814,7 @@
                   "comment": "7月佣金批处理（误用 2026-Q2 版本）"
                 },
                 {
-                  "ledger_id": "LED-64C2A5F8",
+                  "ledger_id": "LED-01BBB830",
                   "order_id": "EZ202608001",
                   "component": "SALES_COMMISSION",
                   "amount": "9000.00",
@@ -3822,10 +3822,10 @@
                   "policy_version": "2026-Q3",
                   "status": "POSTED",
                   "source": "REVGUARD:CASE-2026-0008",
-                  "posted_at": "2026-08-28T00:21:36.441609Z"
+                  "posted_at": "2026-08-28T10:07:13.702333Z"
                 },
                 {
-                  "ledger_id": "LED-0C1A0E71",
+                  "ledger_id": "LED-0EE3564C",
                   "order_id": "EZ202608001",
                   "component": "COLLECTION_COMMISSION",
                   "amount": "5400.00",
@@ -3833,12 +3833,12 @@
                   "policy_version": "2026-Q3",
                   "status": "POSTED",
                   "source": "REVGUARD:CASE-2026-0008",
-                  "posted_at": "2026-08-28T00:21:36.469203Z"
+                  "posted_at": "2026-08-28T10:07:13.726009Z"
                 }
               ],
-              "rollback_token": "<redacted:sha256:ef3febc43f33e1c0>",
+              "rollback_token": "<redacted:sha256:be1482bd98d0eda1>",
               "ledger_entry": {
-                "ledger_id": "LED-0C1A0E71",
+                "ledger_id": "LED-0EE3564C",
                 "order_id": "EZ202608001",
                 "component": "COLLECTION_COMMISSION",
                 "amount": "5400.00",
@@ -3846,10 +3846,10 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.469203Z"
+                "posted_at": "2026-08-28T10:07:13.726009Z"
               },
               "reversal": {
-                "ledger_id": "LED-9D10A320",
+                "ledger_id": "LED-63B47999",
                 "order_id": "EZ202608001",
                 "component": "COLLECTION_COMMISSION",
                 "amount": "-5400.00",
@@ -3857,8 +3857,8 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.491568Z",
-                "reversal_of": "LED-0C1A0E71"
+                "posted_at": "2026-08-28T10:07:13.745168Z",
+                "reversal_of": "LED-0EE3564C"
               }
             }
           ],
@@ -3882,15 +3882,15 @@
               }
             ],
             "evidence_refs": [
-              "RCPT-C535B8F4"
+              "RCPT-D938E59D"
             ],
             "rollback_required": true,
-            "checked_at": "2026-08-28T00:21:36.482336Z"
+            "checked_at": "2026-08-28T10:07:13.737247Z"
           },
           "rollback": {
             "reversals": [
               {
-                "ledger_id": "LED-9D10A320",
+                "ledger_id": "LED-63B47999",
                 "order_id": "EZ202608001",
                 "component": "COLLECTION_COMMISSION",
                 "amount": "-5400.00",
@@ -3898,11 +3898,11 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.491568Z",
-                "reversal_of": "LED-0C1A0E71"
+                "posted_at": "2026-08-28T10:07:13.745168Z",
+                "reversal_of": "LED-0EE3564C"
               },
               {
-                "ledger_id": "LED-DE8DC04C",
+                "ledger_id": "LED-BEE46026",
                 "order_id": "EZ202608001",
                 "component": "SALES_COMMISSION",
                 "amount": "-9000.00",
@@ -3910,8 +3910,8 @@
                 "policy_version": "2026-Q3",
                 "status": "POSTED",
                 "source": "REVGUARD:CASE-2026-0008",
-                "posted_at": "2026-08-28T00:21:36.501247Z",
-                "reversal_of": "LED-64C2A5F8"
+                "posted_at": "2026-08-28T10:07:13.753505Z",
+                "reversal_of": "LED-01BBB830"
               }
             ],
             "verification": {
@@ -3931,9 +3931,9 @@
                 }
               ],
               "evidence_refs": [
-                "RCPT-2EA4B1DF"
+                "RCPT-536BAA29"
               ],
-              "checked_at": "2026-08-28T00:21:36.511828Z"
+              "checked_at": "2026-08-28T10:07:13.762126Z"
             }
           }
         },
@@ -3957,19 +3957,19 @@
             }
           ],
           "evidence_refs": [
-            "RCPT-C535B8F4"
+            "RCPT-D938E59D"
           ],
           "rollback_required": true,
-          "checked_at": "2026-08-28T00:21:36.482336Z"
+          "checked_at": "2026-08-28T10:07:13.737247Z"
         }
       },
       "correlation": {
         "transport": "mcp",
         "mcp_method": "tools/call",
-        "request_id": "REQ-MCP-D3D144CE",
-        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-26015B61",
+        "request_id": "REQ-MCP-CE81DB00",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-686B46F7",
         "traceparent": null,
-        "agent_task_id": "TASK-26015B61"
+        "agent_task_id": "TASK-686B46F7"
       }
     },
     "outputs": {
@@ -4015,18 +4015,18 @@
           }
         ],
         "evidence_refs": [
-          "RCPT-C535B8F4"
+          "RCPT-D938E59D"
         ],
         "rollback_required": true,
-        "checked_at": "2026-08-28T00:21:36.482336Z"
+        "checked_at": "2026-08-28T10:07:13.737247Z"
       },
-      "archived_at": "2026-08-28T00:21:36.523207Z"
+      "archived_at": "2026-08-28T10:07:13.772380Z"
     },
     "error": null
   },
   {
     "trace_sequence": 41,
-    "span_id": "SPAN-42846252",
+    "span_id": "SPAN-D4ECBB85",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "TOOL",
@@ -4034,8 +4034,8 @@
     "actor": "revguard-knowledge",
     "status": "OK",
     "sequence": 41,
-    "started_at": "2026-08-28T00:21:36.534430Z",
-    "ended_at": "2026-08-28T00:21:36.536056Z",
+    "started_at": "2026-08-28T10:07:13.780725Z",
+    "ended_at": "2026-08-28T10:07:13.782290Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
@@ -4066,13 +4066,13 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-1665AF7C"
+      "tool_receipt": "RCPT-C3E0F782"
     },
     "error": null
   },
   {
     "trace_sequence": 42,
-    "span_id": "SPAN-68CA8092",
+    "span_id": "SPAN-AD5F4D15",
     "case_id": "CASE-2026-0008",
     "parent_span_id": null,
     "kind": "TOOL",
@@ -4080,8 +4080,8 @@
     "actor": "revguard-knowledge",
     "status": "OK",
     "sequence": 42,
-    "started_at": "2026-08-28T00:21:36.536255Z",
-    "ended_at": "2026-08-28T00:21:36.537679Z",
+    "started_at": "2026-08-28T10:07:13.782481Z",
+    "ended_at": "2026-08-28T10:07:13.783702Z",
     "duration_ms": 1,
     "inputs": {
       "parameters": {
@@ -4094,7 +4094,7 @@
     "outputs": {
       "success": true,
       "error": null,
-      "tool_receipt": "RCPT-1115FE25"
+      "tool_receipt": "RCPT-636D39A5"
     },
     "error": null
   }

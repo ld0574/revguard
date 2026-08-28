@@ -528,6 +528,11 @@ class TestApiSmoke(unittest.TestCase):
             evidence.json()["business_value"]["production_claim_allowed"]
         )
         self.assertEqual(
+            evidence.json()["business_value"]["simulation_contract"]
+            ["default_assumptions"]["monthly_case_volume"],
+            500,
+        )
+        self.assertEqual(
             evidence.json()["external_validation"]["polardb_pitr_drill"],
             "PENDING_CLOUD_INSTANCE",
         )

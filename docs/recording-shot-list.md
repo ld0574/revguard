@@ -22,6 +22,7 @@
 7. 审批人亲自点击；不要用脚本代点、跳帧或预先批准。
 8. `VERIFIED=FAILED`、1 KES variance、自动冲销、`ROLLBACK_VERIFIED=PASSED`。
 9. 最终 `ROLLED_BACK`，以及完整 Audit / Trace / 工程证据页。
+10. 打开“价值模拟”，依次切换 100 / 500 / 1000 案情景；停在 500 案、100 元/小时，清楚录到 84.7%、6.54×、900 小时/月、90,000 元/月及“非现金承诺”。
 
 ## B：AgentTeams 需要补的外部证据
 
@@ -59,4 +60,5 @@ make postgres-integration REVGUARD_TEST_POSTGRES_DSN='postgresql://...disposable
 - [ ] 看到真实暂停与人工点击。
 - [ ] 看到验证失败、回滚、回滚后再次验证。
 - [ ] 看到 PostgreSQL 已验证 / PolarDB 待部署的真实边界。
+- [ ] 价值模拟同时拍到输入假设、公式、8 个合成样本和 `NOT ALLOWED` 生产声明边界。
 - [ ] 画面与旁白中没有任何 Secret 或原始能力令牌。

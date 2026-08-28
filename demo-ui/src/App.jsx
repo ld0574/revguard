@@ -84,6 +84,20 @@ function formatTime(value) {
   }).format(date);
 }
 
+function percent(value, digits = 1) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return `${(number * 100).toFixed(digits)}%`;
+}
+
+function cny(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return new Intl.NumberFormat("zh-CN", {
+    style: "currency", currency: "CNY", maximumFractionDigits: 0,
+  }).format(number);
+}
+
 async function api(path, key, options = {}) {
   const response = await fetch(path, {
     ...options,
@@ -398,6 +412,69 @@ function EngineeringEvidence({ evidence }) {
   );
 }
 
+function BusinessValueSimulator({ evidence }) {
+  const value = evidence?.business_value || {};
+  const metrics = value.metrics || {};
+  const contract = value.simulation_contract || {};
+  const defaults = contract.default_assumptions || {};
+  const [monthlyCases, setMonthlyCases] = useState(defaults.monthly_case_volume || 500);
+  const [hourlyCost, setHourlyCost] = useState(defaults.loaded_hourly_labor_cost || 100);
+  const manualMinutes = Number(metrics.median_manual_processing_minutes || 0);
+  const assistedMinutes = Number(metrics.median_revguard_processing_minutes || 0);
+  const savedPerCase = Number(metrics.median_minutes_saved_per_case || Math.max(manualMinutes - assistedMinutes, 0));
+  const monthlyHours = savedPerCase * Math.max(monthlyCases, 0) / 60;
+  const monthlyLaborValue = monthlyHours * Math.max(hourlyCost, 0);
+  const annualLaborValue = monthlyLaborValue * Number(defaults.months_per_year || 12);
+  const fteEquivalent = monthlyHours / Number(defaults.working_hours_per_fte_month || 160);
+  const throughput = Number(metrics.throughput_capacity_multiplier || (assistedMinutes ? manualMinutes / assistedMinutes : 0));
+  const timeReduction = Number(metrics.median_processing_time_reduction_rate || 0);
+  const recoveryBefore = Number(metrics.recovery_cost_before || 0);
+  const recoveryAfter = Number(metrics.recovery_cost_after || 0);
+  const recoveryReduction = Number(metrics.recovery_cost_reduction_rate || 0);
+  const comparisons = [
+    ["单案处理时长", `${manualMinutes} min`, `${assistedMinutes} min`, assistedMinutes / Math.max(manualMinutes, 1)],
+    ["错付样本率", percent(metrics.wrong_payment_rate_before), percent(metrics.wrong_payment_rate_after), Number(metrics.wrong_payment_rate_after || 0) / Math.max(Number(metrics.wrong_payment_rate_before || 0), 0.01)],
+    ["追回成本指数", recoveryBefore.toLocaleString(), recoveryAfter.toLocaleString(), recoveryAfter / Math.max(recoveryBefore, 1)],
+  ];
+  return (
+    <div className="value-simulator">
+      <section className="detail-section value-hero">
+        <div className="value-hero-copy">
+          <span className="value-eyebrow">SYNTHETIC VALUE SCENARIO</span>
+          <h2>企业价值模拟器</h2>
+          <p>把 8 个合成案件的可复算基线，与企业自行输入的业务量和人工成本组合，回答“可能释放多少工时、形成多少预算空间”。</p>
+        </div>
+        <div className="scenario-controls">
+          <label><span>月均异常案件量</span><div><input type="number" min="1" max="100000" step="50" value={monthlyCases} onChange={(event) => setMonthlyCases(Number(event.target.value) || 0)} /><b>案/月</b></div></label>
+          <label><span>综合人工成本</span><div><input type="number" min="1" max="10000" step="10" value={hourlyCost} onChange={(event) => setHourlyCost(Number(event.target.value) || 0)} /><b>元/小时</b></div></label>
+          <div className="scenario-presets"><span>快速情景</span>{[100, 500, 1000].map((count) => <button className={monthlyCases === count ? "active" : ""} onClick={() => setMonthlyCases(count)} key={count}>{count} 案</button>)}</div>
+        </div>
+      </section>
+
+      <section className="value-kpi-grid" aria-label="模拟价值关键指标">
+        <article><span>处理时长下降</span><strong>{percent(timeReduction)}</strong><small>{manualMinutes} → {assistedMinutes} 分钟/案</small></article>
+        <article><span>同等工时理论吞吐</span><strong>{throughput ? `${throughput.toFixed(2)}×` : "—"}</strong><small>基于合成样本中位数</small></article>
+        <article><span>每月释放处理工时</span><strong>{monthlyHours.toLocaleString("zh-CN", { maximumFractionDigits: 0 })} h</strong><small>约 {fteEquivalent.toFixed(1)} 个 FTE 月产能</small></article>
+        <article className="value-kpi-accent"><span>模拟人工经费空间</span><strong>{cny(monthlyLaborValue)}<em>/月</em></strong><small>{cny(annualLaborValue)}/年 · 非现金承诺</small></article>
+      </section>
+
+      <div className="value-detail-grid">
+        <section className="detail-section comparison-section">
+          <div className="section-title"><Gauge weight="duotone" /><strong>合成样本前后对照</strong><span>n={value.case_count || 0}</span></div>
+          <div className="comparison-list">{comparisons.map(([label, before, after, ratio]) => <div className="comparison-row" key={label}><div><strong>{label}</strong><small>人工基线 {before}　→　RevGuard {after}</small></div><div className="comparison-track"><span className="before-bar" /><span className="after-bar" style={{ width: `${Math.max(Math.min(ratio * 100, 100), after === "0.0%" ? 0 : 2)}%` }} /></div></div>)}</div>
+          <div className="sample-outcomes"><div><span>追回成本下降</span><strong>{percent(recoveryReduction)}</strong></div><div><span>审计异常样本</span><strong>{percent(metrics.audit_exception_rate_before)} → {percent(metrics.audit_exception_rate_after)}</strong></div><div><span>错付样本</span><strong>{percent(metrics.wrong_payment_rate_before)} → {percent(metrics.wrong_payment_rate_after)}</strong></div></div>
+        </section>
+        <section className="detail-section methodology-section">
+          <div className="section-title"><Calculator weight="duotone" /><strong>计算口径与边界</strong><span>每个数字可复算</span></div>
+          <div className="formula-callout"><span>月度人工经费空间</span><strong>{savedPerCase} 分钟 × {monthlyCases.toLocaleString()} 案 ÷ 60 × {cny(hourlyCost)}/小时</strong><b>= {cny(monthlyLaborValue)}</b></div>
+          <div className="methodology-list"><div><span>数据分类</span><strong>{value.data_classifications?.join(", ") || "等待 API"}</strong></div><div><span>生产收益声明</span><strong>{value.production_claim_allowed ? "ALLOWED" : "NOT ALLOWED"}</strong></div><div><span>样本来源</span><strong>GOLDEN-001～008 合成案件</strong></div><div><span>企业接入后</span><strong>替换 CSV 基线即可复算</strong></div></div>
+          <div className="claim-boundary"><WarningCircle weight="fill" /><span>{contract.claim_boundary || value.guardrail || "当前结果仅用于指标方法验证。"}</span></div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 function SafetyRail({ snapshot, onExport }) {
   const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
@@ -451,15 +528,15 @@ export function App() {
       anchor.href = url; anchor.download = `${CASE_ID}-audit-report.md`; anchor.click(); URL.revokeObjectURL(url);
     } catch (err) { setError(err.message); }
   };
-  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["engineering", "工程证据", Gauge]], []);
+  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["engineering", "工程证据", Gauge]], []);
 
   return (
     <div className="app-shell"><Header snapshot={snapshot} busy={busy} onReset={onReset} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
-        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
-      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-27</span></footer>
+        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
+      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-28</span></footer>
     </div>
   );
 }

@@ -22,8 +22,8 @@
   },
   "evidence_score": 1.0,
   "risk_level": "L2",
-  "created_at": "2026-08-28T00:21:36.218637Z",
-  "updated_at": "2026-08-28T00:21:36.517954Z",
+  "created_at": "2026-08-28T10:07:13.490469Z",
+  "updated_at": "2026-08-28T10:07:13.767402Z",
   "execution_mode": "MCP_TEAM",
   "workflow_provenance": {
     "business_data": "synthetic",

@@ -4,7 +4,7 @@
 
 | # | 评委建议 | 修改结果 | 验证证据 | 状态 |
 |---|---|---|---|---|
-| A1 | 补充人工时长、错付率、追回成本、人工升级率、审计风险 | 新增强制数据分类的基线 CSV 和评估脚本，五类指标统一计算；合成样本输出强制 `production_claim_allowed=false` | `scripts/run_value_evaluation.py`、`data/value_baseline/template.csv`、`docs/value-evaluation-synthetic.json` | 指标链已实现；企业基线待真实数据 |
+| A1 | 补充人工时长、错付率、追回成本、人工升级率、审计风险 | 新增强制数据分类的基线 CSV 和评估脚本，五类指标统一计算；WebUI“价值模拟”可输入月案件量和综合人工成本，直观展示时长下降、吞吐倍数、释放工时及月/年经费空间；合成样本输出强制 `production_claim_allowed=false` | `scripts/run_value_evaluation.py`、`data/value_baseline/template.csv`、`docs/value-evaluation-synthetic.json`、`docs/value-simulation.md`、`demo-ui` | 模拟口径与展示已实现；企业基线待真实数据 |
 | A2 | 说明 Agent 上下文传递 | StageTask 绑定 case ID、case status、case version 哈希、Skill、Worker actor 和输入快照；MCP/REST 关联 message/request/task/receipt ID | `revguard/agent_bridge.py`、`revguard/mcp_server.py`、MCP Team 证据包 | 已实现并本地验证 |
 | A3 | 政策/金额冲突如何裁决 | 政策重叠显式输出 `unresolved_conflicts`，风险硬升 L3；金额由 Decimal 确定性内核复算，差异无法归因时禁止自动写入 | `policy_matcher.py`、`risk.py`、风险/政策测试 | 已实现并本地验证 |
 | A4 | 谁可以批准写入 | 只有独立 Approver Principal 可决策；Executor 仅在签名能力令牌通过后写，Verifier 独立读后验证 | `security.py`、`api.py`、`adr/0005` | 已实现并本地验证 |

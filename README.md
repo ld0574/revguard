@@ -74,7 +74,9 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
 评委意见的逐条实施状态见 [`docs/reviewer-remediation.md`](docs/reviewer-remediation.md)；
-合成价值数据只验证指标口径，文件内强制标记“不得作为企业真实收益”。
+合成价值数据只验证指标口径，文件内强制标记“不得作为企业真实收益”。驾驶舱新增
+可交互的“价值模拟”页签，可按月案件量和综合人工成本试算释放工时与人工经费空间；
+公式、默认假设和生产使用边界见 [`docs/value-simulation.md`](docs/value-simulation.md)。
 可直接审阅正常闭环报告 [`CASE-2026-0001.md`](docs/reports/CASE-2026-0001.md)
 与故障回滚报告 [`CASE-2026-0008.md`](docs/reports/CASE-2026-0008.md)；完整 Trace 可由
 `make demo-reset` 同步重建。

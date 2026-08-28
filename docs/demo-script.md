@@ -29,8 +29,9 @@ make demo-ui
 | 03:25–04:05 | 查看执行、验证与回滚阶段逐步完成 | “Executor 按组件和额度写入，Verifier 随后重新查询台账，不使用 Executor 的回执自证。我们故意让首次读取出现 1 KES 偏差，验证立即失败，案件转入 ROLLBACK_REQUIRED。” | 两个 adjustment；`verification=FAILED`；variance=1 KES |
 | 04:05–04:35 | 聚焦自动回滚与最终状态 | “系统使用一次性回滚能力做反向台账，再由 Verifier 第二次独立查询。只有恢复到执行前净额，案件才以 ROLLED_BACK 终止。失败没有被改写成成功，也没有静默吞掉。” | reversal entries；`ROLLBACK_VERIFIED=PASSED`；最终 `ROLLED_BACK` |
 | 04:35–05:10 | 打开完整审计/工程证据页签 | “同一个 case ID 下保留 20 个成功 StageTask、9 个 Worker、16 种 Skill，以及 task、request、receipt、Trace 和审计事件。凭证会被替换为不可授权指纹，金额、审批、执行与回滚可逐项对账。” | 20/20；9 Workers；MCP；Audit/Trace；无原始 token |
-| 05:10–05:35 | 展示数据来源与 PostgreSQL 工程证据 | “公司没有提供真实数据，所以我们没有伪装生产接入。10 个虚构伙伴、11 笔订单和 8 个 Golden Case 都有合成来源清单与关联校验。持久层已在一次性 PostgreSQL 验证 NUMERIC、原子 StageResult 和不可篡改审计触发器；PolarDB 云端仍诚实标记为待部署。” | SYNTHETIC；validation PASSED；Local PostgreSQL PASSED；Cloud PolarDB PENDING |
-| 05:35–06:00 | 回到全景，停在闭环流水线 | “RevGuard 的差异化不是 Agent 数量，而是给 Agent 协作加上可执行的治理底座：MCP 最小权限、真实状态流、人审不可自签、执行与验证分离、失败可回滚、结果可复现。这让 Agent 从建议者变成可审计的业务执行团队。” | 完整 8 段流水线与 ROLLED_BACK/PASSED |
+| 05:10–05:35 | 打开“价值模拟”，保持 500 案/月、100 元/小时默认情景 | “技术闭环最终要回答企业价值。8 个合成样本中，单案处理中位时长从 127.5 分钟降到 19.5 分钟，时长下降 84.7%，同等工时理论吞吐是 6.54 倍。若企业每月有 500 个异常案件、综合人工成本每小时 100 元，模拟可释放 900 小时，对应 9 万元每月的人工产能空间。” | 输入假设；84.7%；6.54×；900 h；¥90,000/月 |
+| 05:35–05:50 | 下移到公式与边界，再切工程证据 | “这不是现金节省承诺。页面同时展示公式、8 个合成样本和 NOT ALLOWED 生产声明；接入企业实测基线后才能对外主张收益。当前持久层已通过本地 PostgreSQL 验证，云 PolarDB 仍明确标记为待部署。” | 公式；SYNTHETIC；NOT ALLOWED；Local PostgreSQL PASSED；Cloud PolarDB PENDING |
+| 05:50–06:00 | 回到全景，停在闭环流水线 | “RevGuard 的差异化不是 Agent 数量，而是给 Agent 协作加上可执行的治理底座：MCP 最小权限、真实状态流、人审不可自签、执行与验证分离、失败可回滚、价值可测算。” | 完整 8 段流水线与 ROLLED_BACK/PASSED |
 
 ## 可裁剪的 3 分钟版
 
@@ -44,4 +45,5 @@ make demo-ui
 - 不说“已部署 PolarDB”，应说“完成 PostgreSQL 兼容验证，PolarDB 接入配置已就绪”。
 - 不把本地 MCP harness 说成完整 Matrix 房间；Matrix 证据没有补齐前明确标为待采集。
 - 不说“AI 自动审批”；L2 必须由独立审批人点击，L3 永远不自动执行。
+- 不说“已为企业节省 84.7%/9 万元”；应说“基于 8 个合成样本和输入假设的模拟测算，待企业真实基线验证”。
 - 不展示 API key、签名密钥、approval token 或 rollback token。
