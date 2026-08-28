@@ -1,6 +1,21 @@
 # RevGuard API 服务镜像
 # 与 AgentTeams 同机部署时，Worker 通过 http://revguard-api:9000 调用 Skill 层
-FROM python:3.11-slim
+ARG PYTHON_IMAGE=python:3.11-slim
+FROM node:20-alpine AS demo-ui-build
+
+WORKDIR /ui
+
+# 独立构建录制驾驶舱，只把静态产物带入最终 Python 镜像。
+COPY demo-ui/package.json demo-ui/package-lock.json ./
+RUN npm ci
+COPY demo-ui/ ./
+RUN npm run build
+
+FROM ${PYTHON_IMAGE}
+
+USER root
+
+ARG PIP_INDEX_URL=https://pypi.org/simple
 
 ARG REVGUARD_VERSION=0.4.0
 LABEL org.opencontainers.image.title="RevGuard" \
@@ -21,8 +36,10 @@ COPY config/demo_principals.json ./config/demo_principals.json
 COPY data/fixtures/ ./data/fixtures/
 COPY data/golden_cases/ ./data/golden_cases/
 COPY docs/evaluation-summary.json docs/value-evaluation-synthetic.json ./docs/
+COPY --from=demo-ui-build /ui/dist/client/ ./demo-ui/dist/client/
 
-RUN addgroup --system revguard && adduser --system --ingroup revguard revguard
+RUN getent group revguard >/dev/null || addgroup --system revguard; \
+    id -u revguard >/dev/null 2>&1 || adduser --system --ingroup revguard revguard
 
 ENV REVGUARD_DB_PATH=/app/runtime/revguard.db \
     REVGUARD_FIXTURES_DIR=/app/data/fixtures \
