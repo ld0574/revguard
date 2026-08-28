@@ -3,9 +3,10 @@ name: revguard-api
 description: Invoke the RevGuard Skill allowed for this Worker and persist Matrix-to-Skill correlation in RevGuard Trace/Audit.
 ---
 
-# RevGuard Skills-only Adapter
+# RevGuard REST Skills-only Adapter（MCP 不可用时的兼容路径）
 
-Use this adapter when a RevGuard Worker must invoke one of its registered domain Skills. The
+Prefer the Worker-scoped MCP server described in `agentteams/mcp/README.md`. Use this REST
+adapter only when the AgentTeams host cannot attach an MCP server. The
 adapter derives the Worker from `AGENTTEAMS_WORKER_NAME`, enforces a local Skill allowlist and
 owns the Bearer credential; never read, print, request or place credentials in chat.
 

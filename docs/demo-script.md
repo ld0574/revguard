@@ -1,62 +1,47 @@
-# RevGuard 现场 Demo 剧本
+# RevGuard 复赛视频脚本（6 分钟主版）
 
-一键复现：
+> 核心叙事不是“又一个 Agent 平台”，而是：**让多个 Agent 在资金业务中不能越权、不能自签、
+> 不能用聊天结论冒充执行结果，而且失败后能自动恢复并留下证据。**
+
+## 录制前准备
 
 ```bash
-make demo
-make evaluate
+make demo-ui
+# 浏览器打开 http://127.0.0.1:9000
 ```
 
-## 8 个端到端案件
+页面固定演示 `CASE-2026-0008`。它使用合成业务数据，但 MCP 调用、StageTask、状态迁移、
+人工暂停、受控写入、独立验证、反向冲销和证据落盘都是真实可执行链路。正式录屏必须由
+组员亲自点击审批按钮；`docs/evidence/demo-rehearsal` 中的自动批准只用于可复现排练，已明确
+标为 `simulated_human=true`。
 
-| 案件 | 场景 | 可验证结局 |
-|---|---|---|
-| CASE-2026-0001 | 旧政策版本 + 回款佣金漏算 | L2 审批，补付 14,400，独立验证通过 |
-| CASE-2026-0002 | 订单时点等级冲突，多算佣金 | 负向 gross 调整强制 L2，验证通过 |
-| CASE-2026-0003 | 缺订单号且存在多个候选 | 挂起补证，不计算、不执行 |
-| CASE-2026-0004 | 申诉不成立 | L0 零动作关闭 |
-| CASE-2026-0005 | 整单漏算 | L2 审批，补付 6,600，验证通过 |
-| CASE-2026-0006 | 小额且证据充分 | L1 仅生成不生效草稿，台账零写入 |
-| CASE-2026-0007 | gross 金额超过 50,000 | L3 只出方案，系统零执行 |
-| CASE-2026-0008 | Verifier 首次查询注入 1 KES 偏差 | FAILED → 反向冲销 → 回滚验证 PASSED → ROLLED_BACK |
+## 分镜与旁白
 
-## 8 分钟演示动线
+| 时间 | 画面与操作 | 旁白（可直接念） | 必须看清的证据 |
+|---|---|---|---|
+| 00:00–00:25 | 驾驶舱初始全景，镜头停在案件摘要与 8 段流水线 | “企业佣金异常不是问答题。它牵涉跨系统证据、历史政策、资金审批和执行后验证。RevGuard 解决的是：多个 Agent 如何在可控边界内真正把案件办完。” | 顶部 `合成业务数据 · 真实运行链路`；CASE-0008；180,000 / 18,000 / 32,400 KES |
+| 00:25–00:55 | 缓慢扫过流水线和 Agent 权限矩阵 | “我们把职责拆成 Intake、Evidence、Policy、Calculation、RootCause、Risk、Executor、Verifier 和 Knowledge。Executor 能受控写入，但 Verifier 只有独立读取权，任何一个 Agent 都不能既执行又自证。” | Worker 名称、权限差异、Executor/Verifier 分离 |
+| 00:55–01:15 | 点击“启动多 Agent 调查” | “现在启动的不是预置动画。Orchestrator 根据案件当前状态创建版本绑定的 StageTask；每个 Worker 通过自己的 scoped MCP Server 只看到被允许的 Skill。” | 按钮 loading；状态从 CREATED 开始推进 |
+| 01:15–02:00 | 运行结束后查看 MCP Agent 任务表和证据表 | “8 个任务先后完成：标准化、实体解析、七路证据收集、政策匹配、确定性金额复算、根因解释、风险判断和审批路由。聊天文本不能推进状态，只有服务端落库的 SUCCEEDED StageResult 才能继续。” | `MCP`、真实 task ID、Skill、assigned actor、SUCCEEDED；8/8 证据与 hash/receipt |
+| 02:00–02:35 | 镜头聚焦政策和金额详情 | “系统按订单时点回溯到 2026-Q3，而不是误用旧批处理版本；销售佣金 27,000，加回款佣金 5,400，应付 32,400。现有台账只有 18,000，差额 14,400。金额由 Decimal 规则内核计算，不交给大模型猜。” | policy version；组件公式；calculation hash；根因 `WRONG_POLICY_VERSION`、`MISSING_COMPONENT` |
+| 02:35–03:10 | 停在橙色人工审批边界，暂时不点 | “风险为 L2，流程已经真正暂停。系统没有模拟审批，也没有后台偷偷继续。审批人、币种、总额度和逐组件额度会被绑定进短时能力凭证。” | `WAITING_FOR_APPROVAL`；PENDING approval；暂停至少 3 秒 |
+| 03:10–03:25 | 组员亲自点击“批准并执行 14,400 KES” | “现在由独立 Approver 做出明确决定。这个动作会写入 `simulated_human=false` 的审计事件，然后 MCP Team 从持久化状态继续，而不是重新跑一条脚本。” | 人手点击录入；按钮 loading；状态进入 READY/EXECUTING |
+| 03:25–04:05 | 查看执行、验证与回滚阶段逐步完成 | “Executor 按组件和额度写入，Verifier 随后重新查询台账，不使用 Executor 的回执自证。我们故意让首次读取出现 1 KES 偏差，验证立即失败，案件转入 ROLLBACK_REQUIRED。” | 两个 adjustment；`verification=FAILED`；variance=1 KES |
+| 04:05–04:35 | 聚焦自动回滚与最终状态 | “系统使用一次性回滚能力做反向台账，再由 Verifier 第二次独立查询。只有恢复到执行前净额，案件才以 ROLLED_BACK 终止。失败没有被改写成成功，也没有静默吞掉。” | reversal entries；`ROLLBACK_VERIFIED=PASSED`；最终 `ROLLED_BACK` |
+| 04:35–05:10 | 打开完整审计/工程证据页签 | “同一个 case ID 下保留 20 个成功 StageTask、9 个 Worker、16 种 Skill，以及 task、request、receipt、Trace 和审计事件。凭证会被替换为不可授权指纹，金额、审批、执行与回滚可逐项对账。” | 20/20；9 Workers；MCP；Audit/Trace；无原始 token |
+| 05:10–05:35 | 展示数据来源与 PostgreSQL 工程证据 | “公司没有提供真实数据，所以我们没有伪装生产接入。10 个虚构伙伴、11 笔订单和 8 个 Golden Case 都有合成来源清单与关联校验。持久层已在一次性 PostgreSQL 验证 NUMERIC、原子 StageResult 和不可篡改审计触发器；PolarDB 云端仍诚实标记为待部署。” | SYNTHETIC；validation PASSED；Local PostgreSQL PASSED；Cloud PolarDB PENDING |
+| 05:35–06:00 | 回到全景，停在闭环流水线 | “RevGuard 的差异化不是 Agent 数量，而是给 Agent 协作加上可执行的治理底座：MCP 最小权限、真实状态流、人审不可自签、执行与验证分离、失败可回滚、结果可复现。这让 Agent 从建议者变成可审计的业务执行团队。” | 完整 8 段流水线与 ROLLED_BACK/PASSED |
 
-1. **场景与输入（40 秒）**：展示一条佣金申诉，说明人工需跨 CRM、合同、政策和财务核对。
-2. **AgentTeams 拆解（50 秒）**：Manager 将任务拆给 Intake、Evidence、Policy、Calculation、
-   RootCause、Risk、Executor、Verifier、Knowledge；强调 Executor/Verifier 分离。
-3. **真实并行取证（50 秒）**：展示 7 个独立 I/O Tool span 重叠执行，政策查询等待合同结果后继续；
-   每项证据含 receipt 和 SHA-256 content hash。
-4. **政策与金额（60 秒）**：展示订单时点版本、等级回溯、Decimal 公式与 calculation hash。
-5. **人工审批（60 秒）**：CASE-0001 停在 `WAITING_FOR_APPROVAL`；Approver Bearer Principal 批准，
-   系统签发绑定案件/币种/gross 金额/有效期的能力令牌。
-6. **写入与独立验证（60 秒）**：Executor 提交两项调整；Verifier 重新查询，不复用执行回执。
-7. **故障与真实回滚（90 秒）**：运行 CASE-0008，展示首次验证 FAILED、两笔反向台账、
-   `PostRollbackVerifySkill=PASSED`，最终状态保留 `ROLLED_BACK`。
-8. **评测与复现（50 秒）**：运行 `make verify-ci`，展示 95 项测试（其中 1 项需一次性 PostgreSQL）、91% 核心路径实测覆盖率（门禁 90%）和
-   105/105 场景评测；
-   指向 `docs/evaluation-summary.json`、Trace、报告和 Case Memory。
+## 可裁剪的 3 分钟版
 
-## 评分项—证据映射
+保留 00:00–00:25、00:55–01:15、01:15–02:00、02:35–03:25、03:25–04:35、
+05:10–06:00 六段；其余用 2–3 秒特写加字幕。不得删除“合成数据”声明、真实人工点击、
+验证失败和回滚后复核四个关键镜头。
 
-| 评审关注 | 演示证据 |
-|---|---|
-| AgentTeams 协同 | Matrix 事件 → Evidence Worker → API → Trace/Audit → Matrix 回执的正式证据 |
-| 真实并行任务 | `EvidenceCollectSkill` 的 7 路 ThreadPool I/O 与并行耗时字段 |
-| 工具失败重试 | 首次 Finance `TOOL_UNAVAILABLE` 为 ERROR span，随后 retry 成功 |
-| 证据冲突 | CASE-0002 的等级生效时点回溯与冲突说明 |
-| 人工审批 | CASE-0001/API 的 WAIT → Approver → signed capability token |
-| 权限边界 | forged/cross-case/expired/scope-escalation/组件串用等 9 个攻击探针 |
-| 受控写入 | signed token + gross/component quota + idempotency + snapshot + receipt |
-| 执行后验证 | Verifier 新查询与逐组件 comparison |
-| 回滚 | CASE-0008 的 reversal entries、一次性 rollback token、回滚后验证 |
-| Skill 工程 | 16 个版本化 Skill + `/skills/{name}/invoke` + allowed actor |
-| 可复现性 | `make verify`、干净 reset、重复 seed、Gateway 重启持久化测试 |
+## 旁白禁区
 
-## 明确边界
-
-- Demo 业务数据均为合成 Fixture，不代表真实企业生产数据。
-- 并行基准为 7 个工具各注入 50ms 固定 I/O 延迟，用于证明并发实现；不代表生产网络 SLA。
-- `APPROVAL_MODE=auto` 只用于离线 Golden 回放，API/Docker 默认 `wait`。
-- L1 从不写资金台账；L3 从不自动执行。
-- AgentTeams LLM 不计算金额，也不持有 API key；Bearer key 由 skills-only Adapter 的 Secret 注入。
+- 不说“接入了公司真实数据”，应说“采用高保真合成业务数据，真实执行工程链路”。
+- 不说“已部署 PolarDB”，应说“完成 PostgreSQL 兼容验证，PolarDB 接入配置已就绪”。
+- 不把本地 MCP harness 说成完整 Matrix 房间；Matrix 证据没有补齐前明确标为待采集。
+- 不说“AI 自动审批”；L2 必须由独立审批人点击，L3 永远不自动执行。
+- 不展示 API key、签名密钥、approval token 或 rollback token。

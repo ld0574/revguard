@@ -153,12 +153,13 @@ function stageValue(snapshot, id) {
 
 function Header({ snapshot, busy, onReset }) {
   const status = snapshot?.case?.status || "CONNECTING";
+  const mcpTeam = snapshot?.case?.execution_mode === "MCP_TEAM";
   return (
     <header className="topbar">
       <div className="brand-group">
         <ShieldCheck className="brand-mark" weight="duotone" aria-hidden="true" />
         <span className="brand-name">RevGuard</span><span className="top-divider" />
-        <span className="case-id">{CASE_ID}</span><span className="risk-pill">L2</span>
+        <span className="case-id">{CASE_ID}</span><span className="risk-pill">L2</span>{mcpTeam && <span className="mcp-pill">MCP TEAM</span>}
         <span className="approval-label">Human Approval</span>
       </div>
       <div className="disclosure">合成业务数据 · 真实运行链路<span>/ Synthetic business data · Real executable workflow</span></div>
@@ -298,12 +299,16 @@ function PolicyTimeline({ snapshot }) {
   );
 }
 
-function AgentMatrix() {
+function AgentMatrix({ snapshot }) {
+  const tasks = snapshot?.agent_tasks || [];
+  const visible = tasks.slice(-8);
+  const workerCount = new Set(tasks.map((item) => item.assigned_actor)).size;
+  const succeeded = tasks.filter((item) => item.status === "SUCCEEDED").length;
   return (
     <section className="detail-section agent-section">
-      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同链路</strong><span>（责任与能力边界）</span></div>
-      <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>
-      <p className="boundary-note"><ShieldCheck weight="fill" />Executor 与 Verifier 为不同主体；验证结果不能由执行者自证。</p>
+      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同链路</strong><span>{tasks.length ? `MCP StageTask ${succeeded}/${tasks.length} · ${workerCount} Workers` : "责任与能力边界"}</span></div>
+      <div className="compact-table">{visible.length ? visible.map((task) => <div className="compact-row task-row" key={task.task_id}><strong>{task.skill_name.replace("Skill", "")}</strong><code>{task.assigned_actor}</code><span className="transport-cell">MCP</span><span className={`task-status task-${task.status.toLowerCase()}`}>{task.status} · attempt {task.attempt}</span></div>) : AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>
+      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "每项结果均绑定 Case Version、Worker、Skill 与输入快照；聊天文本不能推进状态。" : "Executor 与 Verifier 为不同主体；验证结果不能由执行者自证。"}</p>
     </section>
   );
 }
@@ -351,6 +356,9 @@ function EngineeringEvidence({ evidence }) {
   const runtime = evidence?.runtime || {};
   const evaluation = evidence?.deterministic_evaluation || {};
   const value = evidence?.business_value || {};
+  const synthetic = evidence?.synthetic_dataset || {};
+  const rehearsal = evidence?.mcp_rehearsal || {};
+  const postgres = evidence?.local_postgresql || {};
   const metrics = value.metrics || {};
   const external = evidence?.external_validation || {};
   const rows = [
@@ -358,6 +366,9 @@ function EngineeringEvidence({ evidence }) {
     ["审计链", runtime.audit_chain?.enforced ? (runtime.audit_chain.valid ? "VALID" : "BROKEN") : "DEMO ONLY", runtime.audit_chain?.enforced ? `${runtime.audit_chain.rows_checked || 0} 条已校验` : "PolarDB 模式由 DB trigger 强制"],
     ["Trace 错误", String(runtime.trace_error_spans_total ?? 0), `${runtime.trace_spans_total || 0} spans 已持久化`],
     ["StageResult", String(runtime.agent_task_attempts_total ?? 0), "Task 终态与 Result 同事务"],
+    ["MCP Team 排练", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} Workers · ${rehearsal.outcome?.skill_count || 0} Skills`],
+    ["合成数据校验", synthetic.validation_status || "等待生成", `${synthetic.record_counts?.orders || 0} orders · ${synthetic.record_counts?.golden_cases || 0} cases`],
+    ["本地 PostgreSQL", postgres.checks?.audit_chain_valid ? "PASSED" : "PENDING", postgres.classification ? "PG 18.6 兼容验证；非云验收" : "等待本地验证"],
     ["确定性评测", `${evaluation.passed || 0}/${evaluation.total_scenarios || 0}`, `通过率 ${Number(evaluation.pass_rate || 0) * 100}%`],
     ["发布版本", evidence?.release || "—", "0 → 5% → 25% → 100% 灰度"],
   ];
@@ -381,7 +392,7 @@ function EngineeringEvidence({ evidence }) {
       </section>
       <section className="detail-section pending-section">
         <div className="section-title"><Database weight="duotone" /><strong>外部环境验收</strong><span>不伪造完成状态</span></div>
-        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong>{state || "PENDING"}</strong></div>)}</div>
+        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["AgentTeams 完整房间", external.agentteams_room], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong>{state || "PENDING"}</strong></div>)}</div>
       </section>
     </div>
   );
@@ -400,7 +411,7 @@ function SafetyRail({ snapshot, onExport }) {
 }
 
 function DecisionView({ snapshot }) {
-  return <div className="decision-grid"><div className="decision-left"><EvidenceTable evidence={snapshot?.evidence} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><div className="lower-pair"><AgentMatrix /><AuditTrail snapshot={snapshot} /></div></div></div>;
+  return <div className="decision-grid"><div className="decision-left"><EvidenceTable evidence={snapshot?.evidence} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><div className="lower-pair"><AgentMatrix snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div></div></div>;
 }
 
 export function App() {
@@ -429,7 +440,7 @@ export function App() {
   }, [load]);
 
   const onReset = () => perform("已恢复录制初始状态", () => api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" }));
-  const onRun = () => perform("调查完成，案件已进入 L2 人工审批", () => api(`/api/v1/cases/${CASE_ID}/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": "REQ-WEBUI-RUN-0008" } }));
+  const onRun = () => perform("MCP Team 调查完成，案件已进入 L2 人工审批", () => api(`/api/v1/cases/${CASE_ID}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": "REQ-WEBUI-MCP-RUN-0008" } }));
   const onApprove = () => perform("独立验证发现 1 KES 偏差，系统已自动冲销", () => api(`/api/v1/cases/${CASE_ID}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境执行调整。" }) }));
   const onInspect = () => { setTab("audit"); window.setTimeout(() => document.getElementById("rollback-evidence")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   const onExport = async () => {
@@ -448,7 +459,7 @@ export function App() {
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
-      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-25</span></footer>
+      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-27</span></footer>
     </div>
   );
 }

@@ -17,10 +17,11 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from .agent_bridge import create_agent_task, validate_task_invocation
+from .agent_bridge import create_agent_task, execute_agent_task
 from .demo_dashboard import build_dashboard_snapshot
+from .mcp_team import McpTeamRunner
 from .mocks import ToolGateway
-from .models import Case, CaseStatus, TaskStatus, new_id
+from .models import Case, CaseStatus, new_id
 from .observability import configure_structured_logging, prometheus_text
 from .orchestrator import Orchestrator
 from .security import (
@@ -59,7 +60,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.3.0")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.4.0")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -174,6 +175,12 @@ def require_roles(*roles: str):
 def _orchestrator() -> Orchestrator:
     return Orchestrator(store, gateway, output_dir=OUTPUT_DIR,
                         report_dir=REPORT_DIR, approval_mode=APPROVAL_MODE)
+
+
+def _mcp_team() -> McpTeamRunner:
+    return McpTeamRunner(
+        store, gateway, output_dir=OUTPUT_DIR, report_dir=REPORT_DIR,
+    )
 
 
 # --------------------------------------------------------------------- 模型
@@ -337,9 +344,47 @@ def run_case(case_id: str, response: Response,
     return {"case": store.get_case(case_id), "state_status": state.get("final_status")}
 
 
+@app.post("/api/v1/cases/{case_id}/team/run")
+async def run_case_via_mcp_team(
+    case_id: str,
+    response: Response,
+    principal: ApiPrincipal = Depends(require_roles("operator")),
+    request_id: str | None = Header(default=None, alias="X-Request-ID"),
+):
+    """Run state-driven Worker stages through scoped MCP until the human gate."""
+    correlation_id = request_id or new_id("REQ-MCP-TEAM")
+    if len(correlation_id) > 256:
+        raise HTTPException(400, "X-Request-ID 长度不能超过 256")
+    response.headers["X-Request-ID"] = correlation_id
+    case = store.get_case(case_id)
+    if not case:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    if case["status"] != CaseStatus.CREATED.value:
+        raise HTTPException(409, f"案件状态 {case['status']} 不允许启动 MCP Team")
+    store.audit(case_id, principal.actor, "MCP_TEAM_STARTED", {
+        "request_id": correlation_id,
+        "business_data": "synthetic",
+        "workflow": "real_executable",
+    })
+    try:
+        state = await _mcp_team().run_to_human_gate(case)
+    except Exception as exc:
+        raise HTTPException(500, {
+            "code": "MCP_TEAM_RUN_FAILED",
+            "request_id": correlation_id,
+            "error_type": type(exc).__name__,
+        }) from exc
+    return {
+        "case": store.get_case(case_id),
+        "state_status": state.get("final_status"),
+        "agent_tasks": [redact_secrets(item)
+                        for item in store.list_agent_tasks(case_id)],
+    }
+
+
 @app.post("/api/v1/cases/{case_id}/approval")
-def decide_approval(case_id: str, payload: ApprovalDecision,
-                    principal: ApiPrincipal = Depends(require_roles("approver"))):
+async def decide_approval(case_id: str, payload: ApprovalDecision,
+                          principal: ApiPrincipal = Depends(require_roles("approver"))):
     """人工审批节点：审批通过后自动续跑执行与独立验证。"""
     case = store.get_case(case_id)
     if not case:
@@ -373,18 +418,24 @@ def decide_approval(case_id: str, payload: ApprovalDecision,
             case_id, actor=principal.actor, reason="人工审批驳回，禁止继续执行"
         )
         transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=principal.actor)
-        orch = _orchestrator()
-        state = orch._rebuild_state(case)
-        state["approval"] = decided
-        orch._finalize(case, state, Tracer(store, case_id), archived=True)
+        if case.get("execution_mode") == "MCP_TEAM":
+            await _mcp_team().finalize_terminal(case, approval=decided)
+        else:
+            orch = _orchestrator()
+            state = orch._rebuild_state(case)
+            state["approval"] = decided
+            orch._finalize(case, state, Tracer(store, case_id), archived=True)
         return {"case": store.get_case(case_id), "approval": public_approval,
                 "verification": None}
 
     transition_case(store, case, CaseStatus.READY_TO_EXECUTE,
                     "人工审批通过", actor=principal.actor)
-    orch = _orchestrator()
-    state = orch.execute_and_verify(case)
-    orch._finalize(case, state, Tracer(store, case_id), archived=True)
+    if case.get("execution_mode") == "MCP_TEAM":
+        state = await _mcp_team().execute_after_approval(case)
+    else:
+        orch = _orchestrator()
+        state = orch.execute_and_verify(case)
+        orch._finalize(case, state, Tracer(store, case_id), archived=True)
     return {"case": store.get_case(case_id), "approval": public_approval,
             "verification": state.get("verification")}
 
@@ -631,67 +682,37 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
     }
     if any(value is not None and len(value) > 256 for value in correlation.values()):
         raise HTTPException(400, "关联请求头长度不能超过 256")
-    active_task = None
     if agent_task_id:
         active_task = store.get_agent_task(agent_task_id)
         if not active_task:
             raise HTTPException(404, f"Agent task 不存在: {agent_task_id}")
         if active_task["assigned_actor"] != principal.actor:
             raise HTTPException(403, "Agent task 不属于当前 Worker")
-        case = store.get_case(payload.case_id)
-        if not case:
-            raise HTTPException(404, f"案件不存在: {payload.case_id}")
-        try:
-            validate_task_invocation(
-                active_task, case, skill_name=skill_name,
-                actor=principal.actor, skill_input=payload.input,
-            )
-            active_task = store.transition_agent_task(
-                agent_task_id,
-                expected={TaskStatus.PENDING.value, TaskStatus.FAILED_RETRYABLE.value},
-                status=TaskStatus.RUNNING.value,
-            )
-        except ValueError as exc:
-            raise HTTPException(409, str(exc)) from exc
-        store.audit(payload.case_id, principal.actor, "AGENT_TASK_STARTED", {
-            "task_id": agent_task_id, "skill": skill_name,
-        })
     try:
-        result = invoke_skill(
-            skill_name, payload.input, actor=principal.actor, case_id=payload.case_id,
-            gateway=gateway, store=store, correlation=correlation,
-        )
+        if agent_task_id:
+            result = execute_agent_task(
+                task_id=agent_task_id, case_id=payload.case_id,
+                skill_name=skill_name, skill_input=payload.input,
+                actor=principal.actor, gateway=gateway, store=store,
+                correlation={**correlation, "transport": "rest"},
+            )
+        else:
+            result = invoke_skill(
+                skill_name, payload.input, actor=principal.actor,
+                case_id=payload.case_id, gateway=gateway, store=store,
+                correlation={**correlation, "transport": "rest"},
+            )
         response.headers["X-Request-ID"] = correlation["request_id"]
         response.headers["X-Skill-Receipt"] = result["skill_receipt"]
-        if active_task:
-            store.complete_agent_task(
-                active_task["task_id"], status=TaskStatus.SUCCEEDED.value,
-                result=result["data"], skill_receipt=result["skill_receipt"],
-            )
-            store.audit(payload.case_id, principal.actor, "AGENT_TASK_SUCCEEDED", {
-                "task_id": active_task["task_id"], "skill": skill_name,
-                "skill_receipt": result["skill_receipt"],
-            })
         return result
     except SkillInvocationError as exc:
-        if active_task:
-            store.complete_agent_task(
-                active_task["task_id"], status=TaskStatus.FAILED_FINAL.value,
-                error={"type": type(exc).__name__, "message": str(exc)},
-            )
         raise HTTPException(422, str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     except Exception as exc:
         from .mocks import ToolError
-        if active_task:
-            failed_status = (
-                TaskStatus.FAILED_RETRYABLE.value
-                if isinstance(exc, ToolError) and exc.retryable
-                else TaskStatus.FAILED_FINAL.value
-            )
-            store.complete_agent_task(
-                active_task["task_id"], status=failed_status,
-                error={"type": type(exc).__name__, "message": str(exc)},
-            )
         if isinstance(exc, ToolError) and exc.error_type == "AUTH_FAILED":
             raise HTTPException(403, exc.message) from exc
         if isinstance(exc, ToolError):
@@ -750,8 +771,12 @@ def engineering_evidence(
         "runtime": store.operational_metrics(),
         "deterministic_evaluation": read_json("evaluation-summary.json"),
         "business_value": read_json("value-evaluation-synthetic.json"),
+        "synthetic_dataset": read_json("synthetic-data-validation.json"),
+        "mcp_rehearsal": read_json("evidence/demo-rehearsal/manifest.json"),
+        "local_postgresql": read_json("polardb-local-verification-2026-08-27.json"),
         "external_validation": {
             "production_business_baseline": "PENDING_COMPANY_DATA",
+            "agentteams_room": "PENDING_EXTERNAL_CAPTURE",
             "polardb_cloud_acceptance": "PENDING_CLOUD_INSTANCE",
             "polardb_pitr_drill": "PENDING_CLOUD_INSTANCE",
         },

@@ -16,7 +16,7 @@ RevGuard 以每案 JSON Trace + Store Audit + Markdown 报告提供可回放证�
 ## 关联与安全
 
 - `trace_id` 等于 case ID；span 有稳定 sequence、父子关系、UTC 起止时间、状态和错误。
-- AgentTeams 调用把 Matrix message ID、request ID、task ID、skill/tool receipt 写入 Trace 与 Audit，可跨证据包对账。
+- AgentTeams/MCP 调用把 transport、Matrix message ID、request ID、task ID、skill/tool receipt 写入 Trace 与 Audit，可跨证据包对账。
 - Bearer key 与 `RGC1` 能力令牌在任何嵌套字符串中都会被替换为不可授权指纹。
 - ERROR span 不被降级成 Evidence Gap；只有工具级 `ToolError` 才能转换为显式缺口。
 
@@ -27,5 +27,9 @@ RevGuard 以每案 JSON Trace + Store Audit + Markdown 报告提供可回放证�
 `config/alerts.yaml` 告警规则。日志不记录请求体或凭证。
 
 这仍不表示生产观测后端、OTLP exporter、采样策略或跨进程传播已经验收。后续接入 OTLP 时，以本映射为 Adapter 输入，并新增 exporter 背压、采样与租户隔离设计。运维约定见 [`operations.md`](operations.md)。
+
+录制排练的脱敏任务、Audit、Trace、报告与 SHA-256 清单位于
+[`evidence/demo-rehearsal/manifest.json`](evidence/demo-rehearsal/manifest.json)。其中自动化批准
+明确标记为 `simulated_human=true`；正式人审证据必须来自 WebUI 实际点击录屏。
 
 参考：[OpenTelemetry GenAI attributes registry](https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/)（该语义约定仍标记为 Development）。

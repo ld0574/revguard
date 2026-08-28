@@ -1,0 +1,262 @@
+{
+  "case_id": "CASE-2026-0008",
+  "case_type": "COMMISSION_UNDERPAYMENT",
+  "source": "EVALUATION",
+  "status": "ROLLED_BACK",
+  "priority": "P1",
+  "partner_id": "AGT-10001",
+  "partner_name": "Nairobi Solar Solutions Ltd",
+  "order_id": "EZ202608001",
+  "contract_id": null,
+  "description": "故障注入评测：写入后 Verifier 首次查询出现 1 KES 偏差，系统必须冲销。",
+  "claim": {
+    "actual_amount": 18000,
+    "expected_amount": 32400,
+    "currency": "KES"
+  },
+  "entities": {
+    "partner_id": "AGT-10001",
+    "partner_name": null,
+    "order_id": "EZ202608001",
+    "contract_id": null
+  },
+  "evidence_score": 1.0,
+  "risk_level": "L2",
+  "created_at": "2026-08-28T00:21:36.218637Z",
+  "updated_at": "2026-08-28T00:21:36.517954Z",
+  "execution_mode": "MCP_TEAM",
+  "workflow_provenance": {
+    "business_data": "synthetic",
+    "workflow": "real_executable",
+    "transport": "mcp",
+    "orchestration": "state-driven",
+    "agentteams_room_evidence": "PENDING_EXTERNAL_CAPTURE"
+  },
+  "policy_decision": {
+    "policy_id": "KE-COMMISSION-2026",
+    "policy_version": "2026-Q3",
+    "time_basis": "order_date",
+    "decision_date": "2026-07-10",
+    "effective_rule_set": {
+      "policy_id": "KE-COMMISSION-2026",
+      "version": "2026-Q3",
+      "eligibility": {
+        "order_status": [
+          "COMPLETED"
+        ],
+        "payment_status": [
+          "SETTLED"
+        ],
+        "product_id": [
+          "SHS-500",
+          "SHS-1000"
+        ]
+      },
+      "rules": [
+        {
+          "component": "SALES_COMMISSION",
+          "when": {
+            "agent_tier": "GOLD"
+          },
+          "formula": "order_amount * 0.15"
+        },
+        {
+          "component": "SALES_COMMISSION",
+          "when": {
+            "agent_tier": "SILVER"
+          },
+          "formula": "order_amount * 0.08"
+        },
+        {
+          "component": "SALES_COMMISSION",
+          "when": {
+            "agent_tier": "BRONZE"
+          },
+          "formula": "order_amount * 0.05"
+        },
+        {
+          "component": "COLLECTION_COMMISSION",
+          "when": {
+            "payment_days_lte": 30
+          },
+          "formula": "payment_amount * 0.03"
+        },
+        {
+          "component": "MONTHLY_INCENTIVE",
+          "when": {
+            "monthly_completed_orders_gte": 20
+          },
+          "formula": "order_amount * 0.02"
+        }
+      ],
+      "rounding": {
+        "scale": 2,
+        "mode": "HALF_UP"
+      }
+    },
+    "cited_clauses": [
+      {
+        "clause_id": "Q3-C1",
+        "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+      },
+      {
+        "clause_id": "Q3-C2",
+        "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+      },
+      {
+        "clause_id": "Q3-C3",
+        "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+      },
+      {
+        "clause_id": "Q3-C4",
+        "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+      },
+      {
+        "clause_id": "Q3-C5",
+        "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+      }
+    ],
+    "excluded_versions": [
+      {
+        "version": "2026-Q1",
+        "reason": "有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-10"
+      },
+      {
+        "version": "2026-Q2",
+        "reason": "有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-10"
+      }
+    ],
+    "unresolved_conflicts": [],
+    "confidence": 1.0
+  },
+  "tier_resolution": {
+    "tier": "GOLD",
+    "effective_from": "2026-06-01",
+    "conflict": null
+  },
+  "facts": {
+    "order_amount": "180000",
+    "payment_amount": "180000",
+    "refund_amount": "0",
+    "order_date": "2026-07-10",
+    "payment_date": "2026-07-28",
+    "payment_days": "16",
+    "agent_tier": "GOLD",
+    "product_id": "SHS-500",
+    "order_status": "COMPLETED",
+    "payment_status": "SETTLED",
+    "monthly_completed_orders": "1"
+  },
+  "calculation_result": {
+    "eligible": true,
+    "total_commission": "32400.00",
+    "currency": "KES",
+    "components": [
+      {
+        "type": "SALES_COMMISSION",
+        "amount": "27000.00",
+        "formula": "order_amount * 0.15",
+        "substituted": "180000 * 0.15",
+        "applied": true,
+        "skip_reasons": []
+      },
+      {
+        "type": "SALES_COMMISSION",
+        "amount": "0",
+        "formula": "order_amount * 0.08",
+        "substituted": "",
+        "applied": false,
+        "skip_reasons": [
+          "agent_tier 期望 'SILVER'，实际 'GOLD'"
+        ]
+      },
+      {
+        "type": "SALES_COMMISSION",
+        "amount": "0",
+        "formula": "order_amount * 0.05",
+        "substituted": "",
+        "applied": false,
+        "skip_reasons": [
+          "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+        ]
+      },
+      {
+        "type": "COLLECTION_COMMISSION",
+        "amount": "5400.00",
+        "formula": "payment_amount * 0.03",
+        "substituted": "180000 * 0.03",
+        "applied": true,
+        "skip_reasons": []
+      },
+      {
+        "type": "MONTHLY_INCENTIVE",
+        "amount": "0",
+        "formula": "order_amount * 0.02",
+        "substituted": "",
+        "applied": false,
+        "skip_reasons": [
+          "monthly_completed_orders='1' 不满足 monthly_completed_orders_gte 20"
+        ]
+      }
+    ],
+    "rounding_rule": "scale=2,mode=HALF_UP",
+    "calculation_hash": "sha256:3f5cad3a50827c822bce84abff587651c38fed3f1064adf8b9adce3da436df05",
+    "policy_version": "2026-Q3",
+    "eligibility_failures": [],
+    "facts_snapshot": {
+      "order_amount": "180000",
+      "payment_amount": "180000",
+      "refund_amount": "0",
+      "order_date": "2026-07-10",
+      "payment_date": "2026-07-28",
+      "payment_days": "16",
+      "agent_tier": "GOLD",
+      "product_id": "SHS-500",
+      "order_status": "COMPLETED",
+      "payment_status": "SETTLED",
+      "monthly_completed_orders": "1"
+    }
+  },
+  "root_cause_report": {
+    "diffs": [
+      {
+        "component": "SALES_COMMISSION",
+        "expected": "27000.00",
+        "posted": "18000.00",
+        "delta": "9000.00",
+        "root_cause": "WRONG_POLICY_VERSION",
+        "explanation": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+      },
+      {
+        "component": "COLLECTION_COMMISSION",
+        "expected": "5400.00",
+        "posted": "0",
+        "delta": "5400.00",
+        "root_cause": "MISSING_COMPONENT",
+        "explanation": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+      }
+    ],
+    "total_expected": "32400.00",
+    "total_posted": "18000.00",
+    "total_delta": "14400.00",
+    "root_causes": [
+      "MISSING_COMPONENT",
+      "WRONG_POLICY_VERSION"
+    ],
+    "confidence": 1.0
+  },
+  "risk_decision": {
+    "risk_level": "L2",
+    "approval_required": true,
+    "approver_role": "FINANCE_LEAD",
+    "execution_constraints": {
+      "write": true,
+      "requires_approval_token": true,
+      "max_amount": "50000"
+    },
+    "rollback_plan_required": true,
+    "reason_codes": [
+      "REQUIRES_HUMAN_APPROVAL"
+    ]
+  }
+}

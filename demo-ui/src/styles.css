@@ -37,6 +37,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .top-divider { width: 1px; height: 24px; background: var(--line-bright); }
 .case-id { font-size: 16px; font-weight: 720; letter-spacing: .01em; }
 .risk-pill { color: var(--orange); border: 1px solid #8a4a11; background: var(--orange-soft); padding: 3px 8px; border-radius: 6px; font-weight: 780; }
+.mcp-pill { color: var(--cyan); border: 1px solid #17658c; background: #08263a; padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; letter-spacing: .05em; }
 .approval-label { color: #c5d7e5; font-size: 13px; }
 .disclosure { color: #b6cad9; font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .disclosure span { color: var(--muted); margin-left: 6px; }
@@ -44,7 +45,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .health-dot { display: inline-block; width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-right: 6px; }
 .icon-button { display: flex; align-items: center; gap: 6px; color: #c9dceb; background: transparent; border: 1px solid var(--line-bright); border-radius: 6px; padding: 7px 9px; cursor: pointer; }
 .icon-button:hover { background: var(--surface-3); }
-.status-mini { font: 700 10px/1 InterVariable, sans-serif; max-width: 115px; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.status-mini { font: 700 9px/1 InterVariable, sans-serif; max-width: 145px; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 
 main { padding: 10px; }
 .summary-strip { min-height: 76px; display: grid; grid-template-columns: 1.3fr 1.05fr 1fr 1fr 1.1fr 1fr .95fr .95fr; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; overflow: hidden; }
@@ -54,7 +55,7 @@ main { padding: 10px; }
 .summary-item strong { color: var(--text); font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .summary-item small { color: #7590a5; font-size: 9px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .summary-5 strong { color: var(--orange); }
-.summary-6 strong { color: var(--red); }
+.summary-6 strong { color: var(--red); font-size: 10px; letter-spacing: -.02em; white-space: normal; overflow-wrap: anywhere; }
 .summary-7 strong { color: var(--green); }
 
 .pipeline-panel { margin-top: 9px; padding: 13px 12px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; overflow: hidden; }
@@ -142,6 +143,12 @@ tbody tr:hover { background: #0a1e2f; }
 .compact-row strong { color: #b9d0df; }
 .compact-row code { color: #7ba4c0; font-size: 8px; overflow: hidden; text-overflow: ellipsis; }
 .compact-row span { color: var(--muted); }
+.task-row { grid-template-columns: minmax(76px, 1fr) 112px 30px 98px; }
+.transport-cell { color: var(--cyan) !important; font-weight: 760; letter-spacing: .04em; }
+.task-status { text-align: right; font-size: 7px; font-weight: 720; }
+.task-succeeded { color: var(--green) !important; }
+.task-failed_retryable, .task-failed_final { color: var(--red) !important; }
+.task-running, .task-pending { color: var(--orange) !important; }
 .boundary-note { display: flex; align-items: center; gap: 6px; margin: 7px; padding: 6px; color: #7fa1b7; font-size: 8px; border: 1px solid #17425d; border-radius: 4px; }
 .boundary-note svg { color: var(--cyan); }
 .audit-list { padding: 4px 8px; }
@@ -162,7 +169,7 @@ tbody tr:hover { background: #0a1e2f; }
 .safety-rail { display: flex; flex-direction: column; gap: 8px; }
 .rail-section { padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
 .rail-label { display: block; color: var(--muted); font-size: 9px; margin: 2px 0 6px; }
-.rail-state { display: block; margin-bottom: 10px; padding: 7px; color: var(--muted); border: 1px solid var(--line-bright); border-radius: 4px; background: var(--surface-2); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.rail-state { display: block; margin-bottom: 10px; padding: 7px; color: var(--muted); border: 1px solid var(--line-bright); border-radius: 4px; background: var(--surface-2); font-size: 9px; overflow: hidden; text-overflow: ellipsis; }
 .rollback-state { color: var(--red); border-color: #70222b; background: var(--red-soft); }
 .passed-state { color: var(--green); border-color: #155a3b; background: var(--green-soft); }
 .rail-section > b { display: block; color: var(--text); font-size: 14px; }

@@ -23,6 +23,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 | 证据 | 支撑“这笔佣金是否正确、应该是多少”的订单、合同、回款、退款和审批记录。 |
 | 案件 | 一次需要调查、判断、处理和验证的佣金或结算异常。 |
 | Skill | 一个有固定输入、输出和权限边界、可由多个 Agent 复用的任务能力。 |
+| MCP | Agent 与 Skill 之间的标准协议层；本项目按 Worker 隔离可见 Skill，并要求绑定 StageTask。 |
 | Adapter | 连接 Agent 与 CRM、财务、工单等外部系统的适配层；它负责传递请求，不负责替代业务规则。 |
 
 ## 系统边界
@@ -48,12 +49,16 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 
 - 1 个 Manager 加 9 个职能 Worker，共 10 个 Agent；Executor 负责受控写入，Verifier 独立复核。
 - 16 个版本化 Skill，每个 Skill 都有统一调用入口、允许身份、输入/输出格式、失败处理和复用说明。
+- 官方 MCP Client/Server 驱动的状态型 Team 流程；每个 Worker 只看到授权 Skill，底层 Tool
+  不暴露给模型，错 Worker、错 Skill、篡改输入、过期 task 和重放都会拒绝。
+- CASE-0008 实测 20 个成功 StageTask、9 个 Worker、16 种 Skill；L2 在 WebUI 真实暂停，
+  人工批准后从持久化状态续跑并完成 `FAILED → ROLLED_BACK → rollback PASSED`。
 - 7 路独立 I/O 真实并行取证；政策查询会在合同证据返回后按依赖继续执行。
 - L0 只读，L1 只创建不生效的草稿，L2 经过人工审批后写入，L3 只给出方案、禁止自动执行。
 - HMAC-SHA256 能力令牌把案件、币种、总额、逐组件额度、用途、有效期和唯一编号绑定在一起。
 - 执行后验证失败时，系统会创建反向台账，再由 Verifier 独立确认金额恢复到执行前状态。
 - 8 个端到端 Golden Case；105 个确定性场景（8 Golden + 80 风险 + 8 政策 + 9 安全）；
-  95 项单元、集成与 API 测试（默认执行 94，1 项需一次性 PostgreSQL），核心路径实测 91% 行覆盖率，门禁为 90%。
+  自动化测试覆盖内核、MCP、API、状态桥接、安全和持久层，核心路径行覆盖门禁为 90%。
 - 19 状态、24 条普通迁移的显式白名单；SQLite WAL + keyset 分页；支持干净重置、
   重复 seed 与容器重启。
 - 真实 Matrix → Orchestrator StageTask → Intake Skill 已用 message/request/task/receipt ID、
@@ -64,6 +69,8 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
   DB trigger 强制 append-only 哈希链，列表/Trace/Metrics 可分流到只读端点。
 - 可查询 JSON/Prometheus Metrics、JSON 访问日志、liveness/readiness、灰度/回滚策略、
   告警规则、容量探针和 PolarDB PITR 证据捕获脚本。
+- 10 个合成伙伴、11 笔订单和 8 个案件带来源边界、关联/时序/币种检查与源文件哈希；
+  所有材料明确区分“合成业务数据”“真实执行链路”“本地 PostgreSQL”“云 PolarDB 待验收”。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
 评委意见的逐条实施状态见 [`docs/reviewer-remediation.md`](docs/reviewer-remediation.md)；
@@ -91,8 +98,11 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 ```bash
 cd revguard
 make setup
-make verify-ci    # 固定 Ruff + 95 项测试（1 项 PG 条件跳过）+ 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
+make verify-ci    # Ruff + 自动化测试（PG 条件项除外）+ 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
+make competition-verify # 在 verify-ci 上增加依赖安全审计、WebUI 构建与脱敏证据包重放
 make value-evaluate # 运行五类业务价值指标口径（当前为明确标注的合成数据）
+make synthetic-validate # 校验合成数据血缘、引用、时序、币种和源文件哈希
+make evidence-bundle # 重放 MCP Team 并生成脱敏可审计证据包
 make capacity     # 本地合成容量回归，不冒充 PolarDB 生产 SLO
 make security     # pip-audit + Bandit；CI 另执行 Trivy 文件系统与镜像扫描
 make demo         # 干净重置并运行 8 个 Golden Case
@@ -105,6 +115,8 @@ make demo         # 干净重置并运行 8 个 Golden Case
 - `data/outputs/case_memory/*.json`：Golden、Bad 与 Safe-Rollback 评测样本；
 - `data/outputs/evaluation_summary.json`：运行时评测产物（忽略目录）；
 - `docs/evaluation-summary.json`：含 UTC、环境、重复次数、中位数与样本的发布快照。
+- `docs/evidence/demo-rehearsal/`：MCP Task、人审暂停、Audit、Trace、报告与证据哈希清单。
+- `docs/demo-script.md` / `docs/recording-shot-list.md`：复赛旁白、镜头和组员分工。
 
 核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
@@ -136,7 +148,8 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 主要接口：
 
-- `POST /api/v1/cases/{id}/run`：运行确定性闭环；
+- `POST /api/v1/cases/{id}/run`：运行确定性回放闭环；
+- `POST /api/v1/cases/{id}/team/run`：通过 scoped MCP 运行多 Worker 状态流，L2 停在人审；
 - `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
 - `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
 - `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
@@ -183,6 +196,8 @@ revguard/
 │   ├── skills.py         # Skill 实现与注册中心
 │   ├── skill_schemas.py  # 16 个 Skill 的 JSON Schema 单一事实源
 │   ├── agent_bridge.py   # StageTask/StageResult 与 case version 绑定
+│   ├── mcp_server.py     # 每 Worker 隔离、任务绑定的 MCP Skill Server
+│   ├── mcp_team.py       # 状态驱动 MCP Team 可执行参考编排
 │   ├── state_machine.py  # 状态迁移白名单与终态不变量
 │   ├── orchestrator.py   # 阶段编排、审批、执行、验证与回滚
 │   ├── rule_engine.py    # Decimal 确定性规则引擎
@@ -192,22 +207,23 @@ revguard/
   │   ├── postgres_store.py # PostgreSQL/PolarDB 主/只读连接池适配
 │   ├── trace.py          # 可回放 Trace
 │   └── api.py            # FastAPI 服务
-├── agentteams/           # Worker SOUL、few-shot Playbook 与 skills-only API Adapter
+├── agentteams/           # Worker SOUL、MCP Host 示例与 REST 兼容 Adapter
 ├── data/golden_cases/    # 8 个端到端场景
 ├── migrations/polardb/  # 核心 Schema 与可选 pgvector 迁移
 ├── docs/                 # API、Agent、PolarDB、运维、评测与报告
 ├── scripts/              # seed、demo、evaluation、AgentTeams setup
-└── tests/                # 95 项自动测试（含 1 项需一次性 PostgreSQL）
+└── tests/                # 自动化测试（含需一次性 PostgreSQL 的条件测试）
 ```
 
-## MCP、RAG 与替代机制
+## MCP 与 RAG 边界
 
-当前版本没有为了数量而引入 MCP 或 RAG：
+MCP 已作为 Agent-facing Skill transport 接入，不是底层工具的无边界包装：每个 server 进程
+固定一个 Worker actor，`tools/list` 仅列出授权 Skill，每次调用必须绑定不可漂移的 StageTask；
+MCP 与 REST 共用同一套 Schema、执行器、状态机、权限、StageResult 事务与 Audit。详见
+[`docs/adr/0007-scoped-mcp-skill-transport.md`](docs/adr/0007-scoped-mcp-skill-transport.md)。
 
-- ToolGateway 已覆盖鉴权、Schema、结构化错误、重试、幂等、审计与降级；迁移 MCP
-  时只替换协议 Adapter，不重写 Skill 或编排器。
-- 金额与政策判断依赖精确业务事实，不采用语义检索；上下文由 Shared Case State、
-  Case Memory 与 Trace 三层承载。后续仅在政策条款自然语言检索等适合场景引入 RAG。
+金额与政策判断依赖精确业务事实，当前不采用语义检索；上下文由 Shared Case State、
+Case Memory 与 Trace 三层承载。只在自然语言政策规模和离线 recall@k 证明收益后考虑 RAG。
 
 ## 开源状态
 

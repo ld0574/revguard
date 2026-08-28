@@ -10,8 +10,9 @@ import hashlib
 import json
 
 from .json_schema import validate_json
+from .mocks import ToolError
 from .models import CaseStatus, TaskStatus, new_id, utc_now
-from .skill_runtime import SKILL_ACTORS
+from .skill_runtime import SKILL_ACTORS, invoke_skill
 from .skills import SKILL_REGISTRY
 
 SKILL_CASE_STATUSES: dict[str, frozenset[str]] = {
@@ -92,3 +93,72 @@ def validate_task_invocation(task: dict, case: dict, *, skill_name: str,
     if task["status"] not in {TaskStatus.PENDING.value,
                                TaskStatus.FAILED_RETRYABLE.value}:
         raise ValueError(f"Agent task 状态不允许执行: {task['status']}")
+
+
+def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
+                       skill_input: dict, actor: str, gateway, store,
+                       correlation: dict | None = None,
+                       execution_input: dict | None = None) -> dict:
+    """Execute one server-bound StageTask through REST or MCP.
+
+    Transport adapters are deliberately thin: this function owns the common
+    state transition, immutable input binding, Skill invocation and atomic
+    StageResult persistence.  The caller supplies ``actor`` from a trusted
+    Principal or a process-scoped MCP server; it is never read from tool input.
+    ``execution_input`` is reserved for server-side secret hydration after the
+    public task input has passed its immutable binding check.  It is never
+    persisted into the StageTask or returned to the Worker.
+    """
+    task = store.get_agent_task(task_id)
+    if not task:
+        raise LookupError(f"Agent task 不存在: {task_id}")
+    case = store.get_case(case_id)
+    if not case:
+        raise LookupError(f"案件不存在: {case_id}")
+    validate_task_invocation(
+        task, case, skill_name=skill_name, actor=actor, skill_input=skill_input,
+    )
+    running = store.transition_agent_task(
+        task_id,
+        expected={TaskStatus.PENDING.value, TaskStatus.FAILED_RETRYABLE.value},
+        status=TaskStatus.RUNNING.value,
+    )
+    store.audit(case_id, actor, "AGENT_TASK_STARTED", {
+        "task_id": task_id,
+        "skill": skill_name,
+        "transport": (correlation or {}).get("transport", "unknown"),
+    })
+    try:
+        result = invoke_skill(
+            skill_name, execution_input or skill_input, actor=actor, case_id=case_id,
+            gateway=gateway, store=store, correlation=correlation,
+        )
+    except Exception as exc:
+        failed_status = (
+            TaskStatus.FAILED_RETRYABLE.value
+            if isinstance(exc, ToolError) and exc.retryable
+            else TaskStatus.FAILED_FINAL.value
+        )
+        store.complete_agent_task(
+            running["task_id"], status=failed_status,
+            error={"type": type(exc).__name__, "message": str(exc)},
+        )
+        store.audit(case_id, actor, "AGENT_TASK_FAILED", {
+            "task_id": task_id,
+            "skill": skill_name,
+            "status": failed_status,
+            "error_type": type(exc).__name__,
+            "transport": (correlation or {}).get("transport", "unknown"),
+        })
+        raise
+    store.complete_agent_task(
+        running["task_id"], status=TaskStatus.SUCCEEDED.value,
+        result=result["data"], skill_receipt=result["skill_receipt"],
+    )
+    store.audit(case_id, actor, "AGENT_TASK_SUCCEEDED", {
+        "task_id": task_id,
+        "skill": skill_name,
+        "skill_receipt": result["skill_receipt"],
+        "transport": (correlation or {}).get("transport", "unknown"),
+    })
+    return result

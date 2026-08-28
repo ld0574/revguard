@@ -1,0 +1,1662 @@
+[
+  {
+    "seq": 1,
+    "case_id": "CASE-2026-0008",
+    "actor": "evidence-rehearsal",
+    "event": "CASE_CREATED",
+    "detail": {
+      "dataset": "revguard-ke-commission-v1",
+      "classification": "SYNTHETIC"
+    },
+    "created_at": "2026-08-28T00:21:36.218986Z"
+  },
+  {
+    "seq": 2,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-49B6F51D",
+      "skill": "CaseNormalizeSkill",
+      "assigned_actor": "revguard-intake",
+      "case_version": "sha256:be186c60052820d1e5d6915ada99fdebe5ee5a9cef9e1c6a961194ca9d34cc59",
+      "request_id": "REQ-MCP-57F2A7E1",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-49B6F51D",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.219352Z"
+  },
+  {
+    "seq": 3,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-intake",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-49B6F51D",
+      "skill": "CaseNormalizeSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.225158Z"
+  },
+  {
+    "seq": 4,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-intake",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "CaseNormalizeSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-D6DA3EFF",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-57F2A7E1",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-49B6F51D",
+      "traceparent": null,
+      "agent_task_id": "TASK-49B6F51D"
+    },
+    "created_at": "2026-08-28T00:21:36.225622Z"
+  },
+  {
+    "seq": 5,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-intake",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-49B6F51D",
+      "skill": "CaseNormalizeSkill",
+      "skill_receipt": "SKR-D6DA3EFF",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.225899Z"
+  },
+  {
+    "seq": 6,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "CREATED",
+      "to": "NORMALIZING",
+      "reason": "MCP Intake Worker 完成标准化"
+    },
+    "created_at": "2026-08-28T00:21:36.280671Z"
+  },
+  {
+    "seq": 7,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-5C6D266B",
+      "skill": "EntityResolveSkill",
+      "assigned_actor": "revguard-intake",
+      "case_version": "sha256:3385e42b9e707243180dd0142db8fb035dc803f789a7c33878476c14aceeabc2",
+      "request_id": "REQ-MCP-383C6BC7",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5C6D266B",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.281075Z"
+  },
+  {
+    "seq": 8,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-intake",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-5C6D266B",
+      "skill": "EntityResolveSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.282201Z"
+  },
+  {
+    "seq": 9,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-intake",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "EntityResolveSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-35439A65",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-383C6BC7",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5C6D266B",
+      "traceparent": null,
+      "agent_task_id": "TASK-5C6D266B"
+    },
+    "created_at": "2026-08-28T00:21:36.283196Z"
+  },
+  {
+    "seq": 10,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-intake",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-5C6D266B",
+      "skill": "EntityResolveSkill",
+      "skill_receipt": "SKR-35439A65",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.283417Z"
+  },
+  {
+    "seq": 11,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "NORMALIZING",
+      "to": "EVIDENCE_COLLECTING",
+      "reason": "MCP Intake Worker 已解析唯一业务实体"
+    },
+    "created_at": "2026-08-28T00:21:36.287762Z"
+  },
+  {
+    "seq": 12,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-02F24117",
+      "skill": "EvidenceCollectSkill",
+      "assigned_actor": "revguard-evidence",
+      "case_version": "sha256:dd3e8b65dd3eeb8e776e1afba916545c200ad43245037bad9f64291d329233b0",
+      "request_id": "REQ-MCP-A8D64383",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-02F24117",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.288043Z"
+  },
+  {
+    "seq": 13,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-evidence",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-02F24117",
+      "skill": "EvidenceCollectSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.288910Z"
+  },
+  {
+    "seq": 14,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-evidence",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "EvidenceCollectSkill",
+      "version": "1.1.0",
+      "skill_receipt": "SKR-A0667FB3",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-A8D64383",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-02F24117",
+      "traceparent": null,
+      "agent_task_id": "TASK-02F24117"
+    },
+    "created_at": "2026-08-28T00:21:36.347894Z"
+  },
+  {
+    "seq": 15,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-evidence",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-02F24117",
+      "skill": "EvidenceCollectSkill",
+      "skill_receipt": "SKR-A0667FB3",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.348552Z"
+  },
+  {
+    "seq": 16,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-evidence",
+    "event": "EVIDENCE_COLLECTED",
+    "detail": {
+      "score": 1.0,
+      "gaps": [],
+      "parallel": {
+        "enabled": true,
+        "workers": 7,
+        "duration_ms": 56,
+        "task_count": 7
+      },
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.356230Z"
+  },
+  {
+    "seq": 17,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "EVIDENCE_COLLECTING",
+      "to": "POLICY_MATCHING",
+      "reason": "MCP Evidence Worker 完成跨系统证据包"
+    },
+    "created_at": "2026-08-28T00:21:36.356389Z"
+  },
+  {
+    "seq": 18,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-76DCE957",
+      "skill": "PolicyVersionMatchSkill",
+      "assigned_actor": "revguard-policy",
+      "case_version": "sha256:177090842f1ea448104c970376415a34658a81b7c52283743e7ea9e774faaa7b",
+      "request_id": "REQ-MCP-2A228620",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-76DCE957",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.356739Z"
+  },
+  {
+    "seq": 19,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-policy",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-76DCE957",
+      "skill": "PolicyVersionMatchSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.358132Z"
+  },
+  {
+    "seq": 20,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-policy",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "PolicyVersionMatchSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-5A97D581",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-2A228620",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-76DCE957",
+      "traceparent": null,
+      "agent_task_id": "TASK-76DCE957"
+    },
+    "created_at": "2026-08-28T00:21:36.359063Z"
+  },
+  {
+    "seq": 21,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-policy",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-76DCE957",
+      "skill": "PolicyVersionMatchSkill",
+      "skill_receipt": "SKR-5A97D581",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.359470Z"
+  },
+  {
+    "seq": 22,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-policy",
+    "event": "POLICY_MATCHED",
+    "detail": {
+      "policy_version": "2026-Q3",
+      "time_basis": "order_date",
+      "excluded": [
+        {
+          "version": "2026-Q1",
+          "reason": "有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-10"
+        },
+        {
+          "version": "2026-Q2",
+          "reason": "有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-10"
+        }
+      ],
+      "conflicts": [],
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.366772Z"
+  },
+  {
+    "seq": 23,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "POLICY_MATCHING",
+      "to": "CALCULATING",
+      "reason": "MCP Policy Worker 完成政策时点匹配"
+    },
+    "created_at": "2026-08-28T00:21:36.367059Z"
+  },
+  {
+    "seq": 24,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-835A93EE",
+      "skill": "CommissionCalculateSkill",
+      "assigned_actor": "revguard-calculation",
+      "case_version": "sha256:ad79cef0874c4d98087886ec4422a37b037bd45050c876d45d651cc45dfa338c",
+      "request_id": "REQ-MCP-2F7B0431",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-835A93EE",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.368380Z"
+  },
+  {
+    "seq": 25,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-calculation",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-835A93EE",
+      "skill": "CommissionCalculateSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.369515Z"
+  },
+  {
+    "seq": 26,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-calculation",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "CommissionCalculateSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-A3A9BF63",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-2F7B0431",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-835A93EE",
+      "traceparent": null,
+      "agent_task_id": "TASK-835A93EE"
+    },
+    "created_at": "2026-08-28T00:21:36.370177Z"
+  },
+  {
+    "seq": 27,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-calculation",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-835A93EE",
+      "skill": "CommissionCalculateSkill",
+      "skill_receipt": "SKR-A3A9BF63",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.370451Z"
+  },
+  {
+    "seq": 28,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-calculation",
+    "event": "CALCULATED",
+    "detail": {
+      "total": "32400.00",
+      "hash": "sha256:3f5cad3a50827c822bce84abff587651c38fed3f1064adf8b9adce3da436df05",
+      "eligible": true,
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.377193Z"
+  },
+  {
+    "seq": 29,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "CALCULATING",
+      "to": "ROOT_CAUSE_ANALYZING",
+      "reason": "MCP Calculation Worker 完成确定性金额复算"
+    },
+    "created_at": "2026-08-28T00:21:36.377642Z"
+  },
+  {
+    "seq": 30,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-358984ED",
+      "skill": "DifferenceExplainSkill",
+      "assigned_actor": "revguard-rootcause",
+      "case_version": "sha256:6543538d2adc61af37ca24809d422396e0ab7b0a28bd815219e148a8d1ff26ef",
+      "request_id": "REQ-MCP-8934A3E4",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-358984ED",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.378289Z"
+  },
+  {
+    "seq": 31,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-rootcause",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-358984ED",
+      "skill": "DifferenceExplainSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.379925Z"
+  },
+  {
+    "seq": 32,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-rootcause",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "DifferenceExplainSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-CC6D9593",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-8934A3E4",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-358984ED",
+      "traceparent": null,
+      "agent_task_id": "TASK-358984ED"
+    },
+    "created_at": "2026-08-28T00:21:36.380823Z"
+  },
+  {
+    "seq": 33,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-rootcause",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-358984ED",
+      "skill": "DifferenceExplainSkill",
+      "skill_receipt": "SKR-CC6D9593",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.381156Z"
+  },
+  {
+    "seq": 34,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-rootcause",
+    "event": "ROOT_CAUSE",
+    "detail": {
+      "root_causes": [
+        "MISSING_COMPONENT",
+        "WRONG_POLICY_VERSION"
+      ],
+      "total_delta": "14400.00",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.387120Z"
+  },
+  {
+    "seq": 35,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "ROOT_CAUSE_ANALYZING",
+      "to": "RISK_REVIEW",
+      "reason": "MCP RootCause Worker 完成逐组件差异解释"
+    },
+    "created_at": "2026-08-28T00:21:36.387369Z"
+  },
+  {
+    "seq": 36,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-F09680D9",
+      "skill": "RiskClassifySkill",
+      "assigned_actor": "revguard-risk",
+      "case_version": "sha256:8bf1b588328f02402e49be1cfe6b2d37fa4a7b5e3b0b9a98e21c12adc9d79b48",
+      "request_id": "REQ-MCP-C312AFAF",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-F09680D9",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.387814Z"
+  },
+  {
+    "seq": 37,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-F09680D9",
+      "skill": "RiskClassifySkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.388845Z"
+  },
+  {
+    "seq": 38,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "RiskClassifySkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-051B77FF",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-C312AFAF",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-F09680D9",
+      "traceparent": null,
+      "agent_task_id": "TASK-F09680D9"
+    },
+    "created_at": "2026-08-28T00:21:36.389162Z"
+  },
+  {
+    "seq": 39,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-F09680D9",
+      "skill": "RiskClassifySkill",
+      "skill_receipt": "SKR-051B77FF",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.389402Z"
+  },
+  {
+    "seq": 40,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "RISK_CLASSIFIED",
+    "detail": {
+      "risk_level": "L2",
+      "approval_required": true,
+      "approver_role": "FINANCE_LEAD",
+      "execution_constraints": {
+        "write": true,
+        "requires_approval_token": true,
+        "max_amount": "50000"
+      },
+      "rollback_plan_required": true,
+      "reason_codes": [
+        "REQUIRES_HUMAN_APPROVAL"
+      ],
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.395317Z"
+  },
+  {
+    "seq": 41,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-28EF9099",
+      "skill": "ApprovalRouteSkill",
+      "assigned_actor": "revguard-risk",
+      "case_version": "sha256:ef614e68ceb99a4dc91116a413e31071d6e28a3541336a24aa541570789c91c8",
+      "request_id": "REQ-MCP-53F04DF2",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-28EF9099",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.396043Z"
+  },
+  {
+    "seq": 42,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-28EF9099",
+      "skill": "ApprovalRouteSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.397588Z"
+  },
+  {
+    "seq": 43,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "ApprovalRouteSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-39EC8362",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-53F04DF2",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-28EF9099",
+      "traceparent": null,
+      "agent_task_id": "TASK-28EF9099"
+    },
+    "created_at": "2026-08-28T00:21:36.400365Z"
+  },
+  {
+    "seq": 44,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-risk",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-28EF9099",
+      "skill": "ApprovalRouteSkill",
+      "skill_receipt": "SKR-39EC8362",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.400639Z"
+  },
+  {
+    "seq": 45,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "RISK_REVIEW",
+      "to": "WAITING_FOR_APPROVAL",
+      "reason": "MCP Team 等待 FINANCE_LEAD 审批 APR-EF696B51"
+    },
+    "created_at": "2026-08-28T00:21:36.407197Z"
+  },
+  {
+    "seq": 46,
+    "case_id": "CASE-2026-0008",
+    "actor": "evidence-rehearsal",
+    "event": "APPROVAL_DECIDED",
+    "detail": {
+      "decision": "APPROVED",
+      "simulated_human": true,
+      "evidence_note": "Automated rehearsal; not a claim of a human UI click"
+    },
+    "created_at": "2026-08-28T00:21:36.416014Z"
+  },
+  {
+    "seq": 47,
+    "case_id": "CASE-2026-0008",
+    "actor": "evidence-rehearsal",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "WAITING_FOR_APPROVAL",
+      "to": "READY_TO_EXECUTE",
+      "reason": "自动化证据排练批准；正式录屏必须由组员点击"
+    },
+    "created_at": "2026-08-28T00:21:36.416198Z"
+  },
+  {
+    "seq": 48,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-3C596FD1",
+      "skill": "PermissionCheckSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:13bda30efadab37110bd31c5937a2a48904c0b0b0f634c99fba94861feb0f96d",
+      "request_id": "REQ-MCP-4A806B90",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-3C596FD1",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.416826Z"
+  },
+  {
+    "seq": 49,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "MCP_SERVER_SECRET_INJECTED",
+    "detail": {
+      "task_id": "TASK-3C596FD1",
+      "skill": "PermissionCheckSkill",
+      "fields": [
+        "approval_token"
+      ],
+      "request_id": "REQ-MCP-4A806B90"
+    },
+    "created_at": "2026-08-28T00:21:36.417955Z"
+  },
+  {
+    "seq": 50,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-3C596FD1",
+      "skill": "PermissionCheckSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.418315Z"
+  },
+  {
+    "seq": 51,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "PermissionCheckSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-AF40E44B",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-4A806B90",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-3C596FD1",
+      "traceparent": null,
+      "agent_task_id": "TASK-3C596FD1"
+    },
+    "created_at": "2026-08-28T00:21:36.418668Z"
+  },
+  {
+    "seq": 52,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-3C596FD1",
+      "skill": "PermissionCheckSkill",
+      "skill_receipt": "SKR-AF40E44B",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.418885Z"
+  },
+  {
+    "seq": 53,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "READY_TO_EXECUTE",
+      "to": "EXECUTING",
+      "reason": "MCP Executor 通过服务端权限检查，开始受控执行"
+    },
+    "created_at": "2026-08-28T00:21:36.423101Z"
+  },
+  {
+    "seq": 54,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-FC54C519",
+      "skill": "IdempotencyGuardSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+      "request_id": "REQ-MCP-48993870",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-FC54C519",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.423586Z"
+  },
+  {
+    "seq": 55,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-FC54C519",
+      "skill": "IdempotencyGuardSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.424650Z"
+  },
+  {
+    "seq": 56,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "IdempotencyGuardSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-EE45606E",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-48993870",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-FC54C519",
+      "traceparent": null,
+      "agent_task_id": "TASK-FC54C519"
+    },
+    "created_at": "2026-08-28T00:21:36.424956Z"
+  },
+  {
+    "seq": 57,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-FC54C519",
+      "skill": "IdempotencyGuardSkill",
+      "skill_receipt": "SKR-EE45606E",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.425187Z"
+  },
+  {
+    "seq": 58,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-CEBBB80B",
+      "skill": "AdjustmentDraftSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+      "request_id": "REQ-MCP-968A3392",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-CEBBB80B",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.430217Z"
+  },
+  {
+    "seq": 59,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-CEBBB80B",
+      "skill": "AdjustmentDraftSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.431449Z"
+  },
+  {
+    "seq": 60,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "AdjustmentDraftSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-57653DA0",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-968A3392",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-CEBBB80B",
+      "traceparent": null,
+      "agent_task_id": "TASK-CEBBB80B"
+    },
+    "created_at": "2026-08-28T00:21:36.433182Z"
+  },
+  {
+    "seq": 61,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-CEBBB80B",
+      "skill": "AdjustmentDraftSkill",
+      "skill_receipt": "SKR-57653DA0",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.433407Z"
+  },
+  {
+    "seq": 62,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-4079B214",
+      "skill": "LedgerAdjustSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+      "request_id": "REQ-MCP-8A901A70",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-4079B214",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.439971Z"
+  },
+  {
+    "seq": 63,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "MCP_SERVER_SECRET_INJECTED",
+    "detail": {
+      "task_id": "TASK-4079B214",
+      "skill": "LedgerAdjustSkill",
+      "fields": [
+        "approval_token"
+      ],
+      "request_id": "REQ-MCP-8A901A70"
+    },
+    "created_at": "2026-08-28T00:21:36.440914Z"
+  },
+  {
+    "seq": 64,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-4079B214",
+      "skill": "LedgerAdjustSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.441334Z"
+  },
+  {
+    "seq": 65,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "LedgerAdjustSkill",
+      "version": "2.0.0",
+      "skill_receipt": "SKR-8210367A",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-8A901A70",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-4079B214",
+      "traceparent": null,
+      "agent_task_id": "TASK-4079B214"
+    },
+    "created_at": "2026-08-28T00:21:36.443319Z"
+  },
+  {
+    "seq": 66,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-4079B214",
+      "skill": "LedgerAdjustSkill",
+      "skill_receipt": "SKR-8210367A",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.443600Z"
+  },
+  {
+    "seq": 67,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "EXECUTED",
+    "detail": {
+      "action_id": "ACT-314A117B",
+      "component": "SALES_COMMISSION",
+      "amount": "9000.00",
+      "idempotency_key": "CASE-2026-0008:SALES_COMMISSION",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.450942Z"
+  },
+  {
+    "seq": 68,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-5E7F19C2",
+      "skill": "IdempotencyGuardSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+      "request_id": "REQ-MCP-12F26E01",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5E7F19C2",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.451296Z"
+  },
+  {
+    "seq": 69,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-5E7F19C2",
+      "skill": "IdempotencyGuardSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.452421Z"
+  },
+  {
+    "seq": 70,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "IdempotencyGuardSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-93AB91B0",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-12F26E01",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5E7F19C2",
+      "traceparent": null,
+      "agent_task_id": "TASK-5E7F19C2"
+    },
+    "created_at": "2026-08-28T00:21:36.452709Z"
+  },
+  {
+    "seq": 71,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-5E7F19C2",
+      "skill": "IdempotencyGuardSkill",
+      "skill_receipt": "SKR-93AB91B0",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.452916Z"
+  },
+  {
+    "seq": 72,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-63952ADE",
+      "skill": "AdjustmentDraftSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+      "request_id": "REQ-MCP-3176D558",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-63952ADE",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.457186Z"
+  },
+  {
+    "seq": 73,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-63952ADE",
+      "skill": "AdjustmentDraftSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.458408Z"
+  },
+  {
+    "seq": 74,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "AdjustmentDraftSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-432AF294",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-3176D558",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-63952ADE",
+      "traceparent": null,
+      "agent_task_id": "TASK-63952ADE"
+    },
+    "created_at": "2026-08-28T00:21:36.460545Z"
+  },
+  {
+    "seq": 75,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-63952ADE",
+      "skill": "AdjustmentDraftSkill",
+      "skill_receipt": "SKR-432AF294",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.460792Z"
+  },
+  {
+    "seq": 76,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-046DC667",
+      "skill": "LedgerAdjustSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:c9e5ee19a3b6ee23586ff91393899d04490878858910d4ecbb0616d0ad384564",
+      "request_id": "REQ-MCP-344A1618",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-046DC667",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.467757Z"
+  },
+  {
+    "seq": 77,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "MCP_SERVER_SECRET_INJECTED",
+    "detail": {
+      "task_id": "TASK-046DC667",
+      "skill": "LedgerAdjustSkill",
+      "fields": [
+        "approval_token"
+      ],
+      "request_id": "REQ-MCP-344A1618"
+    },
+    "created_at": "2026-08-28T00:21:36.468604Z"
+  },
+  {
+    "seq": 78,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-046DC667",
+      "skill": "LedgerAdjustSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.468961Z"
+  },
+  {
+    "seq": 79,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "LedgerAdjustSkill",
+      "version": "2.0.0",
+      "skill_receipt": "SKR-7B27DCA3",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-344A1618",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-046DC667",
+      "traceparent": null,
+      "agent_task_id": "TASK-046DC667"
+    },
+    "created_at": "2026-08-28T00:21:36.471154Z"
+  },
+  {
+    "seq": 80,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-046DC667",
+      "skill": "LedgerAdjustSkill",
+      "skill_receipt": "SKR-7B27DCA3",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.471471Z"
+  },
+  {
+    "seq": 81,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "EXECUTED",
+    "detail": {
+      "action_id": "ACT-8BF7F41E",
+      "component": "COLLECTION_COMMISSION",
+      "amount": "5400.00",
+      "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.478858Z"
+  },
+  {
+    "seq": 82,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "EXECUTING",
+      "to": "VERIFYING",
+      "reason": "MCP Executor 完成写入，移交独立 Verifier"
+    },
+    "created_at": "2026-08-28T00:21:36.478953Z"
+  },
+  {
+    "seq": 83,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-374A1089",
+      "skill": "PostActionVerifySkill",
+      "assigned_actor": "revguard-verifier",
+      "case_version": "sha256:8a69331b447606a68b18449abf151405f0a5ae550b537d1754c5e5aa5cdd1b74",
+      "request_id": "REQ-MCP-C287D60E",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-374A1089",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.479596Z"
+  },
+  {
+    "seq": 84,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-374A1089",
+      "skill": "PostActionVerifySkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.481124Z"
+  },
+  {
+    "seq": 85,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "PostActionVerifySkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-57CE06C6",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-C287D60E",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-374A1089",
+      "traceparent": null,
+      "agent_task_id": "TASK-374A1089"
+    },
+    "created_at": "2026-08-28T00:21:36.482594Z"
+  },
+  {
+    "seq": 86,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-374A1089",
+      "skill": "PostActionVerifySkill",
+      "skill_receipt": "SKR-57CE06C6",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.482848Z"
+  },
+  {
+    "seq": 87,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "VERIFIED",
+    "detail": {
+      "verification_status": "FAILED",
+      "expected_amount": "32400.00",
+      "actual_amount": "32401.00",
+      "variance": "1.00",
+      "component_checks": [
+        {
+          "component": "SALES_COMMISSION",
+          "expected": "27000.00",
+          "actual": "27000.00",
+          "passed": true
+        },
+        {
+          "component": "COLLECTION_COMMISSION",
+          "expected": "5400.00",
+          "actual": "5401.00",
+          "passed": false
+        }
+      ],
+      "evidence_refs": [
+        "RCPT-C535B8F4"
+      ],
+      "rollback_required": true,
+      "checked_at": "2026-08-28T00:21:36.482336Z",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.489314Z"
+  },
+  {
+    "seq": 88,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "VERIFYING",
+      "to": "ROLLBACK_REQUIRED",
+      "reason": "MCP Verifier 发现 variance=1.00，触发冲销"
+    },
+    "created_at": "2026-08-28T00:21:36.489396Z"
+  },
+  {
+    "seq": 89,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-E711BA5E",
+      "skill": "LedgerReverseSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:473c51d70c190904847c2038ceadfc844e7c8c6ca499549300fe22e59773b939",
+      "request_id": "REQ-MCP-873D0B7B",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-E711BA5E",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.489842Z"
+  },
+  {
+    "seq": 90,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "MCP_SERVER_SECRET_INJECTED",
+    "detail": {
+      "task_id": "TASK-E711BA5E",
+      "skill": "LedgerReverseSkill",
+      "fields": [
+        "rollback_token"
+      ],
+      "request_id": "REQ-MCP-873D0B7B"
+    },
+    "created_at": "2026-08-28T00:21:36.490917Z"
+  },
+  {
+    "seq": 91,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-E711BA5E",
+      "skill": "LedgerReverseSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.491287Z"
+  },
+  {
+    "seq": 92,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "LedgerReverseSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-A8C49195",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-873D0B7B",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-E711BA5E",
+      "traceparent": null,
+      "agent_task_id": "TASK-E711BA5E"
+    },
+    "created_at": "2026-08-28T00:21:36.493329Z"
+  },
+  {
+    "seq": 93,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-E711BA5E",
+      "skill": "LedgerReverseSkill",
+      "skill_receipt": "SKR-A8C49195",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.493585Z"
+  },
+  {
+    "seq": 94,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "ROLLED_BACK",
+    "detail": {
+      "action_id": "ACT-8BF7F41E",
+      "ledger_id": "LED-0C1A0E71",
+      "reversal_id": "LED-9D10A320",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.499402Z"
+  },
+  {
+    "seq": 95,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-B8A4B7BD",
+      "skill": "LedgerReverseSkill",
+      "assigned_actor": "revguard-executor",
+      "case_version": "sha256:473c51d70c190904847c2038ceadfc844e7c8c6ca499549300fe22e59773b939",
+      "request_id": "REQ-MCP-5E13108B",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-B8A4B7BD",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.499743Z"
+  },
+  {
+    "seq": 96,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "MCP_SERVER_SECRET_INJECTED",
+    "detail": {
+      "task_id": "TASK-B8A4B7BD",
+      "skill": "LedgerReverseSkill",
+      "fields": [
+        "rollback_token"
+      ],
+      "request_id": "REQ-MCP-5E13108B"
+    },
+    "created_at": "2026-08-28T00:21:36.500659Z"
+  },
+  {
+    "seq": 97,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-B8A4B7BD",
+      "skill": "LedgerReverseSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.501009Z"
+  },
+  {
+    "seq": 98,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "LedgerReverseSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-117E1DAC",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-5E13108B",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-B8A4B7BD",
+      "traceparent": null,
+      "agent_task_id": "TASK-B8A4B7BD"
+    },
+    "created_at": "2026-08-28T00:21:36.503057Z"
+  },
+  {
+    "seq": 99,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-B8A4B7BD",
+      "skill": "LedgerReverseSkill",
+      "skill_receipt": "SKR-117E1DAC",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.503318Z"
+  },
+  {
+    "seq": 100,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-executor",
+    "event": "ROLLED_BACK",
+    "detail": {
+      "action_id": "ACT-314A117B",
+      "ledger_id": "LED-64C2A5F8",
+      "reversal_id": "LED-DE8DC04C",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.508667Z"
+  },
+  {
+    "seq": 101,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-31B8A544",
+      "skill": "PostRollbackVerifySkill",
+      "assigned_actor": "revguard-verifier",
+      "case_version": "sha256:473c51d70c190904847c2038ceadfc844e7c8c6ca499549300fe22e59773b939",
+      "request_id": "REQ-MCP-283384D3",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-31B8A544",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.509043Z"
+  },
+  {
+    "seq": 102,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-31B8A544",
+      "skill": "PostRollbackVerifySkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.510383Z"
+  },
+  {
+    "seq": 103,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "PostRollbackVerifySkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-BE9EFED6",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-283384D3",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-31B8A544",
+      "traceparent": null,
+      "agent_task_id": "TASK-31B8A544"
+    },
+    "created_at": "2026-08-28T00:21:36.512040Z"
+  },
+  {
+    "seq": 104,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-31B8A544",
+      "skill": "PostRollbackVerifySkill",
+      "skill_receipt": "SKR-BE9EFED6",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.512353Z"
+  },
+  {
+    "seq": 105,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-verifier",
+    "event": "ROLLBACK_VERIFIED",
+    "detail": {
+      "verification_status": "PASSED",
+      "component_checks": [
+        {
+          "component": "COLLECTION_COMMISSION",
+          "expected": "0",
+          "actual": "0.00",
+          "passed": true
+        },
+        {
+          "component": "SALES_COMMISSION",
+          "expected": "18000.00",
+          "actual": "18000.00",
+          "passed": true
+        }
+      ],
+      "evidence_refs": [
+        "RCPT-2EA4B1DF"
+      ],
+      "checked_at": "2026-08-28T00:21:36.511828Z",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.517875Z"
+  },
+  {
+    "seq": 106,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "STATE_TRANSITION",
+    "detail": {
+      "from": "ROLLBACK_REQUIRED",
+      "to": "ROLLED_BACK",
+      "reason": "MCP Verifier 确认反向冲销恢复执行前净额"
+    },
+    "created_at": "2026-08-28T00:21:36.517968Z"
+  },
+  {
+    "seq": 107,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-orchestrator",
+    "event": "AGENT_TASK_DISPATCHED",
+    "detail": {
+      "task_id": "TASK-26015B61",
+      "skill": "CaseToDatasetSkill",
+      "assigned_actor": "revguard-knowledge",
+      "case_version": "sha256:c32922f1b33788facfa8486e8e2cf495adce3e073b0291084bbaf82d778e06af",
+      "request_id": "REQ-MCP-D3D144CE",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-26015B61",
+      "transport": "mcp",
+      "runner": "agentteams-compatible-reference-harness"
+    },
+    "created_at": "2026-08-28T00:21:36.519464Z"
+  },
+  {
+    "seq": 108,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-knowledge",
+    "event": "AGENT_TASK_STARTED",
+    "detail": {
+      "task_id": "TASK-26015B61",
+      "skill": "CaseToDatasetSkill",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.522211Z"
+  },
+  {
+    "seq": 109,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-knowledge",
+    "event": "SKILL_INVOKED",
+    "detail": {
+      "skill": "CaseToDatasetSkill",
+      "version": "1.0.0",
+      "skill_receipt": "SKR-ED33564B",
+      "transport": "mcp",
+      "mcp_method": "tools/call",
+      "request_id": "REQ-MCP-D3D144CE",
+      "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-26015B61",
+      "traceparent": null,
+      "agent_task_id": "TASK-26015B61"
+    },
+    "created_at": "2026-08-28T00:21:36.524567Z"
+  },
+  {
+    "seq": 110,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-knowledge",
+    "event": "AGENT_TASK_SUCCEEDED",
+    "detail": {
+      "task_id": "TASK-26015B61",
+      "skill": "CaseToDatasetSkill",
+      "skill_receipt": "SKR-ED33564B",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.525383Z"
+  },
+  {
+    "seq": 111,
+    "case_id": "CASE-2026-0008",
+    "actor": "revguard-knowledge",
+    "event": "KNOWLEDGE_ARCHIVED",
+    "detail": {
+      "terminal_status_preserved": "ROLLED_BACK",
+      "transport": "mcp"
+    },
+    "created_at": "2026-08-28T00:21:36.537803Z"
+  }
+]

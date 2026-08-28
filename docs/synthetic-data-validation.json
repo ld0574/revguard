@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "revguard-ke-commission-v1",
+  "classification": "SYNTHETIC",
+  "production_data_used": false,
+  "validation_status": "PASSED",
+  "checks": {
+    "referential_integrity": "PASSED",
+    "temporal_consistency": "PASSED",
+    "currency_consistency": "PASSED",
+    "scenario_provenance_coverage": "PASSED"
+  },
+  "record_counts": {
+    "partners": 10,
+    "orders": 11,
+    "invoices": 8,
+    "payments": 9,
+    "ledger_entries": 5,
+    "golden_cases": 8
+  },
+  "source_sha256": {
+    "data/synthetic-provenance.json": "100de3e9a638a92dc612bf79134ebf67b8c9481af1a8cc523cc8fa43d8dccf55",
+    "data/fixtures/contracts.json": "ad3fb45cd4d9fe83d6da3008e2d99534b8ffc6dfa6aba61d3d1b9b4ac2e4d3b5",
+    "data/fixtures/history_cases.json": "8defc2932aa166d89edc48f971abe81b6c4ae5a661b010f1180e18986096f7ad",
+    "data/fixtures/invoices.json": "8748cd9f0ad6196bc919609154038fe329ec631ff541b1eb39e5ed78c041947e",
+    "data/fixtures/ledger.json": "c7fcfe75ae0c6d55b7f3b265e119893d15a8d608f939db04b58e2e6cc7053934",
+    "data/fixtures/orders.json": "bcc77a3ab3dad16cf5be9ee9189d64e50b92ddc3fc33711f2c6f58018cabee0b",
+    "data/fixtures/partners.json": "cbc83dc6f0300dae536bbb5a89796de8fd24d470f6cb948af8c3b5e5fe7d220d",
+    "data/fixtures/payments.json": "a8d2948ffd67c0f40a9c05ac4a1b1994e48cdaed9616912bac362d8d786f4c4a",
+    "data/fixtures/policies.json": "cd85954b2058482aa2178ee0e2cf4142d8b1574fcacb3d5db96fcdc89562694e",
+    "data/fixtures/refunds.json": "2bf1e114d03b38425a8cff7f6b653d8a346b92b216e5ef1895eaf682bd0871e9",
+    "data/golden_cases/GOLDEN-001.json": "92437d0ab26d84e12990c4eeaaa9b582dab67f247d5f4dff853c5c1fb982b590",
+    "data/golden_cases/GOLDEN-002.json": "0b6c20aabb1966f6e03d441df89ed476c412be13cbd63b7cf7bd78fb96bf051f",
+    "data/golden_cases/GOLDEN-003.json": "8ad43a1d09f34f1e6b95d716e9522663ccee33208b40e6126f010dfe423b220a",
+    "data/golden_cases/GOLDEN-004.json": "17c53e89ea53b97545bb39010e21860886856f4775220d2035033e9e440a767f",
+    "data/golden_cases/GOLDEN-005.json": "21690e73516db56f9eddbac691a57e69bb04b76dfcd105615f55dc53b939bdab",
+    "data/golden_cases/GOLDEN-006.json": "b24750b8bcbe10ae657a44caf31c55e7436dee4e1757dfba6945aa9b34e72e1c",
+    "data/golden_cases/GOLDEN-007.json": "18172404b8c9e5d125d032857df1d6265d294b749e1807a63c9c7c5220f32419",
+    "data/golden_cases/GOLDEN-008.json": "34abd5408d715f3a65f185e60766900627ddfd875d9228e4082b582c77af7a8c"
+  },
+  "errors": []
+}

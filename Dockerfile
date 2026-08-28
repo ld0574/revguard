@@ -2,7 +2,7 @@
 # 与 AgentTeams 同机部署时，Worker 通过 http://revguard-api:9000 调用 Skill 层
 FROM python:3.11-slim
 
-ARG REVGUARD_VERSION=0.3.0
+ARG REVGUARD_VERSION=0.4.0
 LABEL org.opencontainers.image.title="RevGuard" \
       org.opencontainers.image.version="$REVGUARD_VERSION"
 

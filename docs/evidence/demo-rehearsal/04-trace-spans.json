@@ -1,0 +1,4101 @@
+[
+  {
+    "trace_sequence": 1,
+    "span_id": "SPAN-BC9E025F",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "CaseNormalizeSkill",
+    "actor": "revguard-intake",
+    "status": "OK",
+    "sequence": 1,
+    "started_at": "2026-08-28T00:21:36.225384Z",
+    "ended_at": "2026-08-28T00:21:36.225412Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "raw_case": {
+          "case_id": "CASE-2026-0008",
+          "case_type": "COMMISSION_UNDERPAYMENT",
+          "source": "EVALUATION",
+          "status": "CREATED",
+          "priority": "P1",
+          "partner_id": "AGT-10001",
+          "partner_name": null,
+          "order_id": "EZ202608001",
+          "contract_id": null,
+          "description": "故障注入评测：写入后 Verifier 首次查询出现 1 KES 偏差，系统必须冲销。",
+          "claim": {
+            "actual_amount": 18000,
+            "expected_amount": 32400,
+            "currency": "KES"
+          },
+          "entities": {
+            "partner_id": "AGT-10001",
+            "partner_name": null,
+            "order_id": "EZ202608001",
+            "contract_id": null
+          },
+          "evidence_score": 0.0,
+          "risk_level": null,
+          "created_at": "2026-08-28T00:21:36.218637Z",
+          "updated_at": "2026-08-28T00:21:36.218827Z",
+          "execution_mode": "MCP_TEAM",
+          "workflow_provenance": {
+            "business_data": "synthetic",
+            "workflow": "real_executable",
+            "transport": "mcp",
+            "orchestration": "state-driven",
+            "agentteams_room_evidence": "PENDING_EXTERNAL_CAPTURE"
+          }
+        }
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-57F2A7E1",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-49B6F51D",
+        "traceparent": null,
+        "agent_task_id": "TASK-49B6F51D"
+      }
+    },
+    "outputs": {
+      "entities": {
+        "partner_id": "AGT-10001",
+        "partner_name": null,
+        "order_id": "EZ202608001",
+        "contract_id": null
+      },
+      "missing_fields": [],
+      "claim": {
+        "actual_amount": 18000,
+        "expected_amount": 32400,
+        "currency": "KES"
+      }
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 2,
+    "span_id": "SPAN-1C05F2D1",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "EntityResolveSkill",
+    "actor": "revguard-intake",
+    "status": "OK",
+    "sequence": 2,
+    "started_at": "2026-08-28T00:21:36.282324Z",
+    "ended_at": "2026-08-28T00:21:36.283061Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "entities": {
+          "partner_id": "AGT-10001",
+          "partner_name": null,
+          "order_id": "EZ202608001",
+          "contract_id": null
+        }
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-383C6BC7",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5C6D266B",
+        "traceparent": null,
+        "agent_task_id": "TASK-5C6D266B"
+      }
+    },
+    "outputs": {
+      "partner": {
+        "partner_id": "AGT-10001",
+        "name": "Nairobi Solar Solutions Ltd",
+        "region": "KE-NAIROBI",
+        "tier_history": [
+          {
+            "tier": "SILVER",
+            "effective_from": "2025-01-01"
+          },
+          {
+            "tier": "GOLD",
+            "effective_from": "2026-06-01"
+          }
+        ]
+      },
+      "resolved_by": "partner_id"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 3,
+    "span_id": "SPAN-ABEC9D7C",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-1C05F2D1",
+    "kind": "TOOL",
+    "name": "crm.get_partner",
+    "actor": "revguard-intake",
+    "status": "OK",
+    "sequence": 3,
+    "started_at": "2026-08-28T00:21:36.282347Z",
+    "ended_at": "2026-08-28T00:21:36.282938Z",
+    "duration_ms": 0,
+    "inputs": {
+      "parameters": {
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-51574CC5"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 4,
+    "span_id": "SPAN-89C9CD57",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "EvidenceCollectSkill",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 4,
+    "started_at": "2026-08-28T00:21:36.289027Z",
+    "ended_at": "2026-08-28T00:21:36.347026Z",
+    "duration_ms": 57,
+    "inputs": {
+      "input": {
+        "partner": {
+          "partner_id": "AGT-10001",
+          "name": "Nairobi Solar Solutions Ltd",
+          "region": "KE-NAIROBI",
+          "tier_history": [
+            {
+              "tier": "SILVER",
+              "effective_from": "2025-01-01"
+            },
+            {
+              "tier": "GOLD",
+              "effective_from": "2026-06-01"
+            }
+          ]
+        },
+        "order_id": "EZ202608001"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-A8D64383",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-02F24117",
+        "traceparent": null,
+        "agent_task_id": "TASK-02F24117"
+      }
+    },
+    "outputs": {
+      "evidence": [
+        {
+          "evidence_id": "EV-1F4EF996",
+          "case_id": "CASE-2026-0008",
+          "type": "ORDER",
+          "source_system": "CRM_MOCK",
+          "source_ref": "EZ202608001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "order_id": "EZ202608001",
+            "partner_id": "AGT-10001",
+            "product_id": "SHS-500",
+            "order_amount": 180000,
+            "currency": "KES",
+            "order_status": "COMPLETED",
+            "order_date": "2026-07-10",
+            "completed_date": "2026-07-12",
+            "sales_owner": "j.mwangi"
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-69526F7B",
+          "collected_at": "2026-08-28T00:21:36.345472Z",
+          "content_hash": "sha256:54a741652c8b6e86ac8fcb0c8eabae6d6c65651a94b0c7cbfcd6b08a5d1e5897"
+        },
+        {
+          "evidence_id": "EV-8AF47086",
+          "case_id": "CASE-2026-0008",
+          "type": "TIER_HISTORY",
+          "source_system": "CRM_MOCK",
+          "source_ref": "AGT-10001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "partner_id": "AGT-10001",
+            "tier_history": [
+              {
+                "tier": "SILVER",
+                "effective_from": "2025-01-01"
+              },
+              {
+                "tier": "GOLD",
+                "effective_from": "2026-06-01"
+              }
+            ]
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-C1BCF8B6",
+          "collected_at": "2026-08-28T00:21:36.345505Z",
+          "content_hash": "sha256:5608d13fed5130d8446c0b54e32df9b7764cd57b0b1d854f58dd2a463cafd61d"
+        },
+        {
+          "evidence_id": "EV-692903F9",
+          "case_id": "CASE-2026-0008",
+          "type": "CONTRACT",
+          "source_system": "CONTRACT_MOCK",
+          "source_ref": "AGT-10001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "contract_id": "CON-10001",
+            "partner_id": "AGT-10001",
+            "signed_date": "2026-01-15",
+            "policy_id": "KE-COMMISSION-2026",
+            "terms": {
+              "time_basis": "order_date",
+              "clause_tier": "代理商等级以订单创建时点为准",
+              "clause_payment": "回款佣金以回款完成时间计算天数"
+            }
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-F313A444",
+          "collected_at": "2026-08-28T00:21:36.345536Z",
+          "content_hash": "sha256:faae19846969d0ca62c731b9568f55231f1dfc30fddd54f2086b93cfaf5a4a07"
+        },
+        {
+          "evidence_id": "EV-6D5C8189",
+          "case_id": "CASE-2026-0008",
+          "type": "PAYMENT_RECORD",
+          "source_system": "FINANCE_MOCK",
+          "source_ref": "EZ202608001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "payment_id": "PAY-98765",
+            "order_id": "EZ202608001",
+            "payment_amount": 180000,
+            "currency": "KES",
+            "payment_status": "SETTLED",
+            "payment_date": "2026-07-28"
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-FD5E5FD6",
+          "collected_at": "2026-08-28T00:21:36.345554Z",
+          "content_hash": "sha256:48a02fc111e991cf0b3d142d9f025fd24ae476e656dd1562aa09cb700597928f"
+        },
+        {
+          "evidence_id": "EV-706B25A9",
+          "case_id": "CASE-2026-0008",
+          "type": "REFUND_RECORD",
+          "source_system": "FINANCE_MOCK",
+          "source_ref": "EZ202608001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "refunds": [],
+            "refund_amount": "0"
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-11DFF98F",
+          "collected_at": "2026-08-28T00:21:36.345568Z",
+          "content_hash": "sha256:275422447ff010cdaaa862401935c61dfe07a449f19fc2ca4337841366fa015b"
+        },
+        {
+          "evidence_id": "EV-02305729",
+          "case_id": "CASE-2026-0008",
+          "type": "INVOICE",
+          "source_system": "FINANCE_MOCK",
+          "source_ref": "EZ202608001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "invoice_id": "INV-98765",
+            "order_id": "EZ202608001",
+            "invoice_amount": 180000,
+            "currency": "KES",
+            "invoice_status": "ISSUED",
+            "invoice_date": "2026-07-12"
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-6D493B24",
+          "collected_at": "2026-08-28T00:21:36.345586Z",
+          "content_hash": "sha256:d0f129d5ada4425f2ef0806b13cdbb5bad1a42024a9135e9f6daeb737b62d9f9"
+        },
+        {
+          "evidence_id": "EV-1032DC2B",
+          "case_id": "CASE-2026-0008",
+          "type": "COMMISSION_LEDGER",
+          "source_system": "FINANCE_MOCK",
+          "source_ref": "EZ202608001",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "entries": [
+              {
+                "ledger_id": "LED-50001",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "18000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q2",
+                "status": "POSTED",
+                "source": "BATCH-CALC-2026-07",
+                "posted_at": "2026-08-01T02:00:00Z",
+                "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+              }
+            ],
+            "posted_total": "18000.00"
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-F51381E6",
+          "collected_at": "2026-08-28T00:21:36.345614Z",
+          "content_hash": "sha256:294c72859b146bacac5956284d1929429f9275bf116934d76e9adf53d40441d2"
+        },
+        {
+          "evidence_id": "EV-3F58341E",
+          "case_id": "CASE-2026-0008",
+          "type": "POLICY_VERSIONS",
+          "source_system": "CONTRACT_MOCK",
+          "source_ref": "KE-COMMISSION-2026",
+          "collected_by": "revguard-evidence",
+          "payload": {
+            "versions": [
+              {
+                "policy_id": "KE-COMMISSION-2026",
+                "version": "2026-Q1",
+                "effective_from": "2026-01-01",
+                "effective_to": "2026-03-31",
+                "status": "ARCHIVED",
+                "clauses": [
+                  {
+                    "clause_id": "Q1-C1",
+                    "text": "GOLD 级代理商销售佣金按订单金额 8% 计算"
+                  },
+                  {
+                    "clause_id": "Q1-C2",
+                    "text": "SILVER 级代理商销售佣金按订单金额 5% 计算"
+                  }
+                ],
+                "rule_dsl": {
+                  "policy_id": "KE-COMMISSION-2026",
+                  "version": "2026-Q1",
+                  "eligibility": {
+                    "order_status": [
+                      "COMPLETED"
+                    ],
+                    "payment_status": [
+                      "SETTLED"
+                    ],
+                    "product_id": [
+                      "SHS-500",
+                      "SHS-1000"
+                    ]
+                  },
+                  "rules": [
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "GOLD"
+                      },
+                      "formula": "order_amount * 0.08"
+                    },
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "SILVER"
+                      },
+                      "formula": "order_amount * 0.05"
+                    },
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "BRONZE"
+                      },
+                      "formula": "order_amount * 0.03"
+                    }
+                  ],
+                  "rounding": {
+                    "scale": 2,
+                    "mode": "HALF_UP"
+                  }
+                }
+              },
+              {
+                "policy_id": "KE-COMMISSION-2026",
+                "version": "2026-Q2",
+                "effective_from": "2026-04-01",
+                "effective_to": "2026-06-30",
+                "status": "ARCHIVED",
+                "clauses": [
+                  {
+                    "clause_id": "Q2-C1",
+                    "text": "GOLD 级代理商销售佣金按订单金额 10% 计算"
+                  },
+                  {
+                    "clause_id": "Q2-C2",
+                    "text": "SILVER 级代理商销售佣金按订单金额 6% 计算"
+                  },
+                  {
+                    "clause_id": "Q2-C3",
+                    "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金"
+                  }
+                ],
+                "rule_dsl": {
+                  "policy_id": "KE-COMMISSION-2026",
+                  "version": "2026-Q2",
+                  "eligibility": {
+                    "order_status": [
+                      "COMPLETED"
+                    ],
+                    "payment_status": [
+                      "SETTLED"
+                    ],
+                    "product_id": [
+                      "SHS-500",
+                      "SHS-1000"
+                    ]
+                  },
+                  "rules": [
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "GOLD"
+                      },
+                      "formula": "order_amount * 0.10"
+                    },
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "SILVER"
+                      },
+                      "formula": "order_amount * 0.06"
+                    },
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "BRONZE"
+                      },
+                      "formula": "order_amount * 0.04"
+                    },
+                    {
+                      "component": "COLLECTION_COMMISSION",
+                      "when": {
+                        "payment_days_lte": 45
+                      },
+                      "formula": "payment_amount * 0.02"
+                    }
+                  ],
+                  "rounding": {
+                    "scale": 2,
+                    "mode": "HALF_UP"
+                  }
+                }
+              },
+              {
+                "policy_id": "KE-COMMISSION-2026",
+                "version": "2026-Q3",
+                "effective_from": "2026-07-01",
+                "effective_to": "2026-09-30",
+                "status": "ACTIVE",
+                "clauses": [
+                  {
+                    "clause_id": "Q3-C1",
+                    "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+                  },
+                  {
+                    "clause_id": "Q3-C2",
+                    "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+                  },
+                  {
+                    "clause_id": "Q3-C3",
+                    "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+                  },
+                  {
+                    "clause_id": "Q3-C4",
+                    "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+                  },
+                  {
+                    "clause_id": "Q3-C5",
+                    "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+                  }
+                ],
+                "rule_dsl": {
+                  "policy_id": "KE-COMMISSION-2026",
+                  "version": "2026-Q3",
+                  "eligibility": {
+                    "order_status": [
+                      "COMPLETED"
+                    ],
+                    "payment_status": [
+                      "SETTLED"
+                    ],
+                    "product_id": [
+                      "SHS-500",
+                      "SHS-1000"
+                    ]
+                  },
+                  "rules": [
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "GOLD"
+                      },
+                      "formula": "order_amount * 0.15"
+                    },
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "SILVER"
+                      },
+                      "formula": "order_amount * 0.08"
+                    },
+                    {
+                      "component": "SALES_COMMISSION",
+                      "when": {
+                        "agent_tier": "BRONZE"
+                      },
+                      "formula": "order_amount * 0.05"
+                    },
+                    {
+                      "component": "COLLECTION_COMMISSION",
+                      "when": {
+                        "payment_days_lte": 30
+                      },
+                      "formula": "payment_amount * 0.03"
+                    },
+                    {
+                      "component": "MONTHLY_INCENTIVE",
+                      "when": {
+                        "monthly_completed_orders_gte": 20
+                      },
+                      "formula": "order_amount * 0.02"
+                    }
+                  ],
+                  "rounding": {
+                    "scale": 2,
+                    "mode": "HALF_UP"
+                  }
+                }
+              }
+            ]
+          },
+          "strength": "STRONG",
+          "tool_receipt": "RCPT-FFE006F1",
+          "collected_at": "2026-08-28T00:21:36.346762Z",
+          "content_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994"
+        }
+      ],
+      "collected": {
+        "ORDER": {
+          "order_id": "EZ202608001",
+          "partner_id": "AGT-10001",
+          "product_id": "SHS-500",
+          "order_amount": 180000,
+          "currency": "KES",
+          "order_status": "COMPLETED",
+          "order_date": "2026-07-10",
+          "completed_date": "2026-07-12",
+          "sales_owner": "j.mwangi"
+        },
+        "TIER_HISTORY": {
+          "partner_id": "AGT-10001",
+          "tier_history": [
+            {
+              "tier": "SILVER",
+              "effective_from": "2025-01-01"
+            },
+            {
+              "tier": "GOLD",
+              "effective_from": "2026-06-01"
+            }
+          ]
+        },
+        "CONTRACT": {
+          "contract_id": "CON-10001",
+          "partner_id": "AGT-10001",
+          "signed_date": "2026-01-15",
+          "policy_id": "KE-COMMISSION-2026",
+          "terms": {
+            "time_basis": "order_date",
+            "clause_tier": "代理商等级以订单创建时点为准",
+            "clause_payment": "回款佣金以回款完成时间计算天数"
+          }
+        },
+        "PAYMENT_RECORD": {
+          "payment_id": "PAY-98765",
+          "order_id": "EZ202608001",
+          "payment_amount": 180000,
+          "currency": "KES",
+          "payment_status": "SETTLED",
+          "payment_date": "2026-07-28"
+        },
+        "REFUND_RECORD": {
+          "refunds": [],
+          "refund_amount": "0"
+        },
+        "INVOICE": {
+          "invoice_id": "INV-98765",
+          "order_id": "EZ202608001",
+          "invoice_amount": 180000,
+          "currency": "KES",
+          "invoice_status": "ISSUED",
+          "invoice_date": "2026-07-12"
+        },
+        "COMMISSION_LEDGER": {
+          "entries": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            }
+          ],
+          "posted_total": "18000.00"
+        },
+        "POLICY_VERSIONS": {
+          "versions": [
+            {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q1",
+              "effective_from": "2026-01-01",
+              "effective_to": "2026-03-31",
+              "status": "ARCHIVED",
+              "clauses": [
+                {
+                  "clause_id": "Q1-C1",
+                  "text": "GOLD 级代理商销售佣金按订单金额 8% 计算"
+                },
+                {
+                  "clause_id": "Q1-C2",
+                  "text": "SILVER 级代理商销售佣金按订单金额 5% 计算"
+                }
+              ],
+              "rule_dsl": {
+                "policy_id": "KE-COMMISSION-2026",
+                "version": "2026-Q1",
+                "eligibility": {
+                  "order_status": [
+                    "COMPLETED"
+                  ],
+                  "payment_status": [
+                    "SETTLED"
+                  ],
+                  "product_id": [
+                    "SHS-500",
+                    "SHS-1000"
+                  ]
+                },
+                "rules": [
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "GOLD"
+                    },
+                    "formula": "order_amount * 0.08"
+                  },
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "SILVER"
+                    },
+                    "formula": "order_amount * 0.05"
+                  },
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "BRONZE"
+                    },
+                    "formula": "order_amount * 0.03"
+                  }
+                ],
+                "rounding": {
+                  "scale": 2,
+                  "mode": "HALF_UP"
+                }
+              }
+            },
+            {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q2",
+              "effective_from": "2026-04-01",
+              "effective_to": "2026-06-30",
+              "status": "ARCHIVED",
+              "clauses": [
+                {
+                  "clause_id": "Q2-C1",
+                  "text": "GOLD 级代理商销售佣金按订单金额 10% 计算"
+                },
+                {
+                  "clause_id": "Q2-C2",
+                  "text": "SILVER 级代理商销售佣金按订单金额 6% 计算"
+                },
+                {
+                  "clause_id": "Q2-C3",
+                  "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金"
+                }
+              ],
+              "rule_dsl": {
+                "policy_id": "KE-COMMISSION-2026",
+                "version": "2026-Q2",
+                "eligibility": {
+                  "order_status": [
+                    "COMPLETED"
+                  ],
+                  "payment_status": [
+                    "SETTLED"
+                  ],
+                  "product_id": [
+                    "SHS-500",
+                    "SHS-1000"
+                  ]
+                },
+                "rules": [
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "GOLD"
+                    },
+                    "formula": "order_amount * 0.10"
+                  },
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "SILVER"
+                    },
+                    "formula": "order_amount * 0.06"
+                  },
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "BRONZE"
+                    },
+                    "formula": "order_amount * 0.04"
+                  },
+                  {
+                    "component": "COLLECTION_COMMISSION",
+                    "when": {
+                      "payment_days_lte": 45
+                    },
+                    "formula": "payment_amount * 0.02"
+                  }
+                ],
+                "rounding": {
+                  "scale": 2,
+                  "mode": "HALF_UP"
+                }
+              }
+            },
+            {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q3",
+              "effective_from": "2026-07-01",
+              "effective_to": "2026-09-30",
+              "status": "ACTIVE",
+              "clauses": [
+                {
+                  "clause_id": "Q3-C1",
+                  "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+                },
+                {
+                  "clause_id": "Q3-C2",
+                  "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+                },
+                {
+                  "clause_id": "Q3-C3",
+                  "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+                },
+                {
+                  "clause_id": "Q3-C4",
+                  "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+                },
+                {
+                  "clause_id": "Q3-C5",
+                  "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+                }
+              ],
+              "rule_dsl": {
+                "policy_id": "KE-COMMISSION-2026",
+                "version": "2026-Q3",
+                "eligibility": {
+                  "order_status": [
+                    "COMPLETED"
+                  ],
+                  "payment_status": [
+                    "SETTLED"
+                  ],
+                  "product_id": [
+                    "SHS-500",
+                    "SHS-1000"
+                  ]
+                },
+                "rules": [
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "GOLD"
+                    },
+                    "formula": "order_amount * 0.15"
+                  },
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "SILVER"
+                    },
+                    "formula": "order_amount * 0.08"
+                  },
+                  {
+                    "component": "SALES_COMMISSION",
+                    "when": {
+                      "agent_tier": "BRONZE"
+                    },
+                    "formula": "order_amount * 0.05"
+                  },
+                  {
+                    "component": "COLLECTION_COMMISSION",
+                    "when": {
+                      "payment_days_lte": 30
+                    },
+                    "formula": "payment_amount * 0.03"
+                  },
+                  {
+                    "component": "MONTHLY_INCENTIVE",
+                    "when": {
+                      "monthly_completed_orders_gte": 20
+                    },
+                    "formula": "order_amount * 0.02"
+                  }
+                ],
+                "rounding": {
+                  "scale": 2,
+                  "mode": "HALF_UP"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "evidence_gaps": [],
+      "evidence_score": 1.0,
+      "parallel": {
+        "enabled": true,
+        "workers": 7,
+        "duration_ms": 56,
+        "task_count": 7
+      }
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 5,
+    "span_id": "SPAN-64BE8813",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "crm.get_order",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 5,
+    "started_at": "2026-08-28T00:21:36.289437Z",
+    "ended_at": "2026-08-28T00:21:36.290381Z",
+    "duration_ms": 0,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-69526F7B"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 6,
+    "span_id": "SPAN-AE289820",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "crm.get_partner_tier_history",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 6,
+    "started_at": "2026-08-28T00:21:36.289551Z",
+    "ended_at": "2026-08-28T00:21:36.290925Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-C1BCF8B6"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 7,
+    "span_id": "SPAN-DA916BB1",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "contract.get_contract",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 7,
+    "started_at": "2026-08-28T00:21:36.289811Z",
+    "ended_at": "2026-08-28T00:21:36.291525Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-F313A444"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 8,
+    "span_id": "SPAN-7C0E8997",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "finance.get_payment",
+    "actor": "revguard-evidence",
+    "status": "ERROR",
+    "sequence": 8,
+    "started_at": "2026-08-28T00:21:36.289937Z",
+    "ended_at": "2026-08-28T00:21:36.292181Z",
+    "duration_ms": 2,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": false,
+      "error": {
+        "type": "TOOL_UNAVAILABLE",
+        "message": "财务系统暂时不可用（故障注入）",
+        "retryable": true
+      },
+      "tool_receipt": "RCPT-4949C336"
+    },
+    "error": "财务系统暂时不可用（故障注入）"
+  },
+  {
+    "trace_sequence": 9,
+    "span_id": "SPAN-1755A1B7",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "finance.get_refund",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 9,
+    "started_at": "2026-08-28T00:21:36.290090Z",
+    "ended_at": "2026-08-28T00:21:36.292651Z",
+    "duration_ms": 2,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-11DFF98F"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 10,
+    "span_id": "SPAN-F6FBD00C",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "finance.get_invoice",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 10,
+    "started_at": "2026-08-28T00:21:36.290212Z",
+    "ended_at": "2026-08-28T00:21:36.293165Z",
+    "duration_ms": 2,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-6D493B24"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 11,
+    "span_id": "SPAN-0592548F",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "finance.get_commission_ledger",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 11,
+    "started_at": "2026-08-28T00:21:36.290299Z",
+    "ended_at": "2026-08-28T00:21:36.293673Z",
+    "duration_ms": 3,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-F51381E6"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 12,
+    "span_id": "SPAN-C557F2EB",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "finance.get_payment",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 12,
+    "started_at": "2026-08-28T00:21:36.343919Z",
+    "ended_at": "2026-08-28T00:21:36.344824Z",
+    "duration_ms": 0,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 2
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-FD5E5FD6"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 13,
+    "span_id": "SPAN-11B5F3DF",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-89C9CD57",
+    "kind": "TOOL",
+    "name": "policy.search_versions",
+    "actor": "revguard-evidence",
+    "status": "OK",
+    "sequence": 13,
+    "started_at": "2026-08-28T00:21:36.345645Z",
+    "ended_at": "2026-08-28T00:21:36.346492Z",
+    "duration_ms": 0,
+    "inputs": {
+      "parameters": {
+        "policy_id": "KE-COMMISSION-2026"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-FFE006F1"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 14,
+    "span_id": "SPAN-007C0041",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "PolicyVersionMatchSkill",
+    "actor": "revguard-policy",
+    "status": "OK",
+    "sequence": 14,
+    "started_at": "2026-08-28T00:21:36.358477Z",
+    "ended_at": "2026-08-28T00:21:36.358609Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "versions": [
+          {
+            "policy_id": "KE-COMMISSION-2026",
+            "version": "2026-Q1",
+            "effective_from": "2026-01-01",
+            "effective_to": "2026-03-31",
+            "status": "ARCHIVED",
+            "clauses": [
+              {
+                "clause_id": "Q1-C1",
+                "text": "GOLD 级代理商销售佣金按订单金额 8% 计算"
+              },
+              {
+                "clause_id": "Q1-C2",
+                "text": "SILVER 级代理商销售佣金按订单金额 5% 计算"
+              }
+            ],
+            "rule_dsl": {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q1",
+              "eligibility": {
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ],
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ]
+              },
+              "rules": [
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.08"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.05"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.03"
+                }
+              ],
+              "rounding": {
+                "scale": 2,
+                "mode": "HALF_UP"
+              }
+            }
+          },
+          {
+            "policy_id": "KE-COMMISSION-2026",
+            "version": "2026-Q2",
+            "effective_from": "2026-04-01",
+            "effective_to": "2026-06-30",
+            "status": "ARCHIVED",
+            "clauses": [
+              {
+                "clause_id": "Q2-C1",
+                "text": "GOLD 级代理商销售佣金按订单金额 10% 计算"
+              },
+              {
+                "clause_id": "Q2-C2",
+                "text": "SILVER 级代理商销售佣金按订单金额 6% 计算"
+              },
+              {
+                "clause_id": "Q2-C3",
+                "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金"
+              }
+            ],
+            "rule_dsl": {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q2",
+              "eligibility": {
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ],
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ]
+              },
+              "rules": [
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.10"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.06"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.04"
+                },
+                {
+                  "component": "COLLECTION_COMMISSION",
+                  "when": {
+                    "payment_days_lte": 45
+                  },
+                  "formula": "payment_amount * 0.02"
+                }
+              ],
+              "rounding": {
+                "scale": 2,
+                "mode": "HALF_UP"
+              }
+            }
+          },
+          {
+            "policy_id": "KE-COMMISSION-2026",
+            "version": "2026-Q3",
+            "effective_from": "2026-07-01",
+            "effective_to": "2026-09-30",
+            "status": "ACTIVE",
+            "clauses": [
+              {
+                "clause_id": "Q3-C1",
+                "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+              },
+              {
+                "clause_id": "Q3-C2",
+                "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+              },
+              {
+                "clause_id": "Q3-C3",
+                "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+              },
+              {
+                "clause_id": "Q3-C4",
+                "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+              },
+              {
+                "clause_id": "Q3-C5",
+                "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+              }
+            ],
+            "rule_dsl": {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q3",
+              "eligibility": {
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ],
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ]
+              },
+              "rules": [
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.15"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.08"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.05"
+                },
+                {
+                  "component": "COLLECTION_COMMISSION",
+                  "when": {
+                    "payment_days_lte": 30
+                  },
+                  "formula": "payment_amount * 0.03"
+                },
+                {
+                  "component": "MONTHLY_INCENTIVE",
+                  "when": {
+                    "monthly_completed_orders_gte": 20
+                  },
+                  "formula": "order_amount * 0.02"
+                }
+              ],
+              "rounding": {
+                "scale": 2,
+                "mode": "HALF_UP"
+              }
+            }
+          }
+        ],
+        "facts": {
+          "order_date": "2026-07-10",
+          "payment_date": "2026-07-28"
+        },
+        "time_basis": "order_date"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-2A228620",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-76DCE957",
+        "traceparent": null,
+        "agent_task_id": "TASK-76DCE957"
+      }
+    },
+    "outputs": {
+      "policy_id": "KE-COMMISSION-2026",
+      "policy_version": "2026-Q3",
+      "time_basis": "order_date",
+      "decision_date": "2026-07-10",
+      "effective_rule_set": {
+        "policy_id": "KE-COMMISSION-2026",
+        "version": "2026-Q3",
+        "eligibility": {
+          "order_status": [
+            "COMPLETED"
+          ],
+          "payment_status": [
+            "SETTLED"
+          ],
+          "product_id": [
+            "SHS-500",
+            "SHS-1000"
+          ]
+        },
+        "rules": [
+          {
+            "component": "SALES_COMMISSION",
+            "when": {
+              "agent_tier": "GOLD"
+            },
+            "formula": "order_amount * 0.15"
+          },
+          {
+            "component": "SALES_COMMISSION",
+            "when": {
+              "agent_tier": "SILVER"
+            },
+            "formula": "order_amount * 0.08"
+          },
+          {
+            "component": "SALES_COMMISSION",
+            "when": {
+              "agent_tier": "BRONZE"
+            },
+            "formula": "order_amount * 0.05"
+          },
+          {
+            "component": "COLLECTION_COMMISSION",
+            "when": {
+              "payment_days_lte": 30
+            },
+            "formula": "payment_amount * 0.03"
+          },
+          {
+            "component": "MONTHLY_INCENTIVE",
+            "when": {
+              "monthly_completed_orders_gte": 20
+            },
+            "formula": "order_amount * 0.02"
+          }
+        ],
+        "rounding": {
+          "scale": 2,
+          "mode": "HALF_UP"
+        }
+      },
+      "cited_clauses": [
+        {
+          "clause_id": "Q3-C1",
+          "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+        },
+        {
+          "clause_id": "Q3-C2",
+          "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+        },
+        {
+          "clause_id": "Q3-C3",
+          "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+        },
+        {
+          "clause_id": "Q3-C4",
+          "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+        },
+        {
+          "clause_id": "Q3-C5",
+          "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+        }
+      ],
+      "excluded_versions": [
+        {
+          "version": "2026-Q1",
+          "reason": "有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-10"
+        },
+        {
+          "version": "2026-Q2",
+          "reason": "有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-10"
+        }
+      ],
+      "unresolved_conflicts": [],
+      "confidence": 1.0
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 15,
+    "span_id": "SPAN-2F4E853E",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "TOOL",
+    "name": "crm.list_orders_by_partner",
+    "actor": "revguard-calculation",
+    "status": "OK",
+    "sequence": 15,
+    "started_at": "2026-08-28T00:21:36.367292Z",
+    "ended_at": "2026-08-28T00:21:36.368008Z",
+    "duration_ms": 0,
+    "inputs": {
+      "parameters": {
+        "partner_id": "AGT-10001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-6804E418"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 16,
+    "span_id": "SPAN-5E016737",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "CommissionCalculateSkill",
+    "actor": "revguard-calculation",
+    "status": "OK",
+    "sequence": 16,
+    "started_at": "2026-08-28T00:21:36.369668Z",
+    "ended_at": "2026-08-28T00:21:36.369904Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "rule_dsl": {
+          "policy_id": "KE-COMMISSION-2026",
+          "version": "2026-Q3",
+          "eligibility": {
+            "order_status": [
+              "COMPLETED"
+            ],
+            "payment_status": [
+              "SETTLED"
+            ],
+            "product_id": [
+              "SHS-500",
+              "SHS-1000"
+            ]
+          },
+          "rules": [
+            {
+              "component": "SALES_COMMISSION",
+              "when": {
+                "agent_tier": "GOLD"
+              },
+              "formula": "order_amount * 0.15"
+            },
+            {
+              "component": "SALES_COMMISSION",
+              "when": {
+                "agent_tier": "SILVER"
+              },
+              "formula": "order_amount * 0.08"
+            },
+            {
+              "component": "SALES_COMMISSION",
+              "when": {
+                "agent_tier": "BRONZE"
+              },
+              "formula": "order_amount * 0.05"
+            },
+            {
+              "component": "COLLECTION_COMMISSION",
+              "when": {
+                "payment_days_lte": 30
+              },
+              "formula": "payment_amount * 0.03"
+            },
+            {
+              "component": "MONTHLY_INCENTIVE",
+              "when": {
+                "monthly_completed_orders_gte": 20
+              },
+              "formula": "order_amount * 0.02"
+            }
+          ],
+          "rounding": {
+            "scale": 2,
+            "mode": "HALF_UP"
+          }
+        },
+        "facts": {
+          "order_amount": "180000",
+          "payment_amount": "180000",
+          "refund_amount": "0",
+          "order_date": "2026-07-10",
+          "payment_date": "2026-07-28",
+          "payment_days": "16",
+          "agent_tier": "GOLD",
+          "product_id": "SHS-500",
+          "order_status": "COMPLETED",
+          "payment_status": "SETTLED",
+          "monthly_completed_orders": "1"
+        },
+        "currency": "KES"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-2F7B0431",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-835A93EE",
+        "traceparent": null,
+        "agent_task_id": "TASK-835A93EE"
+      }
+    },
+    "outputs": {
+      "eligible": true,
+      "total_commission": "32400.00",
+      "currency": "KES",
+      "components": [
+        {
+          "type": "SALES_COMMISSION",
+          "amount": "27000.00",
+          "formula": "order_amount * 0.15",
+          "substituted": "180000 * 0.15",
+          "applied": true,
+          "skip_reasons": []
+        },
+        {
+          "type": "SALES_COMMISSION",
+          "amount": "0",
+          "formula": "order_amount * 0.08",
+          "substituted": "",
+          "applied": false,
+          "skip_reasons": [
+            "agent_tier 期望 'SILVER'，实际 'GOLD'"
+          ]
+        },
+        {
+          "type": "SALES_COMMISSION",
+          "amount": "0",
+          "formula": "order_amount * 0.05",
+          "substituted": "",
+          "applied": false,
+          "skip_reasons": [
+            "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+          ]
+        },
+        {
+          "type": "COLLECTION_COMMISSION",
+          "amount": "5400.00",
+          "formula": "payment_amount * 0.03",
+          "substituted": "180000 * 0.03",
+          "applied": true,
+          "skip_reasons": []
+        },
+        {
+          "type": "MONTHLY_INCENTIVE",
+          "amount": "0",
+          "formula": "order_amount * 0.02",
+          "substituted": "",
+          "applied": false,
+          "skip_reasons": [
+            "monthly_completed_orders='1' 不满足 monthly_completed_orders_gte 20"
+          ]
+        }
+      ],
+      "rounding_rule": "scale=2,mode=HALF_UP",
+      "calculation_hash": "sha256:3f5cad3a50827c822bce84abff587651c38fed3f1064adf8b9adce3da436df05",
+      "policy_version": "2026-Q3",
+      "eligibility_failures": [],
+      "facts_snapshot": {
+        "order_amount": "180000",
+        "payment_amount": "180000",
+        "refund_amount": "0",
+        "order_date": "2026-07-10",
+        "payment_date": "2026-07-28",
+        "payment_days": "16",
+        "agent_tier": "GOLD",
+        "product_id": "SHS-500",
+        "order_status": "COMPLETED",
+        "payment_status": "SETTLED",
+        "monthly_completed_orders": "1"
+      }
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 17,
+    "span_id": "SPAN-5993205A",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "DifferenceExplainSkill",
+    "actor": "revguard-rootcause",
+    "status": "OK",
+    "sequence": 17,
+    "started_at": "2026-08-28T00:21:36.380185Z",
+    "ended_at": "2026-08-28T00:21:36.380274Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "calculation": {
+          "eligible": true,
+          "total_commission": "32400.00",
+          "currency": "KES",
+          "components": [
+            {
+              "type": "SALES_COMMISSION",
+              "amount": "27000.00",
+              "formula": "order_amount * 0.15",
+              "substituted": "180000 * 0.15",
+              "applied": true,
+              "skip_reasons": []
+            },
+            {
+              "type": "SALES_COMMISSION",
+              "amount": "0",
+              "formula": "order_amount * 0.08",
+              "substituted": "",
+              "applied": false,
+              "skip_reasons": [
+                "agent_tier 期望 'SILVER'，实际 'GOLD'"
+              ]
+            },
+            {
+              "type": "SALES_COMMISSION",
+              "amount": "0",
+              "formula": "order_amount * 0.05",
+              "substituted": "",
+              "applied": false,
+              "skip_reasons": [
+                "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+              ]
+            },
+            {
+              "type": "COLLECTION_COMMISSION",
+              "amount": "5400.00",
+              "formula": "payment_amount * 0.03",
+              "substituted": "180000 * 0.03",
+              "applied": true,
+              "skip_reasons": []
+            },
+            {
+              "type": "MONTHLY_INCENTIVE",
+              "amount": "0",
+              "formula": "order_amount * 0.02",
+              "substituted": "",
+              "applied": false,
+              "skip_reasons": [
+                "monthly_completed_orders='1' 不满足 monthly_completed_orders_gte 20"
+              ]
+            }
+          ],
+          "rounding_rule": "scale=2,mode=HALF_UP",
+          "calculation_hash": "sha256:3f5cad3a50827c822bce84abff587651c38fed3f1064adf8b9adce3da436df05",
+          "policy_version": "2026-Q3",
+          "eligibility_failures": [],
+          "facts_snapshot": {
+            "order_amount": "180000",
+            "payment_amount": "180000",
+            "refund_amount": "0",
+            "order_date": "2026-07-10",
+            "payment_date": "2026-07-28",
+            "payment_days": "16",
+            "agent_tier": "GOLD",
+            "product_id": "SHS-500",
+            "order_status": "COMPLETED",
+            "payment_status": "SETTLED",
+            "monthly_completed_orders": "1"
+          }
+        },
+        "ledger_entries": [
+          {
+            "ledger_id": "LED-50001",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "amount": "18000.00",
+            "currency": "KES",
+            "policy_version": "2026-Q2",
+            "status": "POSTED",
+            "source": "BATCH-CALC-2026-07",
+            "posted_at": "2026-08-01T02:00:00Z",
+            "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+          }
+        ],
+        "matched_policy_version": "2026-Q3",
+        "tier_conflict": null
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-8934A3E4",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-358984ED",
+        "traceparent": null,
+        "agent_task_id": "TASK-358984ED"
+      }
+    },
+    "outputs": {
+      "diffs": [
+        {
+          "component": "SALES_COMMISSION",
+          "expected": "27000.00",
+          "posted": "18000.00",
+          "delta": "9000.00",
+          "root_cause": "WRONG_POLICY_VERSION",
+          "explanation": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+        },
+        {
+          "component": "COLLECTION_COMMISSION",
+          "expected": "5400.00",
+          "posted": "0",
+          "delta": "5400.00",
+          "root_cause": "MISSING_COMPONENT",
+          "explanation": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+        }
+      ],
+      "total_expected": "32400.00",
+      "total_posted": "18000.00",
+      "total_delta": "14400.00",
+      "root_causes": [
+        "MISSING_COMPONENT",
+        "WRONG_POLICY_VERSION"
+      ],
+      "confidence": 1.0
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 18,
+    "span_id": "SPAN-FE10FDCB",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "RiskClassifySkill",
+    "actor": "revguard-risk",
+    "status": "OK",
+    "sequence": 18,
+    "started_at": "2026-08-28T00:21:36.388969Z",
+    "ended_at": "2026-08-28T00:21:36.389028Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "action_type": "LEDGER_ADJUST",
+        "adjustment_amount": "14400.00",
+        "currency": "KES",
+        "evidence_score": 1.0,
+        "case_type": "COMMISSION_UNDERPAYMENT",
+        "policy_conflict": false
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-C312AFAF",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-F09680D9",
+        "traceparent": null,
+        "agent_task_id": "TASK-F09680D9"
+      }
+    },
+    "outputs": {
+      "risk_level": "L2",
+      "approval_required": true,
+      "approver_role": "FINANCE_LEAD",
+      "execution_constraints": {
+        "write": true,
+        "requires_approval_token": true,
+        "max_amount": "50000"
+      },
+      "rollback_plan_required": true,
+      "reason_codes": [
+        "REQUIRES_HUMAN_APPROVAL"
+      ]
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 19,
+    "span_id": "SPAN-AD50E64D",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "ApprovalRouteSkill",
+    "actor": "revguard-risk",
+    "status": "OK",
+    "sequence": 19,
+    "started_at": "2026-08-28T00:21:36.397771Z",
+    "ended_at": "2026-08-28T00:21:36.400201Z",
+    "duration_ms": 2,
+    "inputs": {
+      "input": {
+        "risk": {
+          "risk_level": "L2",
+          "approval_required": true,
+          "approver_role": "FINANCE_LEAD",
+          "execution_constraints": {
+            "write": true,
+            "requires_approval_token": true,
+            "max_amount": "50000"
+          },
+          "rollback_plan_required": true,
+          "reason_codes": [
+            "REQUIRES_HUMAN_APPROVAL"
+          ]
+        },
+        "amount": "14400.00",
+        "component_quota": {
+          "SALES_COMMISSION": "9000.00",
+          "COLLECTION_COMMISSION": "5400.00"
+        },
+        "currency": "KES",
+        "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-53F04DF2",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-28EF9099",
+        "traceparent": null,
+        "agent_task_id": "TASK-28EF9099"
+      }
+    },
+    "outputs": {
+      "approval_id": "APR-EF696B51",
+      "case_id": "CASE-2026-0008",
+      "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
+      "amount": "14400.00",
+      "component_quota": {
+        "SALES_COMMISSION": "9000.00",
+        "COLLECTION_COMMISSION": "5400.00"
+      },
+      "currency": "KES",
+      "risk_level": "L2",
+      "approver_role": "FINANCE_LEAD",
+      "status": "PENDING",
+      "created_at": "2026-08-28T00:21:36.397850Z"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 20,
+    "span_id": "SPAN-F3DE8406",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-AD50E64D",
+    "kind": "TOOL",
+    "name": "workflow.create_approval",
+    "actor": "revguard-risk",
+    "status": "OK",
+    "sequence": 20,
+    "started_at": "2026-08-28T00:21:36.397812Z",
+    "ended_at": "2026-08-28T00:21:36.400011Z",
+    "duration_ms": 2,
+    "inputs": {
+      "parameters": {
+        "case_id": "CASE-2026-0008",
+        "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
+        "amount": "14400.00",
+        "component_quota": {
+          "SALES_COMMISSION": "9000.00",
+          "COLLECTION_COMMISSION": "5400.00"
+        },
+        "currency": "KES",
+        "risk_level": "L2",
+        "approver_role": "FINANCE_LEAD"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-BAC2B3BC"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 21,
+    "span_id": "SPAN-76821FEB",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "PermissionCheckSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 21,
+    "started_at": "2026-08-28T00:21:36.418488Z",
+    "ended_at": "2026-08-28T00:21:36.418511Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "action_type": "LEDGER_ADJUST",
+        "risk": {
+          "risk_level": "L2",
+          "approval_required": true,
+          "approver_role": "FINANCE_LEAD",
+          "execution_constraints": {
+            "write": true,
+            "requires_approval_token": true,
+            "max_amount": "50000"
+          },
+          "rollback_plan_required": true,
+          "reason_codes": [
+            "REQUIRES_HUMAN_APPROVAL"
+          ]
+        },
+        "approval": {
+          "case_id": "CASE-2026-0008",
+          "approval_id": "APR-EF696B51",
+          "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
+          "amount": "14400.00",
+          "component_quota": {
+            "SALES_COMMISSION": "9000.00",
+            "COLLECTION_COMMISSION": "5400.00"
+          },
+          "currency": "KES",
+          "risk_level": "L2",
+          "approver_role": "FINANCE_LEAD",
+          "status": "APPROVED",
+          "created_at": "2026-08-28T00:21:36.397850Z",
+          "approver": "finance.lead",
+          "comment": "",
+          "decided_at": "2026-08-28T00:21:36.414714Z",
+          "approval_token": "<redacted:sha256:bc64fa574e54a0f3>"
+        }
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-4A806B90",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-3C596FD1",
+        "traceparent": null,
+        "agent_task_id": "TASK-3C596FD1"
+      }
+    },
+    "outputs": {
+      "authorized": true
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 22,
+    "span_id": "SPAN-47CFCBEC",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "IdempotencyGuardSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 22,
+    "started_at": "2026-08-28T00:21:36.424769Z",
+    "ended_at": "2026-08-28T00:21:36.424833Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "idempotency_key": "CASE-2026-0008:SALES_COMMISSION"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-48993870",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-FC54C519",
+        "traceparent": null,
+        "agent_task_id": "TASK-FC54C519"
+      }
+    },
+    "outputs": null,
+    "error": null
+  },
+  {
+    "trace_sequence": 23,
+    "span_id": "SPAN-E759B083",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "AdjustmentDraftSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 23,
+    "started_at": "2026-08-28T00:21:36.431581Z",
+    "ended_at": "2026-08-28T00:21:36.433034Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "order_id": "EZ202608001",
+        "component": "SALES_COMMISSION",
+        "delta": "9000.00",
+        "currency": "KES",
+        "reason": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-968A3392",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-CEBBB80B",
+        "traceparent": null,
+        "agent_task_id": "TASK-CEBBB80B"
+      }
+    },
+    "outputs": {
+      "action_id": "ACT-314A117B",
+      "order_id": "EZ202608001",
+      "case_id": "CASE-2026-0008",
+      "component": "SALES_COMMISSION",
+      "amount": "9000.00",
+      "currency": "KES",
+      "reason": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00",
+      "status": "DRAFT",
+      "created_at": "2026-08-28T00:21:36.431640Z"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 24,
+    "span_id": "SPAN-6AF996A8",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-E759B083",
+    "kind": "TOOL",
+    "name": "commission.create_adjustment_draft",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 24,
+    "started_at": "2026-08-28T00:21:36.431615Z",
+    "ended_at": "2026-08-28T00:21:36.432856Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "case_id": "CASE-2026-0008",
+        "component": "SALES_COMMISSION",
+        "amount": "9000.00",
+        "currency": "KES",
+        "reason": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-1AF798E3"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 25,
+    "span_id": "SPAN-53D6C1E2",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "LedgerAdjustSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 25,
+    "started_at": "2026-08-28T00:21:36.441472Z",
+    "ended_at": "2026-08-28T00:21:36.443125Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "action_id": "ACT-314A117B",
+        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "policy_version": "2026-Q3",
+        "idempotency_key": "CASE-2026-0008:SALES_COMMISSION"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-8A901A70",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-4079B214",
+        "traceparent": null,
+        "agent_task_id": "TASK-4079B214"
+      }
+    },
+    "outputs": {
+      "action_id": "ACT-314A117B",
+      "status": "SUBMITTED",
+      "ledger_entry": {
+        "ledger_id": "LED-64C2A5F8",
+        "order_id": "EZ202608001",
+        "component": "SALES_COMMISSION",
+        "amount": "9000.00",
+        "currency": "KES",
+        "policy_version": "2026-Q3",
+        "status": "POSTED",
+        "source": "REVGUARD:CASE-2026-0008",
+        "posted_at": "2026-08-28T00:21:36.441609Z"
+      },
+      "before_snapshot": [
+        {
+          "ledger_id": "LED-50001",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "18000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q2",
+          "status": "POSTED",
+          "source": "BATCH-CALC-2026-07",
+          "posted_at": "2026-08-01T02:00:00Z",
+          "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+        }
+      ],
+      "after_snapshot": [
+        {
+          "ledger_id": "LED-50001",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "18000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q2",
+          "status": "POSTED",
+          "source": "BATCH-CALC-2026-07",
+          "posted_at": "2026-08-01T02:00:00Z",
+          "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+        },
+        {
+          "ledger_id": "LED-64C2A5F8",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "9000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q3",
+          "status": "POSTED",
+          "source": "REVGUARD:CASE-2026-0008",
+          "posted_at": "2026-08-28T00:21:36.441609Z"
+        }
+      ],
+      "rollback_token": "<redacted:sha256:1c5bdf156d125335>"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 26,
+    "span_id": "SPAN-7D465455",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-53D6C1E2",
+    "kind": "TOOL",
+    "name": "commission.submit_adjustment",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 26,
+    "started_at": "2026-08-28T00:21:36.441501Z",
+    "ended_at": "2026-08-28T00:21:36.442972Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "action_id": "ACT-314A117B",
+        "case_id": "CASE-2026-0008",
+        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "policy_version": "2026-Q3"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-E537A54A"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 27,
+    "span_id": "SPAN-8E218E00",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "IdempotencyGuardSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 27,
+    "started_at": "2026-08-28T00:21:36.452537Z",
+    "ended_at": "2026-08-28T00:21:36.452558Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-12F26E01",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-5E7F19C2",
+        "traceparent": null,
+        "agent_task_id": "TASK-5E7F19C2"
+      }
+    },
+    "outputs": null,
+    "error": null
+  },
+  {
+    "trace_sequence": 28,
+    "span_id": "SPAN-5B74B3D6",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "AdjustmentDraftSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 28,
+    "started_at": "2026-08-28T00:21:36.458550Z",
+    "ended_at": "2026-08-28T00:21:36.460378Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "order_id": "EZ202608001",
+        "component": "COLLECTION_COMMISSION",
+        "delta": "5400.00",
+        "currency": "KES",
+        "reason": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-3176D558",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-63952ADE",
+        "traceparent": null,
+        "agent_task_id": "TASK-63952ADE"
+      }
+    },
+    "outputs": {
+      "action_id": "ACT-8BF7F41E",
+      "order_id": "EZ202608001",
+      "case_id": "CASE-2026-0008",
+      "component": "COLLECTION_COMMISSION",
+      "amount": "5400.00",
+      "currency": "KES",
+      "reason": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）",
+      "status": "DRAFT",
+      "created_at": "2026-08-28T00:21:36.458622Z"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 29,
+    "span_id": "SPAN-746FEFAC",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-5B74B3D6",
+    "kind": "TOOL",
+    "name": "commission.create_adjustment_draft",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 29,
+    "started_at": "2026-08-28T00:21:36.458585Z",
+    "ended_at": "2026-08-28T00:21:36.460081Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001",
+        "case_id": "CASE-2026-0008",
+        "component": "COLLECTION_COMMISSION",
+        "amount": "5400.00",
+        "currency": "KES",
+        "reason": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-D12BD895"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 30,
+    "span_id": "SPAN-9B57135B",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "LedgerAdjustSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 30,
+    "started_at": "2026-08-28T00:21:36.469087Z",
+    "ended_at": "2026-08-28T00:21:36.470907Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "action_id": "ACT-8BF7F41E",
+        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "policy_version": "2026-Q3",
+        "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-344A1618",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-046DC667",
+        "traceparent": null,
+        "agent_task_id": "TASK-046DC667"
+      }
+    },
+    "outputs": {
+      "action_id": "ACT-8BF7F41E",
+      "status": "SUBMITTED",
+      "ledger_entry": {
+        "ledger_id": "LED-0C1A0E71",
+        "order_id": "EZ202608001",
+        "component": "COLLECTION_COMMISSION",
+        "amount": "5400.00",
+        "currency": "KES",
+        "policy_version": "2026-Q3",
+        "status": "POSTED",
+        "source": "REVGUARD:CASE-2026-0008",
+        "posted_at": "2026-08-28T00:21:36.469203Z"
+      },
+      "before_snapshot": [
+        {
+          "ledger_id": "LED-50001",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "18000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q2",
+          "status": "POSTED",
+          "source": "BATCH-CALC-2026-07",
+          "posted_at": "2026-08-01T02:00:00Z",
+          "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+        },
+        {
+          "ledger_id": "LED-64C2A5F8",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "9000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q3",
+          "status": "POSTED",
+          "source": "REVGUARD:CASE-2026-0008",
+          "posted_at": "2026-08-28T00:21:36.441609Z"
+        }
+      ],
+      "after_snapshot": [
+        {
+          "ledger_id": "LED-50001",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "18000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q2",
+          "status": "POSTED",
+          "source": "BATCH-CALC-2026-07",
+          "posted_at": "2026-08-01T02:00:00Z",
+          "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+        },
+        {
+          "ledger_id": "LED-64C2A5F8",
+          "order_id": "EZ202608001",
+          "component": "SALES_COMMISSION",
+          "amount": "9000.00",
+          "currency": "KES",
+          "policy_version": "2026-Q3",
+          "status": "POSTED",
+          "source": "REVGUARD:CASE-2026-0008",
+          "posted_at": "2026-08-28T00:21:36.441609Z"
+        },
+        {
+          "ledger_id": "LED-0C1A0E71",
+          "order_id": "EZ202608001",
+          "component": "COLLECTION_COMMISSION",
+          "amount": "5400.00",
+          "currency": "KES",
+          "policy_version": "2026-Q3",
+          "status": "POSTED",
+          "source": "REVGUARD:CASE-2026-0008",
+          "posted_at": "2026-08-28T00:21:36.469203Z"
+        }
+      ],
+      "rollback_token": "<redacted:sha256:6a975d54ce7521c3>"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 31,
+    "span_id": "SPAN-38458881",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-9B57135B",
+    "kind": "TOOL",
+    "name": "commission.submit_adjustment",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 31,
+    "started_at": "2026-08-28T00:21:36.469113Z",
+    "ended_at": "2026-08-28T00:21:36.470756Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "action_id": "ACT-8BF7F41E",
+        "case_id": "CASE-2026-0008",
+        "approval_token": "<redacted:sha256:bc64fa574e54a0f3>",
+        "policy_version": "2026-Q3"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-D809C716"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 32,
+    "span_id": "SPAN-DBC721BB",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "PostActionVerifySkill",
+    "actor": "revguard-verifier",
+    "status": "OK",
+    "sequence": 32,
+    "started_at": "2026-08-28T00:21:36.481314Z",
+    "ended_at": "2026-08-28T00:21:36.482375Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "order_id": "EZ202608001",
+        "expected_components": [
+          {
+            "type": "SALES_COMMISSION",
+            "amount": "27000.00",
+            "formula": "order_amount * 0.15",
+            "substituted": "180000 * 0.15",
+            "applied": true,
+            "skip_reasons": []
+          },
+          {
+            "type": "SALES_COMMISSION",
+            "amount": "0",
+            "formula": "order_amount * 0.08",
+            "substituted": "",
+            "applied": false,
+            "skip_reasons": [
+              "agent_tier 期望 'SILVER'，实际 'GOLD'"
+            ]
+          },
+          {
+            "type": "SALES_COMMISSION",
+            "amount": "0",
+            "formula": "order_amount * 0.05",
+            "substituted": "",
+            "applied": false,
+            "skip_reasons": [
+              "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+            ]
+          },
+          {
+            "type": "COLLECTION_COMMISSION",
+            "amount": "5400.00",
+            "formula": "payment_amount * 0.03",
+            "substituted": "180000 * 0.03",
+            "applied": true,
+            "skip_reasons": []
+          },
+          {
+            "type": "MONTHLY_INCENTIVE",
+            "amount": "0",
+            "formula": "order_amount * 0.02",
+            "substituted": "",
+            "applied": false,
+            "skip_reasons": [
+              "monthly_completed_orders='1' 不满足 monthly_completed_orders_gte 20"
+            ]
+          }
+        ]
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-C287D60E",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-374A1089",
+        "traceparent": null,
+        "agent_task_id": "TASK-374A1089"
+      }
+    },
+    "outputs": {
+      "verification_status": "FAILED",
+      "expected_amount": "32400.00",
+      "actual_amount": "32401.00",
+      "variance": "1.00",
+      "component_checks": [
+        {
+          "component": "SALES_COMMISSION",
+          "expected": "27000.00",
+          "actual": "27000.00",
+          "passed": true
+        },
+        {
+          "component": "COLLECTION_COMMISSION",
+          "expected": "5400.00",
+          "actual": "5401.00",
+          "passed": false
+        }
+      ],
+      "evidence_refs": [
+        "RCPT-C535B8F4"
+      ],
+      "rollback_required": true,
+      "checked_at": "2026-08-28T00:21:36.482336Z"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 33,
+    "span_id": "SPAN-C59F307E",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-DBC721BB",
+    "kind": "TOOL",
+    "name": "finance.get_commission_ledger",
+    "actor": "revguard-verifier",
+    "status": "OK",
+    "sequence": 33,
+    "started_at": "2026-08-28T00:21:36.481336Z",
+    "ended_at": "2026-08-28T00:21:36.482208Z",
+    "duration_ms": 0,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-C535B8F4"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 34,
+    "span_id": "SPAN-D8D9F823",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "LedgerReverseSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 34,
+    "started_at": "2026-08-28T00:21:36.491434Z",
+    "ended_at": "2026-08-28T00:21:36.493167Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "ledger_id": "LED-0C1A0E71",
+        "rollback_token": "<redacted:sha256:cd3ad809cbeefd46>",
+        "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION:rollback"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-873D0B7B",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-E711BA5E",
+        "traceparent": null,
+        "agent_task_id": "TASK-E711BA5E"
+      }
+    },
+    "outputs": {
+      "reversal_entry": {
+        "ledger_id": "LED-9D10A320",
+        "order_id": "EZ202608001",
+        "component": "COLLECTION_COMMISSION",
+        "amount": "-5400.00",
+        "currency": "KES",
+        "policy_version": "2026-Q3",
+        "status": "POSTED",
+        "source": "REVGUARD:CASE-2026-0008",
+        "posted_at": "2026-08-28T00:21:36.491568Z",
+        "reversal_of": "LED-0C1A0E71"
+      },
+      "reversed_entry": {
+        "ledger_id": "LED-0C1A0E71",
+        "order_id": "EZ202608001",
+        "component": "COLLECTION_COMMISSION",
+        "amount": "5400.00",
+        "currency": "KES",
+        "policy_version": "2026-Q3",
+        "status": "POSTED",
+        "source": "REVGUARD:CASE-2026-0008",
+        "posted_at": "2026-08-28T00:21:36.469203Z",
+        "reversed_by": "LED-9D10A320"
+      }
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 35,
+    "span_id": "SPAN-1DC26F47",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-D8D9F823",
+    "kind": "TOOL",
+    "name": "commission.reverse_adjustment",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 35,
+    "started_at": "2026-08-28T00:21:36.491461Z",
+    "ended_at": "2026-08-28T00:21:36.493033Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "case_id": "CASE-2026-0008",
+        "ledger_id": "LED-0C1A0E71",
+        "rollback_token": "<redacted:sha256:cd3ad809cbeefd46>"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-36DBD152"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 36,
+    "span_id": "SPAN-854272B4",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "LedgerReverseSkill",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 36,
+    "started_at": "2026-08-28T00:21:36.501138Z",
+    "ended_at": "2026-08-28T00:21:36.502878Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "ledger_id": "LED-64C2A5F8",
+        "rollback_token": "<redacted:sha256:d2a81c6e8b0d79c8>",
+        "idempotency_key": "CASE-2026-0008:SALES_COMMISSION:rollback"
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-5E13108B",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-B8A4B7BD",
+        "traceparent": null,
+        "agent_task_id": "TASK-B8A4B7BD"
+      }
+    },
+    "outputs": {
+      "reversal_entry": {
+        "ledger_id": "LED-DE8DC04C",
+        "order_id": "EZ202608001",
+        "component": "SALES_COMMISSION",
+        "amount": "-9000.00",
+        "currency": "KES",
+        "policy_version": "2026-Q3",
+        "status": "POSTED",
+        "source": "REVGUARD:CASE-2026-0008",
+        "posted_at": "2026-08-28T00:21:36.501247Z",
+        "reversal_of": "LED-64C2A5F8"
+      },
+      "reversed_entry": {
+        "ledger_id": "LED-64C2A5F8",
+        "order_id": "EZ202608001",
+        "component": "SALES_COMMISSION",
+        "amount": "9000.00",
+        "currency": "KES",
+        "policy_version": "2026-Q3",
+        "status": "POSTED",
+        "source": "REVGUARD:CASE-2026-0008",
+        "posted_at": "2026-08-28T00:21:36.441609Z",
+        "reversed_by": "LED-DE8DC04C"
+      }
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 37,
+    "span_id": "SPAN-561D10D0",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-854272B4",
+    "kind": "TOOL",
+    "name": "commission.reverse_adjustment",
+    "actor": "revguard-executor",
+    "status": "OK",
+    "sequence": 37,
+    "started_at": "2026-08-28T00:21:36.501162Z",
+    "ended_at": "2026-08-28T00:21:36.502750Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "case_id": "CASE-2026-0008",
+        "ledger_id": "LED-64C2A5F8",
+        "rollback_token": "<redacted:sha256:d2a81c6e8b0d79c8>"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-C27EF292"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 38,
+    "span_id": "SPAN-AF62635A",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "PostRollbackVerifySkill",
+    "actor": "revguard-verifier",
+    "status": "OK",
+    "sequence": 38,
+    "started_at": "2026-08-28T00:21:36.510538Z",
+    "ended_at": "2026-08-28T00:21:36.511863Z",
+    "duration_ms": 1,
+    "inputs": {
+      "input": {
+        "order_id": "EZ202608001",
+        "expected_snapshot": [
+          {
+            "ledger_id": "LED-50001",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "amount": "18000.00",
+            "currency": "KES",
+            "policy_version": "2026-Q2",
+            "status": "POSTED",
+            "source": "BATCH-CALC-2026-07",
+            "posted_at": "2026-08-01T02:00:00Z",
+            "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+          }
+        ]
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-283384D3",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-31B8A544",
+        "traceparent": null,
+        "agent_task_id": "TASK-31B8A544"
+      }
+    },
+    "outputs": {
+      "verification_status": "PASSED",
+      "component_checks": [
+        {
+          "component": "COLLECTION_COMMISSION",
+          "expected": "0",
+          "actual": "0.00",
+          "passed": true
+        },
+        {
+          "component": "SALES_COMMISSION",
+          "expected": "18000.00",
+          "actual": "18000.00",
+          "passed": true
+        }
+      ],
+      "evidence_refs": [
+        "RCPT-2EA4B1DF"
+      ],
+      "checked_at": "2026-08-28T00:21:36.511828Z"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 39,
+    "span_id": "SPAN-39E0042C",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": "SPAN-AF62635A",
+    "kind": "TOOL",
+    "name": "finance.get_commission_ledger",
+    "actor": "revguard-verifier",
+    "status": "OK",
+    "sequence": 39,
+    "started_at": "2026-08-28T00:21:36.510561Z",
+    "ended_at": "2026-08-28T00:21:36.511648Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "order_id": "EZ202608001"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-2EA4B1DF"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 40,
+    "span_id": "SPAN-4670F6A0",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "SKILL",
+    "name": "CaseToDatasetSkill",
+    "actor": "revguard-knowledge",
+    "status": "OK",
+    "sequence": 40,
+    "started_at": "2026-08-28T00:21:36.523191Z",
+    "ended_at": "2026-08-28T00:21:36.523245Z",
+    "duration_ms": 0,
+    "inputs": {
+      "input": {
+        "case": {
+          "case_id": "CASE-2026-0008",
+          "case_type": "COMMISSION_UNDERPAYMENT",
+          "source": "EVALUATION",
+          "status": "ROLLED_BACK",
+          "priority": "P1",
+          "partner_id": "AGT-10001",
+          "partner_name": "Nairobi Solar Solutions Ltd",
+          "order_id": "EZ202608001",
+          "contract_id": null,
+          "description": "故障注入评测：写入后 Verifier 首次查询出现 1 KES 偏差，系统必须冲销。",
+          "claim": {
+            "actual_amount": 18000,
+            "expected_amount": 32400,
+            "currency": "KES"
+          },
+          "entities": {
+            "partner_id": "AGT-10001",
+            "partner_name": null,
+            "order_id": "EZ202608001",
+            "contract_id": null
+          },
+          "evidence_score": 1.0,
+          "risk_level": "L2",
+          "created_at": "2026-08-28T00:21:36.218637Z",
+          "updated_at": "2026-08-28T00:21:36.517954Z",
+          "execution_mode": "MCP_TEAM",
+          "workflow_provenance": {
+            "business_data": "synthetic",
+            "workflow": "real_executable",
+            "transport": "mcp",
+            "orchestration": "state-driven",
+            "agentteams_room_evidence": "PENDING_EXTERNAL_CAPTURE"
+          },
+          "policy_decision": {
+            "policy_id": "KE-COMMISSION-2026",
+            "policy_version": "2026-Q3",
+            "time_basis": "order_date",
+            "decision_date": "2026-07-10",
+            "effective_rule_set": {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q3",
+              "eligibility": {
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ],
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ]
+              },
+              "rules": [
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.15"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.08"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.05"
+                },
+                {
+                  "component": "COLLECTION_COMMISSION",
+                  "when": {
+                    "payment_days_lte": 30
+                  },
+                  "formula": "payment_amount * 0.03"
+                },
+                {
+                  "component": "MONTHLY_INCENTIVE",
+                  "when": {
+                    "monthly_completed_orders_gte": 20
+                  },
+                  "formula": "order_amount * 0.02"
+                }
+              ],
+              "rounding": {
+                "scale": 2,
+                "mode": "HALF_UP"
+              }
+            },
+            "cited_clauses": [
+              {
+                "clause_id": "Q3-C1",
+                "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+              },
+              {
+                "clause_id": "Q3-C2",
+                "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+              },
+              {
+                "clause_id": "Q3-C3",
+                "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+              },
+              {
+                "clause_id": "Q3-C4",
+                "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+              },
+              {
+                "clause_id": "Q3-C5",
+                "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+              }
+            ],
+            "excluded_versions": [
+              {
+                "version": "2026-Q1",
+                "reason": "有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-10"
+              },
+              {
+                "version": "2026-Q2",
+                "reason": "有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-10"
+              }
+            ],
+            "unresolved_conflicts": [],
+            "confidence": 1.0
+          },
+          "tier_resolution": {
+            "tier": "GOLD",
+            "effective_from": "2026-06-01",
+            "conflict": null
+          },
+          "facts": {
+            "order_amount": "180000",
+            "payment_amount": "180000",
+            "refund_amount": "0",
+            "order_date": "2026-07-10",
+            "payment_date": "2026-07-28",
+            "payment_days": "16",
+            "agent_tier": "GOLD",
+            "product_id": "SHS-500",
+            "order_status": "COMPLETED",
+            "payment_status": "SETTLED",
+            "monthly_completed_orders": "1"
+          },
+          "calculation_result": {
+            "eligible": true,
+            "total_commission": "32400.00",
+            "currency": "KES",
+            "components": [
+              {
+                "type": "SALES_COMMISSION",
+                "amount": "27000.00",
+                "formula": "order_amount * 0.15",
+                "substituted": "180000 * 0.15",
+                "applied": true,
+                "skip_reasons": []
+              },
+              {
+                "type": "SALES_COMMISSION",
+                "amount": "0",
+                "formula": "order_amount * 0.08",
+                "substituted": "",
+                "applied": false,
+                "skip_reasons": [
+                  "agent_tier 期望 'SILVER'，实际 'GOLD'"
+                ]
+              },
+              {
+                "type": "SALES_COMMISSION",
+                "amount": "0",
+                "formula": "order_amount * 0.05",
+                "substituted": "",
+                "applied": false,
+                "skip_reasons": [
+                  "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+                ]
+              },
+              {
+                "type": "COLLECTION_COMMISSION",
+                "amount": "5400.00",
+                "formula": "payment_amount * 0.03",
+                "substituted": "180000 * 0.03",
+                "applied": true,
+                "skip_reasons": []
+              },
+              {
+                "type": "MONTHLY_INCENTIVE",
+                "amount": "0",
+                "formula": "order_amount * 0.02",
+                "substituted": "",
+                "applied": false,
+                "skip_reasons": [
+                  "monthly_completed_orders='1' 不满足 monthly_completed_orders_gte 20"
+                ]
+              }
+            ],
+            "rounding_rule": "scale=2,mode=HALF_UP",
+            "calculation_hash": "sha256:3f5cad3a50827c822bce84abff587651c38fed3f1064adf8b9adce3da436df05",
+            "policy_version": "2026-Q3",
+            "eligibility_failures": [],
+            "facts_snapshot": {
+              "order_amount": "180000",
+              "payment_amount": "180000",
+              "refund_amount": "0",
+              "order_date": "2026-07-10",
+              "payment_date": "2026-07-28",
+              "payment_days": "16",
+              "agent_tier": "GOLD",
+              "product_id": "SHS-500",
+              "order_status": "COMPLETED",
+              "payment_status": "SETTLED",
+              "monthly_completed_orders": "1"
+            }
+          },
+          "root_cause_report": {
+            "diffs": [
+              {
+                "component": "SALES_COMMISSION",
+                "expected": "27000.00",
+                "posted": "18000.00",
+                "delta": "9000.00",
+                "root_cause": "WRONG_POLICY_VERSION",
+                "explanation": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+              },
+              {
+                "component": "COLLECTION_COMMISSION",
+                "expected": "5400.00",
+                "posted": "0",
+                "delta": "5400.00",
+                "root_cause": "MISSING_COMPONENT",
+                "explanation": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+              }
+            ],
+            "total_expected": "32400.00",
+            "total_posted": "18000.00",
+            "total_delta": "14400.00",
+            "root_causes": [
+              "MISSING_COMPONENT",
+              "WRONG_POLICY_VERSION"
+            ],
+            "confidence": 1.0
+          },
+          "risk_decision": {
+            "risk_level": "L2",
+            "approval_required": true,
+            "approver_role": "FINANCE_LEAD",
+            "execution_constraints": {
+              "write": true,
+              "requires_approval_token": true,
+              "max_amount": "50000"
+            },
+            "rollback_plan_required": true,
+            "reason_codes": [
+              "REQUIRES_HUMAN_APPROVAL"
+            ]
+          }
+        },
+        "shared_state": {
+          "case_id": "CASE-2026-0008",
+          "facts": {
+            "order_amount": "180000",
+            "payment_amount": "180000",
+            "refund_amount": "0",
+            "order_date": "2026-07-10",
+            "payment_date": "2026-07-28",
+            "payment_days": "16",
+            "agent_tier": "GOLD",
+            "product_id": "SHS-500",
+            "order_status": "COMPLETED",
+            "payment_status": "SETTLED",
+            "monthly_completed_orders": "1"
+          },
+          "evidence": {
+            "ORDER": {
+              "order_id": "EZ202608001",
+              "partner_id": "AGT-10001",
+              "product_id": "SHS-500",
+              "order_amount": 180000,
+              "currency": "KES",
+              "order_status": "COMPLETED",
+              "order_date": "2026-07-10",
+              "completed_date": "2026-07-12",
+              "sales_owner": "j.mwangi"
+            },
+            "TIER_HISTORY": {
+              "partner_id": "AGT-10001",
+              "tier_history": [
+                {
+                  "tier": "SILVER",
+                  "effective_from": "2025-01-01"
+                },
+                {
+                  "tier": "GOLD",
+                  "effective_from": "2026-06-01"
+                }
+              ]
+            },
+            "CONTRACT": {
+              "contract_id": "CON-10001",
+              "partner_id": "AGT-10001",
+              "signed_date": "2026-01-15",
+              "policy_id": "KE-COMMISSION-2026",
+              "terms": {
+                "time_basis": "order_date",
+                "clause_tier": "代理商等级以订单创建时点为准",
+                "clause_payment": "回款佣金以回款完成时间计算天数"
+              }
+            },
+            "PAYMENT_RECORD": {
+              "payment_id": "PAY-98765",
+              "order_id": "EZ202608001",
+              "payment_amount": 180000,
+              "currency": "KES",
+              "payment_status": "SETTLED",
+              "payment_date": "2026-07-28"
+            },
+            "REFUND_RECORD": {
+              "refunds": [],
+              "refund_amount": "0"
+            },
+            "INVOICE": {
+              "invoice_id": "INV-98765",
+              "order_id": "EZ202608001",
+              "invoice_amount": 180000,
+              "currency": "KES",
+              "invoice_status": "ISSUED",
+              "invoice_date": "2026-07-12"
+            },
+            "COMMISSION_LEDGER": {
+              "entries": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "posted_total": "18000.00"
+            },
+            "POLICY_VERSIONS": {
+              "versions": [
+                {
+                  "policy_id": "KE-COMMISSION-2026",
+                  "version": "2026-Q1",
+                  "effective_from": "2026-01-01",
+                  "effective_to": "2026-03-31",
+                  "status": "ARCHIVED",
+                  "clauses": [
+                    {
+                      "clause_id": "Q1-C1",
+                      "text": "GOLD 级代理商销售佣金按订单金额 8% 计算"
+                    },
+                    {
+                      "clause_id": "Q1-C2",
+                      "text": "SILVER 级代理商销售佣金按订单金额 5% 计算"
+                    }
+                  ],
+                  "rule_dsl": {
+                    "policy_id": "KE-COMMISSION-2026",
+                    "version": "2026-Q1",
+                    "eligibility": {
+                      "order_status": [
+                        "COMPLETED"
+                      ],
+                      "payment_status": [
+                        "SETTLED"
+                      ],
+                      "product_id": [
+                        "SHS-500",
+                        "SHS-1000"
+                      ]
+                    },
+                    "rules": [
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "GOLD"
+                        },
+                        "formula": "order_amount * 0.08"
+                      },
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "SILVER"
+                        },
+                        "formula": "order_amount * 0.05"
+                      },
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "BRONZE"
+                        },
+                        "formula": "order_amount * 0.03"
+                      }
+                    ],
+                    "rounding": {
+                      "scale": 2,
+                      "mode": "HALF_UP"
+                    }
+                  }
+                },
+                {
+                  "policy_id": "KE-COMMISSION-2026",
+                  "version": "2026-Q2",
+                  "effective_from": "2026-04-01",
+                  "effective_to": "2026-06-30",
+                  "status": "ARCHIVED",
+                  "clauses": [
+                    {
+                      "clause_id": "Q2-C1",
+                      "text": "GOLD 级代理商销售佣金按订单金额 10% 计算"
+                    },
+                    {
+                      "clause_id": "Q2-C2",
+                      "text": "SILVER 级代理商销售佣金按订单金额 6% 计算"
+                    },
+                    {
+                      "clause_id": "Q2-C3",
+                      "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金"
+                    }
+                  ],
+                  "rule_dsl": {
+                    "policy_id": "KE-COMMISSION-2026",
+                    "version": "2026-Q2",
+                    "eligibility": {
+                      "order_status": [
+                        "COMPLETED"
+                      ],
+                      "payment_status": [
+                        "SETTLED"
+                      ],
+                      "product_id": [
+                        "SHS-500",
+                        "SHS-1000"
+                      ]
+                    },
+                    "rules": [
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "GOLD"
+                        },
+                        "formula": "order_amount * 0.10"
+                      },
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "SILVER"
+                        },
+                        "formula": "order_amount * 0.06"
+                      },
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "BRONZE"
+                        },
+                        "formula": "order_amount * 0.04"
+                      },
+                      {
+                        "component": "COLLECTION_COMMISSION",
+                        "when": {
+                          "payment_days_lte": 45
+                        },
+                        "formula": "payment_amount * 0.02"
+                      }
+                    ],
+                    "rounding": {
+                      "scale": 2,
+                      "mode": "HALF_UP"
+                    }
+                  }
+                },
+                {
+                  "policy_id": "KE-COMMISSION-2026",
+                  "version": "2026-Q3",
+                  "effective_from": "2026-07-01",
+                  "effective_to": "2026-09-30",
+                  "status": "ACTIVE",
+                  "clauses": [
+                    {
+                      "clause_id": "Q3-C1",
+                      "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+                    },
+                    {
+                      "clause_id": "Q3-C2",
+                      "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+                    },
+                    {
+                      "clause_id": "Q3-C3",
+                      "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+                    },
+                    {
+                      "clause_id": "Q3-C4",
+                      "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+                    },
+                    {
+                      "clause_id": "Q3-C5",
+                      "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+                    }
+                  ],
+                  "rule_dsl": {
+                    "policy_id": "KE-COMMISSION-2026",
+                    "version": "2026-Q3",
+                    "eligibility": {
+                      "order_status": [
+                        "COMPLETED"
+                      ],
+                      "payment_status": [
+                        "SETTLED"
+                      ],
+                      "product_id": [
+                        "SHS-500",
+                        "SHS-1000"
+                      ]
+                    },
+                    "rules": [
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "GOLD"
+                        },
+                        "formula": "order_amount * 0.15"
+                      },
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "SILVER"
+                        },
+                        "formula": "order_amount * 0.08"
+                      },
+                      {
+                        "component": "SALES_COMMISSION",
+                        "when": {
+                          "agent_tier": "BRONZE"
+                        },
+                        "formula": "order_amount * 0.05"
+                      },
+                      {
+                        "component": "COLLECTION_COMMISSION",
+                        "when": {
+                          "payment_days_lte": 30
+                        },
+                        "formula": "payment_amount * 0.03"
+                      },
+                      {
+                        "component": "MONTHLY_INCENTIVE",
+                        "when": {
+                          "monthly_completed_orders_gte": 20
+                        },
+                        "formula": "order_amount * 0.02"
+                      }
+                    ],
+                    "rounding": {
+                      "scale": 2,
+                      "mode": "HALF_UP"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "approval": {
+            "case_id": "CASE-2026-0008",
+            "approval_id": "APR-EF696B51",
+            "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
+            "amount": "14400.00",
+            "component_quota": {
+              "SALES_COMMISSION": "9000.00",
+              "COLLECTION_COMMISSION": "5400.00"
+            },
+            "currency": "KES",
+            "risk_level": "L2",
+            "approver_role": "FINANCE_LEAD",
+            "status": "APPROVED",
+            "created_at": "2026-08-28T00:21:36.397850Z",
+            "approver": "finance.lead",
+            "comment": "",
+            "decided_at": "2026-08-28T00:21:36.414714Z",
+            "approval_token": "<redacted:sha256:e0ff134ced563ecb>"
+          },
+          "policy_decision": {
+            "policy_id": "KE-COMMISSION-2026",
+            "policy_version": "2026-Q3",
+            "time_basis": "order_date",
+            "decision_date": "2026-07-10",
+            "effective_rule_set": {
+              "policy_id": "KE-COMMISSION-2026",
+              "version": "2026-Q3",
+              "eligibility": {
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ],
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ]
+              },
+              "rules": [
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.15"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.08"
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.05"
+                },
+                {
+                  "component": "COLLECTION_COMMISSION",
+                  "when": {
+                    "payment_days_lte": 30
+                  },
+                  "formula": "payment_amount * 0.03"
+                },
+                {
+                  "component": "MONTHLY_INCENTIVE",
+                  "when": {
+                    "monthly_completed_orders_gte": 20
+                  },
+                  "formula": "order_amount * 0.02"
+                }
+              ],
+              "rounding": {
+                "scale": 2,
+                "mode": "HALF_UP"
+              }
+            },
+            "cited_clauses": [
+              {
+                "clause_id": "Q3-C1",
+                "text": "GOLD 级代理商销售佣金按订单金额 15% 计算"
+              },
+              {
+                "clause_id": "Q3-C2",
+                "text": "SILVER 级代理商销售佣金按订单金额 8% 计算"
+              },
+              {
+                "clause_id": "Q3-C3",
+                "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算"
+              },
+              {
+                "clause_id": "Q3-C4",
+                "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金"
+              },
+              {
+                "clause_id": "Q3-C5",
+                "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+              }
+            ],
+            "excluded_versions": [
+              {
+                "version": "2026-Q1",
+                "reason": "有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-10"
+              },
+              {
+                "version": "2026-Q2",
+                "reason": "有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-10"
+              }
+            ],
+            "unresolved_conflicts": [],
+            "confidence": 1.0
+          },
+          "tier_resolution": {
+            "tier": "GOLD",
+            "effective_from": "2026-06-01",
+            "conflict": null
+          },
+          "calculation_result": {
+            "eligible": true,
+            "total_commission": "32400.00",
+            "currency": "KES",
+            "components": [
+              {
+                "type": "SALES_COMMISSION",
+                "amount": "27000.00",
+                "formula": "order_amount * 0.15",
+                "substituted": "180000 * 0.15",
+                "applied": true,
+                "skip_reasons": []
+              },
+              {
+                "type": "SALES_COMMISSION",
+                "amount": "0",
+                "formula": "order_amount * 0.08",
+                "substituted": "",
+                "applied": false,
+                "skip_reasons": [
+                  "agent_tier 期望 'SILVER'，实际 'GOLD'"
+                ]
+              },
+              {
+                "type": "SALES_COMMISSION",
+                "amount": "0",
+                "formula": "order_amount * 0.05",
+                "substituted": "",
+                "applied": false,
+                "skip_reasons": [
+                  "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+                ]
+              },
+              {
+                "type": "COLLECTION_COMMISSION",
+                "amount": "5400.00",
+                "formula": "payment_amount * 0.03",
+                "substituted": "180000 * 0.03",
+                "applied": true,
+                "skip_reasons": []
+              },
+              {
+                "type": "MONTHLY_INCENTIVE",
+                "amount": "0",
+                "formula": "order_amount * 0.02",
+                "substituted": "",
+                "applied": false,
+                "skip_reasons": [
+                  "monthly_completed_orders='1' 不满足 monthly_completed_orders_gte 20"
+                ]
+              }
+            ],
+            "rounding_rule": "scale=2,mode=HALF_UP",
+            "calculation_hash": "sha256:3f5cad3a50827c822bce84abff587651c38fed3f1064adf8b9adce3da436df05",
+            "policy_version": "2026-Q3",
+            "eligibility_failures": [],
+            "facts_snapshot": {
+              "order_amount": "180000",
+              "payment_amount": "180000",
+              "refund_amount": "0",
+              "order_date": "2026-07-10",
+              "payment_date": "2026-07-28",
+              "payment_days": "16",
+              "agent_tier": "GOLD",
+              "product_id": "SHS-500",
+              "order_status": "COMPLETED",
+              "payment_status": "SETTLED",
+              "monthly_completed_orders": "1"
+            }
+          },
+          "root_cause_report": {
+            "diffs": [
+              {
+                "component": "SALES_COMMISSION",
+                "expected": "27000.00",
+                "posted": "18000.00",
+                "delta": "9000.00",
+                "root_cause": "WRONG_POLICY_VERSION",
+                "explanation": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+              },
+              {
+                "component": "COLLECTION_COMMISSION",
+                "expected": "5400.00",
+                "posted": "0",
+                "delta": "5400.00",
+                "root_cause": "MISSING_COMPONENT",
+                "explanation": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+              }
+            ],
+            "total_expected": "32400.00",
+            "total_posted": "18000.00",
+            "total_delta": "14400.00",
+            "root_causes": [
+              "MISSING_COMPONENT",
+              "WRONG_POLICY_VERSION"
+            ],
+            "confidence": 1.0
+          },
+          "risk_decision": {
+            "risk_level": "L2",
+            "approval_required": true,
+            "approver_role": "FINANCE_LEAD",
+            "execution_constraints": {
+              "write": true,
+              "requires_approval_token": true,
+              "max_amount": "50000"
+            },
+            "rollback_plan_required": true,
+            "reason_codes": [
+              "REQUIRES_HUMAN_APPROVAL"
+            ]
+          },
+          "errors": [],
+          "executions": [
+            {
+              "action_id": "ACT-314A117B",
+              "case_id": "CASE-2026-0008",
+              "action_type": "LEDGER_ADJUST",
+              "status": "ROLLED_BACK",
+              "amount": "9000.00",
+              "currency": "KES",
+              "component": "SALES_COMMISSION",
+              "idempotency_key": "CASE-2026-0008:SALES_COMMISSION",
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-64C2A5F8",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0008",
+                  "posted_at": "2026-08-28T00:21:36.441609Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:14dfac7422cd3b9c>",
+              "ledger_entry": {
+                "ledger_id": "LED-64C2A5F8",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "9000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0008",
+                "posted_at": "2026-08-28T00:21:36.441609Z"
+              },
+              "reversal": {
+                "ledger_id": "LED-DE8DC04C",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "-9000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0008",
+                "posted_at": "2026-08-28T00:21:36.501247Z",
+                "reversal_of": "LED-64C2A5F8"
+              }
+            },
+            {
+              "action_id": "ACT-8BF7F41E",
+              "case_id": "CASE-2026-0008",
+              "action_type": "LEDGER_ADJUST",
+              "status": "ROLLED_BACK",
+              "amount": "5400.00",
+              "currency": "KES",
+              "component": "COLLECTION_COMMISSION",
+              "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION",
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-64C2A5F8",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0008",
+                  "posted_at": "2026-08-28T00:21:36.441609Z"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-64C2A5F8",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0008",
+                  "posted_at": "2026-08-28T00:21:36.441609Z"
+                },
+                {
+                  "ledger_id": "LED-0C1A0E71",
+                  "order_id": "EZ202608001",
+                  "component": "COLLECTION_COMMISSION",
+                  "amount": "5400.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0008",
+                  "posted_at": "2026-08-28T00:21:36.469203Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:ef3febc43f33e1c0>",
+              "ledger_entry": {
+                "ledger_id": "LED-0C1A0E71",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "amount": "5400.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0008",
+                "posted_at": "2026-08-28T00:21:36.469203Z"
+              },
+              "reversal": {
+                "ledger_id": "LED-9D10A320",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "amount": "-5400.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0008",
+                "posted_at": "2026-08-28T00:21:36.491568Z",
+                "reversal_of": "LED-0C1A0E71"
+              }
+            }
+          ],
+          "verification": {
+            "verification_status": "FAILED",
+            "expected_amount": "32400.00",
+            "actual_amount": "32401.00",
+            "variance": "1.00",
+            "component_checks": [
+              {
+                "component": "SALES_COMMISSION",
+                "expected": "27000.00",
+                "actual": "27000.00",
+                "passed": true
+              },
+              {
+                "component": "COLLECTION_COMMISSION",
+                "expected": "5400.00",
+                "actual": "5401.00",
+                "passed": false
+              }
+            ],
+            "evidence_refs": [
+              "RCPT-C535B8F4"
+            ],
+            "rollback_required": true,
+            "checked_at": "2026-08-28T00:21:36.482336Z"
+          },
+          "rollback": {
+            "reversals": [
+              {
+                "ledger_id": "LED-9D10A320",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "amount": "-5400.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0008",
+                "posted_at": "2026-08-28T00:21:36.491568Z",
+                "reversal_of": "LED-0C1A0E71"
+              },
+              {
+                "ledger_id": "LED-DE8DC04C",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "-9000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0008",
+                "posted_at": "2026-08-28T00:21:36.501247Z",
+                "reversal_of": "LED-64C2A5F8"
+              }
+            ],
+            "verification": {
+              "verification_status": "PASSED",
+              "component_checks": [
+                {
+                  "component": "COLLECTION_COMMISSION",
+                  "expected": "0",
+                  "actual": "0.00",
+                  "passed": true
+                },
+                {
+                  "component": "SALES_COMMISSION",
+                  "expected": "18000.00",
+                  "actual": "18000.00",
+                  "passed": true
+                }
+              ],
+              "evidence_refs": [
+                "RCPT-2EA4B1DF"
+              ],
+              "checked_at": "2026-08-28T00:21:36.511828Z"
+            }
+          }
+        },
+        "verification": {
+          "verification_status": "FAILED",
+          "expected_amount": "32400.00",
+          "actual_amount": "32401.00",
+          "variance": "1.00",
+          "component_checks": [
+            {
+              "component": "SALES_COMMISSION",
+              "expected": "27000.00",
+              "actual": "27000.00",
+              "passed": true
+            },
+            {
+              "component": "COLLECTION_COMMISSION",
+              "expected": "5400.00",
+              "actual": "5401.00",
+              "passed": false
+            }
+          ],
+          "evidence_refs": [
+            "RCPT-C535B8F4"
+          ],
+          "rollback_required": true,
+          "checked_at": "2026-08-28T00:21:36.482336Z"
+        }
+      },
+      "correlation": {
+        "transport": "mcp",
+        "mcp_method": "tools/call",
+        "request_id": "REQ-MCP-D3D144CE",
+        "agentteams_message_id": "$mcp-CASE-2026-0008-TASK-26015B61",
+        "traceparent": null,
+        "agent_task_id": "TASK-26015B61"
+      }
+    },
+    "outputs": {
+      "case_id": "CASE-2026-0008",
+      "label": "SAFE_ROLLBACK",
+      "case_type": "COMMISSION_UNDERPAYMENT",
+      "input": {
+        "claim": {
+          "actual_amount": 18000,
+          "expected_amount": 32400,
+          "currency": "KES"
+        },
+        "entities": {
+          "partner_id": "AGT-10001",
+          "partner_name": null,
+          "order_id": "EZ202608001",
+          "contract_id": null
+        }
+      },
+      "expected_policy_version": "2026-Q3",
+      "expected_amount": "32400.00",
+      "root_causes": [
+        "MISSING_COMPONENT",
+        "WRONG_POLICY_VERSION"
+      ],
+      "verification": {
+        "verification_status": "FAILED",
+        "expected_amount": "32400.00",
+        "actual_amount": "32401.00",
+        "variance": "1.00",
+        "component_checks": [
+          {
+            "component": "SALES_COMMISSION",
+            "expected": "27000.00",
+            "actual": "27000.00",
+            "passed": true
+          },
+          {
+            "component": "COLLECTION_COMMISSION",
+            "expected": "5400.00",
+            "actual": "5401.00",
+            "passed": false
+          }
+        ],
+        "evidence_refs": [
+          "RCPT-C535B8F4"
+        ],
+        "rollback_required": true,
+        "checked_at": "2026-08-28T00:21:36.482336Z"
+      },
+      "archived_at": "2026-08-28T00:21:36.523207Z"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 41,
+    "span_id": "SPAN-42846252",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "TOOL",
+    "name": "mail.create_reply_draft",
+    "actor": "revguard-knowledge",
+    "status": "OK",
+    "sequence": 41,
+    "started_at": "2026-08-28T00:21:36.534430Z",
+    "ended_at": "2026-08-28T00:21:36.536056Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "case_id": "CASE-2026-0008",
+        "partner_id": "AGT-10001",
+        "summary": [
+          {
+            "component": "SALES_COMMISSION",
+            "expected": "27000.00",
+            "posted": "18000.00",
+            "delta": "9000.00",
+            "root_cause": "WRONG_POLICY_VERSION",
+            "explanation": "SALES_COMMISSION 台账按版本 ['2026-Q2'] 计算为 18000.00，但业务时点应适用 2026-Q3，应为 27000.00"
+          },
+          {
+            "component": "COLLECTION_COMMISSION",
+            "expected": "5400.00",
+            "posted": "0",
+            "delta": "5400.00",
+            "root_cause": "MISSING_COMPONENT",
+            "explanation": "COLLECTION_COMMISSION 在台账中不存在，应为 5400.00（180000 * 0.03）"
+          }
+        ],
+        "resolution": "ROLLED_BACK"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-1665AF7C"
+    },
+    "error": null
+  },
+  {
+    "trace_sequence": 42,
+    "span_id": "SPAN-68CA8092",
+    "case_id": "CASE-2026-0008",
+    "parent_span_id": null,
+    "kind": "TOOL",
+    "name": "ticket.update_case",
+    "actor": "revguard-knowledge",
+    "status": "OK",
+    "sequence": 42,
+    "started_at": "2026-08-28T00:21:36.536255Z",
+    "ended_at": "2026-08-28T00:21:36.537679Z",
+    "duration_ms": 1,
+    "inputs": {
+      "parameters": {
+        "ticket_ref": "TICKET-MOCK",
+        "case_id": "CASE-2026-0008",
+        "status": "ROLLED_BACK"
+      },
+      "attempt": 1
+    },
+    "outputs": {
+      "success": true,
+      "error": null,
+      "tool_receipt": "RCPT-1115FE25"
+    },
+    "error": null
+  }
+]

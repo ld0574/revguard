@@ -2,8 +2,8 @@ PYTHON ?= python3
 VENV ?= .venv
 VENV_PYTHON := $(VENV)/bin/python
 
-.PHONY: setup lint test coverage evaluate value-evaluate capacity postgres-integration openapi generated-check security \
-	verify verify-ci verify-release demo-reset demo run demo-ui-build demo-ui
+.PHONY: setup lint test coverage evaluate value-evaluate synthetic-validate evidence-bundle capacity postgres-integration openapi generated-check security \
+	verify verify-ci verify-release competition-verify demo-reset demo run demo-ui-build demo-ui
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -27,6 +27,14 @@ value-evaluate:
 		--input data/value_baseline/synthetic_demo.csv \
 		--output docs/value-evaluation-synthetic.json
 
+synthetic-validate:
+	$(VENV_PYTHON) scripts/validate_synthetic_dataset.py \
+		--output docs/synthetic-data-validation.json
+
+evidence-bundle:
+	$(VENV_PYTHON) scripts/build_competition_evidence.py \
+		--output docs/evidence/demo-rehearsal
+
 capacity:
 	$(VENV_PYTHON) scripts/run_capacity_probe.py --cases 200 --concurrency 20 \
 		--output docs/capacity-baseline-local.json
@@ -45,6 +53,8 @@ generated-check:
 	$(VENV_PYTHON) scripts/gen_skill_docs.py --check
 	$(VENV_PYTHON) scripts/export_openapi.py --check
 	$(VENV_PYTHON) scripts/validate_evaluation_snapshot.py
+	$(VENV_PYTHON) scripts/validate_synthetic_dataset.py \
+		--check docs/synthetic-data-validation.json
 
 security:
 	$(VENV_PYTHON) -m pip_audit -r requirements.lock
@@ -55,6 +65,8 @@ verify: test evaluate
 verify-ci: lint coverage evaluate value-evaluate generated-check
 
 verify-release: verify-ci security
+
+competition-verify: verify-release demo-ui-build evidence-bundle
 
 demo-reset:
 	$(VENV_PYTHON) scripts/seed_demo.py --db data/revguard.db --reset --gateway-state data/revguard.gateway.json

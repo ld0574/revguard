@@ -15,6 +15,7 @@ import os
 import sys
 import tempfile
 import unittest
+from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 
@@ -522,7 +523,7 @@ class TestApiSmoke(unittest.TestCase):
         self.assertIn("revguard_cases_total", prometheus.text)
         evidence = self.client.get("/api/v1/ops/evidence", headers=self.viewer)
         self.assertEqual(evidence.status_code, 200)
-        self.assertEqual(evidence.json()["release"], "0.3.0")
+        self.assertEqual(evidence.json()["release"], "0.4.0")
         self.assertFalse(
             evidence.json()["business_value"]["production_claim_allowed"]
         )
@@ -530,6 +531,39 @@ class TestApiSmoke(unittest.TestCase):
             evidence.json()["external_validation"]["polardb_pitr_drill"],
             "PENDING_CLOUD_INSTANCE",
         )
+
+    def test_15a_mcp_team_api_pauses_and_resumes_after_human_approval(self):
+        case_id = "CASE-2026-0008"
+        api_module.gateway._verification_tamper_amount = Decimal("1")
+        api_module.gateway._verification_tamper_used = False
+        started = self.client.post(
+            f"/api/v1/cases/{case_id}/team/run",
+            headers={**self.operator, "X-Request-ID": "REQ-MCP-TEAM-API"},
+        )
+        self.assertEqual(started.status_code, 200, started.text)
+        self.assertEqual(started.headers["X-Request-ID"], "REQ-MCP-TEAM-API")
+        body = started.json()
+        self.assertEqual(body["case"]["status"], CaseStatus.WAITING_FOR_APPROVAL.value)
+        self.assertEqual(body["case"]["execution_mode"], "MCP_TEAM")
+        self.assertEqual(len(body["agent_tasks"]), 8)
+        self.assertEqual({item["status"] for item in body["agent_tasks"]}, {"SUCCEEDED"})
+
+        approved = self.client.post(
+            f"/api/v1/cases/{case_id}/approval",
+            json={"decision": "APPROVED", "comment": "录制测试人工批准"},
+            headers=self.approver,
+        )
+        self.assertEqual(approved.status_code, 200, approved.text)
+        self.assertEqual(approved.json()["case"]["status"], CaseStatus.ROLLED_BACK.value)
+        tasks = store.list_agent_tasks(case_id)
+        self.assertEqual(len(tasks), 20)
+        details = [
+            json.loads(item["detail"])
+            for item in store.list_audit(case_id)
+            if item.get("detail")
+        ]
+        self.assertTrue(any(item.get("transport") == "mcp" for item in details))
+        self.assertTrue(any(item.get("simulated_human") is False for item in details))
 
 
 if __name__ == "__main__":

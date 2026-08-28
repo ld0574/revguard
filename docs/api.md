@@ -33,6 +33,7 @@ Principal 映射；缺失时 API fail-closed，不会退回匿名模式。
 | `REVGUARD_ALLOW_INSECURE_DEMO_KEYS` | `false` | 仅本地评测可设为 `true` |
 | `REVGUARD_ENABLE_LEGACY_TOOL_API` | `false` | 仅复放旧 `/tools/call` 证据链时显式开启 |
 | `REVGUARD_DEMO_PRINCIPALS_PATH` | `config/demo_principals.json` | 显式启用 Demo 模式时读取；生产不要启用 |
+| `REVGUARD_MCP_ACTOR` | 无 | stdio MCP server 绑定的唯一 Worker actor；不能由模型参数覆盖 |
 
 ## 身份与角色
 
@@ -80,6 +81,13 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 
 异常类型与脱敏详情只写入 `CASE_RUN_FAILED` Audit，不返回客户端。
 
+### `POST /api/v1/cases/{case_id}/team/run`
+
+需要 `operator`。这是录制驾驶舱的主入口：根据持久化 Case 状态逐阶段创建 StageTask，
+通过官方 MCP Client 调用每个 Worker 的 scoped MCP Server，并且只有 `SUCCEEDED`
+StageResult 落库后才应用输出。L2 会真实停在 `WAITING_FOR_APPROVAL`，响应同时返回脱敏后的
+任务列表。后续必须调用独立审批接口，批准后从现有状态继续执行、验证与回滚。
+
 ### `POST /api/v1/cases/{case_id}/approval`
 
 需要 `approver`。审批人来自 Bearer Principal：
@@ -106,7 +114,7 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 {"order_id": "EZ202607101"}
 ```
 
-### Agent StageTask 桥接
+### Agent StageTask 与 MCP 桥接
 
 Orchestrator 使用 `dispatcher` Principal 派发：
 
@@ -135,6 +143,13 @@ Skill、改动输入、Case 状态/版本变化或重放已完成任务均被拒
 `GET /api/v1/cases/{case_id}/agent-tasks` 查询；只有 `operator|dispatcher` 能看全量，Worker
 只能看分配给自己的任务，纯 `viewer` 无权读取任何任务输入或结果。由于 `case_version`
 包含状态和 `updated_at`，任何状态变化都会使先前派发的 pending task 失效，必须重新派发。
+
+支持 MCP 的 Host 不需要使用 REST invoke：为每个 Worker 启动
+`scripts/run_mcp_server.py`，由环境变量固定 `REVGUARD_MCP_ACTOR`。MCP `tools/list` 只返回
+该 actor 的 Skill，`tools/call` 的输入信封必须包含 `case_id`、`task_id`、精确 `input`
+以及可选 message/request/trace ID。MCP 与 REST 共用任务校验、Skill Registry、状态机、
+ToolGateway、StageResult 事务和 Audit；底层 Tool 不会进入 MCP 清单。配置见
+`agentteams/mcp/README.md`。
 
 任务结果历史使用 `GET /api/v1/agent-tasks/{task_id}/results`。失败任务可由
 `operator|dispatcher` 调用 `POST /api/v1/agent-tasks/{task_id}/reassign`，请求体必须说明

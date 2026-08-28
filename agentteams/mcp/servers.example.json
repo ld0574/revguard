@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "revguard-intake": {
+      "command": "/absolute/path/to/revguard/.venv/bin/python",
+      "args": [
+        "/absolute/path/to/revguard/scripts/run_mcp_server.py"
+      ],
+      "env": {
+        "REVGUARD_MCP_ACTOR": "revguard-intake",
+        "REVGUARD_DATABASE_URL": "${REVGUARD_DATABASE_URL}",
+        "REVGUARD_APPROVAL_SIGNING_KEY": "${REVGUARD_APPROVAL_SIGNING_KEY}",
+        "REVGUARD_GATEWAY_STATE_PATH": "/var/lib/revguard/gateway.json",
+        "REVGUARD_FIXTURES_DIR": "/absolute/path/to/revguard/data/fixtures"
+      }
+    }
+  }
+}

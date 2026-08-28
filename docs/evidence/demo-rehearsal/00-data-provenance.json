@@ -1,0 +1,36 @@
+{
+  "dataset_id": "revguard-ke-commission-v1",
+  "classification": "SYNTHETIC",
+  "production_data_used": false,
+  "owner": "RevGuard competition team",
+  "locale": "Kenya solar distribution scenario",
+  "currency": "KES",
+  "effective_period": "2026-01-01/2026-09-30",
+  "generation_method": "Scenario-authored fixtures with deterministic referential and temporal constraints",
+  "source_boundary": [
+    "Publicly understandable commission-settlement process patterns",
+    "Fictional organizations, people, identifiers, policies and amounts",
+    "No company database export, customer record or production credential"
+  ],
+  "permitted_claims": [
+    "Business records are synthetic",
+    "Workflow execution, task state, MCP calls, approval gate, audit chain, verification and rollback are real executable behavior",
+    "Local PostgreSQL evidence demonstrates PostgreSQL compatibility; cloud PolarDB connectivity remains deployment evidence"
+  ],
+  "prohibited_claims": [
+    "Do not describe fixtures as real company data",
+    "Do not describe a scripted approval call as a human screen click",
+    "Do not describe local PostgreSQL as a live PolarDB deployment"
+  ],
+  "primary_recording_case": "CASE-2026-0008",
+  "scenario_catalog": {
+    "CASE-2026-0001": "wrong policy version and missing collection component",
+    "CASE-2026-0002": "tier effective-date conflict",
+    "CASE-2026-0003": "insufficient evidence; no fabricated conclusion",
+    "CASE-2026-0004": "claim rejected after exact recalculation",
+    "CASE-2026-0005": "entire settled order omitted",
+    "CASE-2026-0006": "small adjustment creates draft only",
+    "CASE-2026-0007": "large adjustment requires human-only disposition",
+    "CASE-2026-0008": "post-write verification fault and compensating rollback"
+  }
+}

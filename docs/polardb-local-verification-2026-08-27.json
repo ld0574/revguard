@@ -8,7 +8,10 @@
     "audit_chain_valid": true,
     "audit_update_rejected_by_trigger": true,
     "stage_task_result_same_transaction": true,
-    "stage_results_persisted": 1
+    "mcp_tools_call_persisted_to_postgresql": true,
+    "cases_persisted": 2,
+    "agent_tasks_succeeded": 2,
+    "stage_results_persisted": 2
   },
   "limitations": [
     "未验证 PolarProxy 主从路由",

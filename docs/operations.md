@@ -12,7 +12,7 @@
 
 ## 版本与灰度
 
-镜像与 `/health` 同时暴露 `REVGUARD_RELEASE_VERSION`，当前为 `0.3.0`。发布策略以 `config/release-policy.yaml` 为准：
+镜像与 `/health` 同时暴露 `REVGUARD_RELEASE_VERSION`，当前为 `0.4.0`。发布策略以 `config/release-policy.yaml` 为准：
 
 1. 0% 真实流量：完成 `verify-ci`、临时 PostgreSQL 集成测试和 Golden 回放；
 2. 5% canary，最少 30 分钟；

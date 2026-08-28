@@ -3,20 +3,21 @@
 RevGuard 以 AgentTeams 为多 Agent 协同基点。本目录提供 1 个 Orchestrator 与 9 个
 职能 Worker 的 SOUL；金额、政策、风险和权限仍由 RevGuard 确定性 Skill 执行。
 
-## 两条互补路径
+## 三条互补路径
 
 | 路径 | 用途 | 入口 |
 |---|---|---|
 | 确定性回放 | 评测、Golden Case、故障注入、回归测试 | `make verify && make demo` |
+| MCP Team 参考编排 | 真实 MCP Client/Server、完整 StageTask 状态流与恢复 | Web 驾驶舱 `/team/run` |
 | AgentTeams 协同 | 任务拆解、Worker 协作、人工审批、现场展示 | Element / AgentTeams Team |
 
-两条路径共享同一套 16 个 Skill、ToolGateway、状态机与 Trace 语义。AgentTeams Worker
-只通过 `POST /api/v1/skills/{name}/invoke` 调用按身份允许的领域 Skill；底层 Tool 只由
-Skill/状态机在服务端调用，不进入 Agent 可见清单。
+三条路径共享同一套 16 个 Skill、ToolGateway、状态机与 Trace 语义。AgentTeams Worker
+优先通过 Worker-scoped MCP 调用按身份允许的领域 Skill；REST Skill Adapter 保留为不支持
+MCP Host 时的兼容路径。底层 Tool 只由 Skill/状态机在服务端调用，不进入 Agent 可见清单。
 
-当前正式证据验证 Matrix 上 Orchestrator 派发与 Intake 执行的双 Agent StageTask 桥接；
-完整十阶段业务闭环由服务端确定性参考编排真实执行。两者互补，但不混称外部十 Agent
-已逐阶段推进。
+本地 MCP Team 参考编排已验证 9 个 Worker、20 个 StageTask 的完整故障回滚闭环；既有
+Matrix 证据验证 Orchestrator 派发与 Intake 执行的双 Agent StageTask 桥接。尚未采集的
+完整 Matrix 房间截图会明确标为 `PENDING_EXTERNAL_CAPTURE`，不以本地 harness 冒充。
 
 ## 部署
 
@@ -33,6 +34,8 @@ SOUL 使用 `{{REVGUARD_API_BASE_URL}}`，setup 脚本在临时目录渲染后�
 Worker 容器。
 API key 不能出现在 SOUL、Prompt、聊天或 Trace 中，必须由 AgentTeams Secret/Tool
 Adapter 注入 `Authorization: Bearer ...`。
+
+MCP Host 配置、逐 Worker 进程隔离与证据边界见 [`mcp/README.md`](mcp/README.md)。
 
 ## 协同映射
 
@@ -51,13 +54,12 @@ Adapter 注入 `Authorization: Bearer ...`。
 
 ## 状态机与 Agent 桥接
 
-1. Orchestrator 使用 `dispatcher` Principal 调用
-   `POST /api/v1/cases/{case_id}/agent-tasks`；
+1. Orchestrator 使用可信调度身份创建状态绑定的 Agent StageTask；
 2. 服务端按当前 Case 状态绑定 `skill_name`、唯一 `assigned_actor`、输入和
    `case_version`，返回 `task_id`；
-3. Worker 用自己的 Principal 调 Skill，并携带 `X-RevGuard-Task-ID`；
+3. Worker 通过自身 scoped MCP server 调 Skill，并携带 task/case/message/request ID；
 4. 服务端拒绝错 Worker、错 Skill、输入被改、案件快照过期和已完成任务重放；
-5. Skill 成功后 StageResult 与 `skill_receipt` 自动写入 `agent_tasks` 和 Audit。
+5. Skill 成功后 StageResult 与 `skill_receipt` 原子写入 `agent_tasks` 和 Audit。
 
 聊天中的“已完成”不推进状态；只有服务端 `SUCCEEDED` StageTask 才是可验证完成信号。
 

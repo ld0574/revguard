@@ -10,3 +10,4 @@ ADR 只记录已经进入代码、测试和可运行契约的决策；路线图�
 | [0004](0004-state-machine-allowlist.md) | 状态机白名单 | 已采纳 |
 | [0005](0005-capability-tokens.md) | 能力令牌 | 已采纳 |
 | [0006](0006-skill-registry-source-of-truth.md) | Skill Registry 单一事实源 | 已采纳 |
+| [0007](0007-scoped-mcp-skill-transport.md) | Worker-scoped MCP Skill transport | 已采纳 |
