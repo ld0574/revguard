@@ -50,34 +50,34 @@ const STATUS_ORDER = [
 ];
 
 const AGENT_ROWS = [
-  ["受理 Agent", "revguard-intake", "识别订单与主体", "任务受理"],
-  ["取证 Agent", "revguard-evidence", "只读访问证据", "证据采集与验证"],
-  ["政策 Agent", "revguard-policy", "只读访问政策", "政策回溯与选择"],
-  ["计算 Agent", "revguard-calculation", "只读访问数据", "应有金额计算"],
-  ["风险 Agent", "revguard-risk", "审批路由", "风险判断与限额"],
-  ["执行 Agent", "revguard-executor", "受边界限制写入", "模拟记账（入账）"],
-  ["验证 Agent", "revguard-verifier", "独立只读验证", "独立验证与复核"],
-  ["回滚 Agent", "revguard-executor", "受控冲销", "自动回滚执行"],
+  ["受理智能体", "revguard-intake", "识别订单与主体", "任务受理"],
+  ["取证智能体", "revguard-evidence", "只读访问证据", "证据采集与验证"],
+  ["政策智能体", "revguard-policy", "只读访问政策", "政策回溯与选择"],
+  ["计算智能体", "revguard-calculation", "只读访问数据", "应有金额计算"],
+  ["风险智能体", "revguard-risk", "审批路由", "风险判断与限额"],
+  ["执行智能体", "revguard-executor", "受边界限制写入", "模拟记账（入账）"],
+  ["验证智能体", "revguard-verifier", "独立只读验证", "独立验证与复核"],
+  ["回滚智能体", "revguard-executor", "受控冲销", "自动回滚执行"],
 ];
 
 const SKILL_LABELS = {
-  OrchestratorHandshake: "编排器控制握手",
-  CaseNormalizeSkill: "案件标准化",
-  EntityResolveSkill: "主体与订单解析",
-  EvidenceCollectSkill: "跨系统证据采集",
-  PolicyVersionMatchSkill: "时点政策匹配",
-  CommissionCalculateSkill: "应付佣金复算",
-  DifferenceExplainSkill: "差异归因",
-  RiskClassifySkill: "风险分级",
-  ApprovalRouteSkill: "审批路由",
-  PermissionCheckSkill: "权限与能力校验",
-  IdempotencyGuardSkill: "幂等防重校验",
-  AdjustmentDraftSkill: "调整草案生成",
-  LedgerAdjustSkill: "佣金台账调整",
-  LedgerReverseSkill: "佣金台账冲销",
-  PostActionVerifySkill: "写后独立验证",
-  PostRollbackVerifySkill: "回滚后独立复核",
-  CaseToDatasetSkill: "案例沉淀入库",
+  OrchestratorHandshake: "协同任务编排",
+  CaseNormalizeSkill: "整理案件信息",
+  EntityResolveSkill: "匹配代理商与订单",
+  EvidenceCollectSkill: "收集跨系统证据",
+  PolicyVersionMatchSkill: "匹配业务时点政策",
+  CommissionCalculateSkill: "重新计算应付佣金",
+  DifferenceExplainSkill: "分析佣金差异原因",
+  RiskClassifySkill: "判断案件风险等级",
+  ApprovalRouteSkill: "确定审批流程",
+  PermissionCheckSkill: "检查执行权限",
+  IdempotencyGuardSkill: "防止重复执行",
+  AdjustmentDraftSkill: "生成佣金调整草稿",
+  LedgerAdjustSkill: "更新佣金台账",
+  LedgerReverseSkill: "冲销佣金调整",
+  PostActionVerifySkill: "独立核验调整结果",
+  PostRollbackVerifySkill: "复核回滚结果",
+  CaseToDatasetSkill: "归档案件经验",
 };
 
 const TASK_STATUS_LABELS = {
@@ -217,7 +217,7 @@ function stageValue(snapshot, id) {
       : "待授权",
     verification: verification.actual_amount !== undefined && verification.actual_amount !== null ? `读取 ${money(verification.actual_amount)}` : closedWithoutWrite ? "无需写后验证" : "不同主体复核",
     rollback: reversals.length ? reversals.map((item) => money(item.reversal?.amount)).join("  ") : closedWithoutWrite ? "未触发（无写入）" : "验证失败时触发",
-    postcheck: caseData.status === "ROLLED_BACK" ? "PASSED" : closedWithoutWrite ? "CLOSED（无写入）" : "等待回滚复核",
+    postcheck: caseData.status === "ROLLED_BACK" ? "已通过" : closedWithoutWrite ? "已关闭（无写入）" : "等待回滚复核",
   };
   return values[id];
 }
@@ -234,10 +234,10 @@ function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange }) {
         <span className="brand-name">RevGuard</span><span className="top-divider" />
         <select className="case-select" value={caseId} onChange={(event) => onCaseChange(event.target.value)} disabled={busy} aria-label="选择演示案件">
           {(cases.length ? cases : [{ case_id: caseId }]).map((item) => <option value={item.case_id} key={item.case_id}>{item.case_id} · {item.status || "CREATED"}</option>)}
-        </select><span className="risk-pill">{risk}</span>{mcpTeam && <span className="mcp-pill">MCP LOCAL</span>}{matrixTeam && <span className="mcp-pill matrix-pill"><span />AGENTTEAMS LIVE</span>}
-        <span className="approval-label">Human Approval</span>
+        </select><span className="risk-pill">{risk}</span>{mcpTeam && <span className="mcp-pill">本地 MCP</span>}{matrixTeam && <span className="mcp-pill matrix-pill"><span />AgentTeams 已连接</span>}
+        <span className="approval-label">人工审批</span>
       </div>
-      <div className="disclosure">合成业务数据 · 真实运行链路<span>/ Synthetic business data · Real executable workflow</span></div>
+      <div className="disclosure">合成业务数据 · 真实运行链路</div>
       <div className="top-actions">
         <span className="health-pill"><span className="health-dot" />安全优先模式：已激活</span>
         <button className="icon-button" onClick={onReset} disabled={busy} title="重新准备演示案件">
@@ -263,7 +263,7 @@ function SummaryStrip({ snapshot }) {
     ["预期佣金（正确）", money(expected, currency), "确定性规则内核"],
     ["本次审批金额", money(approvalAmount(snapshot), currency), approval.status || "PENDING"],
     ["最终状态", c.status || "CREATED", "案件终态保留"],
-    ["回滚后状态", c.status === "ROLLED_BACK" ? "PASSED" : "—", c.status === "ROLLED_BACK" ? "恢复安全基线" : "等待验证"],
+    ["回滚后状态", c.status === "ROLLED_BACK" ? "已通过" : "—", c.status === "ROLLED_BACK" ? "恢复安全基线" : "等待验证"],
   ];
   return (
     <section className="summary-strip" aria-label="案件摘要">
@@ -282,7 +282,7 @@ function PrimaryAction({ snapshot, busy, onRun, onApprove, onInspect }) {
   const running = ["QUEUED", "STARTING", "RUNNING"].includes(run.status);
   const currency = snapshot?.case?.claim?.currency || "KES";
   if (status === "CREATED") {
-    return <button className="primary-action" onClick={onRun} disabled={busy || running}>{busy || running ? <SpinnerGap className="spin" weight="bold" /> : <Play weight="fill" />}{running ? `AgentTeams 调度中 ${run.completed_tasks || 0}/${run.total_tasks || 8}` : busy ? "正在启动真实调查链路…" : "启动多 Agent 调查"}</button>;
+    return <button className="primary-action" onClick={onRun} disabled={busy || running}>{busy || running ? <SpinnerGap className="spin" weight="bold" /> : <Play weight="fill" />}{running ? `AgentTeams 调度中 ${run.completed_tasks || 0}/${run.total_tasks || 8}` : busy ? "正在启动真实调查链路…" : "启动多智能体调查"}</button>;
   }
   if (status === "WAITING_FOR_APPROVAL") {
     return <button className="primary-action" onClick={onApprove} disabled={busy}>{busy ? <SpinnerGap className="spin" weight="bold" /> : <UserCheck weight="bold" />}{busy ? "正在执行并独立验证…" : `批准 ${money(approvalAmount(snapshot), currency)}`}</button>;
@@ -327,7 +327,7 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
         <div className="pipeline-note execution-note"><span>模拟记账（入账）</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{item.component}：+{money(item.amount, currency)}</strong>)}<div>合计：+{money(postedTotal, currency)}</div></> : <strong>{closedWithoutWrite ? "风险边界拦截，未发生写入" : "等待受限执行器写入"}</strong>}</div>
         <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span><div>实际读取：{money(verification.actual_amount, currency)}</div><div>差异：{money(verification.variance, currency)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : closedWithoutWrite ? "无需写后验证" : "等待独立验证"}</strong></div>
         <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversalAmounts.length ? <>{reversalAmounts.map((amount, index) => <strong key={`${amount}-${index}`}>组件 {reversalAmounts.length - index}：{money(amount, currency)}</strong>)}<div>合计：{money(reversedTotal, currency)}</div></> : <strong>{closedWithoutWrite ? "未触发（没有财务写入）" : "验证失败时由策略自动触发"}</strong>}</div>
-        <div className="pipeline-note result-note"><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{c.status === "ROLLED_BACK" ? "PASSED" : closedWithoutWrite ? "SAFE CLOSED" : "—"}</b><small>{c.status === "ROLLED_BACK" ? "已恢复至安全基线" : closedWithoutWrite ? "高风险案件仅形成方案，未触碰台账" : "尚未生成终态结论"}</small></div>
+        <div className="pipeline-note result-note"><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{c.status === "ROLLED_BACK" ? "已通过" : closedWithoutWrite ? "安全关闭" : "—"}</b><small>{c.status === "ROLLED_BACK" ? "已恢复至安全基线" : closedWithoutWrite ? "高风险案件仅形成方案，未触碰台账" : "尚未生成终态结论"}</small></div>
       </div>
     </section>
   );
@@ -371,7 +371,7 @@ function CalculationLedger({ snapshot }) {
           return <tr key={item.component}><td>{item.component}</td><td>{component.formula || "规则引擎"}</td><td>{base}</td><td>{ratio}</td><td>{component.substituted || "确定性复算"}</td><td>{Number(item.expected).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td><td>{Number(item.posted).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td><td className="negative-cell">{Number(item.delta).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td></tr>;
         })}{!diffs.length && <tr><td colSpan="8" className="table-empty">等待调查完成后生成逐组件确定性复算账本</td></tr>}
       </tbody></table></div>
-      <div className="ledger-total"><span>Expected {money(rca.total_expected, currency)}</span><span>Posted {money(rca.total_posted, currency)}</span><strong>Difference {money(rca.total_delta, currency)}</strong></div>
+      <div className="ledger-total"><span>应有 {money(rca.total_expected, currency)}</span><span>已记 {money(rca.total_posted, currency)}</span><strong>差额 {money(rca.total_delta, currency)}</strong></div>
     </section>
   );
 }
@@ -388,7 +388,7 @@ function PolicyTimeline({ snapshot }) {
     <section className="detail-section policy-section">
       <div className="section-title"><GitBranch weight="duotone" /><strong>政策时间线</strong><span>{selectedVersion ? `（排除 ${excludedVersions.join("、") || "无"}，选择 ${selectedVersion}）` : "（等待时点政策匹配）"}</span></div>
       <div className="policy-line">{(versions.length ? versions : ["待判定"]).map((version) => <div className={`policy-point ${version === selectedVersion ? "selected" : ""}`} key={version}><strong>{version}</strong><span /><small>{version === selectedVersion ? `已选中（业务日期 ${decision.decision_date || "—"}）` : selectedVersion ? "未选中" : "待判定"}</small></div>)}</div>
-      <div className={`policy-selected ${selectedVersion ? "" : "policy-pending"}`}>{selectedVersion ? <CheckCircle weight="fill" /> : <Clock weight="fill" />}<div>{selectedVersion ? <><strong>{decision.policy_id}　|　{decision.policy_version}　|　{tier || "时点等级"}</strong><p>{clauses.slice(0, 2).map((item) => item.text).join("；") || "已按业务时点选择有效规则集。"}</p><small>引用条款：{clauses.map((item) => item.clause_id).join("、") || "规则集版本已绑定"}</small></> : <><strong>等待 Policy Agent 读取订单时点并回溯政策版本</strong><p>运行后展示被排除版本、最终适用版本与条款级引用。</p></>}</div></div>
+      <div className={`policy-selected ${selectedVersion ? "" : "policy-pending"}`}>{selectedVersion ? <CheckCircle weight="fill" /> : <Clock weight="fill" />}<div>{selectedVersion ? <><strong>{decision.policy_id}　|　{decision.policy_version}　|　{tier || "时点等级"}</strong><p>{clauses.slice(0, 2).map((item) => item.text).join("；") || "已按业务时点选择有效规则集。"}</p><small>引用条款：{clauses.map((item) => item.clause_id).join("、") || "规则集版本已绑定"}</small></> : <><strong>等待政策智能体读取订单时点并回溯政策版本</strong><p>运行后展示被排除版本、最终适用版本与条款级引用。</p></>}</div></div>
     </section>
   );
 }
@@ -405,11 +405,11 @@ function AgentMatrix({ snapshot }) {
   const runStatus = run.status || "QUEUED";
   return (
     <section className="detail-section agent-section">
-      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同任务账本</strong><span>{tasks.length ? `${isMatrix ? "AgentTeams Matrix" : "本地 MCP"} · ${succeeded}/${tasks.length} 轮任务 · ${workerCount} 个 Worker` : "责任与能力边界"}</span></div>
-      {isMatrix && <div className={`team-runtime team-runtime-${runStatus.toLowerCase()}`}><div><span className="runtime-live-dot" /><strong title={runStatus}>{RUN_STATUS_LABELS[runStatus] || runStatus}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前 Agent</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前阶段</span><strong title={run.current_stage || ""}>{skillLabel(run.current_stage)}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
+      <div className="section-title"><UsersThree weight="duotone" /><strong>多智能体协同任务账本</strong><span>{tasks.length ? `${isMatrix ? "AgentTeams Matrix" : "本地 MCP"} · ${succeeded}/${tasks.length} 轮任务 · ${workerCount} 个执行者` : "责任与能力边界"}</span></div>
+      {isMatrix && <div className={`team-runtime team-runtime-${runStatus.toLowerCase()}`}><div><span className="runtime-live-dot" /><strong title={runStatus}>{RUN_STATUS_LABELS[runStatus] || runStatus}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前执行者</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前阶段</span><strong title={run.current_stage || ""}>{skillLabel(run.current_stage)}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
       <div className="agent-task-ledger">
         {orchestrator && <details className="agent-task-card orchestrator-card" open>
-          <summary><span className="task-seq">控制</span><div><strong title="Orchestrator Control Handshake">编排器控制握手</strong><code>revguard-orchestrator</code></div><span className="transport-cell">MATRIX</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
+          <summary><span className="task-seq">编排</span><div><strong title="OrchestratorHandshake">协同任务编排</strong><code>revguard-orchestrator</code></div><span className="transport-cell">MATRIX</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
           <div className="task-evidence-grid"><div><span>控制输入</span><pre>{JSON.stringify(orchestrator.input || {}, null, 2)}</pre></div><div><span>控制输出</span><pre>{JSON.stringify(orchestrator.output || { status: "WAITING" }, null, 2)}</pre></div></div>
           <div className="correlation-strip"><code>dispatch {shortId(orchestrator.dispatch_event_id, 30)}</code><code>trigger {shortId(orchestrator.trigger_event_id, 30)}</code><code>response {shortId(orchestrator.response_event_id, 30)}</code></div>
         </details>}
@@ -417,12 +417,12 @@ function AgentMatrix({ snapshot }) {
           const span = traceSpans.find((item) => item.inputs?.correlation?.agent_task_id === task.task_id || item.outputs?.agent_task_id === task.task_id || item.inputs?.task_id === task.task_id);
           return <details className="agent-task-card" key={task.task_id} open={reverseIndex === 0}>
             <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong title={task.skill_name}>{skillLabel(task.skill_name)}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.transport === "agentteams-matrix" ? "MATRIX" : task.transport === "mcp" ? "MCP" : (task.transport || "—").toUpperCase()}</span><span className={`task-status task-${task.status.toLowerCase()}`}>{TASK_STATUS_LABELS[task.status] || task.status} · 第 {task.attempt} 次</span></summary>
-            <div className="task-evidence-grid"><div><span>Agent 输入 · 不可变</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>Agent 输出 · 阶段结果</span><pre>{JSON.stringify(task.result || task.error || { status: task.status }, null, 2)}</pre></div></div>
+            <div className="task-evidence-grid"><div><span>任务输入 · 不可变</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>任务输出 · 阶段结果</span><pre>{JSON.stringify(task.result || task.error || { status: task.status }, null, 2)}</pre></div></div>
             <div className="correlation-strip"><code>task {shortId(task.task_id, 28)}</code><code>request {shortId(task.request_id, 28)}</code><code>room {shortId(task.matrix_room_id, 28)}</code><code>message {shortId(task.agentteams_message_id, 28)}</code><code>receipt {shortId(task.skill_receipt, 28)}</code><code>trace {shortId(span?.span_id, 28)}</code></div>
           </details>;
         }) : <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>}
       </div>
-      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "输入、输出、Task、Request、Transport Message、Receipt 与 Trace 逐项关联；只有持久化 StageResult 能推进状态。" : "Executor 与 Verifier 为不同主体；验证结果不能由执行者自证。"}</p>
+      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "输入、输出、任务、请求、传输消息、回执与追踪标识逐项关联；只有持久化的阶段结果才能推进状态。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
     </section>
   );
 }
@@ -456,7 +456,7 @@ function TraceView({ snapshot }) {
     return `${value} ms`;
   };
   return (
-    <div className="trace-grid"><section className="detail-section trace-section"><div className="section-title"><Gauge weight="duotone" /><strong>本次运行 Trace 实际耗时</strong><span>AGENT = Matrix / Worker 端到端；SKILL / TOOL = API 进程内执行</span></div><div className="span-list">{shown.map((span) => <div className={`span-row span-${span.status?.toLowerCase()}`} key={span.span_id}><span className="span-kind">{span.kind}</span><strong>{span.name}</strong><code>{span.actor || "system"}</code><span>{duration(span.duration_ms)}</span><span>{span.status}</span></div>)}{!shown.length && <div className="empty-state"><Play weight="duotone" />启动调查后显示真实 Agent / Skill / Tool spans。</div>}</div></section><AuditTrail snapshot={snapshot} full /></div>
+    <div className="trace-grid"><section className="detail-section trace-section"><div className="section-title"><Gauge weight="duotone" /><strong>本次运行追踪耗时</strong><span>AGENT 类型记录 Matrix 与执行者的端到端耗时；SKILL / TOOL 类型记录 API 进程内耗时</span></div><div className="span-list">{shown.map((span) => <div className={`span-row span-${span.status?.toLowerCase()}`} key={span.span_id}><span className="span-kind">{span.kind}</span><strong>{span.name}</strong><code>{span.actor || "system"}</code><span>{duration(span.duration_ms)}</span><span>{span.status}</span></div>)}{!shown.length && <div className="empty-state"><Play weight="duotone" />启动调查后显示真实的智能体、技能和工具调用记录。</div>}</div></section><AuditTrail snapshot={snapshot} full /></div>
   );
 }
 
@@ -466,11 +466,11 @@ function Permissions({ snapshot }) {
   const quotas = approval.component_quota || {};
   const currency = approval.currency || c.claim?.currency || "KES";
   const quotaRows = Object.entries(quotas).map(([component, amount]) => [component, money(amount, currency)]);
-  const rows = [["案件绑定", c.case_id || "—"], ["币种", currency], ["Gross 上限", money(approvalAmount(snapshot), currency)], ...quotaRows, ["令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || c.risk_decision?.approver_role || "等待风险判断"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
+  const rows = [["案件绑定", c.case_id || "—"], ["币种", currency], ["总额度上限", money(approvalAmount(snapshot), currency)], ...quotaRows, ["令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || c.risk_decision?.approver_role || "等待风险判断"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
   return (
     <div className="permissions-grid">
       <section className="detail-section permission-card"><div className="section-title"><LockKey weight="duotone" /><strong>审批与能力边界</strong></div><div className="permission-list">{rows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></section>
-      <section className="detail-section permission-card"><div className="section-title"><ShieldWarning weight="duotone" /><strong>四重约束</strong></div><div className="constraint-list"><div><span>01</span><strong>任务不漂移</strong><small>状态、Skill、Worker、输入快照与案件版本绑定</small></div><div><span>02</span><strong>审批不自签</strong><small>Finance Lead Principal 独立批准，Executor 无审批权限</small></div><div><span>03</span><strong>额度不外溢</strong><small>Gross 与逐组件额度同时约束，幂等防重复写入</small></div><div><span>04</span><strong>权限不升级</strong><small>服务端 Principal、角色、scope 与 Skill actor 白名单</small></div></div></section>
+      <section className="detail-section permission-card"><div className="section-title"><ShieldWarning weight="duotone" /><strong>四重约束</strong></div><div className="constraint-list"><div><span>01</span><strong>任务不漂移</strong><small>状态、技能、执行者、输入快照与案件版本绑定</small></div><div><span>02</span><strong>审批不自签</strong><small>财务负责人独立批准，执行智能体没有审批权限</small></div><div><span>03</span><strong>额度不外溢</strong><small>总额度与逐组件额度同时约束，防止重复写入</small></div><div><span>04</span><strong>权限不升级</strong><small>服务端身份、角色、权限范围与技能执行者白名单共同约束</small></div></div></section>
       <section className="detail-section permission-card"><div className="section-title"><Fingerprint weight="duotone" /><strong>安全探针</strong></div><div className="probe-list">{["伪造令牌", "过期令牌", "跨案件调用", "组件额度滥用", "并发双写", "回滚令牌重放"].map((item) => <div key={item}><CheckCircle weight="fill" /><span>{item}</span><strong>已拒绝</strong></div>)}</div></section>
     </div>
   );
@@ -491,7 +491,7 @@ function EngineeringEvidence({ evidence }) {
     ["审计链", runtime.audit_chain?.enforced ? (runtime.audit_chain.valid ? "VALID" : "BROKEN") : "DEMO ONLY", runtime.audit_chain?.enforced ? `${runtime.audit_chain.rows_checked || 0} 条已校验` : "PolarDB 模式由 DB trigger 强制"],
     ["Trace 错误", String(runtime.trace_error_spans_total ?? 0), `${runtime.trace_spans_total || 0} spans 已持久化`],
     ["StageResult", String(runtime.agent_task_attempts_total ?? 0), "Task 终态与 Result 同事务"],
-    ["MCP Team 排练", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} Workers · ${rehearsal.outcome?.skill_count || 0} Skills`],
+    ["MCP 协同排练", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} 个执行者 · ${rehearsal.outcome?.skill_count || 0} 项技能`],
     ["合成数据校验", synthetic.validation_status || "等待生成", `${synthetic.record_counts?.orders || 0} orders · ${synthetic.record_counts?.golden_cases || 0} cases`],
     ["本地 PostgreSQL", postgres.checks?.audit_chain_valid ? "PASSED" : "PENDING", postgres.classification ? "PG 18.6 兼容验证；非云验收" : "等待本地验证"],
     ["确定性评测", `${evaluation.passed || 0}/${evaluation.total_scenarios || 0}`, `通过率 ${Number(evaluation.pass_rate || 0) * 100}%`],
@@ -543,7 +543,7 @@ function BusinessValueSimulator({ evidence }) {
   const recoveryAfter = Number(metrics.recovery_cost_after || 0);
   const recoveryReduction = Number(metrics.recovery_cost_reduction_rate || 0);
   const comparisons = [
-    ["单案处理时长", `${manualMinutes} min`, `${assistedMinutes} min`, assistedMinutes / Math.max(manualMinutes, 1)],
+    ["单案处理时长", `${manualMinutes} 分钟`, `${assistedMinutes} 分钟`, assistedMinutes / Math.max(manualMinutes, 1)],
     ["错付样本率", percent(metrics.wrong_payment_rate_before), percent(metrics.wrong_payment_rate_after), Number(metrics.wrong_payment_rate_after || 0) / Math.max(Number(metrics.wrong_payment_rate_before || 0), 0.01)],
     ["追回成本指数", recoveryBefore.toLocaleString(), recoveryAfter.toLocaleString(), recoveryAfter / Math.max(recoveryBefore, 1)],
   ];
@@ -551,7 +551,7 @@ function BusinessValueSimulator({ evidence }) {
     <div className="value-simulator">
       <section className="detail-section value-hero">
         <div className="value-hero-copy">
-          <span className="value-eyebrow">SYNTHETIC VALUE SCENARIO</span>
+          <span className="value-eyebrow">合成数据价值情景</span>
           <h2>企业价值模拟器</h2>
           <p>把 8 个合成案件的可复算基线，与企业自行输入的业务量和人工成本组合，回答“可能释放多少工时、形成多少预算空间”。</p>
         </div>
@@ -565,20 +565,20 @@ function BusinessValueSimulator({ evidence }) {
       <section className="value-kpi-grid" aria-label="模拟价值关键指标">
         <article><span>处理时长下降</span><strong>{percent(timeReduction)}</strong><small>{manualMinutes} → {assistedMinutes} 分钟/案</small></article>
         <article><span>同等工时理论吞吐</span><strong>{throughput ? `${throughput.toFixed(2)}×` : "—"}</strong><small>基于合成样本中位数</small></article>
-        <article><span>每月释放处理工时</span><strong>{monthlyHours.toLocaleString("zh-CN", { maximumFractionDigits: 0 })} h</strong><small>约 {fteEquivalent.toFixed(1)} 个 FTE 月产能</small></article>
+        <article><span>每月释放处理工时</span><strong>{monthlyHours.toLocaleString("zh-CN", { maximumFractionDigits: 0 })} 小时</strong><small>约 {fteEquivalent.toFixed(1)} 个全职人员月产能</small></article>
         <article className="value-kpi-accent"><span>模拟人工经费空间</span><strong>{cny(monthlyLaborValue)}<em>/月</em></strong><small>{cny(annualLaborValue)}/年 · 非现金承诺</small></article>
       </section>
 
       <div className="value-detail-grid">
         <section className="detail-section comparison-section">
-          <div className="section-title"><Gauge weight="duotone" /><strong>合成样本前后对照</strong><span>n={value.case_count || 0}</span></div>
+          <div className="section-title"><Gauge weight="duotone" /><strong>合成样本前后对照</strong><span>样本数 {value.case_count || 0}</span></div>
           <div className="comparison-list">{comparisons.map(([label, before, after, ratio]) => <div className="comparison-row" key={label}><div><strong>{label}</strong><small>人工基线 {before}　→　RevGuard {after}</small></div><div className="comparison-track"><span className="before-bar" /><span className="after-bar" style={{ width: `${Math.max(Math.min(ratio * 100, 100), after === "0.0%" ? 0 : 2)}%` }} /></div></div>)}</div>
           <div className="sample-outcomes"><div><span>追回成本下降</span><strong>{percent(recoveryReduction)}</strong></div><div><span>审计异常样本</span><strong>{percent(metrics.audit_exception_rate_before)} → {percent(metrics.audit_exception_rate_after)}</strong></div><div><span>错付样本</span><strong>{percent(metrics.wrong_payment_rate_before)} → {percent(metrics.wrong_payment_rate_after)}</strong></div></div>
         </section>
         <section className="detail-section methodology-section">
           <div className="section-title"><Calculator weight="duotone" /><strong>计算口径与边界</strong><span>每个数字可复算</span></div>
           <div className="formula-callout"><span>月度人工经费空间</span><strong>{savedPerCase} 分钟 × {monthlyCases.toLocaleString()} 案 ÷ 60 × {cny(hourlyCost)}/小时</strong><b>= {cny(monthlyLaborValue)}</b></div>
-          <div className="methodology-list"><div><span>数据分类</span><strong>{value.data_classifications?.join(", ") || "等待 API"}</strong></div><div><span>生产收益声明</span><strong>{value.production_claim_allowed ? "ALLOWED" : "NOT ALLOWED"}</strong></div><div><span>样本来源</span><strong>GOLDEN-001～008 合成案件</strong></div><div><span>企业接入后</span><strong>替换 CSV 基线即可复算</strong></div></div>
+          <div className="methodology-list"><div><span>数据分类</span><strong>{value.data_classifications?.join(", ") || "等待接口数据"}</strong></div><div><span>生产收益声明</span><strong>{value.production_claim_allowed ? "允许" : "不允许"}</strong></div><div><span>样本来源</span><strong>GOLDEN-001～008 合成案件</strong></div><div><span>企业接入后</span><strong>替换 CSV 基线即可复算</strong></div></div>
           <div className="claim-boundary"><WarningCircle weight="fill" /><span>{contract.claim_boundary || value.guardrail || "当前结果仅用于指标方法验证。"}</span></div>
         </section>
       </div>
@@ -593,9 +593,9 @@ function SafetyRail({ snapshot, onExport }) {
   const currency = approval.currency || c.claim?.currency || "KES";
   const rolledBack = c.status === "ROLLED_BACK";
   return (
-    <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">回滚后验证结果</span><strong className={`rail-state ${rolledBack ? "passed-state" : ""}`}>{rolledBack ? "PASSED" : "WAITING"}</strong><span className="rail-label">安全基线（恢复后）</span><b>{money(c.claim?.actual_amount, currency)}</b><small>与该案件原始过账一致</small></section>
-      <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["Case Bound", c.case_id || "—"], ["币种", currency], ["Gross", money(approvalAmount(snapshot), currency)], ...Object.entries(quotas).map(([component, amount]) => [component, money(amount, currency)]), ["令牌有效期", "15 分钟"], ["策略范围", c.policy_decision?.policy_version || "待匹配"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
-      <section className="rail-section export-section"><span className="rail-label">导出证据包</span><button onClick={onExport} disabled={!snapshot?.report_available}><DownloadSimple weight="bold" />导出摘要报告</button><small>完整证据包包含 Trace、Audit、Report 与校验清单。</small></section></aside>
+    <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">回滚后验证结果</span><strong className={`rail-state ${rolledBack ? "passed-state" : ""}`}>{rolledBack ? "已通过" : "等待验证"}</strong><span className="rail-label">安全基线（恢复后）</span><b>{money(c.claim?.actual_amount, currency)}</b><small>与该案件原始过账一致</small></section>
+      <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["绑定案件", c.case_id || "—"], ["币种", currency], ["总额度", money(approvalAmount(snapshot), currency)], ...Object.entries(quotas).map(([component, amount]) => [component, money(amount, currency)]), ["令牌有效期", "15 分钟"], ["策略范围", c.policy_decision?.policy_version || "待匹配"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
+      <section className="rail-section export-section"><span className="rail-label">导出证据包</span><button onClick={onExport} disabled={!snapshot?.report_available}><DownloadSimple weight="bold" />导出摘要报告</button><small>完整证据包包含追踪记录、审计日志、报告与校验清单。</small></section></aside>
   );
 }
 
@@ -653,8 +653,8 @@ export function App() {
     await api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" });
     await loadCases();
   });
-  const onRun = () => perform("多 Agent 调查已启动，真实 Worker 输入输出将写入任务账本", () => api(`/api/v1/cases/${caseId}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": `REQ-WEBUI-${caseId}-RUN` } }));
-  const onApprove = () => perform("人工审批已记录，Executor 与独立 Verifier 正在后台运行", () => api(`/api/v1/cases/${caseId}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境按当前风险边界处理。" }) }));
+  const onRun = () => perform("多智能体调查已启动，真实执行者的输入输出将写入任务账本", () => api(`/api/v1/cases/${caseId}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": `REQ-WEBUI-${caseId}-RUN` } }));
+  const onApprove = () => perform("人工审批已记录，执行智能体与独立验证智能体正在后台运行", () => api(`/api/v1/cases/${caseId}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境按当前风险边界处理。" }) }));
   const onInspect = () => { setTab("audit"); window.setTimeout(() => document.getElementById("rollback-evidence")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   const onExport = async () => {
     try {
@@ -672,7 +672,7 @@ export function App() {
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
-      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-29</span></footer>
+      </main><footer><span>RevGuard 财务智能体治理</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />北京时间 · 2026-08-29</span></footer>
     </div>
   );
 }
