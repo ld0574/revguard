@@ -92,6 +92,8 @@ main { padding: 10px; }
 .rollback-note { border-color: #77400f; }
 .result-note { border-color: #17603f; background: #071c18; }
 .result-note b { color: var(--green); font-size: 17px; }
+.result-note.is-failed { border-color: #8e2430; background: #190e17; }
+.result-note.is-failed > span, .result-note.is-failed b { color: var(--red); }
 .primary-action { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 31px; padding: 6px 7px; border: 1px solid #ff9e3d; border-radius: 5px; background: var(--orange); color: #171008; font-size: 10px; font-weight: 790; cursor: pointer; white-space: nowrap; }
 .primary-action:hover { background: #ffa64c; }
 .primary-action:disabled { opacity: .66; cursor: wait; }
@@ -164,6 +166,7 @@ tbody tr:hover { background: #0a1e2f; }
 .agent-task-card { border-bottom: 1px solid #12324a; background: #081725; }
 .agent-task-card[open] { margin: 5px 0; border: 1px solid #18506f; border-radius: 5px; background: #071927; box-shadow: inset 2px 0 0 #159ac0; }
 .agent-task-card.orchestrator-card[open] { border-color: #35647a; box-shadow: inset 2px 0 0 var(--orange); }
+.agent-task-card.failed-task-card[open] { border-color: #8e2430; box-shadow: inset 2px 0 0 var(--red); }
 .agent-task-card summary { min-height: 31px; display: grid; grid-template-columns: 28px minmax(120px, 1fr) 46px 108px; align-items: center; gap: 7px; padding: 4px 7px; cursor: pointer; list-style: none; }
 .agent-task-card summary::-webkit-details-marker { display: none; }
 .agent-task-card summary::after { content: "+"; position: absolute; right: 5px; color: #527b94; }
@@ -177,6 +180,11 @@ tbody tr:hover { background: #0a1e2f; }
 .task-evidence-grid > div { min-width: 0; border: 1px solid #153a52; border-radius: 4px; background: #06131f; overflow: hidden; }
 .task-evidence-grid span { display: block; padding: 5px 6px; color: #4fb3d3; border-bottom: 1px solid #153a52; font-size: 7px; font-weight: 750; letter-spacing: .06em; }
 .task-evidence-grid pre { max-height: 150px; margin: 0; padding: 7px; overflow: auto; color: #9fb9c9; font: 7px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }
+.task-failure-reason { margin: 0 7px 7px 42px; padding: 7px 8px; display: flex; align-items: flex-start; gap: 7px; color: var(--red); border: 1px solid #762630; border-radius: 4px; background: #241018; }
+.task-failure-reason svg { flex: 0 0 14px; }
+.task-failure-reason strong, .task-failure-reason small { display: block; }
+.task-failure-reason strong { font-size: 8px; }
+.task-failure-reason small { margin-top: 3px; color: #e59ba2; font-size: 7px; line-height: 1.4; }
 .correlation-strip { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 7px 7px 42px; }
 .correlation-strip code { padding: 3px 5px; border: 1px solid #163c53; border-radius: 3px; color: #648ba4; background: #07131d; font-size: 6px; }
 .boundary-note { display: flex; align-items: center; gap: 6px; margin: 7px; padding: 6px; color: #7fa1b7; font-size: 8px; border: 1px solid #17425d; border-radius: 4px; }
@@ -302,6 +310,12 @@ tbody tr:hover { background: #0a1e2f; }
 
 .system-banner { position: fixed; top: 66px; left: 50%; transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 6px; font-size: 11px; box-shadow: 0 10px 30px #0008; }
 .error-banner { color: #ffd8dc; background: #41151d; border: 1px solid var(--red); }
+.run-failure-banner { width: min(780px, calc(100vw - 24px)); align-items: flex-start; color: #ffd8dc; background: #41151df5; border: 1px solid var(--red); }
+.run-failure-banner > svg { flex: 0 0 18px; }
+.run-failure-banner > div { min-width: 0; flex: 1; }
+.run-failure-banner strong, .run-failure-banner small { display: block; }
+.run-failure-banner small { margin-top: 3px; color: #efadb3; font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
+.run-failure-banner button { flex: 0 0 auto; padding: 4px 7px; }
 .notice-banner { color: #d9ffea; background: #0b3a29; border: 1px solid var(--green); }
 .system-banner button { color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 4px; cursor: pointer; }
 footer { min-height: 31px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #617e93; border-top: 1px solid var(--line); font-size: 8px; }

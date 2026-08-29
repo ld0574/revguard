@@ -169,8 +169,16 @@ class TestApiSmoke(unittest.TestCase):
 
         resp = self.client.get(f"/api/v1/cases/{self.case_id}/report", headers=self.viewer)
         self.assertEqual(resp.status_code, 200)
-        self.assertIn(self.case_id, resp.json()["markdown"])
-        self.assertNotIn(approval_token, resp.json()["markdown"])
+        markdown = resp.json()["markdown"]
+        self.assertIn(self.case_id, markdown)
+        self.assertIn("证据链", markdown)
+        self.assertIn("独立验证（重新查询，非执行主体自证）", markdown)
+        self.assertIn("调用链与审计摘要", markdown)
+        self.assertNotIn("Evidence Package", markdown)
+        self.assertNotIn("Policy Time Travel", markdown)
+        self.assertNotIn("CRM_MOCK", markdown)
+        self.assertNotIn("FINANCE_MOCK", markdown)
+        self.assertNotIn(approval_token, markdown)
 
     def test_06a_dashboard_projection_is_complete_and_sanitized(self):
         resp = self.client.get(

@@ -529,7 +529,12 @@ class MatrixTeamRunner(McpTeamRunner):
                 "--input", json.dumps(
                     skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
                 ),
-                "--message-id", dispatch_event_id,
+                # Matrix event ids are untrusted random text.  Passing them raw
+                # through a Worker shell command can accidentally match CoPaw's
+                # command guard (for example an id ending in "-SU").  Hex keeps
+                # the argument shell/tool-guard safe; the adapter restores the
+                # exact event id before sending the correlation header.
+                "--message-id-hex", dispatch_event_id.encode("utf-8").hex(),
                 "--request-id", request_id,
             ])
         )

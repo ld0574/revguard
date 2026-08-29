@@ -78,6 +78,22 @@ class TestAgentTeamsAdapter(unittest.TestCase):
         self.assertTrue(request.full_url.endswith("/skills/EvidenceCollectSkill/invoke"))
         self.assertEqual(request.headers["X-revguard-task-id"], "TASK-1")
 
+    def test_hex_message_id_restores_exact_matrix_correlation(self):
+        matrix_event_id = "$event-with-random-SU"
+        with tempfile.TemporaryDirectory() as tmp:
+            secret = Path(tmp) / "key"
+            secret.write_text("adapter-test-key", encoding="utf-8")
+            with patch.object(adapter, "_credential_path", return_value=secret), \
+                    patch.object(adapter.urllib.request, "urlopen", return_value=_Response()) as call:
+                code, _result = self._run([
+                    "--skill", "EvidenceCollectSkill", "--task-id", "TASK-1",
+                    "--case-id", "CASE-1", "--input", "{}",
+                    "--message-id-hex", matrix_event_id.encode("utf-8").hex(),
+                ], worker="revguard-evidence")
+        self.assertEqual(code, 0)
+        request = call.call_args.args[0]
+        self.assertEqual(request.headers["X-agentteams-message-id"], matrix_event_id)
+
 
 if __name__ == "__main__":
     unittest.main()

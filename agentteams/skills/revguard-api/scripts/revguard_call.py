@@ -44,10 +44,22 @@ def main() -> int:
     action.add_argument("--dispatch-skill")
     parser.add_argument("--case-id", required=True)
     parser.add_argument("--input", required=True)
-    parser.add_argument("--message-id", required=True)
+    message = parser.add_mutually_exclusive_group(required=True)
+    message.add_argument("--message-id")
+    message.add_argument("--message-id-hex")
     parser.add_argument("--request-id")
     parser.add_argument("--task-id")
     args = parser.parse_args()
+
+    try:
+        message_id = (
+            bytes.fromhex(args.message_id_hex).decode("utf-8")
+            if args.message_id_hex else args.message_id
+        )
+    except (ValueError, UnicodeDecodeError):
+        print(json.dumps({"success": False, "error": {"type": "INVALID_PARAMS",
+                         "message": "message-id-hex must encode UTF-8"}}))
+        return 2
 
     try:
         skill_input = json.loads(args.input)
@@ -98,7 +110,7 @@ def main() -> int:
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "X-AgentTeams-Message-ID": args.message_id,
+        "X-AgentTeams-Message-ID": message_id,
         "X-Request-ID": request_id,
     }
     if args.task_id:
