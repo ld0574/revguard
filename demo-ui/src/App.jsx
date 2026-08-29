@@ -168,12 +168,13 @@ function stageValue(snapshot, id) {
 function Header({ snapshot, busy, onReset }) {
   const status = snapshot?.case?.status || "CONNECTING";
   const mcpTeam = snapshot?.case?.execution_mode === "MCP_TEAM";
+  const matrixTeam = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
   return (
     <header className="topbar">
       <div className="brand-group">
         <ShieldCheck className="brand-mark" weight="duotone" aria-hidden="true" />
         <span className="brand-name">RevGuard</span><span className="top-divider" />
-        <span className="case-id">{CASE_ID}</span><span className="risk-pill">L2</span>{mcpTeam && <span className="mcp-pill">MCP TEAM</span>}
+        <span className="case-id">{CASE_ID}</span><span className="risk-pill">L2</span>{mcpTeam && <span className="mcp-pill">MCP LOCAL</span>}{matrixTeam && <span className="mcp-pill matrix-pill"><span />AGENTTEAMS LIVE</span>}
         <span className="approval-label">Human Approval</span>
       </div>
       <div className="disclosure">合成业务数据 · 真实运行链路<span>/ Synthetic business data · Real executable workflow</span></div>
@@ -216,8 +217,10 @@ function SummaryStrip({ snapshot }) {
 
 function PrimaryAction({ snapshot, busy, onRun, onApprove, onInspect }) {
   const status = snapshot?.case?.status || "CREATED";
+  const run = snapshot?.case?.team_run || {};
+  const running = ["QUEUED", "STARTING", "RUNNING"].includes(run.status);
   if (status === "CREATED") {
-    return <button className="primary-action" onClick={onRun} disabled={busy}>{busy ? <SpinnerGap className="spin" weight="bold" /> : <Play weight="fill" />}{busy ? "正在运行真实调查链路…" : "启动多 Agent 调查"}</button>;
+    return <button className="primary-action" onClick={onRun} disabled={busy || running}>{busy || running ? <SpinnerGap className="spin" weight="bold" /> : <Play weight="fill" />}{running ? `AgentTeams 调度中 ${run.completed_tasks || 0}/${run.total_tasks || 8}` : busy ? "正在启动真实调查链路…" : "启动多 Agent 调查"}</button>;
   }
   if (status === "WAITING_FOR_APPROVAL") {
     return <button className="primary-action" onClick={onApprove} disabled={busy}>{busy ? <SpinnerGap className="spin" weight="bold" /> : <UserCheck weight="bold" />}{busy ? "正在执行并独立验证…" : "批准并执行 14,400 KES"}</button>;
@@ -315,14 +318,33 @@ function PolicyTimeline({ snapshot }) {
 
 function AgentMatrix({ snapshot }) {
   const tasks = snapshot?.agent_tasks || [];
-  const visible = tasks.slice(-8);
+  const visible = tasks.slice().reverse();
   const workerCount = new Set(tasks.map((item) => item.assigned_actor)).size;
   const succeeded = tasks.filter((item) => item.status === "SUCCEEDED").length;
+  const run = snapshot?.case?.team_run || {};
+  const orchestrator = run.orchestrator;
+  const isMatrix = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
+  const traceSpans = snapshot?.trace?.spans || [];
   return (
     <section className="detail-section agent-section">
-      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同链路</strong><span>{tasks.length ? `MCP StageTask ${succeeded}/${tasks.length} · ${workerCount} Workers` : "责任与能力边界"}</span></div>
-      <div className="compact-table">{visible.length ? visible.map((task) => <div className="compact-row task-row" key={task.task_id}><strong>{task.skill_name.replace("Skill", "")}</strong><code>{task.assigned_actor}</code><span className="transport-cell">MCP</span><span className={`task-status task-${task.status.toLowerCase()}`}>{task.status} · attempt {task.attempt}</span></div>) : AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>
-      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "每项结果均绑定 Case Version、Worker、Skill 与输入快照；聊天文本不能推进状态。" : "Executor 与 Verifier 为不同主体；验证结果不能由执行者自证。"}</p>
+      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同任务账本</strong><span>{tasks.length ? `${isMatrix ? "AgentTeams Matrix" : "MCP Local"} · ${succeeded}/${tasks.length} StageTasks · ${workerCount} Workers` : "责任与能力边界"}</span></div>
+      {isMatrix && <div className={`team-runtime team-runtime-${(run.status || "queued").toLowerCase()}`}><div><span className="runtime-live-dot" /><strong>{run.status || "QUEUED"}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前 Agent</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前 Stage</span><strong>{run.current_stage || "等待下一状态"}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
+      <div className="agent-task-ledger">
+        {orchestrator && <details className="agent-task-card orchestrator-card" open>
+          <summary><span className="task-seq">CTL</span><div><strong>Orchestrator Control Handshake</strong><code>revguard-orchestrator</code></div><span className="transport-cell">MATRIX</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{orchestrator.status}</span></summary>
+          <div className="task-evidence-grid"><div><span>CONTROL INPUT</span><pre>{JSON.stringify(orchestrator.input || {}, null, 2)}</pre></div><div><span>CONTROL OUTPUT</span><pre>{JSON.stringify(orchestrator.output || { status: "WAITING" }, null, 2)}</pre></div></div>
+          <div className="correlation-strip"><code>dispatch {shortId(orchestrator.dispatch_event_id, 30)}</code><code>trigger {shortId(orchestrator.trigger_event_id, 30)}</code><code>response {shortId(orchestrator.response_event_id, 30)}</code></div>
+        </details>}
+        {visible.length ? visible.map((task, reverseIndex) => {
+          const span = traceSpans.find((item) => item.inputs?.correlation?.agent_task_id === task.task_id || item.outputs?.agent_task_id === task.task_id || item.inputs?.task_id === task.task_id);
+          return <details className="agent-task-card" key={task.task_id} open={reverseIndex === 0}>
+            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong>{task.skill_name.replace("Skill", "")}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.transport === "agentteams-matrix" ? "MATRIX" : task.transport === "mcp" ? "MCP" : (task.transport || "—").toUpperCase()}</span><span className={`task-status task-${task.status.toLowerCase()}`}>{task.status} · {task.attempt}</span></summary>
+            <div className="task-evidence-grid"><div><span>AGENT INPUT · IMMUTABLE</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>AGENT OUTPUT · STAGE RESULT</span><pre>{JSON.stringify(task.result || task.error || { status: task.status }, null, 2)}</pre></div></div>
+            <div className="correlation-strip"><code>task {shortId(task.task_id, 28)}</code><code>request {shortId(task.request_id, 28)}</code><code>room {shortId(task.matrix_room_id, 28)}</code><code>message {shortId(task.agentteams_message_id, 28)}</code><code>receipt {shortId(task.skill_receipt, 28)}</code><code>trace {shortId(span?.span_id, 28)}</code></div>
+          </details>;
+        }) : <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>}
+      </div>
+      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "输入、输出、Task、Request、Transport Message、Receipt 与 Trace 逐项关联；只有持久化 StageResult 能推进状态。" : "Executor 与 Verifier 为不同主体；验证结果不能由执行者自证。"}</p>
     </section>
   );
 }
@@ -488,7 +510,7 @@ function SafetyRail({ snapshot, onExport }) {
 }
 
 function DecisionView({ snapshot }) {
-  return <div className="decision-grid"><div className="decision-left"><EvidenceTable evidence={snapshot?.evidence} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><div className="lower-pair"><AgentMatrix snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div></div></div>;
+  return <div className="decision-grid"><div className="decision-left"><EvidenceTable evidence={snapshot?.evidence} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><AgentMatrix snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div></div>;
 }
 
 export function App() {
@@ -498,6 +520,7 @@ export function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState("decision");
+  const teamRunning = ["QUEUED", "STARTING", "RUNNING"].includes(snapshot?.case?.team_run?.status);
 
   const load = useCallback(async () => {
     try {
@@ -509,16 +532,21 @@ export function App() {
     } catch (err) { setError(`无法连接 RevGuard API：${err.message}`); }
   }, []);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!teamRunning) return undefined;
+    const timer = window.setInterval(load, 1400);
+    return () => window.clearInterval(timer);
+  }, [load, teamRunning]);
 
   const perform = useCallback(async (label, action) => {
-    setBusy(true); setError(""); setNotice(label);
-    try { await action(); await load(); } catch (err) { setError(err.message); }
+    setBusy(true); setError(""); setNotice("");
+    try { await action(); await load(); setNotice(label); } catch (err) { setError(err.message); }
     finally { setBusy(false); window.setTimeout(() => setNotice(""), 2200); }
   }, [load]);
 
   const onReset = () => perform("已恢复录制初始状态", () => api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" }));
-  const onRun = () => perform("MCP Team 调查完成，案件已进入 L2 人工审批", () => api(`/api/v1/cases/${CASE_ID}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": "REQ-WEBUI-MCP-RUN-0008" } }));
-  const onApprove = () => perform("独立验证发现 1 KES 偏差，系统已自动冲销", () => api(`/api/v1/cases/${CASE_ID}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境执行调整。" }) }));
+  const onRun = () => perform("多 Agent 调查已启动，真实 Worker 输入输出将写入任务账本", () => api(`/api/v1/cases/${CASE_ID}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": "REQ-WEBUI-AGENTTEAMS-RUN-0008" } }));
+  const onApprove = () => perform("人工审批已记录，Executor 与独立 Verifier 正在后台运行", () => api(`/api/v1/cases/${CASE_ID}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境执行调整。" }) }));
   const onInspect = () => { setTab("audit"); window.setTimeout(() => document.getElementById("rollback-evidence")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   const onExport = async () => {
     try {
@@ -531,12 +559,12 @@ export function App() {
   const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["engineering", "工程证据", Gauge]], []);
 
   return (
-    <div className="app-shell"><Header snapshot={snapshot} busy={busy} onReset={onReset} />
+    <div className="app-shell"><Header snapshot={snapshot} busy={busy || teamRunning} onReset={onReset} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
-      <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
+      <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
-      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-28</span></footer>
+      </main><footer><span>RevGuard Financial Agent Governance</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />Asia/Shanghai · 2026-08-29</span></footer>
     </div>
   );
 }

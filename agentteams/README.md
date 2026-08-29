@@ -12,12 +12,12 @@ RevGuard 以 AgentTeams 为多 Agent 协同基点。本目录提供 1 个 Orches
 | AgentTeams 协同 | 任务拆解、Worker 协作、人工审批、现场展示 | Element / AgentTeams Team |
 
 三条路径共享同一套 16 个 Skill、ToolGateway、状态机与 Trace 语义。AgentTeams Worker
-优先通过 Worker-scoped MCP 调用按身份允许的领域 Skill；REST Skill Adapter 保留为不支持
-MCP Host 时的兼容路径。底层 Tool 只由 Skill/状态机在服务端调用，不进入 Agent 可见清单。
+通过 skills-only REST Adapter 调用按身份允许的领域 Skill；本地 MCP Team 作为标准 MCP
+参考编排。底层 Tool 只由 Skill/状态机在服务端调用，不进入 Agent 可见清单。
 
-本地 MCP Team 参考编排已验证 9 个 Worker、20 个 StageTask 的完整故障回滚闭环；既有
-Matrix 证据验证 Orchestrator 派发与 Intake 执行的双 Agent StageTask 桥接。尚未采集的
-完整 Matrix 房间截图会明确标为 `PENDING_EXTERNAL_CAPTURE`，不以本地 harness 冒充。
+真实 AgentTeams Matrix 路径由团队房间完成 Orchestrator 控制面握手，再把 20 个 StageTask
+分别派到 9 个 Worker 独立房间。独立房间避免共享聊天历史污染模型上下文；每次调用都把
+room/message/request/task/receipt/trace 标识落入驾驶舱、Trace 与 Audit。
 
 ## 部署
 
@@ -30,10 +30,15 @@ bash scripts/agentteams_setup.sh
 ```
 
 SOUL 使用 `{{REVGUARD_API_BASE_URL}}`，setup 脚本在临时目录渲染后复制到 controller，
-并把 `agentteams/skills/revguard-api/` skills-only Adapter 安装到 1 个 Manager 与 9 个
+并把 `agentteams/skills/revguard-api/` skills-only Adapter 安装到 1 个 Orchestrator 与 9 个
 Worker 容器。
 API key 不能出现在 SOUL、Prompt、聊天或 Trace 中，必须由 AgentTeams Secret/Tool
 Adapter 注入 `Authorization: Bearer ...`。
+
+setup 脚本默认把 9 个 Worker 容器的 `AGENTTEAMS_WORKER_ROOM_ID` 写入权限为 0600 的
+`.env`，键名为 `REVGUARD_MATRIX_WORKER_ROOMS_JSON`。Orchestrator 仍在
+`REVGUARD_MATRIX_ROOM_ID` 指向的 Team 房间握手；Worker 任务走独立房间。
+仅刷新房间映射可运行 `python3 scripts/configure_matrix_worker_rooms.py --env .env`。
 
 MCP Host 配置、逐 Worker 进程隔离与证据边界见 [`mcp/README.md`](mcp/README.md)。
 
@@ -41,7 +46,7 @@ MCP Host 配置、逐 Worker 进程隔离与证据边界见 [`mcp/README.md`](mc
 
 | 赛道关注 | RevGuard 实现 |
 |---|---|
-| ≥3 个不同职能 Agent | 1 Manager + 9 Worker，共 10 Agent |
+| ≥3 个不同职能 Agent | 1 Orchestrator + 9 Worker，共 10 Agent |
 | 任务拆解 | Orchestrator 按 Case 状态派发版本绑定的 StageTask |
 | 上下文传递 | Shared Case State，传递结构化 Artifact 而非聊天长文本 |
 | 并行协作 | Evidence 7 路独立 I/O 真并行；政策查询等待合同依赖 |

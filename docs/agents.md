@@ -21,10 +21,10 @@ revguard-orchestrator ◄── revguard-knowledge ◄── revguard-verifier �
                       （差异归因）          （L0-L3 分级）   （L2 审批；L3 转人工）
 ```
 
-编排原则：`revguard-orchestrator` 只拆解和派发结构化 StageTask；
-`revguard/orchestrator.py` 是完整业务闭环的服务端确定性参考实现。当前真实 AgentTeams
-证据验证 Orchestrator → Intake 的双 Agent StageTask 桥接，不宣称十个外部 Worker 已逐阶段
-驱动整条状态机。
+编排原则：`revguard-orchestrator` 只确认控制面并派发结构化 StageTask；
+`revguard/orchestrator.py` 是完整业务闭环的服务端确定性参考实现。录制服务器使用真实
+AgentTeams/Matrix：Orchestrator 在 Team room 握手，9 个 Worker 在各自独立 room 调用
+skills-only Adapter；只有服务端 `SUCCEEDED` StageResult 能推进状态机。
 
 ## 登记总表
 

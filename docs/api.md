@@ -83,10 +83,12 @@ Gateway 再次校验：工具所需 scope 必须同时存在于请求 Principal 
 
 ### `POST /api/v1/cases/{case_id}/team/run`
 
-需要 `operator`。这是录制驾驶舱的主入口：根据持久化 Case 状态逐阶段创建 StageTask，
-通过官方 MCP Client 调用每个 Worker 的 scoped MCP Server，并且只有 `SUCCEEDED`
-StageResult 落库后才应用输出。L2 会真实停在 `WAITING_FOR_APPROVAL`，响应同时返回脱敏后的
-任务列表。后续必须调用独立审批接口，批准后从现有状态继续执行、验证与回滚。
+需要 `operator`。这是录制驾驶舱的主入口：根据持久化 Case 状态逐阶段创建 StageTask。
+`REVGUARD_TEAM_TRANSPORT=matrix` 时，Orchestrator 在 Team room 握手，任务经 Matrix 派到
+各 Worker 独立 room，由 skills-only Adapter 回写 StageResult；本地默认 `mcp` 时使用官方
+MCP Client/Server reference harness。两条路径都只有在 `SUCCEEDED` StageResult 落库后才
+应用输出。L2 会真实停在 `WAITING_FOR_APPROVAL`，后续必须调用独立审批接口才能继续执行、
+验证与回滚。
 
 ### `POST /api/v1/cases/{case_id}/approval`
 

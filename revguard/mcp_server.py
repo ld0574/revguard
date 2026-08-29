@@ -146,8 +146,8 @@ def _safe_error(error_type: str, message: str, *, request_id: str,
     )
 
 
-def _hydrate_server_secrets(skill_name: str, skill_input: dict, *,
-                            case_id: str, store) -> tuple[dict, list[str]]:
+def hydrate_server_secrets(skill_name: str, skill_input: dict, *,
+                           case_id: str, store) -> tuple[dict, list[str]]:
     """Resolve secret references only after public StageTask validation."""
     private_input = copy.deepcopy(skill_input)
     injected: list[str] = []
@@ -235,7 +235,7 @@ def build_scoped_server(*, actor: str, store, gateway) -> Server:
                 "traceparent": args.get("traceparent"),
                 "agent_task_id": args["task_id"],
             }
-            execution_input, injected = _hydrate_server_secrets(
+            execution_input, injected = hydrate_server_secrets(
                 params.name, args["input"], case_id=args["case_id"],
                 store=runtime.store,
             )

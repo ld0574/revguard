@@ -3,7 +3,7 @@
 ## 1. 推荐拓扑
 
 ```text
-AgentTeams Manager / Workers
+AgentTeams Orchestrator / Workers
         │  HTTPS + Bearer Principal（由 Secret/Adapter 注入）
         ▼
 RevGuard API :9000
@@ -110,10 +110,13 @@ bash scripts/agentteams_setup.sh
 脚本会：
 
 1. 在临时目录渲染 SOUL 中的 API Base URL；
-2. `agt apply worker` 创建或更新 1 个 Manager（Orchestrator）与 9 个职能 Worker；
+2. `agt apply worker` 创建或更新 1 个 Orchestrator 与 9 个职能 Worker；
 3. 以 `revguard-orchestrator` 为 leader 组建 Team；
 4. 等待 Worker Ready，并向各 Worker 安装 skills-only `revguard-api` Adapter；
-5. 输出 Worker 和 Team 状态。设置 `INSTALL_WORKER_SKILLS=false` 可只更新 Worker/Team。
+5. 同步 CoPaw 激活模型并做 AI Gateway 请求预检；
+6. 把 9 个 Worker 的独立 Matrix room 映射写入权限为 0600 的 `.env`，再输出 Worker 和
+   Team 状态。设置 `INSTALL_WORKER_SKILLS=false` 可只更新 Worker/Team，设置
+   `CONFIGURE_MATRIX_WORKER_ROOMS=false` 可跳过房间映射。
 
 当前 CoPaw 运行时会在约 30 分钟空闲后把 Worker 自动置为 `Sleeping`，这是资源回收而非
 故障。现场演示前可显式预热：
@@ -124,7 +127,7 @@ for worker in revguard-orchestrator revguard-intake revguard-evidence \
   revguard-executor revguard-verifier revguard-knowledge; do
   agt worker ensure-ready --name "$worker"
 done
-agt get teams   # 预期 revguard-team Active / 1 Manager + 9 Worker Ready
+agt get teams   # 预期 revguard-team Active / 1 Orchestrator + 9 Worker Ready
 ```
 
 API key 不写入 SOUL。所有 Worker 使用 `agentteams/skills/revguard-api/` 中的 skills-only
@@ -164,7 +167,8 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - [ ] L2 在 `WAITING_FOR_APPROVAL` 挂起；
 - [ ] 可信 Approver 批准后写入并验证；
 - [ ] CASE-0008 首次验证失败后真实冲销，最终 `ROLLED_BACK`；
-- [ ] AgentTeams Team Active，1 Manager + 9 Worker Ready；
+- [ ] AgentTeams Team Active，1 Orchestrator + 9 Worker Ready；
+- [ ] Team room 完成 Orchestrator 握手；20 个 Worker StageTask 进入各自独立 room，避免共享上下文污染；
 - [ ] Matrix 任务事件、StageTask、Worker 回执、SKILL span 与审计事件的 task ID / request ID / receipt 一致；
 - [ ] Trace、报告、evaluation summary 和视频中的 case_id 一致。
 - [ ] PolarDB 模式的 `/health/ready` 返回 primary/read endpoint 就绪，Metrics 的 audit chain valid=1；

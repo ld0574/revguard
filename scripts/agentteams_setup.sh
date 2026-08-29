@@ -11,11 +11,12 @@ set -euo pipefail
 
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
-MODEL="${MODEL:-moonshotai/kimi-k3}"
+MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-MiniMax-M3}}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
 AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
 INSTALL_WORKER_SKILLS="${INSTALL_WORKER_SKILLS:-true}"
+CONFIGURE_MATRIX_WORKER_ROOMS="${CONFIGURE_MATRIX_WORKER_ROOMS:-true}"
 REVGUARD_PRINCIPALS_FILE="${REVGUARD_PRINCIPALS_FILE:-$REVGUARD_HOME/config/demo_principals.json}"
 TEAM="revguard-team"
 WORKERS="orchestrator intake evidence policy calculation rootcause risk executor verifier knowledge"
@@ -36,7 +37,7 @@ print(next(key for key, value in principals.items() if value["actor"] == actor))
 PY
 }
 
-echo "==> 0/5 核验 RevGuard API 与 AgentTeams 共用网络"
+echo "==> 0/6 核验 RevGuard API 与 AgentTeams 共用网络"
 docker network inspect "$AGENTTEAMS_NETWORK" >/dev/null
 docker inspect revguard-api >/dev/null
 if ! docker network inspect -f '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}' \
@@ -44,7 +45,7 @@ if ! docker network inspect -f '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}' \
   docker network connect --alias revguard-api "$AGENTTEAMS_NETWORK" revguard-api
 fi
 
-echo "==> 1/5 渲染并同步 SOUL 文件到 controller 容器"
+echo "==> 1/6 渲染并同步 SOUL 文件到 controller 容器"
 for w in $WORKERS; do
   sed \
     -e "s|{{REVGUARD_API_BASE_URL}}|$REVGUARD_API_BASE_URL|g" \
@@ -54,7 +55,7 @@ done
 docker exec "$CONTROLLER" mkdir -p /tmp/agentteams/workers
 docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 
-echo "==> 2/5 创建/更新 1 Manager + 9 Worker（model=$MODEL）"
+echo "==> 2/6 创建/更新 1 Orchestrator + 9 Worker（model=$MODEL）"
 for w in $WORKERS; do
   docker exec "$CONTROLLER" agt apply worker \
     --name "revguard-$w" \
@@ -62,7 +63,7 @@ for w in $WORKERS; do
     --model "$MODEL" | tail -1
 done
 
-echo "==> 3/5 组建 Team（leader=revguard-orchestrator）"
+echo "==> 3/6 组建 Team（leader=revguard-orchestrator）"
 TEAM_PHASE=$(docker exec "$CONTROLLER" agt get teams 2>/dev/null | awk -v n="$TEAM" '$1==n {print $2}')
 if [ "$TEAM_PHASE" = "Active" ]; then
   echo "Team $TEAM 已 Active，跳过重建"
@@ -82,7 +83,7 @@ else
     --description "RevGuard 渠道佣金结算异常多 Agent 协同"
 fi
 
-echo "==> 4/5 安装 skills-only RevGuard Adapter"
+echo "==> 4/6 安装 skills-only RevGuard Adapter"
 if [ "$INSTALL_WORKER_SKILLS" = "true" ]; then
   controller_skill_dir="/tmp/agentteams/skills/revguard-api"
   docker exec "$CONTROLLER" rm -rf "$controller_skill_dir"
@@ -133,7 +134,46 @@ else
   echo "INSTALL_WORKER_SKILLS=false，跳过 Adapter 安装"
 fi
 
-echo "==> 5/5 状态核验"
+echo "==> 5/6 同步 CoPaw 运行时激活模型"
+for w in $WORKERS; do
+  container="${WORKER_CONTAINER_PREFIX}revguard-$w"
+  docker exec -i -e REVGUARD_TARGET_MODEL="$MODEL" "$container" python3 - <<'PY'
+import json
+import os
+import urllib.request
+
+base = "http://127.0.0.1:8088"
+target = os.environ["REVGUARD_TARGET_MODEL"]
+with urllib.request.urlopen(base + "/api/models", timeout=10) as response:
+    providers = json.load(response)
+provider = next(item for item in providers if item.get("id") == "agentteams-gateway")
+known = {
+    item.get("id")
+    for item in [*(provider.get("models") or []), *(provider.get("extra_models") or [])]
+}
+if target not in known:
+    payload = json.dumps({"id": target, "name": target}).encode()
+    req = urllib.request.Request(
+        base + "/api/models/agentteams-gateway/models", data=payload,
+        method="POST", headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=10):
+        pass
+payload = json.dumps({
+    "provider_id": "agentteams-gateway", "model": target, "scope": "global",
+}).encode()
+req = urllib.request.Request(
+    base + "/api/models/active", data=payload, method="PUT",
+    headers={"Content-Type": "application/json"},
+)
+with urllib.request.urlopen(req, timeout=10) as response:
+    active = json.load(response).get("active_llm") or {}
+if active.get("provider_id") != "agentteams-gateway" or active.get("model") != target:
+    raise SystemExit(f"active model mismatch: {active}")
+PY
+done
+
+echo "==> 6/6 状态与 LLM Gateway 核验"
 for w in $WORKERS; do
   docker exec "$CONTROLLER" agt worker ensure-ready --name "revguard-$w" >/dev/null &
 done
@@ -149,6 +189,37 @@ done
   exit 1
 }
 docker exec "$CONTROLLER" agt get teams
+
+docker exec -i -e REVGUARD_TARGET_MODEL="$MODEL" \
+  "${WORKER_CONTAINER_PREFIX}revguard-intake" python3 - <<'PY'
+import json
+import os
+import urllib.request
+
+base = os.environ["AGENTTEAMS_AI_GATEWAY_URL"].rstrip("/")
+if not base.endswith("/v1"):
+    base += "/v1"
+token = os.environ.get("AGENTTEAMS_WORKER_GATEWAY_KEY") or os.environ["AGENTTEAMS_AUTH_TOKEN"]
+payload = json.dumps({
+    "model": os.environ["REVGUARD_TARGET_MODEL"],
+    "messages": [{"role": "user", "content": "reply OK"}],
+    "max_tokens": 4,
+}).encode()
+req = urllib.request.Request(
+    base + "/chat/completions", data=payload, method="POST",
+    headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+)
+with urllib.request.urlopen(req, timeout=30) as response:
+    if response.status != 200:
+        raise SystemExit(f"AI Gateway preflight failed: HTTP {response.status}")
+PY
+
+if [ "$CONFIGURE_MATRIX_WORKER_ROOMS" = "true" ]; then
+  echo "==> 写入 Worker 独立 Matrix 房间映射（不输出凭证）"
+  python3 "$REVGUARD_HOME/scripts/configure_matrix_worker_rooms.py" \
+    --env "$REVGUARD_HOME/.env" \
+    --container-prefix "$WORKER_CONTAINER_PREFIX"
+fi
 
 echo
 echo "完成。在 Element Web（http://<host>:8088）进入 revguard-team 聊天室即可演示。"

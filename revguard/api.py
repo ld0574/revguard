@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -19,9 +20,11 @@ from typing import Literal
 
 from .agent_bridge import create_agent_task, execute_agent_task
 from .demo_dashboard import build_dashboard_snapshot
+from .matrix_team import MatrixSettings, MatrixTeamRunner
+from .mcp_server import hydrate_server_secrets
 from .mcp_team import McpTeamRunner
 from .mocks import ToolGateway
-from .models import Case, CaseStatus, new_id
+from .models import Case, CaseStatus, new_id, utc_now
 from .observability import configure_structured_logging, prometheus_text
 from .orchestrator import Orchestrator
 from .security import (
@@ -78,6 +81,7 @@ ENABLE_LEGACY_TOOL_API = os.getenv(
 ENABLE_RECORDING_UI = os.getenv(
     "REVGUARD_ENABLE_RECORDING_UI", "false"
 ).lower() == "true"
+TEAM_TRANSPORT = os.getenv("REVGUARD_TEAM_TRANSPORT", "mcp").lower()
 LEGACY_EVIDENCE_ACTOR = "revguard-evidence"
 DEMO_PRINCIPALS_PATH = Path(os.getenv(
     "REVGUARD_DEMO_PRINCIPALS_PATH", str(ROOT / "config" / "demo_principals.json")
@@ -181,6 +185,60 @@ def _mcp_team() -> McpTeamRunner:
     return McpTeamRunner(
         store, gateway, output_dir=OUTPUT_DIR, report_dir=REPORT_DIR,
     )
+
+
+def _matrix_team() -> MatrixTeamRunner:
+    return MatrixTeamRunner(
+        store, gateway, output_dir=OUTPUT_DIR, report_dir=REPORT_DIR,
+        settings=MatrixSettings.from_env(),
+    )
+
+
+def _team_runner_for_case(case: dict | None = None):
+    mode = (case or {}).get("execution_mode")
+    if mode == "AGENTTEAMS_MATRIX" or (not mode and TEAM_TRANSPORT == "matrix"):
+        return _matrix_team()
+    return _mcp_team()
+
+
+BACKGROUND_TEAM_TASKS: set[asyncio.Task] = set()
+
+
+async def _run_team_background(case_id: str, phase: str) -> None:
+    case = store.get_case(case_id)
+    if not case:
+        return
+    try:
+        runner = _team_runner_for_case(case)
+        if phase == "INVESTIGATION":
+            await runner.run_to_human_gate(case)
+        else:
+            await runner.execute_after_approval(case)
+    except Exception as exc:
+        latest = store.get_case(case_id) or case
+        if latest.get("status") not in {
+            CaseStatus.CLOSED.value, CaseStatus.ROLLED_BACK.value,
+            CaseStatus.FAILED.value,
+        }:
+            transition_case(
+                store, latest, CaseStatus.FAILED,
+                f"AgentTeams background failure: {type(exc).__name__}",
+            )
+        store.audit(case_id, "revguard-orchestrator", "TEAM_RUN_FAILED", {
+            "phase": phase,
+            "transport": "agentteams-matrix",
+            "error_type": type(exc).__name__,
+        })
+        LOGGER.exception("team_run_failed", extra={"revguard_fields": {
+            "case_id": case_id, "phase": phase,
+            "error_type": type(exc).__name__,
+        }})
+
+
+def _spawn_team_background(case_id: str, phase: str) -> None:
+    task = asyncio.create_task(_run_team_background(case_id, phase))
+    BACKGROUND_TEAM_TASKS.add(task)
+    task.add_done_callback(BACKGROUND_TEAM_TASKS.discard)
 
 
 # --------------------------------------------------------------------- 模型
@@ -345,14 +403,14 @@ def run_case(case_id: str, response: Response,
 
 
 @app.post("/api/v1/cases/{case_id}/team/run")
-async def run_case_via_mcp_team(
+async def run_case_via_team(
     case_id: str,
     response: Response,
     principal: ApiPrincipal = Depends(require_roles("operator")),
     request_id: str | None = Header(default=None, alias="X-Request-ID"),
 ):
-    """Run state-driven Worker stages through scoped MCP until the human gate."""
-    correlation_id = request_id or new_id("REQ-MCP-TEAM")
+    """Run state-driven Workers through MCP or real AgentTeams Matrix."""
+    correlation_id = request_id or new_id("REQ-TEAM")
     if len(correlation_id) > 256:
         raise HTTPException(400, "X-Request-ID 长度不能超过 256")
     response.headers["X-Request-ID"] = correlation_id
@@ -360,17 +418,41 @@ async def run_case_via_mcp_team(
     if not case:
         raise HTTPException(404, f"案件不存在: {case_id}")
     if case["status"] != CaseStatus.CREATED.value:
-        raise HTTPException(409, f"案件状态 {case['status']} 不允许启动 MCP Team")
-    store.audit(case_id, principal.actor, "MCP_TEAM_STARTED", {
+        raise HTTPException(409, f"案件状态 {case['status']} 不允许启动 Agent Team")
+    transport = "agentteams-matrix" if TEAM_TRANSPORT == "matrix" else "mcp"
+    store.audit(case_id, principal.actor, "TEAM_RUN_STARTED", {
         "request_id": correlation_id,
         "business_data": "synthetic",
         "workflow": "real_executable",
+        "transport": transport,
     })
+    if TEAM_TRANSPORT == "matrix":
+        case["execution_mode"] = "AGENTTEAMS_MATRIX"
+        case["workflow_provenance"] = {
+            "business_data": "synthetic",
+            "workflow": "real_executable",
+            "transport": transport,
+            "orchestration": "state-driven",
+            "agentteams_room_evidence": "CAPTURED_FROM_RUNTIME",
+        }
+        case["team_run"] = {
+            "status": "QUEUED", "phase": "INVESTIGATION",
+            "current_stage": None, "completed_tasks": 0, "total_tasks": 8,
+            "queued_at": utc_now(),
+        }
+        store.save_case(case)
+        _spawn_team_background(case_id, "INVESTIGATION")
+        response.status_code = 202
+        return {
+            "case": store.get_case(case_id),
+            "state_status": "QUEUED",
+            "agent_tasks": [],
+        }
     try:
         state = await _mcp_team().run_to_human_gate(case)
     except Exception as exc:
         raise HTTPException(500, {
-            "code": "MCP_TEAM_RUN_FAILED",
+            "code": "TEAM_RUN_FAILED",
             "request_id": correlation_id,
             "error_type": type(exc).__name__,
         }) from exc
@@ -384,6 +466,7 @@ async def run_case_via_mcp_team(
 
 @app.post("/api/v1/cases/{case_id}/approval")
 async def decide_approval(case_id: str, payload: ApprovalDecision,
+                          response: Response,
                           principal: ApiPrincipal = Depends(require_roles("approver"))):
     """人工审批节点：审批通过后自动续跑执行与独立验证。"""
     case = store.get_case(case_id)
@@ -418,8 +501,8 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
             case_id, actor=principal.actor, reason="人工审批驳回，禁止继续执行"
         )
         transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=principal.actor)
-        if case.get("execution_mode") == "MCP_TEAM":
-            await _mcp_team().finalize_terminal(case, approval=decided)
+        if case.get("execution_mode") in {"MCP_TEAM", "AGENTTEAMS_MATRIX"}:
+            await _team_runner_for_case(case).finalize_terminal(case, approval=decided)
         else:
             orch = _orchestrator()
             state = orch._rebuild_state(case)
@@ -430,6 +513,18 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
 
     transition_case(store, case, CaseStatus.READY_TO_EXECUTE,
                     "人工审批通过", actor=principal.actor)
+    if case.get("execution_mode") == "AGENTTEAMS_MATRIX":
+        case["team_run"] = {
+            **(case.get("team_run") or {}),
+            "status": "QUEUED", "phase": "EXECUTION",
+            "current_stage": None, "total_tasks": 20,
+            "queued_at": utc_now(), "error": None,
+        }
+        store.save_case(case)
+        _spawn_team_background(case_id, "EXECUTION")
+        response.status_code = 202
+        return {"case": store.get_case(case_id), "approval": public_approval,
+                "verification": None}
     if case.get("execution_mode") == "MCP_TEAM":
         state = await _mcp_team().execute_after_approval(case)
     else:
@@ -494,9 +589,11 @@ def dispatch_agent_task(case_id: str, payload: AgentTaskCreate,
     correlation = {
         "request_id": request_id or new_id("REQ"),
         "agentteams_message_id": agentteams_message_id,
+        "transport": "rest",
     }
     if any(value is not None and len(value) > 256 for value in correlation.values()):
         raise HTTPException(400, "关联请求头长度不能超过 256")
+    task.update(correlation)
     store.save_agent_task(task)
     store.audit(case_id, principal.actor, "AGENT_TASK_DISPATCHED", {
         "task_id": task["task_id"], "skill": task["skill_name"],
@@ -690,12 +787,24 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
             raise HTTPException(403, "Agent task 不属于当前 Worker")
     try:
         if agent_task_id:
+            execution_input, injected = hydrate_server_secrets(
+                skill_name, payload.input, case_id=payload.case_id, store=store,
+            )
             result = execute_agent_task(
                 task_id=agent_task_id, case_id=payload.case_id,
                 skill_name=skill_name, skill_input=payload.input,
                 actor=principal.actor, gateway=gateway, store=store,
                 correlation={**correlation, "transport": "rest"},
+                execution_input=execution_input,
             )
+            if injected:
+                store.audit(payload.case_id, principal.actor,
+                            "SERVER_CAPABILITY_INJECTED", {
+                                "task_id": agent_task_id,
+                                "skill": skill_name,
+                                "injected": injected,
+                                "request_id": correlation["request_id"],
+                            })
         else:
             result = invoke_skill(
                 skill_name, payload.input, actor=principal.actor,

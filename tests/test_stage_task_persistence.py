@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from revguard.agent_bridge import create_agent_task
+from revguard.agent_bridge import case_version, create_agent_task
 from revguard.models import Case, TaskStatus
 from revguard.store import Store
 
@@ -56,6 +56,16 @@ class TestStageTaskPersistence(unittest.TestCase):
         self.assertEqual(completed["status"], TaskStatus.SUCCEEDED.value)
         self.assertEqual([item["attempt"] for item in results], [1, 2])
         self.assertEqual(results[-1]["result"], {"ok": True})
+
+    def test_ui_run_progress_does_not_invalidate_domain_case_version(self):
+        before = case_version(self.case)
+        self.case["team_run"] = {
+            "status": "RUNNING", "current_stage": "CaseNormalizeSkill",
+            "completed_tasks": 0,
+        }
+        self.assertEqual(case_version(self.case), before)
+        self.case["status"] = "NORMALIZING"
+        self.assertNotEqual(case_version(self.case), before)
 
     def test_failed_task_can_be_reassigned_with_lineage(self):
         old = self._task()

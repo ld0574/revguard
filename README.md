@@ -29,8 +29,9 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 ## 系统边界
 
 当前 Demo 把“理解问题”和“动用资金”明确分开：案件解析、政策匹配、金额计算、差异解释、
-风险分级、权限和状态流转均由可重复的确定性代码完成。语言模型是边界清晰的后续适配层，
-当前不把尚未接入的模型能力包装成现状，也不允许模型直接计算或写入资金台账。
+风险分级、权限和状态流转均由可重复的确定性代码完成。AgentTeams Worker 使用语言模型
+理解并执行被绑定的 StageTask，但模型不能自行推进案件状态、计算金额或直接写资金台账；
+实际业务结果仍由服务端确定性 Skill 与权限边界裁决。
 
 ## 四重约束：Agent 不能绕过的四道边界
 
@@ -47,10 +48,12 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 
 ## 已验证能力
 
-- 1 个 Manager 加 9 个职能 Worker，共 10 个 Agent；Executor 负责受控写入，Verifier 独立复核。
+- 1 个 Orchestrator 加 9 个职能 Worker，共 10 个 Agent；Executor 负责受控写入，Verifier 独立复核。
 - 16 个版本化 Skill，每个 Skill 都有统一调用入口、允许身份、输入/输出格式、失败处理和复用说明。
-- 官方 MCP Client/Server 驱动的状态型 Team 流程；每个 Worker 只看到授权 Skill，底层 Tool
-  不暴露给模型，错 Worker、错 Skill、篡改输入、过期 task 和重放都会拒绝。
+- 录制环境由真实 AgentTeams/Matrix 驱动状态型 Team 流程：Team room 做 Orchestrator
+  握手，9 个 Worker 独立 room 执行 skills-only Adapter；本地官方 MCP Client/Server
+  保留为可复现 reference harness。底层 Tool 不暴露给模型，错 Worker、错 Skill、篡改输入、
+  过期 task 和重放都会拒绝。
 - CASE-0008 实测 20 个成功 StageTask、9 个 Worker、16 种 Skill；L2 在 WebUI 真实暂停，
   人工批准后从持久化状态续跑并完成 `FAILED → ROLLED_BACK → rollback PASSED`。
 - 7 路独立 I/O 真实并行取证；政策查询会在合同证据返回后按依赖继续执行。
@@ -61,8 +64,8 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
   自动化测试覆盖内核、MCP、API、状态桥接、安全和持久层，核心路径行覆盖门禁为 90%。
 - 19 状态、24 条普通迁移的显式白名单；SQLite WAL + keyset 分页；支持干净重置、
   重复 seed 与容器重启。
-- 真实 Matrix → Orchestrator StageTask → Intake Skill 已用 message/request/task/receipt ID、
-  Trace 与 Audit 对账；旧 Matrix → Evidence → Tool 链保留为历史证据。
+- 真实 Matrix → Orchestrator handshake → Worker StageTask → Skill 已用
+  room/message/request/task/receipt/trace ID 与 Audit 对账；旧 Matrix → Evidence → Tool 链保留为历史证据。
 - 持久化 StageTask/StageResult 桥接绑定 case version、Skill、Worker actor 和输入快照；
   Task 终态与每次 StageResult 同事务落库，支持失败重试、显式重派和 lineage。
 - 正式持久化可切换到 PostgreSQL/PolarDB：金额使用 `NUMERIC(18,2)`，审计事件由
@@ -73,6 +76,8 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
   所有材料明确区分“合成业务数据”“真实执行链路”“本地 PostgreSQL”“云 PolarDB 待验收”。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
+录制服务器的 20/20 AgentTeams/Matrix 脱敏验收结果见
+[`docs/agentteams-matrix-acceptance-2026-08-29.md`](docs/agentteams-matrix-acceptance-2026-08-29.md)。
 评委意见的逐条实施状态见 [`docs/reviewer-remediation.md`](docs/reviewer-remediation.md)；
 合成价值数据只验证指标口径，文件内强制标记“不得作为企业真实收益”。驾驶舱新增
 可交互的“价值模拟”页签，可按月案件量和综合人工成本试算释放工时与人工经费空间；

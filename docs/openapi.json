@@ -353,9 +353,9 @@
     },
     "/api/v1/cases/{case_id}/team/run": {
       "post": {
-        "summary": "Run Case Via Mcp Team",
-        "description": "Run state-driven Worker stages through scoped MCP until the human gate.",
-        "operationId": "run_case_via_mcp_team_api_v1_cases__case_id__team_run_post",
+        "summary": "Run Case Via Team",
+        "description": "Run state-driven Workers through MCP or real AgentTeams Matrix.",
+        "operationId": "run_case_via_team_api_v1_cases__case_id__team_run_post",
         "parameters": [
           {
             "name": "case_id",

@@ -30,6 +30,12 @@ class McpStageError(RuntimeError):
 
 
 class McpTeamRunner:
+    execution_mode = "MCP_TEAM"
+    transport = "mcp"
+    display_name = "MCP Team"
+    runner_name = "agentteams-compatible-reference-harness"
+    room_evidence = "PENDING_EXTERNAL_CAPTURE"
+
     def __init__(self, store, gateway, *, output_dir: str | Path,
                  report_dir: str | Path):
         self.store = store
@@ -41,9 +47,14 @@ class McpTeamRunner:
                       message_id: str | None = None) -> dict:
         """Dispatch and execute exactly one state-bound Worker task over MCP."""
         task = create_agent_task(case, skill_name, skill_input)
-        self.store.save_agent_task(task)
         request_id = new_id("REQ-MCP")
         message_id = message_id or f"$mcp-{case['case_id']}-{task['task_id']}"
+        task.update({
+            "request_id": request_id,
+            "agentteams_message_id": message_id,
+            "transport": self.transport,
+        })
+        self.store.save_agent_task(task)
         self.store.audit(case["case_id"], "revguard-orchestrator",
                          "AGENT_TASK_DISPATCHED", {
                              "task_id": task["task_id"],
@@ -52,8 +63,8 @@ class McpTeamRunner:
                              "case_version": task["case_version"],
                              "request_id": request_id,
                              "agentteams_message_id": message_id,
-                             "transport": "mcp",
-                             "runner": "agentteams-compatible-reference-harness",
+                             "transport": self.transport,
+                             "runner": self.runner_name,
                          })
         server = build_scoped_server(
             actor=task["assigned_actor"], store=self.store, gateway=self.gateway,
@@ -82,14 +93,16 @@ class McpTeamRunner:
         if case.get("status") not in {
             CaseStatus.CREATED.value, CaseStatus.WAITING_FOR_EVIDENCE.value,
         }:
-            raise ValueError(f"案件状态 {case.get('status')} 不允许启动 MCP Team")
-        case["execution_mode"] = "MCP_TEAM"
+            raise ValueError(
+                f"案件状态 {case.get('status')} 不允许启动 {self.display_name}"
+            )
+        case["execution_mode"] = self.execution_mode
         case["workflow_provenance"] = {
             "business_data": "synthetic",
             "workflow": "real_executable",
-            "transport": "mcp",
+            "transport": self.transport,
             "orchestration": "state-driven",
-            "agentteams_room_evidence": "PENDING_EXTERNAL_CAPTURE",
+            "agentteams_room_evidence": self.room_evidence,
         }
         self.store.save_case(case)
         state: dict = {"case_id": case["case_id"], "facts": {}, "errors": []}
@@ -101,7 +114,7 @@ class McpTeamRunner:
             case["entities"] = normalized["entities"]
             transition_case(
                 self.store, case, CaseStatus.NORMALIZING,
-                "MCP Intake Worker 完成标准化",
+                f"{self.display_name} Intake Worker 完成标准化",
             )
 
             resolved = await self._invoke(
@@ -141,7 +154,7 @@ class McpTeamRunner:
             self.store.save_case(case)
             transition_case(
                 self.store, case, CaseStatus.EVIDENCE_COLLECTING,
-                "MCP Intake Worker 已解析唯一业务实体",
+                f"{self.display_name} Intake Worker 已解析唯一业务实体",
             )
 
             package = await self._invoke(case, "EvidenceCollectSkill", {
@@ -157,7 +170,7 @@ class McpTeamRunner:
                 "score": package["evidence_score"],
                 "gaps": package["evidence_gaps"],
                 "parallel": package["parallel"],
-                "transport": "mcp",
+                "transport": self.transport,
             })
             self.store.save_case(case)
             if package["evidence_score"] < EVIDENCE_SCORE_THRESHOLD:
@@ -171,7 +184,7 @@ class McpTeamRunner:
                 return self._export(case, state)
             transition_case(
                 self.store, case, CaseStatus.POLICY_MATCHING,
-                "MCP Evidence Worker 完成跨系统证据包",
+                f"{self.display_name} Evidence Worker 完成跨系统证据包",
             )
 
             collected = state["evidence"]
@@ -198,7 +211,7 @@ class McpTeamRunner:
                 "time_basis": policy["time_basis"],
                 "excluded": policy["excluded_versions"],
                 "conflicts": policy["unresolved_conflicts"],
-                "transport": "mcp",
+                "transport": self.transport,
             })
             if tier.get("conflict"):
                 self.store.audit(case["case_id"], "revguard-policy",
@@ -206,7 +219,7 @@ class McpTeamRunner:
             self.store.save_case(case)
             transition_case(
                 self.store, case, CaseStatus.CALCULATING,
-                "MCP Policy Worker 完成政策时点匹配",
+                f"{self.display_name} Policy Worker 完成政策时点匹配",
             )
 
             facts = self._build_calculation_facts(case, state)
@@ -223,12 +236,12 @@ class McpTeamRunner:
                 "total": calculation["total_commission"],
                 "hash": calculation["calculation_hash"],
                 "eligible": calculation["eligible"],
-                "transport": "mcp",
+                "transport": self.transport,
             })
             self.store.save_case(case)
             transition_case(
                 self.store, case, CaseStatus.ROOT_CAUSE_ANALYZING,
-                "MCP Calculation Worker 完成确定性金额复算",
+                f"{self.display_name} Calculation Worker 完成确定性金额复算",
             )
 
             root_cause = await self._invoke(case, "DifferenceExplainSkill", {
@@ -242,12 +255,12 @@ class McpTeamRunner:
             self.store.audit(case["case_id"], "revguard-rootcause", "ROOT_CAUSE", {
                 "root_causes": root_cause["root_causes"],
                 "total_delta": root_cause["total_delta"],
-                "transport": "mcp",
+                "transport": self.transport,
             })
             self.store.save_case(case)
             transition_case(
                 self.store, case, CaseStatus.RISK_REVIEW,
-                "MCP RootCause Worker 完成逐组件差异解释",
+                f"{self.display_name} RootCause Worker 完成逐组件差异解释",
             )
 
             action_deltas = [
@@ -268,7 +281,7 @@ class McpTeamRunner:
             case["risk_level"] = risk["risk_level"]
             case["risk_decision"] = risk
             self.store.audit(case["case_id"], "revguard-risk", "RISK_CLASSIFIED", {
-                **risk, "transport": "mcp",
+                **risk, "transport": self.transport,
             })
             self.store.save_case(case)
 
@@ -309,7 +322,8 @@ class McpTeamRunner:
                 })
                 transition_case(
                     self.store, case, CaseStatus.WAITING_FOR_APPROVAL,
-                    f"MCP Team 等待 {risk['approver_role']} 审批 {approval['approval_id']}",
+                    f"{self.display_name} 等待 {risk['approver_role']} "
+                    f"审批 {approval['approval_id']}",
                 )
                 return self._export(case, state)
 
@@ -326,11 +340,11 @@ class McpTeamRunner:
             }:
                 transition_case(
                     self.store, case, CaseStatus.FAILED,
-                    f"MCP Team failure: {type(exc).__name__}",
+                    f"{self.display_name} failure: {type(exc).__name__}",
                 )
             state["errors"].append(str(exc))
             self.store.audit(case["case_id"], "revguard-orchestrator", "CASE_FAILED", {
-                "error_type": type(exc).__name__, "transport": "mcp",
+                "error_type": type(exc).__name__, "transport": self.transport,
             })
             self._export(case, state)
             raise
@@ -357,7 +371,7 @@ class McpTeamRunner:
         })
         transition_case(
             self.store, case, CaseStatus.EXECUTING,
-            "MCP Executor 通过服务端权限检查，开始受控执行",
+            f"{self.display_name} Executor 通过服务端权限检查，开始受控执行",
         )
         executions = []
         for diff in state["root_cause_report"]["diffs"]:
@@ -396,7 +410,7 @@ class McpTeamRunner:
                 executions.append(execution)
                 self.store.audit(case["case_id"], "revguard-executor", "DRAFT_CREATED", {
                     "action_id": draft["action_id"], "component": diff["component"],
-                    "amount": str(delta), "transport": "mcp",
+                    "amount": str(delta), "transport": self.transport,
                 })
                 continue
             submitted = await self._invoke(case, "LedgerAdjustSkill", {
@@ -422,7 +436,7 @@ class McpTeamRunner:
             self.store.audit(case["case_id"], "revguard-executor", "EXECUTED", {
                 "action_id": draft["action_id"], "component": diff["component"],
                 "amount": str(delta), "idempotency_key": idempotency_key,
-                "transport": "mcp",
+                "transport": self.transport,
             })
         state["executions"] = executions
 
@@ -445,7 +459,7 @@ class McpTeamRunner:
 
         transition_case(
             self.store, case, CaseStatus.VERIFYING,
-            "MCP Executor 完成写入，移交独立 Verifier",
+            f"{self.display_name} Executor 完成写入，移交独立 Verifier",
         )
         verification = await self._invoke(case, "PostActionVerifySkill", {
             "order_id": case["order_id"],
@@ -454,17 +468,18 @@ class McpTeamRunner:
         state["verification"] = verification
         self.store.save_verification(case["case_id"], verification)
         self.store.audit(case["case_id"], "revguard-verifier", "VERIFIED", {
-            **verification, "transport": "mcp",
+            **verification, "transport": self.transport,
         })
         if verification["verification_status"] == "PASSED":
             transition_case(
                 self.store, case, CaseStatus.RESOLVED,
-                "MCP Verifier 独立查询验证通过",
+                f"{self.display_name} Verifier 独立查询验证通过",
             )
         else:
             transition_case(
                 self.store, case, CaseStatus.ROLLBACK_REQUIRED,
-                f"MCP Verifier 发现 variance={verification['variance']}，触发冲销",
+                f"{self.display_name} Verifier 发现 "
+                f"variance={verification['variance']}，触发冲销",
             )
             await self._rollback(case, state)
         self.store.save_case(case)
@@ -508,7 +523,7 @@ class McpTeamRunner:
                 "action_id": execution["action_id"],
                 "ledger_id": execution["ledger_entry"]["ledger_id"],
                 "reversal_id": reversed_result["reversal_entry"]["ledger_id"],
-                "transport": "mcp",
+                "transport": self.transport,
             })
         rollback_verification = await self._invoke(
             case, "PostRollbackVerifySkill", {
@@ -520,12 +535,12 @@ class McpTeamRunner:
             "reversals": reversals, "verification": rollback_verification,
         }
         self.store.audit(case["case_id"], "revguard-verifier", "ROLLBACK_VERIFIED", {
-            **rollback_verification, "transport": "mcp",
+            **rollback_verification, "transport": self.transport,
         })
         if rollback_verification["verification_status"] == "PASSED":
             transition_case(
                 self.store, case, CaseStatus.ROLLED_BACK,
-                "MCP Verifier 确认反向冲销恢复执行前净额",
+                f"{self.display_name} Verifier 确认反向冲销恢复执行前净额",
             )
         else:
             transition_case(
@@ -534,9 +549,39 @@ class McpTeamRunner:
             )
 
     async def _archive(self, case: dict, state: dict) -> None:
+        # The authoritative full trace already lives in Store/Trace.  The
+        # Knowledge Worker only needs the fields consumed by CaseToDatasetSkill;
+        # sending the full evidence package and all prior results through Matrix
+        # makes the final Agent turn unnecessarily large and model-dependent.
+        # Keep the StageTask exact and auditable, but project a compact archive
+        # manifest that points to the same case/run.
+        archive_case = {
+            key: case.get(key) for key in (
+                "case_id", "case_type", "status", "claim", "entities",
+            )
+        }
+        archive_state = redact_secrets({
+            "policy_decision": {
+                "policy_version": (state.get("policy_decision") or {}).get(
+                    "policy_version"
+                ),
+            },
+            "calculation_result": {
+                "total_commission": (state.get("calculation_result") or {}).get(
+                    "total_commission"
+                ),
+            },
+            "root_cause_report": {
+                "root_causes": (state.get("root_cause_report") or {}).get(
+                    "root_causes", []
+                ),
+            },
+            "trace_ref": f"case:{case['case_id']}",
+            "run_id": (case.get("team_run") or {}).get("run_id"),
+        })
         dataset = await self._invoke(case, "CaseToDatasetSkill", {
-            "case": case,
-            "shared_state": redact_secrets(state),
+            "case": archive_case,
+            "shared_state": archive_state,
             "verification": state.get("verification") or {},
         })
         memory_dir = self.output_dir / "case_memory"
@@ -557,12 +602,12 @@ class McpTeamRunner:
         terminal = case["status"]
         self.store.audit(case["case_id"], "revguard-knowledge", "KNOWLEDGE_ARCHIVED", {
             "terminal_status_preserved": terminal,
-            "transport": "mcp",
+            "transport": self.transport,
         })
         if terminal == CaseStatus.RESOLVED.value:
             transition_case(
                 self.store, case, CaseStatus.KNOWLEDGE_ARCHIVED,
-                "MCP Knowledge Worker 已沉淀可回放样本",
+                f"{self.display_name} Knowledge Worker 已沉淀可回放样本",
             )
             transition_case(
                 self.store, case, CaseStatus.CLOSED, "案件关闭",

@@ -26,10 +26,10 @@ case version 和已完成 task 重放也都被拒绝。
 | 项目 | 当前证据 | 可宣称 | 不可宣称 |
 |---|---|---|---|
 | 业务记录 | 合成清单 + 关联/时序/币种校验 | 高保真合成数据 | 公司真实数据 |
-| MCP Team | 官方 SDK Client/Server + 20 个持久化任务 | 真实可执行 MCP 工作流 | 已等同完整 Matrix 房间 |
+| MCP Team | 官方 SDK Client/Server + 20 个持久化任务 | 可复现的 MCP reference harness | 已等同录制服务器 Matrix 房间 |
 | 人工审批 | WebUI 独立 Approver 点击 | 录屏中真实人工决策 | 自动排练是人工证据 |
 | 数据库 | PostgreSQL 18.6 一次性库集成验证 | PG/PolarDB 兼容工程已验证 | 已部署云 PolarDB |
-| AgentTeams | 已有双 Agent 桥接证据；完整房间待补 | 已验证部分 Matrix 对账 | 完整 10 Agent 外部闭环已完成 |
+| AgentTeams | 真实 Team room 握手 + 9 个 Worker 独立 room + 20/20 StageTask/回执 | 录制服务器完整 Matrix 闭环已验证 | 业务数据来自企业生产系统 |
 
 ## 可直接提交的本地证据
 
@@ -40,6 +40,8 @@ case version 和已完成 task 重放也都被拒绝。
 - `04-trace-spans.json`：可回放 Skill/Tool span。
 - `05-final-case.json` 与 `06-audit-report.md`：终态和人读报告。
 - `docs/synthetic-data-validation.json`：合成数据完整性和源文件哈希。
+- `docs/agentteams-matrix-acceptance-2026-08-29.md`：录制服务器 20/20 Matrix 回放的
+  脱敏验收摘要；正式提交仍需补充组员真人点击与 Element 画面。
 
 自动证据包把审批明确标为 `simulated_human=true`，只用于排练与回归；录屏完成后将真实
 人手点击截图/视频与 AgentTeams 房间证据放入提交附件，不改写现有证据的分类。

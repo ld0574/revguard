@@ -43,8 +43,15 @@ SKILL_CASE_STATUSES: dict[str, frozenset[str]] = {
 
 
 def case_version(case: dict) -> str:
-    """绑定完整案件快照；updated_at 或状态变化会使 pending Task 主动失效。"""
-    canonical = json.dumps(case, ensure_ascii=False, sort_keys=True,
+    """Bind the domain case snapshot while ignoring presentation-only run progress.
+
+    ``team_run`` changes whenever WebUI polling reports the current Agent/Stage;
+    it is operational metadata, not business state.  Hashing it would invalidate
+    the very StageTask whose progress it describes.  Status, evidence-derived
+    fields, amounts and every other case field remain version-bound.
+    """
+    versioned_case = {key: value for key, value in case.items() if key != "team_run"}
+    canonical = json.dumps(versioned_case, ensure_ascii=False, sort_keys=True,
                            separators=(",", ":"), default=str).encode("utf-8")
     return "sha256:" + hashlib.sha256(canonical).hexdigest()
 
@@ -74,6 +81,10 @@ def create_agent_task(case: dict, skill_name: str, skill_input: dict) -> dict:
         "input": skill_input,
         "result": None,
         "skill_receipt": None,
+        "request_id": None,
+        "agentteams_message_id": None,
+        "traceparent": None,
+        "transport": None,
         "error": None,
         "created_at": now,
         "updated_at": now,
@@ -118,15 +129,31 @@ def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
     validate_task_invocation(
         task, case, skill_name=skill_name, actor=actor, skill_input=skill_input,
     )
+    source_correlation = correlation or {}
+    persisted_correlation = {
+        key: value for key, value in (correlation or {}).items()
+        if key in {
+            "request_id", "agentteams_message_id", "traceparent",
+            "matrix_dispatch_event_id", "matrix_trigger_event_id",
+        } and value is not None
+    }
+    incoming_transport = source_correlation.get("transport")
+    if incoming_transport is not None:
+        # Preserve the end-to-end delivery transport already written by the
+        # Matrix/MCP dispatcher.  The Worker may reach the Skill through a REST
+        # adapter; that is a nested hop, not a reason to relabel the StageTask.
+        transport_key = "skill_transport" if task.get("transport") else "transport"
+        persisted_correlation[transport_key] = incoming_transport
     running = store.transition_agent_task(
         task_id,
         expected={TaskStatus.PENDING.value, TaskStatus.FAILED_RETRYABLE.value},
         status=TaskStatus.RUNNING.value,
+        updates=persisted_correlation,
     )
     store.audit(case_id, actor, "AGENT_TASK_STARTED", {
         "task_id": task_id,
         "skill": skill_name,
-        "transport": (correlation or {}).get("transport", "unknown"),
+        **persisted_correlation,
     })
     try:
         result = invoke_skill(
@@ -148,7 +175,7 @@ def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
             "skill": skill_name,
             "status": failed_status,
             "error_type": type(exc).__name__,
-            "transport": (correlation or {}).get("transport", "unknown"),
+            **persisted_correlation,
         })
         raise
     store.complete_agent_task(
@@ -159,6 +186,6 @@ def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
         "task_id": task_id,
         "skill": skill_name,
         "skill_receipt": result["skill_receipt"],
-        "transport": (correlation or {}).get("transport", "unknown"),
+        **persisted_correlation,
     })
     return result

@@ -5,8 +5,8 @@
 | 角色 | 负责录制 | 输出文件 | 验收点 |
 |---|---|---|---|
 | A：主录屏 | Web 驾驶舱从重置到最终回滚的完整无剪辑操作 | `A01-cockpit-full.mp4` | 2560×1440 或 1920×1080；浏览器缩放 90–100%；清晰看到人工点击 |
-| B：AgentTeams | Matrix 房间中 Orchestrator 派发、至少 3 个 Worker 接单与回执 | `B01-agentteams-room.mp4`、3 张 PNG | 同一 case/task/message ID 可与驾驶舱对账；不拍 Secret |
-| C：工程证据 | 测试、MCP scope、PostgreSQL 迁移/触发器证据 | `C01-engineering.mp4`、终端截图 | 只展示命令与结论，不滚动大段日志；云 PolarDB 未完成就保留 PENDING |
+| B：AgentTeams | Team room 的 Orchestrator 握手，以及 3 个 Worker 独立 room 的接单与回执 | `B01-agentteams-room.mp4`、3 张 PNG | 同一 room/message/request/task/receipt 可与驾驶舱对账；不拍 Secret |
+| C：工程证据 | 测试、MCP reference harness、PostgreSQL 迁移/触发器证据 | `C01-engineering.mp4`、终端截图 | 只展示命令与结论，不滚动大段日志；云 PolarDB 未完成就保留 PENDING |
 | D：剪辑/旁白 | 按 `demo-script.md` 合并、配字幕、音量和片尾 | `RevGuard-semifinal-v1.mp4` | 字幕统一；不改变运行顺序；关键状态不靠后期伪造 |
 
 没有四位组员时，A/B 可由一人承担，C/D 可由一人承担。
@@ -16,7 +16,7 @@
 1. 页面顶部“合成业务数据 · 真实运行链路”。
 2. CASE-2026-0008 初始数据：180,000 / 18,000 / 32,400 KES。
 3. 点击“启动多 Agent 调查”前后状态变化。
-4. MCP Task 表：task ID、Skill、assigned actor、SUCCEEDED，至少停留 4 秒。
+4. `AGENTTEAMS LIVE` 与任务账本：展开真实 input/output，拍到 room、message、request、task、receipt、trace，至少停留 6 秒。
 5. 证据表、政策版本、公式、根因和 calculation hash。
 6. `WAITING_FOR_APPROVAL` 静止 3 秒，证明流程确实暂停。
 7. 审批人亲自点击；不要用脚本代点、跳帧或预先批准。
@@ -26,11 +26,12 @@
 
 ## B：AgentTeams 需要补的外部证据
 
-- Team/Room 名称与成员列表：1 Manager + 至少 3 个不同职责 Worker。
-- Orchestrator 发出的 StageTask，含 case ID、task ID、Skill、case version。
-- Worker 通过 MCP 返回 request ID、skill receipt 和成功状态。
+- Team room 名称与成员列表：1 Orchestrator + 9 个不同职责 Worker。
+- Team room 中的 Orchestrator 控制面握手，含 case ID 与 run ID。
+- Worker 独立 room 中的 StageTask，含 case ID、task ID、Skill 和 request ID。
+- Worker 通过 skills-only Adapter 返回 skill receipt 和成功状态。
 - 一个失败/重试消息，或 CASE-0003 补证挂起消息。
-- 若 AgentTeams MCP Host 暂未跑通，保留 `PENDING_EXTERNAL_CAPTURE`，不要用本地终端冒充房间。
+- 驾驶舱已展示服务器捕获的 Matrix event；Element 补录只用于让评委直观看到聊天室，不得用本地终端画面冒充。
 
 ## C：工程证据命令
 
@@ -56,7 +57,7 @@ make postgres-integration REVGUARD_TEST_POSTGRES_DSN='postgresql://...disposable
 - [ ] 第 10 秒内讲清业务问题，第 30 秒内讲清差异化。
 - [ ] 明确标出 synthetic，不暗示真实公司数据。
 - [ ] 看到 ≥3 个不同职责 Agent 的真实任务证据。
-- [ ] 看到 MCP scope 和 StageResult，而非只有聊天气泡。
+- [ ] 看到 AgentTeams/Matrix 调度、独立 Worker room 和服务端 StageResult，而非只有聊天气泡。
 - [ ] 看到真实暂停与人工点击。
 - [ ] 看到验证失败、回滚、回滚后再次验证。
 - [ ] 看到 PostgreSQL 已验证 / PolarDB 待部署的真实边界。

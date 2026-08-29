@@ -128,6 +128,15 @@ class TestMcpTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(
             SERVER_INJECTION_REF in item.values() for item in adjust_inputs
         ))
+        archive_task = next(
+            item for item in all_tasks if item["skill_name"] == "CaseToDatasetSkill"
+        )
+        self.assertLess(len(json.dumps(archive_task["input"])), 10_000)
+        self.assertEqual(
+            set(archive_task["input"]["shared_state"]),
+            {"policy_decision", "calculation_result", "root_cause_report",
+             "trace_ref", "run_id"},
+        )
         self.assertEqual(len(self.store.list_agent_task_results(all_tasks[-1]["task_id"])), 1)
         self.assertTrue(
             (Path(self.temp.name) / "outputs" / "case_memory" /
