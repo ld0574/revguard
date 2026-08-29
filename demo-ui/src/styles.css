@@ -148,7 +148,7 @@ tbody tr:hover { background: #0a1e2f; }
 .compact-row span { color: var(--muted); }
 .task-row { grid-template-columns: minmax(76px, 1fr) 112px 30px 98px; }
 .transport-cell { color: var(--cyan) !important; font-weight: 760; letter-spacing: .04em; }
-.task-status { text-align: right; font-size: 7px; font-weight: 720; }
+.task-status { text-align: right; white-space: nowrap; font-size: 7px; font-weight: 720; }
 .task-succeeded { color: var(--green) !important; }
 .task-failed_retryable, .task-failed_final { color: var(--red) !important; }
 .task-running, .task-pending { color: var(--orange) !important; }
@@ -164,7 +164,7 @@ tbody tr:hover { background: #0a1e2f; }
 .agent-task-card { border-bottom: 1px solid #12324a; background: #081725; }
 .agent-task-card[open] { margin: 5px 0; border: 1px solid #18506f; border-radius: 5px; background: #071927; box-shadow: inset 2px 0 0 #159ac0; }
 .agent-task-card.orchestrator-card[open] { border-color: #35647a; box-shadow: inset 2px 0 0 var(--orange); }
-.agent-task-card summary { min-height: 31px; display: grid; grid-template-columns: 28px minmax(120px, 1fr) 46px 92px; align-items: center; gap: 7px; padding: 4px 7px; cursor: pointer; list-style: none; }
+.agent-task-card summary { min-height: 31px; display: grid; grid-template-columns: 28px minmax(120px, 1fr) 46px 108px; align-items: center; gap: 7px; padding: 4px 7px; cursor: pointer; list-style: none; }
 .agent-task-card summary::-webkit-details-marker { display: none; }
 .agent-task-card summary::after { content: "+"; position: absolute; right: 5px; color: #527b94; }
 .agent-task-card[open] summary::after { content: "−"; }

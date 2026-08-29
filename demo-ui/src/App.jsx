@@ -50,15 +50,59 @@ const STATUS_ORDER = [
 ];
 
 const AGENT_ROWS = [
-  ["Intake", "revguard-intake", "识别订单与主体", "任务受理"],
-  ["Evidence", "revguard-evidence", "只读访问证据", "证据采集与验证"],
-  ["Policy", "revguard-policy", "只读访问政策", "政策回溯与选择"],
-  ["Calculator", "revguard-calculation", "只读访问数据", "应有金额计算"],
-  ["Risk", "revguard-risk", "审批路由", "风险判断与限额"],
-  ["Executor", "revguard-executor", "受边界限制写入", "模拟记账（入账）"],
-  ["Verifier", "revguard-verifier", "独立只读验证", "独立验证与复核"],
-  ["Rollback", "revguard-executor", "受控冲销", "自动回滚执行"],
+  ["受理 Agent", "revguard-intake", "识别订单与主体", "任务受理"],
+  ["取证 Agent", "revguard-evidence", "只读访问证据", "证据采集与验证"],
+  ["政策 Agent", "revguard-policy", "只读访问政策", "政策回溯与选择"],
+  ["计算 Agent", "revguard-calculation", "只读访问数据", "应有金额计算"],
+  ["风险 Agent", "revguard-risk", "审批路由", "风险判断与限额"],
+  ["执行 Agent", "revguard-executor", "受边界限制写入", "模拟记账（入账）"],
+  ["验证 Agent", "revguard-verifier", "独立只读验证", "独立验证与复核"],
+  ["回滚 Agent", "revguard-executor", "受控冲销", "自动回滚执行"],
 ];
+
+const SKILL_LABELS = {
+  OrchestratorHandshake: "编排器控制握手",
+  CaseNormalizeSkill: "案件标准化",
+  EntityResolveSkill: "主体与订单解析",
+  EvidenceCollectSkill: "跨系统证据采集",
+  PolicyVersionMatchSkill: "时点政策匹配",
+  CommissionCalculateSkill: "应付佣金复算",
+  DifferenceExplainSkill: "差异归因",
+  RiskClassifySkill: "风险分级",
+  ApprovalRouteSkill: "审批路由",
+  PermissionCheckSkill: "权限与能力校验",
+  IdempotencyGuardSkill: "幂等防重校验",
+  AdjustmentDraftSkill: "调整草案生成",
+  LedgerAdjustSkill: "佣金台账调整",
+  LedgerReverseSkill: "佣金台账冲销",
+  PostActionVerifySkill: "写后独立验证",
+  PostRollbackVerifySkill: "回滚后独立复核",
+  CaseToDatasetSkill: "案例沉淀入库",
+};
+
+const TASK_STATUS_LABELS = {
+  PENDING: "待处理",
+  RUNNING: "执行中",
+  SUCCEEDED: "已成功",
+  FAILED_RETRYABLE: "失败待重试",
+  FAILED_FINAL: "最终失败",
+  CANCELLED: "已取消",
+  ACKNOWLEDGED: "已确认",
+};
+
+const RUN_STATUS_LABELS = {
+  QUEUED: "已排队",
+  STARTING: "启动中",
+  RUNNING: "运行中",
+  WAITING_HUMAN: "等待人工审批",
+  COMPLETED: "已完成",
+  FAILED: "运行失败",
+};
+
+function skillLabel(skillName) {
+  if (!skillName) return "等待下一状态";
+  return SKILL_LABELS[skillName] || skillName.replace(/Skill$/, "");
+}
 
 function money(value, currency = "KES") {
   if (value === undefined || value === null || value === "") return "—";
@@ -358,21 +402,22 @@ function AgentMatrix({ snapshot }) {
   const orchestrator = run.orchestrator;
   const isMatrix = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
   const traceSpans = snapshot?.trace?.spans || [];
+  const runStatus = run.status || "QUEUED";
   return (
     <section className="detail-section agent-section">
-      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同任务账本</strong><span>{tasks.length ? `${isMatrix ? "AgentTeams Matrix" : "MCP Local"} · ${succeeded}/${tasks.length} StageTasks · ${workerCount} Workers` : "责任与能力边界"}</span></div>
-      {isMatrix && <div className={`team-runtime team-runtime-${(run.status || "queued").toLowerCase()}`}><div><span className="runtime-live-dot" /><strong>{run.status || "QUEUED"}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前 Agent</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前 Stage</span><strong>{run.current_stage || "等待下一状态"}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
+      <div className="section-title"><UsersThree weight="duotone" /><strong>Agent 协同任务账本</strong><span>{tasks.length ? `${isMatrix ? "AgentTeams Matrix" : "本地 MCP"} · ${succeeded}/${tasks.length} 轮任务 · ${workerCount} 个 Worker` : "责任与能力边界"}</span></div>
+      {isMatrix && <div className={`team-runtime team-runtime-${runStatus.toLowerCase()}`}><div><span className="runtime-live-dot" /><strong title={runStatus}>{RUN_STATUS_LABELS[runStatus] || runStatus}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前 Agent</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前阶段</span><strong title={run.current_stage || ""}>{skillLabel(run.current_stage)}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
       <div className="agent-task-ledger">
         {orchestrator && <details className="agent-task-card orchestrator-card" open>
-          <summary><span className="task-seq">CTL</span><div><strong>Orchestrator Control Handshake</strong><code>revguard-orchestrator</code></div><span className="transport-cell">MATRIX</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{orchestrator.status}</span></summary>
-          <div className="task-evidence-grid"><div><span>CONTROL INPUT</span><pre>{JSON.stringify(orchestrator.input || {}, null, 2)}</pre></div><div><span>CONTROL OUTPUT</span><pre>{JSON.stringify(orchestrator.output || { status: "WAITING" }, null, 2)}</pre></div></div>
+          <summary><span className="task-seq">控制</span><div><strong title="Orchestrator Control Handshake">编排器控制握手</strong><code>revguard-orchestrator</code></div><span className="transport-cell">MATRIX</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
+          <div className="task-evidence-grid"><div><span>控制输入</span><pre>{JSON.stringify(orchestrator.input || {}, null, 2)}</pre></div><div><span>控制输出</span><pre>{JSON.stringify(orchestrator.output || { status: "WAITING" }, null, 2)}</pre></div></div>
           <div className="correlation-strip"><code>dispatch {shortId(orchestrator.dispatch_event_id, 30)}</code><code>trigger {shortId(orchestrator.trigger_event_id, 30)}</code><code>response {shortId(orchestrator.response_event_id, 30)}</code></div>
         </details>}
         {visible.length ? visible.map((task, reverseIndex) => {
           const span = traceSpans.find((item) => item.inputs?.correlation?.agent_task_id === task.task_id || item.outputs?.agent_task_id === task.task_id || item.inputs?.task_id === task.task_id);
           return <details className="agent-task-card" key={task.task_id} open={reverseIndex === 0}>
-            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong>{task.skill_name.replace("Skill", "")}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.transport === "agentteams-matrix" ? "MATRIX" : task.transport === "mcp" ? "MCP" : (task.transport || "—").toUpperCase()}</span><span className={`task-status task-${task.status.toLowerCase()}`}>{task.status} · {task.attempt}</span></summary>
-            <div className="task-evidence-grid"><div><span>AGENT INPUT · IMMUTABLE</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>AGENT OUTPUT · STAGE RESULT</span><pre>{JSON.stringify(task.result || task.error || { status: task.status }, null, 2)}</pre></div></div>
+            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong title={task.skill_name}>{skillLabel(task.skill_name)}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.transport === "agentteams-matrix" ? "MATRIX" : task.transport === "mcp" ? "MCP" : (task.transport || "—").toUpperCase()}</span><span className={`task-status task-${task.status.toLowerCase()}`}>{TASK_STATUS_LABELS[task.status] || task.status} · 第 {task.attempt} 次</span></summary>
+            <div className="task-evidence-grid"><div><span>Agent 输入 · 不可变</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>Agent 输出 · 阶段结果</span><pre>{JSON.stringify(task.result || task.error || { status: task.status }, null, 2)}</pre></div></div>
             <div className="correlation-strip"><code>task {shortId(task.task_id, 28)}</code><code>request {shortId(task.request_id, 28)}</code><code>room {shortId(task.matrix_room_id, 28)}</code><code>message {shortId(task.agentteams_message_id, 28)}</code><code>receipt {shortId(task.skill_receipt, 28)}</code><code>trace {shortId(span?.span_id, 28)}</code></div>
           </details>;
         }) : <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>}
