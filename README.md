@@ -73,7 +73,8 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 - 可查询 JSON/Prometheus Metrics、JSON 访问日志、liveness/readiness、灰度/回滚策略、
   告警规则、容量探针和 PolarDB PITR 证据捕获脚本。
 - 10 个合成伙伴、11 笔订单和 8 个案件带来源边界、关联/时序/币种检查与源文件哈希；
-  所有材料明确区分“合成业务数据”“真实执行链路”“本地 PostgreSQL”“云 PolarDB 待验收”。
+  录制服务器已运行官方开源 PolarDB-PG 15 local_instance，所有材料明确区分“合成业务
+  数据”“真实执行链路”“开源单机 PolarDB-PG 已验收”“云 PolarDB 高可用/PITR 待验收”。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
 录制服务器的 20/20 AgentTeams/Matrix 脱敏验收结果见
@@ -190,7 +191,9 @@ curl http://127.0.0.1:19000/api/v1/health
 与 AgentTeams 同机时使用 `docker-compose.agentteams.yml` 把 API 接入 Worker 网络，详见
 [`docs/deployment.md`](docs/deployment.md)。
 
-本地 Compose 仍使用 SQLite Demo Store；正式环境配置 `REVGUARD_DATABASE_URL`后切换为 PolarDB Store。容器使用非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
+基础 Compose 默认使用 SQLite Demo Store；叠加 `docker-compose.polardb.yml` 后运行官方
+PolarDB-PG local_instance，并通过 `REVGUARD_DATABASE_URL` 切换为 PolarDB Store。容器使用
+非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
 设置 `REVGUARD_RESET_ON_START=true` 可在评审前原子清空全部 Demo 状态再 seed；默认保留状态。
 
 ## 目录结构

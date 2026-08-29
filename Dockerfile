@@ -35,7 +35,13 @@ COPY migrations/ ./migrations/
 COPY config/demo_principals.json ./config/demo_principals.json
 COPY data/fixtures/ ./data/fixtures/
 COPY data/golden_cases/ ./data/golden_cases/
-COPY docs/evaluation-summary.json docs/value-evaluation-synthetic.json ./docs/
+COPY docs/evaluation-summary.json \
+     docs/value-evaluation-synthetic.json \
+     docs/synthetic-data-validation.json \
+     docs/polardb-local-verification-2026-08-27.json \
+     docs/polardb-local-instance-acceptance-2026-08-29.json \
+     ./docs/
+COPY docs/evidence/demo-rehearsal/manifest.json ./docs/evidence/demo-rehearsal/manifest.json
 COPY --from=demo-ui-build /ui/dist/client/ ./demo-ui/dist/client/
 
 RUN getent group revguard >/dev/null || addgroup --system revguard; \

@@ -82,6 +82,9 @@ ENABLE_RECORDING_UI = os.getenv(
     "REVGUARD_ENABLE_RECORDING_UI", "false"
 ).lower() == "true"
 TEAM_TRANSPORT = os.getenv("REVGUARD_TEAM_TRANSPORT", "mcp").lower()
+DEFAULT_DEMO_CASE_ID = os.getenv(
+    "REVGUARD_DEFAULT_DEMO_CASE_ID", "CASE-2026-0008"
+)
 LEGACY_EVIDENCE_ACTOR = "revguard-evidence"
 DEMO_PRINCIPALS_PATH = Path(os.getenv(
     "REVGUARD_DEMO_PRINCIPALS_PATH", str(ROOT / "config" / "demo_principals.json")
@@ -356,22 +359,32 @@ def reset_recording_demo(
     """
     if not ENABLE_RECORDING_UI:
         raise HTTPException(404, "录制模式未启用")
-    from scripts.seed_demo import seed
+    from scripts.seed_demo import seed_store
 
     global gateway
     state_path = Path(GATEWAY_STATE_PATH)
     if state_path.exists() and state_path.is_file():
         state_path.unlink()
-    seed(DB_PATH, reset=True, quiet=True)
+    seeded_cases = seed_store(store, reset=True, quiet=True)
     gateway = _new_gateway()
-    store.audit("CASE-2026-0008", principal.actor, "DEMO_RESET", {
-        "synthetic_business_data": True,
-        "verification_tamper_amount": VERIFICATION_TAMPER_AMOUNT,
-    })
-    snapshot = build_dashboard_snapshot(
-        store, "CASE-2026-0008", report_dir=REPORT_DIR
+    for seeded_case in seeded_cases:
+        store.audit(seeded_case["case_id"], principal.actor, "DEMO_RESET", {
+            "synthetic_business_data": True,
+            "verification_tamper_amount": VERIFICATION_TAMPER_AMOUNT,
+        })
+    case_ids = [item["case_id"] for item in seeded_cases]
+    default_case_id = (
+        DEFAULT_DEMO_CASE_ID
+        if DEFAULT_DEMO_CASE_ID in case_ids else case_ids[0]
     )
-    return {"case_id": "CASE-2026-0008", "snapshot": snapshot}
+    snapshot = build_dashboard_snapshot(
+        store, default_case_id, report_dir=REPORT_DIR
+    )
+    return {
+        "case_id": default_case_id,
+        "case_ids": case_ids,
+        "snapshot": snapshot,
+    }
 
 
 @app.post("/api/v1/cases/{case_id}/run")
@@ -883,9 +896,19 @@ def engineering_evidence(
         "synthetic_dataset": read_json("synthetic-data-validation.json"),
         "mcp_rehearsal": read_json("evidence/demo-rehearsal/manifest.json"),
         "local_postgresql": read_json("polardb-local-verification-2026-08-27.json"),
+        "self_hosted_polardb": read_json(
+            "polardb-local-instance-acceptance-2026-08-29.json"
+        ),
         "external_validation": {
             "production_business_baseline": "PENDING_COMPANY_DATA",
-            "agentteams_room": "PENDING_EXTERNAL_CAPTURE",
+            "agentteams_room": (
+                "PASSED_9_WORKER_ROOMS"
+                if TEAM_TRANSPORT == "matrix" else "PENDING_EXTERNAL_CAPTURE"
+            ),
+            "self_hosted_polardb_pg": (
+                "PASSED_LOCAL_INSTANCE"
+                if store.backend == "postgresql-polardb" else "PENDING_DEPLOYMENT"
+            ),
             "polardb_cloud_acceptance": "PENDING_CLOUD_INSTANCE",
             "polardb_pitr_drill": "PENDING_CLOUD_INSTANCE",
         },

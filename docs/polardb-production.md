@@ -2,9 +2,9 @@
 
 ## 1. 实施边界
 
-本仓库已完成 PostgreSQL/PolarDB 适配代码、核心 Schema、库层审计哈希链、主/只读路由和恢复验证脚本。当前没有可用的 PolarDB 集群与云账号，因此本文不记录虚构的集群 ID、备份集 ID、RPO 或 RTO。
+本仓库已完成 PostgreSQL/PolarDB 适配代码、核心 Schema、库层审计哈希链、主/只读路由和恢复验证脚本。录制服务器 `10.10.10.202` 已部署 PolarDB 官方开源 `polardb_pg_local_instance:15`，实测引擎为 `PostgreSQL 15.19 (PolarDB 15.19.5.0)`，并由 RevGuard 通过独立 Docker 网络访问。它能证明 PolarDB Store、金额语义、事务任务结果和审计链可以实际运行，但它是单机开源实例，不等于云 PolarDB 的高可用、只读节点、自动备份或 PITR。当前仍没有可用的云 PolarDB 集群与云账号，因此本文不记录虚构的云集群 ID、备份集 ID、RPO 或 RTO。
 
-本机 PostgreSQL 18.6 已实测：`NUMERIC(18,2)` 保留 `112.34`，审计事件链校验通过，直接 `UPDATE audit_events` 被 append-only 触发器拒绝，StageTask 与 StageResult 一次事务完成；另有一次官方 MCP `tools/call` 经 scoped Server 执行后把成功 Task/Result 写入同一 PostgreSQL。这只是 PostgreSQL 兼容性证据，不是 PolarDB 云端验收。
+本机 PostgreSQL 18.6 兼容性测试仍保留：`NUMERIC(18,2)` 保留 `112.34`，审计事件链校验通过，直接 `UPDATE audit_events` 被 append-only 触发器拒绝，StageTask 与 StageResult 一次事务完成；另有一次官方 MCP `tools/call` 经 scoped Server 执行后把成功 Task/Result 写入同一 PostgreSQL。录制服务器进一步完成了官方开源 PolarDB-PG 的运行验收，详见 `docs/polardb-local-instance-acceptance-2026-08-29.json`；两者都不是云 PolarDB 验收。
 
 ## 2. 迁移与最小权限
 

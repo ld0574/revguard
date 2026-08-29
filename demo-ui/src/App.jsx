@@ -25,7 +25,7 @@ import {
   XCircle,
 } from "@phosphor-icons/react";
 
-const CASE_ID = "CASE-2026-0008";
+const DEFAULT_CASE_ID = "CASE-2026-0008";
 const API_KEYS = {
   viewer: "rg-demo-viewer-key-1",
   operator: "rg-demo-operator-key",
@@ -68,6 +68,18 @@ function money(value, currency = "KES") {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} ${currency}`;
+}
+
+function approvalAmount(snapshot) {
+  const approval = snapshot?.approval || {};
+  const c = snapshot?.case || {};
+  const rootCause = c.root_cause_report || {};
+  const expected = Number(c.claim?.expected_amount);
+  const actual = Number(c.claim?.actual_amount);
+  if (approval.amount !== undefined && approval.amount !== null) return approval.amount;
+  if (rootCause.total_delta !== undefined && rootCause.total_delta !== null) return rootCause.total_delta;
+  if (Number.isFinite(expected) && Number.isFinite(actual)) return expected - actual;
+  return null;
 }
 
 function shortId(value, length = 18) {
@@ -150,31 +162,35 @@ function stageValue(snapshot, id) {
   const executions = snapshot?.executions || [];
   const verification = snapshot?.verification || {};
   const reversals = executions.filter((item) => item.reversal);
+  const closedWithoutWrite = caseData.status === "CLOSED" && executions.length === 0;
   const values = {
-    evidence: snapshot?.evidence?.length ? `${snapshot.evidence.length}/8` : "待收集",
+    evidence: snapshot?.evidence?.length ? `${snapshot.evidence.length} 条` : "待收集",
     policy: caseData.policy_decision?.policy_version || "待匹配",
     calculation: money(caseData.calculation_result?.total_commission),
-    approval: approval.amount ? money(approval.amount, approval.currency) : "等待风险判断",
+    approval: approval.amount !== undefined && approval.amount !== null ? money(approval.amount, approval.currency) : closedWithoutWrite ? "无需审批写入" : "等待风险判断",
     execution: executions.length
       ? executions.map((item) => `${Number(item.amount) >= 0 ? "+" : ""}${Number(item.amount).toLocaleString()}`).join("  ")
       : "待授权",
-    verification: verification.actual_amount ? `读取 ${money(verification.actual_amount)}` : "不同主体复核",
-    rollback: reversals.length ? reversals.map((item) => money(item.reversal?.amount)).join("  ") : "验证失败时触发",
-    postcheck: caseData.status === "ROLLED_BACK" ? "PASSED" : "等待回滚复核",
+    verification: verification.actual_amount !== undefined && verification.actual_amount !== null ? `读取 ${money(verification.actual_amount)}` : closedWithoutWrite ? "无需写后验证" : "不同主体复核",
+    rollback: reversals.length ? reversals.map((item) => money(item.reversal?.amount)).join("  ") : closedWithoutWrite ? "未触发（无写入）" : "验证失败时触发",
+    postcheck: caseData.status === "ROLLED_BACK" ? "PASSED" : closedWithoutWrite ? "CLOSED（无写入）" : "等待回滚复核",
   };
   return values[id];
 }
 
-function Header({ snapshot, busy, onReset }) {
+function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange }) {
   const status = snapshot?.case?.status || "CONNECTING";
   const mcpTeam = snapshot?.case?.execution_mode === "MCP_TEAM";
   const matrixTeam = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
+  const risk = snapshot?.case?.risk_level || "—";
   return (
     <header className="topbar">
       <div className="brand-group">
         <ShieldCheck className="brand-mark" weight="duotone" aria-hidden="true" />
         <span className="brand-name">RevGuard</span><span className="top-divider" />
-        <span className="case-id">{CASE_ID}</span><span className="risk-pill">L2</span>{mcpTeam && <span className="mcp-pill">MCP LOCAL</span>}{matrixTeam && <span className="mcp-pill matrix-pill"><span />AGENTTEAMS LIVE</span>}
+        <select className="case-select" value={caseId} onChange={(event) => onCaseChange(event.target.value)} disabled={busy} aria-label="选择演示案件">
+          {(cases.length ? cases : [{ case_id: caseId }]).map((item) => <option value={item.case_id} key={item.case_id}>{item.case_id} · {item.status || "CREATED"}</option>)}
+        </select><span className="risk-pill">{risk}</span>{mcpTeam && <span className="mcp-pill">MCP LOCAL</span>}{matrixTeam && <span className="mcp-pill matrix-pill"><span />AGENTTEAMS LIVE</span>}
         <span className="approval-label">Human Approval</span>
       </div>
       <div className="disclosure">合成业务数据 · 真实运行链路<span>/ Synthetic business data · Real executable workflow</span></div>
@@ -194,13 +210,14 @@ function SummaryStrip({ snapshot }) {
   const rca = c.root_cause_report || {};
   const approval = snapshot?.approval || {};
   const currency = c.claim?.currency || "KES";
+  const expected = rca.total_expected ?? c.calculation_result?.total_commission ?? c.claim?.expected_amount;
   const items = [
-    ["代理商", c.partner_name || "Nairobi Solar Solutions Ltd", c.partner_id || "AGT-10001"],
-    ["订单号", c.order_id || "EZ202608001", "订单日期 2026-07-10"],
-    ["订单金额", money(c.calculation_result?.facts_snapshot?.order_amount || 180000, currency), "合成业务订单"],
-    ["已入账金额", money(rca.total_posted || c.claim?.actual_amount || 18000, currency), "模拟佣金台账"],
-    ["预期佣金（正确）", money(rca.total_expected || c.calculation_result?.total_commission || 32400, currency), "确定性规则内核"],
-    ["本次审批金额", money(approval.amount || rca.total_delta || 14400, currency), approval.status || "PENDING"],
+    ["代理商", c.partner_name || c.partner_id || "待解析", c.partner_id || "按名称解析"],
+    ["订单号", c.order_id || "待解析", c.calculation_result?.facts_snapshot?.order_date ? `订单日期 ${c.calculation_result.facts_snapshot.order_date}` : "等待证据定位"],
+    ["订单金额", money(c.calculation_result?.facts_snapshot?.order_amount, currency), "合成业务订单"],
+    ["已入账金额", money(rca.total_posted ?? c.claim?.actual_amount, currency), "模拟佣金台账"],
+    ["预期佣金（正确）", money(expected, currency), "确定性规则内核"],
+    ["本次审批金额", money(approvalAmount(snapshot), currency), approval.status || "PENDING"],
     ["最终状态", c.status || "CREATED", "案件终态保留"],
     ["回滚后状态", c.status === "ROLLED_BACK" ? "PASSED" : "—", c.status === "ROLLED_BACK" ? "恢复安全基线" : "等待验证"],
   ];
@@ -219,22 +236,30 @@ function PrimaryAction({ snapshot, busy, onRun, onApprove, onInspect }) {
   const status = snapshot?.case?.status || "CREATED";
   const run = snapshot?.case?.team_run || {};
   const running = ["QUEUED", "STARTING", "RUNNING"].includes(run.status);
+  const currency = snapshot?.case?.claim?.currency || "KES";
   if (status === "CREATED") {
     return <button className="primary-action" onClick={onRun} disabled={busy || running}>{busy || running ? <SpinnerGap className="spin" weight="bold" /> : <Play weight="fill" />}{running ? `AgentTeams 调度中 ${run.completed_tasks || 0}/${run.total_tasks || 8}` : busy ? "正在启动真实调查链路…" : "启动多 Agent 调查"}</button>;
   }
   if (status === "WAITING_FOR_APPROVAL") {
-    return <button className="primary-action" onClick={onApprove} disabled={busy}>{busy ? <SpinnerGap className="spin" weight="bold" /> : <UserCheck weight="bold" />}{busy ? "正在执行并独立验证…" : "批准并执行 14,400 KES"}</button>;
+    return <button className="primary-action" onClick={onApprove} disabled={busy}>{busy ? <SpinnerGap className="spin" weight="bold" /> : <UserCheck weight="bold" />}{busy ? "正在执行并独立验证…" : `批准 ${money(approvalAmount(snapshot), currency)}`}</button>;
   }
-  return <button className="primary-action evidence-action" onClick={onInspect}><ClipboardText weight="bold" />查看回滚证据</button>;
+  const rolledBack = status === "ROLLED_BACK";
+  return <button className="primary-action evidence-action" onClick={onInspect}><ClipboardText weight="bold" />{rolledBack ? "查看回滚证据" : "查看审计证据"}</button>;
 }
 
 function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
+  const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
   const verification = snapshot?.verification || {};
   const executions = snapshot?.executions || [];
   const postings = executions.filter((item) => Number(item.amount) > 0);
   const reversalAmounts = executions.filter((item) => item.reversal).map((item) => item.reversal.amount);
   const calculated = Boolean(snapshot?.case?.calculation_result);
+  const currency = c.calculation_result?.currency || c.claim?.currency || "KES";
+  const selectedPolicy = c.policy_decision?.policy_version;
+  const excludedPolicies = (c.policy_decision?.excluded_versions || []).map((item) => item.version);
+  const closedWithoutWrite = c.status === "CLOSED" && executions.length === 0;
+  const terminal = ["ROLLED_BACK", "CLOSED", "REJECTED", "FAILED"].includes(c.status);
   const postedTotal = postings.reduce((total, item) => total + Number(item.amount || 0), 0);
   const reversedTotal = reversalAmounts.reduce((total, amount) => total + Number(amount || 0), 0);
   return (
@@ -253,28 +278,32 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
         })}
       </div>
       <div className="pipeline-details">
-        <div className="pipeline-note calculation-note"><span>计算结果</span>{calculated ? <><strong>Q1/Q2：排除（未达成）</strong><strong>Q3：选定（已达成）</strong></> : <strong>等待政策匹配与确定性复算</strong>}</div>
-        <div className="pipeline-note capability-note"><span>能力边界</span><div>组件上限：{money(approval.amount)}</div><div>本次金额：{money(approval.amount)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} /><small>{approval.amount ? "授权有效期：15 分钟" : "审批后签发短时能力"}</small></div>
-        <div className="pipeline-note execution-note"><span>模拟记账（入账）</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{item.component}：+{money(item.amount)}</strong>)}<div>合计：+{money(postedTotal)}</div></> : <strong>等待受限执行器写入</strong>}</div>
-        <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span><div>实际读取：{money(verification.actual_amount)}</div><div>差异：{money(verification.variance)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : "等待独立验证"}</strong></div>
-        <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversalAmounts.length ? <>{reversalAmounts.map((amount, index) => <strong key={`${amount}-${index}`}>组件 {reversalAmounts.length - index}：{money(amount)}</strong>)}<div>合计：{money(reversedTotal)}</div></> : <strong>验证失败时由策略自动触发</strong>}</div>
-        <div className="pipeline-note result-note"><span>最终结果</span><strong>{snapshot?.case?.status === "ROLLED_BACK" ? "ROLLED_BACK" : "等待终态"}</strong><b>{snapshot?.case?.status === "ROLLED_BACK" ? "PASSED" : "—"}</b><small>{snapshot?.case?.status === "ROLLED_BACK" ? "已恢复至安全基线" : "尚未生成终态结论"}</small></div>
+        <div className="pipeline-note calculation-note"><span>政策选择</span>{calculated ? <><strong>{excludedPolicies.length ? `${excludedPolicies.join(" / ")}：已排除` : "无冲突版本"}</strong><strong>{selectedPolicy || "规则集已选定"}：已采用</strong></> : <strong>等待政策匹配与确定性复算</strong>}</div>
+        <div className="pipeline-note capability-note"><span>能力边界</span><div>组件上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} /><small>{approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : closedWithoutWrite ? "风险策略禁止自动写入" : "审批后签发短时能力"}</small></div>
+        <div className="pipeline-note execution-note"><span>模拟记账（入账）</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{item.component}：+{money(item.amount, currency)}</strong>)}<div>合计：+{money(postedTotal, currency)}</div></> : <strong>{closedWithoutWrite ? "风险边界拦截，未发生写入" : "等待受限执行器写入"}</strong>}</div>
+        <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span><div>实际读取：{money(verification.actual_amount, currency)}</div><div>差异：{money(verification.variance, currency)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : closedWithoutWrite ? "无需写后验证" : "等待独立验证"}</strong></div>
+        <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversalAmounts.length ? <>{reversalAmounts.map((amount, index) => <strong key={`${amount}-${index}`}>组件 {reversalAmounts.length - index}：{money(amount, currency)}</strong>)}<div>合计：{money(reversedTotal, currency)}</div></> : <strong>{closedWithoutWrite ? "未触发（没有财务写入）" : "验证失败时由策略自动触发"}</strong>}</div>
+        <div className="pipeline-note result-note"><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{c.status === "ROLLED_BACK" ? "PASSED" : closedWithoutWrite ? "SAFE CLOSED" : "—"}</b><small>{c.status === "ROLLED_BACK" ? "已恢复至安全基线" : closedWithoutWrite ? "高风险案件仅形成方案，未触碰台账" : "尚未生成终态结论"}</small></div>
       </div>
     </section>
   );
 }
 
-function EvidenceTable({ evidence = [] }) {
+function EvidenceTable({ snapshot }) {
+  const evidence = snapshot?.evidence || [];
+  const c = snapshot?.case || {};
+  const orderRef = c.order_id || "等待订单解析";
+  const partnerRef = c.partner_id || c.partner_name || "等待主体解析";
   const fallback = [
-    ["ORDER", "CRM_MOCK", "EZ202608001"], ["TIER_HISTORY", "CRM_MOCK", "AGT-10001"],
-    ["CONTRACT", "CONTRACT_MOCK", "AGT-10001"], ["PAYMENT_RECORD", "FINANCE_MOCK", "EZ202608001"],
-    ["REFUND_RECORD", "FINANCE_MOCK", "EZ202608001"], ["INVOICE", "FINANCE_MOCK", "EZ202608001"],
-    ["COMMISSION_LEDGER", "FINANCE_MOCK", "EZ202608001"], ["POLICY_VERSIONS", "CONTRACT_MOCK", "KE-COMMISSION-2026"],
+    ["ORDER", "CRM_MOCK", orderRef], ["TIER_HISTORY", "CRM_MOCK", partnerRef],
+    ["CONTRACT", "CONTRACT_MOCK", partnerRef], ["PAYMENT_RECORD", "FINANCE_MOCK", orderRef],
+    ["REFUND_RECORD", "FINANCE_MOCK", orderRef], ["INVOICE", "FINANCE_MOCK", orderRef],
+    ["COMMISSION_LEDGER", "FINANCE_MOCK", orderRef], ["POLICY_VERSIONS", "CONTRACT_MOCK", c.case_type || "待匹配"],
   ].map(([type, source_system, source_ref]) => ({ type, source_system, source_ref, strength: "PENDING" }));
   const rows = evidence.length ? evidence : fallback;
   return (
     <section className="detail-section evidence-section">
-      <div className="section-title"><FolderOpen weight="duotone" /><strong>证据来源链</strong><span>（{evidence.length}/8 强证据）</span></div>
+      <div className="section-title"><FolderOpen weight="duotone" /><strong>证据来源链</strong><span>（{evidence.length} 条已采集强证据）</span></div>
       <div className="table-wrap"><table><thead><tr><th>证据类型</th><th>来源系统</th><th>证据 ID</th><th>强度</th><th>工具回执</th><th>校验</th></tr></thead><tbody>
         {rows.map((item) => <tr key={item.evidence_id || item.type}><td>{item.type}</td><td>{item.source_system}</td><td>{item.source_ref}</td><td><span className={evidence.length ? "strong-cell" : "pending-cell"}>{evidence.length ? <ShieldCheck weight="fill" /> : <Clock weight="fill" />}{item.strength || "STRONG"}</span></td><td title={item.tool_receipt}>{shortId(item.tool_receipt || "等待运行", 13)}</td><td><span className={evidence.length ? "verified-cell" : "pending-cell"}>{evidence.length ? <CheckCircle weight="fill" /> : <Clock weight="fill" />}{evidence.length ? "已校验" : "待收集"}</span></td></tr>)}
       </tbody></table></div>
@@ -286,20 +315,19 @@ function CalculationLedger({ snapshot }) {
   const c = snapshot?.case || {};
   const rca = c.root_cause_report || {};
   const diffs = rca.diffs || [];
-  const formulas = {
-    SALES_COMMISSION: ["order_amount × 0.15", "180,000.00", "15%", "180,000.00 × 0.15"],
-    COLLECTION_COMMISSION: ["payment_amount × 0.03", "180,000.00", "3%", "180,000.00 × 0.03"],
-  };
+  const currency = c.calculation_result?.currency || c.claim?.currency || "KES";
+  const components = c.calculation_result?.components || [];
   return (
     <section className="detail-section ledger-section">
-      <div className="section-title"><Calculator weight="duotone" /><strong>计算账本</strong><span>（金额单位：KES）</span></div>
+      <div className="section-title"><Calculator weight="duotone" /><strong>计算账本</strong><span>（金额单位：{currency}）</span></div>
       <div className="table-wrap"><table><thead><tr><th>项目</th><th>公式</th><th>基数</th><th>比例</th><th>计算</th><th>应有金额</th><th>已发布</th><th>差异</th></tr></thead><tbody>
         {diffs.filter((item) => Number(item.delta) !== 0).map((item) => {
-          const f = formulas[item.component] || ["规则引擎", "—", "—", "确定性复算"];
-          return <tr key={item.component}><td>{item.component === "SALES_COMMISSION" ? "销售佣金（GOLD 15%）" : "回款佣金（30 天内，3%）"}</td><td>{f[0]}</td><td>{f[1]}</td><td>{f[2]}</td><td>{f[3]}</td><td>{Number(item.expected).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td><td>{Number(item.posted).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td><td className="negative-cell">{Number(item.delta).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td></tr>;
+          const component = components.find((candidate) => candidate.type === item.component && candidate.applied) || {};
+          const [base = "—", ratio = "—"] = String(component.substituted || "").split(" * ");
+          return <tr key={item.component}><td>{item.component}</td><td>{component.formula || "规则引擎"}</td><td>{base}</td><td>{ratio}</td><td>{component.substituted || "确定性复算"}</td><td>{Number(item.expected).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td><td>{Number(item.posted).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td><td className="negative-cell">{Number(item.delta).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td></tr>;
         })}{!diffs.length && <tr><td colSpan="8" className="table-empty">等待调查完成后生成逐组件确定性复算账本</td></tr>}
       </tbody></table></div>
-      <div className="ledger-total"><span>Expected {money(rca.total_expected)}</span><span>Posted {money(rca.total_posted)}</span><strong>Difference {money(rca.total_delta)}</strong></div>
+      <div className="ledger-total"><span>Expected {money(rca.total_expected, currency)}</span><span>Posted {money(rca.total_posted, currency)}</span><strong>Difference {money(rca.total_delta, currency)}</strong></div>
     </section>
   );
 }
@@ -307,11 +335,16 @@ function CalculationLedger({ snapshot }) {
 function PolicyTimeline({ snapshot }) {
   const decision = snapshot?.case?.policy_decision || {};
   const selectedVersion = decision.policy_version;
+  const excludedVersions = (decision.excluded_versions || []).map((item) => item.version);
+  const selectedYear = selectedVersion?.match(/^(\d{4})-Q[1-4]$/)?.[1];
+  const versions = selectedYear ? [1, 2, 3, 4].map((quarter) => `${selectedYear}-Q${quarter}`) : [...new Set([...excludedVersions, selectedVersion].filter(Boolean))];
+  const tier = snapshot?.case?.calculation_result?.facts_snapshot?.agent_tier;
+  const clauses = decision.cited_clauses || [];
   return (
     <section className="detail-section policy-section">
-      <div className="section-title"><GitBranch weight="duotone" /><strong>政策时间线</strong><span>{selectedVersion ? "（排除 Q1/Q2，选择 2026-Q3）" : "（等待时点政策匹配）"}</span></div>
-      <div className="policy-line">{["2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"].map((version) => <div className={`policy-point ${version === selectedVersion ? "selected" : ""}`} key={version}><strong>{version}</strong><span /><small>{version === selectedVersion ? "已选中（订单日期 2026-07-10）" : selectedVersion ? "未选中" : "待判定"}</small></div>)}</div>
-      <div className={`policy-selected ${selectedVersion ? "" : "policy-pending"}`}>{selectedVersion ? <CheckCircle weight="fill" /> : <Clock weight="fill" />}<div>{selectedVersion ? <><strong>{decision.policy_id}　|　{decision.policy_version}　|　GOLD at order date</strong><p>订单发生时适用 GOLD 级销售佣金 15%；订单完成后 30 天内回款，按回款金额 3% 计回款佣金。</p><small>引用条款：Q3-C1（15%）、Q3-C4（3% 回款佣金）</small></> : <><strong>等待 Policy Agent 读取订单时点并回溯政策版本</strong><p>运行后展示被排除版本、最终适用版本与条款级引用。</p></>}</div></div>
+      <div className="section-title"><GitBranch weight="duotone" /><strong>政策时间线</strong><span>{selectedVersion ? `（排除 ${excludedVersions.join("、") || "无"}，选择 ${selectedVersion}）` : "（等待时点政策匹配）"}</span></div>
+      <div className="policy-line">{(versions.length ? versions : ["待判定"]).map((version) => <div className={`policy-point ${version === selectedVersion ? "selected" : ""}`} key={version}><strong>{version}</strong><span /><small>{version === selectedVersion ? `已选中（业务日期 ${decision.decision_date || "—"}）` : selectedVersion ? "未选中" : "待判定"}</small></div>)}</div>
+      <div className={`policy-selected ${selectedVersion ? "" : "policy-pending"}`}>{selectedVersion ? <CheckCircle weight="fill" /> : <Clock weight="fill" />}<div>{selectedVersion ? <><strong>{decision.policy_id}　|　{decision.policy_version}　|　{tier || "时点等级"}</strong><p>{clauses.slice(0, 2).map((item) => item.text).join("；") || "已按业务时点选择有效规则集。"}</p><small>引用条款：{clauses.map((item) => item.clause_id).join("、") || "规则集版本已绑定"}</small></> : <><strong>等待 Policy Agent 读取订单时点并回溯政策版本</strong><p>运行后展示被排除版本、最终适用版本与条款级引用。</p></>}</div></div>
     </section>
   );
 }
@@ -370,15 +403,25 @@ function AuditTrail({ snapshot, full = false }) {
 function TraceView({ snapshot }) {
   const spans = snapshot?.trace?.spans || [];
   const shown = spans.filter((span) => ["TOOL", "SKILL", "APPROVAL", "AGENT"].includes(span.kind)).slice(-28);
+  const duration = (milliseconds) => {
+    const value = Number(milliseconds);
+    if (!Number.isFinite(value)) return "—";
+    if (value < 1) return "<1 ms";
+    if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 1 : 2)} s`;
+    return `${value} ms`;
+  };
   return (
-    <div className="trace-grid"><section className="detail-section trace-section"><div className="section-title"><Gauge weight="duotone" /><strong>本次运行 Trace 慢速回放</strong><span>（数据来自真实 Trace，展示节奏已放慢）</span></div><div className="span-list">{shown.map((span) => <div className={`span-row span-${span.status?.toLowerCase()}`} key={span.span_id}><span className="span-kind">{span.kind}</span><strong>{span.name}</strong><code>{span.actor || "system"}</code><span>{span.duration_ms ?? 0} ms</span><span>{span.status}</span></div>)}{!shown.length && <div className="empty-state"><Play weight="duotone" />启动调查后显示真实 Agent / Skill / Tool spans。</div>}</div></section><AuditTrail snapshot={snapshot} full /></div>
+    <div className="trace-grid"><section className="detail-section trace-section"><div className="section-title"><Gauge weight="duotone" /><strong>本次运行 Trace 实际耗时</strong><span>AGENT = Matrix / Worker 端到端；SKILL / TOOL = API 进程内执行</span></div><div className="span-list">{shown.map((span) => <div className={`span-row span-${span.status?.toLowerCase()}`} key={span.span_id}><span className="span-kind">{span.kind}</span><strong>{span.name}</strong><code>{span.actor || "system"}</code><span>{duration(span.duration_ms)}</span><span>{span.status}</span></div>)}{!shown.length && <div className="empty-state"><Play weight="duotone" />启动调查后显示真实 Agent / Skill / Tool spans。</div>}</div></section><AuditTrail snapshot={snapshot} full /></div>
   );
 }
 
 function Permissions({ snapshot }) {
+  const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
-  const quotas = approval.component_quota || { SALES_COMMISSION: "9000", COLLECTION_COMMISSION: "5400" };
-  const rows = [["案件绑定", CASE_ID], ["币种", approval.currency || "KES"], ["Gross 上限", money(approval.amount || 14400)], ["销售佣金组件", money(quotas.SALES_COMMISSION || 9000)], ["回款佣金组件", money(quotas.COLLECTION_COMMISSION || 5400)], ["令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || "FINANCE_LEAD"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
+  const quotas = approval.component_quota || {};
+  const currency = approval.currency || c.claim?.currency || "KES";
+  const quotaRows = Object.entries(quotas).map(([component, amount]) => [component, money(amount, currency)]);
+  const rows = [["案件绑定", c.case_id || "—"], ["币种", currency], ["Gross 上限", money(approvalAmount(snapshot), currency)], ...quotaRows, ["令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || c.risk_decision?.approver_role || "等待风险判断"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
   return (
     <div className="permissions-grid">
       <section className="detail-section permission-card"><div className="section-title"><LockKey weight="duotone" /><strong>审批与能力边界</strong></div><div className="permission-list">{rows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></section>
@@ -397,8 +440,9 @@ function EngineeringEvidence({ evidence }) {
   const postgres = evidence?.local_postgresql || {};
   const metrics = value.metrics || {};
   const external = evidence?.external_validation || {};
+  const engineVersion = runtime.database_engine_version || "";
   const rows = [
-    ["存储后端", runtime.storage_backend || "等待 API", runtime.read_replica_enabled ? "主/只读已分流" : "本地 Demo / 单端点"],
+    ["存储后端", runtime.storage_backend || "等待 API", engineVersion.includes("PolarDB") ? engineVersion.split(" on ")[0] : runtime.read_replica_enabled ? "主/只读已分流" : "本地 Demo / 单端点"],
     ["审计链", runtime.audit_chain?.enforced ? (runtime.audit_chain.valid ? "VALID" : "BROKEN") : "DEMO ONLY", runtime.audit_chain?.enforced ? `${runtime.audit_chain.rows_checked || 0} 条已校验` : "PolarDB 模式由 DB trigger 强制"],
     ["Trace 错误", String(runtime.trace_error_spans_total ?? 0), `${runtime.trace_spans_total || 0} spans 已持久化`],
     ["StageResult", String(runtime.agent_task_attempts_total ?? 0), "Task 终态与 Result 同事务"],
@@ -428,7 +472,7 @@ function EngineeringEvidence({ evidence }) {
       </section>
       <section className="detail-section pending-section">
         <div className="section-title"><Database weight="duotone" /><strong>外部环境验收</strong><span>不伪造完成状态</span></div>
-        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["AgentTeams 完整房间", external.agentteams_room], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong>{state || "PENDING"}</strong></div>)}</div>
+        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["AgentTeams 完整房间", external.agentteams_room], ["开源 PolarDB-PG", external.self_hosted_polardb_pg], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong>{state || "PENDING"}</strong></div>)}</div>
       </section>
     </div>
   );
@@ -501,19 +545,22 @@ function SafetyRail({ snapshot, onExport }) {
   const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
   const quotas = approval.component_quota || {};
+  const currency = approval.currency || c.claim?.currency || "KES";
   const rolledBack = c.status === "ROLLED_BACK";
   return (
-    <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">回滚后验证结果</span><strong className={`rail-state ${rolledBack ? "passed-state" : ""}`}>{rolledBack ? "PASSED" : "WAITING"}</strong><span className="rail-label">安全基线（恢复后）</span><b>{money(18000)}</b><small>与原始过账一致</small></section>
-      <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["Case Bound", CASE_ID], ["币种", approval.currency || "KES"], ["Gross", money(approval.amount || 14400)], ["组件 1", money(quotas.SALES_COMMISSION || 9000)], ["组件 2", money(quotas.COLLECTION_COMMISSION || 5400)], ["令牌有效期", "15 分钟"], ["策略范围", "2026-Q3"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
+    <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">回滚后验证结果</span><strong className={`rail-state ${rolledBack ? "passed-state" : ""}`}>{rolledBack ? "PASSED" : "WAITING"}</strong><span className="rail-label">安全基线（恢复后）</span><b>{money(c.claim?.actual_amount, currency)}</b><small>与该案件原始过账一致</small></section>
+      <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["Case Bound", c.case_id || "—"], ["币种", currency], ["Gross", money(approvalAmount(snapshot), currency)], ...Object.entries(quotas).map(([component, amount]) => [component, money(amount, currency)]), ["令牌有效期", "15 分钟"], ["策略范围", c.policy_decision?.policy_version || "待匹配"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
       <section className="rail-section export-section"><span className="rail-label">导出证据包</span><button onClick={onExport} disabled={!snapshot?.report_available}><DownloadSimple weight="bold" />导出摘要报告</button><small>完整证据包包含 Trace、Audit、Report 与校验清单。</small></section></aside>
   );
 }
 
 function DecisionView({ snapshot }) {
-  return <div className="decision-grid"><div className="decision-left"><EvidenceTable evidence={snapshot?.evidence} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><AgentMatrix snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div></div>;
+  return <div className="decision-grid"><div className="decision-left"><EvidenceTable snapshot={snapshot} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><AgentMatrix snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div></div>;
 }
 
 export function App() {
+  const [caseId, setCaseId] = useState(() => new URLSearchParams(window.location.search).get("case") || DEFAULT_CASE_ID);
+  const [cases, setCases] = useState([]);
   const [snapshot, setSnapshot] = useState(null);
   const [engineering, setEngineering] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -522,16 +569,23 @@ export function App() {
   const [tab, setTab] = useState("decision");
   const teamRunning = ["QUEUED", "STARTING", "RUNNING"].includes(snapshot?.case?.team_run?.status);
 
+  const loadCases = useCallback(async () => {
+    const page = await api("/api/v1/cases?limit=200", API_KEYS.viewer);
+    setCases(page.cases || []);
+  }, []);
+
   const load = useCallback(async () => {
     try {
       const [data, evidence] = await Promise.all([
-        api(`/api/v1/cases/${CASE_ID}/dashboard`, API_KEYS.viewer),
+        api(`/api/v1/cases/${caseId}/dashboard`, API_KEYS.viewer),
         api("/api/v1/ops/evidence", API_KEYS.viewer),
       ]);
       setSnapshot(data); setEngineering(evidence); setError("");
+      setCases((current) => current.map((item) => item.case_id === caseId ? { ...item, status: data.case?.status } : item));
     } catch (err) { setError(`无法连接 RevGuard API：${err.message}`); }
-  }, []);
-  useEffect(() => { load(); }, [load]);
+  }, [caseId]);
+  useEffect(() => { loadCases().catch((err) => setError(`无法读取案件列表：${err.message}`)); }, [loadCases]);
+  useEffect(() => { setSnapshot(null); load(); }, [load]);
   useEffect(() => {
     if (!teamRunning) return undefined;
     const timer = window.setInterval(load, 1400);
@@ -544,22 +598,31 @@ export function App() {
     finally { setBusy(false); window.setTimeout(() => setNotice(""), 2200); }
   }, [load]);
 
-  const onReset = () => perform("已恢复录制初始状态", () => api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" }));
-  const onRun = () => perform("多 Agent 调查已启动，真实 Worker 输入输出将写入任务账本", () => api(`/api/v1/cases/${CASE_ID}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": "REQ-WEBUI-AGENTTEAMS-RUN-0008" } }));
-  const onApprove = () => perform("人工审批已记录，Executor 与独立 Verifier 正在后台运行", () => api(`/api/v1/cases/${CASE_ID}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境执行调整。" }) }));
+  const onCaseChange = (nextCaseId) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("case", nextCaseId);
+    window.history.replaceState({}, "", url);
+    setError(""); setNotice(""); setCaseId(nextCaseId);
+  };
+  const onReset = () => perform("已恢复全部合成案件初始状态", async () => {
+    await api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" });
+    await loadCases();
+  });
+  const onRun = () => perform("多 Agent 调查已启动，真实 Worker 输入输出将写入任务账本", () => api(`/api/v1/cases/${caseId}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": `REQ-WEBUI-${caseId}-RUN` } }));
+  const onApprove = () => perform("人工审批已记录，Executor 与独立 Verifier 正在后台运行", () => api(`/api/v1/cases/${caseId}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境按当前风险边界处理。" }) }));
   const onInspect = () => { setTab("audit"); window.setTimeout(() => document.getElementById("rollback-evidence")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   const onExport = async () => {
     try {
-      const data = await api(`/api/v1/cases/${CASE_ID}/report`, API_KEYS.viewer);
+      const data = await api(`/api/v1/cases/${caseId}/report`, API_KEYS.viewer);
       const blob = new Blob([data.markdown], { type: "text/markdown;charset=utf-8" });
       const url = URL.createObjectURL(blob); const anchor = document.createElement("a");
-      anchor.href = url; anchor.download = `${CASE_ID}-audit-report.md`; anchor.click(); URL.revokeObjectURL(url);
+      anchor.href = url; anchor.download = `${caseId}-audit-report.md`; anchor.click(); URL.revokeObjectURL(url);
     } catch (err) { setError(err.message); }
   };
   const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["engineering", "工程证据", Gauge]], []);
 
   return (
-    <div className="app-shell"><Header snapshot={snapshot} busy={busy || teamRunning} onReset={onReset} />
+    <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />

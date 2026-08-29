@@ -6,7 +6,7 @@
 |---|---|---|---|
 | A：主录屏 | Web 驾驶舱从重置到最终回滚的完整无剪辑操作 | `A01-cockpit-full.mp4` | 2560×1440 或 1920×1080；浏览器缩放 90–100%；清晰看到人工点击 |
 | B：AgentTeams | Team room 的 Orchestrator 握手，以及 3 个 Worker 独立 room 的接单与回执 | `B01-agentteams-room.mp4`、3 张 PNG | 同一 room/message/request/task/receipt 可与驾驶舱对账；不拍 Secret |
-| C：工程证据 | 测试、MCP reference harness、PostgreSQL 迁移/触发器证据 | `C01-engineering.mp4`、终端截图 | 只展示命令与结论，不滚动大段日志；云 PolarDB 未完成就保留 PENDING |
+| C：工程证据 | 测试、MCP reference harness、开源 PolarDB-PG 版本/触发器证据 | `C01-engineering.mp4`、终端截图 | 展示 PolarDB 15.19.5.0 与审计链 VALID；云高可用/PITR 保留 PENDING |
 | D：剪辑/旁白 | 按 `demo-script.md` 合并、配字幕、音量和片尾 | `RevGuard-semifinal-v1.mp4` | 字幕统一；不改变运行顺序；关键状态不靠后期伪造 |
 
 没有四位组员时，A/B 可由一人承担，C/D 可由一人承担。
@@ -21,7 +21,7 @@
 6. `WAITING_FOR_APPROVAL` 静止 3 秒，证明流程确实暂停。
 7. 审批人亲自点击；不要用脚本代点、跳帧或预先批准。
 8. `VERIFIED=FAILED`、1 KES variance、自动冲销、`ROLLBACK_VERIFIED=PASSED`。
-9. 最终 `ROLLED_BACK`，以及完整 Audit / Trace / 工程证据页。
+9. 最终 `ROLLED_BACK`，以及完整 Audit / Trace / 工程证据页；Trace 同框拍到 AGENT 秒级耗时和 SKILL/TOOL `<1ms` 口径说明。
 10. 打开“价值模拟”，依次切换 100 / 500 / 1000 案情景；停在 500 案、100 元/小时，清楚录到 84.7%、6.54×、900 小时/月、90,000 元/月及“非现金承诺”。
 
 ## B：AgentTeams 需要补的外部证据
@@ -49,7 +49,7 @@ make postgres-integration REVGUARD_TEST_POSTGRES_DSN='postgresql://...disposable
 - 视频：H.264、16:9、30 fps；UI 画面尽量无鼠标乱晃。
 - 图片：PNG 原图；命名 `角色-序号-内容.png`。
 - 浏览器只保留一个 RevGuard 标签；关闭通知、书签栏、密码管理器提示。
-- 所有金额保留两位小数和 KES；所有 case ID 使用 CASE-2026-0008。
+- 主视频金额保留两位小数和 KES，主线使用 CASE-2026-0008；可补一帧案件下拉或 `?case=CASE-2026-0007`，证明非单案写死。
 - 每个关键镜头前后多录 3 秒，方便剪辑；原始素材只剪切，不做状态合成。
 
 ## 交片前核对
@@ -60,6 +60,6 @@ make postgres-integration REVGUARD_TEST_POSTGRES_DSN='postgresql://...disposable
 - [ ] 看到 AgentTeams/Matrix 调度、独立 Worker room 和服务端 StageResult，而非只有聊天气泡。
 - [ ] 看到真实暂停与人工点击。
 - [ ] 看到验证失败、回滚、回滚后再次验证。
-- [ ] 看到 PostgreSQL 已验证 / PolarDB 待部署的真实边界。
+- [ ] 看到开源 PolarDB-PG local_instance 已验证 / 云 PolarDB 高可用与 PITR 待验收的真实边界。
 - [ ] 价值模拟同时拍到输入假设、公式、8 个合成样本和 `NOT ALLOWED` 生产声明边界。
 - [ ] 画面与旁白中没有任何 Secret 或原始能力令牌。

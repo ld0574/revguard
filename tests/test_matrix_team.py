@@ -340,6 +340,16 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         all_tasks = self.store.list_agent_tasks(self.case["case_id"])
         self.assertEqual(len(all_tasks), 20)
         self.assertEqual({task["status"] for task in all_tasks}, {"SUCCEEDED"})
+        agent_spans = [
+            span for span in self.store.list_spans(self.case["case_id"])
+            if span["kind"] == "AGENT" and span["name"].startswith("AgentTeams.")
+        ]
+        self.assertEqual(len(agent_spans), 21)
+        self.assertTrue(all(span["duration_ms"] >= 0 for span in agent_spans))
+        self.assertIn(
+            "AgentTeams.OrchestratorHandshake",
+            {span["name"] for span in agent_spans},
+        )
 
     async def test_orchestrator_timeout_is_persisted_as_failed_run(self):
         settings = MatrixSettings(

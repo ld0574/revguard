@@ -22,6 +22,8 @@ from .agent_bridge import create_agent_task
 from .mcp_team import McpTeamRunner
 from .models import TaskStatus, new_id, utc_now
 from .security import redact_secrets
+from .skill_runtime import SKILL_ACTORS
+from .trace import Tracer
 
 
 class MatrixTransportError(RuntimeError):
@@ -327,6 +329,39 @@ class MatrixTeamRunner(McpTeamRunner):
         return result
 
     async def _orchestrator_handshake(self, case: dict) -> None:
+        started_at = utc_now()
+        started = time.monotonic()
+        status = "OK"
+        error_text = None
+        try:
+            await self._orchestrator_handshake_transport(case)
+        except Exception as exc:
+            status = "ERROR"
+            error_text = f"{type(exc).__name__}: {exc}"
+            raise
+        finally:
+            orchestrator = (case.get("team_run") or {}).get("orchestrator") or {}
+            Tracer(self.store, case["case_id"]).record_completed_span(
+                "AGENT",
+                "AgentTeams.OrchestratorHandshake",
+                actor="revguard-orchestrator",
+                inputs={
+                    "run_id": self.run_id,
+                    "transport": self.transport,
+                    "room_id": self.settings.room_id,
+                },
+                outputs={
+                    "status": orchestrator.get("status"),
+                    "response_event_id": orchestrator.get("response_event_id"),
+                },
+                status=status,
+                error=error_text,
+                started_at=started_at,
+                ended_at=utc_now(),
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
+
+    async def _orchestrator_handshake_transport(self, case: dict) -> None:
         await self.client.authenticate()
         cursor = await self.client.cursor()
         orchestrator = self._mxid("revguard-orchestrator")
@@ -391,6 +426,53 @@ class MatrixTeamRunner(McpTeamRunner):
 
     async def _invoke(self, case: dict, skill_name: str, skill_input: dict, *,
                       message_id: str | None = None) -> dict:
+        actors = SKILL_ACTORS.get(skill_name, frozenset())
+        actor = next(iter(actors)) if len(actors) == 1 else ""
+        started_at = utc_now()
+        started = time.monotonic()
+        status = "OK"
+        error_text = None
+        result = None
+        try:
+            result = await self._invoke_transport(
+                case, skill_name, skill_input, message_id=message_id,
+            )
+            return result
+        except Exception as exc:
+            status = "ERROR"
+            error_text = f"{type(exc).__name__}: {exc}"
+            raise
+        finally:
+            Tracer(self.store, case["case_id"]).record_completed_span(
+                "AGENT",
+                f"AgentTeams.{skill_name}",
+                actor=actor,
+                inputs={
+                    "run_id": self.run_id,
+                    "skill_name": skill_name,
+                    "transport": self.transport,
+                },
+                outputs={
+                    "status": "SUCCEEDED" if result is not None else "FAILED",
+                    "worker_room": self.settings.worker_rooms.get(
+                        actor, self.settings.room_id,
+                    ),
+                },
+                status=status,
+                error=error_text,
+                started_at=started_at,
+                ended_at=utc_now(),
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
+
+    async def _invoke_transport(
+        self,
+        case: dict,
+        skill_name: str,
+        skill_input: dict,
+        *,
+        message_id: str | None = None,
+    ) -> dict:
         del message_id
         task = create_agent_task(case, skill_name, skill_input)
         request_id = new_id("REQ-AGT")

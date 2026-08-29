@@ -68,6 +68,33 @@ docker compose up -d --build
 
 PolarDB 模式下 `REVGUARD_RESET_ON_START=true` 会直接拒绝启动，以防演示重置语义进入正式审计库。金额的 Decimal → `NUMERIC(18,2)` 语义保持、哈希链、读写路由和 PITR 验收见 [`polardb-production.md`](polardb-production.md)。
 
+### 3.1 复赛服务器的开源 PolarDB-PG local_instance
+
+录制环境使用 PolarDB 官方 `polardb/polardb_pg_local_instance:15`，只在宿主机
+`127.0.0.1:15432-15434` 暴露三个本地节点端口，应用通过 Compose 内网访问 primary。
+它用于证明 PostgreSQL 兼容 Store、JSONB、`NUMERIC(18,2)`、事务性 StageResult 和
+DB trigger 审计链，不等同于云上共享存储、高可用、备份或 PITR 验收。
+
+```bash
+openssl rand -hex 24  # 把结果安全写入服务器 .env 的 REVGUARD_POLARDB_PASSWORD
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.agentteams.yml \
+  -f docker-compose.polardb.yml \
+  up -d polardb-pg
+
+# 创建 revguard 数据库后，以独立 migration principal 执行 001_core.sql，最后再启动 API。
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.agentteams.yml \
+  -f docker-compose.polardb.yml \
+  up -d --build revguard-api
+```
+
+录制服务器是独立合成库，可显式设置 `REVGUARD_ALLOW_DATABASE_RESET=true`，使“重新准备”
+在同一事务中重建 public schema 并重新播种 8 个 Golden Case。该开关默认关闭；生产应用
+principal 不得拥有 schema owner 权限。
+
 ## 4. 生产安全配置
 
 复制 `.env.example` 并生成真实值：

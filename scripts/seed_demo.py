@@ -21,8 +21,8 @@ from revguard.store import Store
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def seed(db_path: str, *, reset: bool = False, quiet: bool = False) -> list[dict]:
-    store = Store(db_path)
+def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]:
+    """Seed any Store-compatible backend without taking ownership of its lifecycle."""
     if reset:
         store.reset()
     cases: list[dict] = []
@@ -55,8 +55,15 @@ def seed(db_path: str, *, reset: bool = False, quiet: bool = False) -> list[dict
         cases.append(case)
         if not quiet:
             print(f"  seeded {case['case_id']}  ({spec['title']})")
-    store.close()
     return cases
+
+
+def seed(db_path: str, *, reset: bool = False, quiet: bool = False) -> list[dict]:
+    store = Store(db_path)
+    try:
+        return seed_store(store, reset=reset, quiet=quiet)
+    finally:
+        store.close()
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ case version 和已完成 task 重放也都被拒绝。
 | 业务记录 | 合成清单 + 关联/时序/币种校验 | 高保真合成数据 | 公司真实数据 |
 | MCP Team | 官方 SDK Client/Server + 20 个持久化任务 | 可复现的 MCP reference harness | 已等同录制服务器 Matrix 房间 |
 | 人工审批 | WebUI 独立 Approver 点击 | 录屏中真实人工决策 | 自动排练是人工证据 |
-| 数据库 | PostgreSQL 18.6 一次性库集成验证 | PG/PolarDB 兼容工程已验证 | 已部署云 PolarDB |
+| 数据库 | 官方开源 PolarDB-PG 15.19.5.0 local_instance + PostgreSQL 兼容验证 | 单机 PolarDB Store、金额语义、事务 StageResult、审计哈希链已验证 | 已部署云 PolarDB 高可用/PITR |
 | AgentTeams | 真实 Team room 握手 + 9 个 Worker 独立 room + 20/20 StageTask/回执 | 录制服务器完整 Matrix 闭环已验证 | 业务数据来自企业生产系统 |
 
 ## 可直接提交的本地证据
@@ -42,6 +42,8 @@ case version 和已完成 task 重放也都被拒绝。
 - `docs/synthetic-data-validation.json`：合成数据完整性和源文件哈希。
 - `docs/agentteams-matrix-acceptance-2026-08-29.md`：录制服务器 20/20 Matrix 回放的
   脱敏验收摘要；正式提交仍需补充组员真人点击与 Element 画面。
+- `docs/polardb-local-instance-acceptance-2026-08-29.json`：官方开源 PolarDB-PG 单机实例、
+  审计链、真实 AgentTeams 耗时和 `CASE-2026-0007` 动态案件验收；云高可用/PITR 不在通过范围。
 
 自动证据包把审批明确标为 `simulated_human=true`，只用于排练与回归；录屏完成后将真实
 人手点击截图/视频与 AgentTeams 房间证据放入提交附件，不改写现有证据的分类。

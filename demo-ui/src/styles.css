@@ -35,7 +35,8 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .brand-mark { color: var(--cyan); font-size: 28px; }
 .brand-name { font-size: 21px; font-weight: 760; letter-spacing: -.03em; }
 .top-divider { width: 1px; height: 24px; background: var(--line-bright); }
-.case-id { font-size: 16px; font-weight: 720; letter-spacing: .01em; }
+.case-select { max-width: 215px; color: var(--text); background: #071827; border: 1px solid var(--line-bright); border-radius: 5px; padding: 5px 7px; font: 720 12px/1 InterVariable, sans-serif; letter-spacing: .01em; cursor: pointer; }
+.case-select:disabled { opacity: .62; cursor: wait; }
 .risk-pill { color: var(--orange); border: 1px solid #8a4a11; background: var(--orange-soft); padding: 3px 8px; border-radius: 6px; font-weight: 780; }
 .mcp-pill { color: var(--cyan); border: 1px solid #17658c; background: #08263a; padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; letter-spacing: .05em; }
 .matrix-pill { display: inline-flex; align-items: center; gap: 5px; color: #66e8ff; border-color: #1687a5; background: #062c3a; }

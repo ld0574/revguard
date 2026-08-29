@@ -494,7 +494,11 @@ class TestApiSmoke(unittest.TestCase):
 
         reset = self.client.post("/api/v1/demo/reset", headers=self.operator)
         self.assertEqual(reset.status_code, 200, reset.text)
-        snapshot = reset.json()["snapshot"]
+        reset_body = reset.json()
+        self.assertEqual(len(reset_body["case_ids"]), 8)
+        self.assertIn("CASE-2026-0007", reset_body["case_ids"])
+        self.assertIn("CASE-2026-0008", reset_body["case_ids"])
+        snapshot = reset_body["snapshot"]
         self.assertEqual(snapshot["case"]["case_id"], "CASE-2026-0008")
         self.assertEqual(snapshot["case"]["status"], CaseStatus.CREATED.value)
         self.assertEqual(snapshot["trace"]["span_count"], 0)
@@ -535,6 +539,10 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(
             evidence.json()["external_validation"]["polardb_pitr_drill"],
             "PENDING_CLOUD_INSTANCE",
+        )
+        self.assertEqual(
+            evidence.json()["self_hosted_polardb"]["deployment"]["application_backend"],
+            "postgresql-polardb",
         )
 
     def test_15a_mcp_team_api_pauses_and_resumes_after_human_approval(self):

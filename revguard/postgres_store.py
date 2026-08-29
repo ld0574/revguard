@@ -69,12 +69,15 @@ class PostgresStore:
             self._validate_core_schema()
 
     def _apply_core_schema(self) -> None:
-        schema = (
+        with self._write_pool.connection() as conn:
+            conn.execute(self._core_schema())
+
+    @staticmethod
+    def _core_schema() -> str:
+        return (
             Path(__file__).resolve().parent.parent
             / "migrations" / "polardb" / "001_core.sql"
         ).read_text(encoding="utf-8")
-        with self._write_pool.connection() as conn:
-            conn.execute(schema)
 
     def _validate_core_schema(self) -> None:
         try:
@@ -106,7 +109,18 @@ class PostgresStore:
         self._write_pool.close()
 
     def reset(self) -> None:
-        raise RuntimeError("PolarDB 正式审计库禁止 Demo reset")
+        if os.getenv("REVGUARD_ALLOW_DATABASE_RESET", "false").lower() != "true":
+            raise RuntimeError(
+                "PolarDB 正式审计库禁止 Demo reset；仅独立合成录制库可显式设置 "
+                "REVGUARD_ALLOW_DATABASE_RESET=true"
+            )
+        # 录制库重置必须连同 append-only 审计链一起回到干净基线。
+        # 使用独立 database owner，在同一事务中重建 public schema；生产应用
+        # principal 不得拥有该权限，也不得打开上面的显式开关。
+        with self._write_pool.connection() as conn:
+            conn.execute("DROP SCHEMA public CASCADE")
+            conn.execute("CREATE SCHEMA public")
+            conn.execute(self._core_schema())
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
@@ -561,6 +575,9 @@ class PostgresStore:
 
     def operational_metrics(self) -> dict:
         with self._conn(analytical=True) as conn:
+            engine_version = conn.execute(
+                "SELECT version() AS version"
+            ).fetchone()["version"]
             case_rows = conn.execute(
                 "SELECT status, COUNT(*) AS count FROM cases GROUP BY status"
             ).fetchall()
@@ -579,6 +596,7 @@ class PostgresStore:
             ).fetchone()["total"]
         return {
             "storage_backend": self.backend,
+            "database_engine_version": engine_version,
             "read_replica_enabled": self.read_replica_enabled,
             "cases_total": sum(int(row["count"]) for row in case_rows),
             "cases_by_status": {row["status"]: int(row["count"]) for row in case_rows},

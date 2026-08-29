@@ -112,6 +112,49 @@ class Tracer:
             # Trace 是可导出的审计产物，只保存不可用于授权的指纹。
             self.store.save_span(redact_secrets(record))
 
+    def record_completed_span(
+        self,
+        kind: str,
+        name: str,
+        *,
+        actor: str = "",
+        inputs: dict | None = None,
+        outputs: dict | None = None,
+        status: str = "OK",
+        error: str | None = None,
+        started_at: str,
+        ended_at: str,
+        duration_ms: int,
+        parent_span_id: str | None = None,
+    ) -> dict:
+        """Persist a span timed by an external transport boundary.
+
+        Matrix/LLM work is asynchronous and may complete through another HTTP
+        request, so it cannot share the in-process context-manager stack used by
+        Skill/Tool spans. The caller measures the real wall time; sequence is
+        allocated only after the nested Skill spans have been committed, avoiding
+        duplicate sequence numbers across independent Tracer instances.
+        """
+        record = {
+            "span_id": new_id("SPAN"),
+            "case_id": self.case_id,
+            "parent_span_id": parent_span_id,
+            "kind": kind,
+            "name": name,
+            "actor": actor,
+            "status": status,
+            "sequence": self._allocate_sequence(),
+            "started_at": started_at,
+            "ended_at": ended_at,
+            "duration_ms": max(0, int(duration_ms)),
+            "inputs": inputs,
+            "outputs": outputs,
+            "error": error,
+        }
+        safe_record = redact_secrets(record)
+        self.store.save_span(safe_record)
+        return safe_record
+
     def export(self) -> dict:
         """导出该案件完整 Trace（平铺 span 列表 + 汇总）。"""
         spans = self.store.list_spans(self.case_id)
