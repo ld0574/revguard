@@ -5,11 +5,6 @@
   },
   "rg-demo-operator-key": {"actor": "api-operator", "roles": ["viewer", "operator"]},
   "rg-demo-viewer-key-1": {"actor": "api-viewer", "roles": ["viewer"]},
-  "rg-demo-approver-key": {
-    "actor": "finance.lead",
-    "roles": ["viewer", "approver"],
-    "scopes": ["approval:read", "approval:decide"]
-  },
   "rg-demo-evidence-key": {
     "actor": "revguard-evidence",
     "roles": ["viewer", "worker"],
