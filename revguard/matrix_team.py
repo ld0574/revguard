@@ -506,6 +506,23 @@ class MatrixTeamRunner(McpTeamRunner):
             "run_id": self.run_id,
         })
         self.store.save_agent_task(task)
+        adapter_command = " ".join(shlex.quote(item) for item in [
+            "python3",
+            f"/root/.copaw-worker/{actor}/skills/revguard-api/scripts/revguard_call.py",
+            "--skill", skill_name,
+            "--task-id", task["task_id"],
+            "--case-id", case["case_id"],
+            "--input", json.dumps(
+                skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
+            ),
+            # Matrix event ids are untrusted random text.  Passing them raw
+            # through a Worker shell command can accidentally match CoPaw's
+            # command guard (for example an id ending in "-SU").  Hex keeps
+            # the argument shell/tool-guard safe; the adapter restores the
+            # exact event id before sending the correlation header.
+            "--message-id-hex", dispatch_event_id.encode("utf-8").hex(),
+            "--request-id", request_id,
+        ])
         trigger_body = (
             f"{worker_mxid}\n"
             "执行一个已由 RevGuard 服务端绑定的 StageTask。不要创建 taskflow，不要查看 "
@@ -520,23 +537,7 @@ class MatrixTeamRunner(McpTeamRunner):
             "input=" + json.dumps(
                 skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
             ) + "\n"
-            "adapter_command=" + " ".join(shlex.quote(item) for item in [
-                "python3",
-                f"/root/.copaw-worker/{actor}/skills/revguard-api/scripts/revguard_call.py",
-                "--skill", skill_name,
-                "--task-id", task["task_id"],
-                "--case-id", case["case_id"],
-                "--input", json.dumps(
-                    skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
-                ),
-                # Matrix event ids are untrusted random text.  Passing them raw
-                # through a Worker shell command can accidentally match CoPaw's
-                # command guard (for example an id ending in "-SU").  Hex keeps
-                # the argument shell/tool-guard safe; the adapter restores the
-                # exact event id before sending the correlation header.
-                "--message-id-hex", dispatch_event_id.encode("utf-8").hex(),
-                "--request-id", request_id,
-            ])
+            "adapter_command=" + adapter_command
         )
         trigger_event_id = await self.client.send_text(
             trigger_body, mentions=[worker_mxid], room_id=worker_room_id,
@@ -590,8 +591,9 @@ class MatrixTeamRunner(McpTeamRunner):
                 retry_event_id = await self.client.send_text(
                     f"{worker_mxid}\n"
                     f"重试同一 StageTask：task_id={task['task_id']}。"
-                    "上次尚未形成服务端 StageResult。不要规划、不要读文件、不要使用 taskflow；"
-                    "只执行先前消息中的 adapter_command 一次，成功后立即回复关联标识。",
+                    "上次尚未形成服务端 StageResult。不要依赖会话历史，不要规划、不要读文件、"
+                    "不要使用 taskflow；只执行下方 adapter_command 一次，成功后立即回复关联标识。\n"
+                    "adapter_command=" + adapter_command,
                     mentions=[worker_mxid], room_id=worker_room_id,
                 )
                 persisted = self.store.get_agent_task(task["task_id"]) or task

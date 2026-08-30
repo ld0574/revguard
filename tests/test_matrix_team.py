@@ -109,6 +109,7 @@ class NoCompletionMatrixClient:
     def __init__(self, settings):
         self.settings = settings
         self.counter = 0
+        self.bodies = []
 
     async def authenticate(self):
         return None
@@ -117,7 +118,8 @@ class NoCompletionMatrixClient:
         return "cursor"
 
     async def send_text(self, body, *, mentions=None, room_id=None):
-        del body, mentions, room_id
+        del mentions, room_id
+        self.bodies.append(body)
         self.counter += 1
         return f"$event-{self.counter}"
 
@@ -384,6 +386,8 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         task = self.store.list_agent_tasks(self.case["case_id"])[0]
         self.assertEqual(len(task["matrix_retry_event_ids"]), 1)
         self.assertGreaterEqual(client.counter, 5)
+        self.assertIn("adapter_command=", client.bodies[-1])
+        self.assertIn("--message-id-hex", client.bodies[-1])
 
     async def test_execute_failure_marks_team_run_failed(self):
         self.case["team_run"] = {"run_id": "RUN-FAIL"}
