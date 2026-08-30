@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -82,6 +83,9 @@ ENABLE_RECORDING_UI = os.getenv(
     "REVGUARD_ENABLE_RECORDING_UI", "false"
 ).lower() == "true"
 TEAM_TRANSPORT = os.getenv("REVGUARD_TEAM_TRANSPORT", "mcp").lower()
+TEAM_RUN_STALE_AFTER_SECONDS = float(os.getenv(
+    "REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS", "600"
+))
 DEFAULT_DEMO_CASE_ID = os.getenv(
     "REVGUARD_DEFAULT_DEMO_CASE_ID", "CASE-2026-0008"
 )
@@ -204,7 +208,27 @@ def _team_runner_for_case(case: dict | None = None):
     return _mcp_team()
 
 
-BACKGROUND_TEAM_TASKS: set[asyncio.Task] = set()
+BACKGROUND_TEAM_TASKS: dict[str, asyncio.Task] = {}
+ACTIVE_TEAM_RUN_STATUSES = frozenset({"QUEUED", "STARTING", "RUNNING"})
+
+
+def _team_run_age_seconds(case: dict) -> float | None:
+    run = case.get("team_run") or {}
+    raw = run.get("updated_at") or run.get("started_at") or run.get("queued_at")
+    if not raw:
+        return None
+    try:
+        updated = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if updated.tzinfo is None:
+        updated = updated.replace(tzinfo=UTC)
+    return max((datetime.now(UTC) - updated).total_seconds(), 0)
+
+
+def _has_live_team_task(case_id: str) -> bool:
+    task = BACKGROUND_TEAM_TASKS.get(case_id)
+    return bool(task and not task.done())
 
 
 async def _run_team_background(case_id: str, phase: str) -> None:
@@ -215,6 +239,8 @@ async def _run_team_background(case_id: str, phase: str) -> None:
         runner = _team_runner_for_case(case)
         if phase == "INVESTIGATION":
             await runner.run_to_human_gate(case)
+        elif phase == "ROLLBACK":
+            await runner.resume_rollback(case)
         else:
             await runner.execute_after_approval(case)
     except Exception as exc:
@@ -239,9 +265,16 @@ async def _run_team_background(case_id: str, phase: str) -> None:
 
 
 def _spawn_team_background(case_id: str, phase: str) -> None:
+    if _has_live_team_task(case_id):
+        raise RuntimeError(f"案件 {case_id} 已有本机 AgentTeams 运行")
     task = asyncio.create_task(_run_team_background(case_id, phase))
-    BACKGROUND_TEAM_TASKS.add(task)
-    task.add_done_callback(BACKGROUND_TEAM_TASKS.discard)
+    BACKGROUND_TEAM_TASKS[case_id] = task
+
+    def discard(completed: asyncio.Task) -> None:
+        if BACKGROUND_TEAM_TASKS.get(case_id) is completed:
+            BACKGROUND_TEAM_TASKS.pop(case_id, None)
+
+    task.add_done_callback(discard)
 
 
 # --------------------------------------------------------------------- 模型
@@ -474,6 +507,163 @@ async def run_case_via_team(
         "state_status": state.get("final_status"),
         "agent_tasks": [redact_secrets(item)
                         for item in store.list_agent_tasks(case_id)],
+    }
+
+
+@app.post("/api/v1/cases/{case_id}/team/resume")
+async def resume_interrupted_team_run(
+    case_id: str,
+    response: Response,
+    principal: ApiPrincipal = Depends(require_roles("approver", "operator")),
+):
+    """Resume a stale post-approval Matrix run through idempotent replay.
+
+    Durable StageResults and execution idempotency keys remain authoritative.
+    L2 recovery requires a trusted approver to renew only the unconsumed part
+    of the expired short-lived capability.
+    """
+    case = store.get_case(case_id)
+    if not case:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    run = case.get("team_run") or {}
+    if case.get("execution_mode") != "AGENTTEAMS_MATRIX":
+        raise HTTPException(409, "只能恢复 AgentTeams Matrix 运行")
+    recovering_execution = (
+        case.get("status") == CaseStatus.EXECUTING.value
+        and run.get("status") in ACTIVE_TEAM_RUN_STATUSES
+    )
+    verification = store.get_verification(case_id) or {}
+    recovering_rollback = (
+        case.get("status") == CaseStatus.FAILED.value
+        and run.get("status") == "FAILED"
+        and run.get("current_stage") in {
+            "LedgerReverseSkill", "PostRollbackVerifySkill",
+        }
+        and verification.get("rollback_required") is True
+    )
+    if not recovering_execution and not recovering_rollback:
+        raise HTTPException(409, {
+            "code": "TEAM_RUN_NOT_RECOVERABLE",
+            "message": (
+                f"案件状态 {case.get('status')} / 运行状态 "
+                f"{run.get('status')} 不支持安全续跑"
+            ),
+        })
+    age_seconds = _team_run_age_seconds(case)
+    if recovering_execution and (
+        age_seconds is None or age_seconds < TEAM_RUN_STALE_AFTER_SECONDS
+    ):
+        raise HTTPException(409, {
+            "code": "TEAM_RUN_NOT_STALE",
+            "message": "运行仍在活跃时限内，拒绝重复调度",
+            "age_seconds": age_seconds,
+        })
+    if _has_live_team_task(case_id):
+        raise HTTPException(409, {
+            "code": "TEAM_RUN_STILL_LOCAL",
+            "message": "本机后台任务仍存活，拒绝重复调度",
+        })
+
+    approval = store.get_approval(case_id) or {}
+    risk = case.get("risk_decision") or {}
+    if risk.get("approval_required") or recovering_rollback:
+        if "approver" not in principal.roles:
+            raise HTTPException(403, "写入或回滚恢复需要审批人重新授权")
+    if recovering_execution and risk.get("approval_required"):
+        renewed = gateway.call(
+            "workflow.renew_approval_capability", {
+                "approval_id": approval.get("approval_id"),
+                "case_id": case_id,
+            },
+            case_id=case_id,
+            actor=principal.actor,
+            scope=["approval:decide"],
+        )
+        if not renewed["success"]:
+            raise HTTPException(409, {
+                "code": "APPROVAL_CAPABILITY_RENEWAL_FAILED",
+                "message": renewed["error"]["message"],
+            })
+        approval = renewed["data"]
+        store.save_approval({
+            "approval_id": approval["approval_id"],
+            "case_id": case_id,
+            **approval,
+        })
+        store.audit(case_id, principal.actor, "APPROVAL_CAPABILITY_RENEWED", {
+            "approval_id": approval["approval_id"],
+            "remaining_component_quota": approval.get(
+                "remaining_component_quota", {}
+            ),
+            "previous_run_id": run.get("run_id"),
+        })
+
+    phase = "EXECUTION"
+    strategy = "idempotent-execution-replay"
+    if recovering_rollback:
+        phase = "ROLLBACK"
+        strategy = "resume-unreversed-executions"
+        renewed_ledgers = []
+        for execution in store.list_executions(case_id):
+            ledger = execution.get("ledger_entry") or {}
+            if execution.get("status") != "SUBMITTED" or not ledger.get("ledger_id"):
+                continue
+            renewed = gateway.call(
+                "workflow.renew_rollback_capability", {
+                    "case_id": case_id,
+                    "ledger_id": ledger["ledger_id"],
+                    "action_id": execution.get("action_id"),
+                },
+                case_id=case_id,
+                actor=principal.actor,
+                scope=["approval:decide"],
+            )
+            if not renewed["success"]:
+                raise HTTPException(409, {
+                    "code": "ROLLBACK_CAPABILITY_RENEWAL_FAILED",
+                    "message": renewed["error"]["message"],
+                })
+            execution["rollback_token"] = renewed["data"]["rollback_token"]
+            store.save_execution(execution)
+            renewed_ledgers.append(ledger["ledger_id"])
+        store.audit(case_id, principal.actor, "ROLLBACK_CAPABILITY_RENEWED", {
+            "ledger_ids": renewed_ledgers,
+            "previous_run_id": run.get("run_id"),
+        })
+        transition_case(
+            store, case, CaseStatus.ROLLBACK_REQUIRED,
+            "审批人确认恢复未完成的安全回滚",
+            actor=principal.actor,
+        )
+
+    recovered_at = utc_now()
+    case["team_run"] = {
+        **run,
+        "status": "QUEUED",
+        "phase": phase,
+        "queued_at": recovered_at,
+        "updated_at": recovered_at,
+        "error": None,
+        "recovery": {
+            "reason": "api-process-interrupted",
+            "strategy": strategy,
+            "requested_by": principal.actor,
+            "requested_at": recovered_at,
+            "stale_for_seconds": int(age_seconds or 0),
+        },
+    }
+    store.save_case(case)
+    store.audit(case_id, principal.actor, "TEAM_RUN_RESUME_REQUESTED", {
+        "run_id": run.get("run_id"),
+        "phase": phase,
+        "stale_for_seconds": int(age_seconds or 0),
+    })
+    _spawn_team_background(case_id, phase)
+    response.status_code = 202
+    return {
+        "case": redact_secrets(store.get_case(case_id) or case),
+        "state_status": "QUEUED",
+        "recovery": case["team_run"]["recovery"],
     }
 
 

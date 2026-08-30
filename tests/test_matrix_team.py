@@ -402,6 +402,37 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(failed["status"], "FAILED")
         self.assertEqual(failed["error"]["type"], "RuntimeError")
 
+    async def test_interrupted_execution_resumes_with_idempotent_replay(self):
+        await self.runner.run_to_human_gate(self.case)
+        interrupted = self.store.get_case(self.case["case_id"])
+        approval = self.store.get_approval(self.case["case_id"])
+        decided = self.gateway.call(
+            "workflow.decide_approval", {
+                "approval_id": approval["approval_id"], "decision": "APPROVED",
+            },
+            case_id=self.case["case_id"], actor="finance.lead",
+            scope=["approval:decide"],
+        )["data"]
+        self.store.save_approval({
+            "approval_id": decided["approval_id"],
+            "case_id": self.case["case_id"],
+            **decided,
+        })
+        transition_case(
+            self.store, interrupted, CaseStatus.READY_TO_EXECUTE,
+            "test approval", actor="finance.lead",
+        )
+        transition_case(
+            self.store, interrupted, CaseStatus.EXECUTING,
+            "simulate process interruption after execution began",
+        )
+
+        await self.runner.execute_after_approval(interrupted)
+        final = self.store.get_case(self.case["case_id"])
+        self.assertEqual(final["status"], CaseStatus.ROLLED_BACK.value)
+        events = self.store.list_audit(self.case["case_id"])
+        self.assertIn("TEAM_RUN_RECOVERED", {item["event"] for item in events})
+
 
 if __name__ == "__main__":
     unittest.main()

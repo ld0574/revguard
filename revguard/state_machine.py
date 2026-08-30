@@ -46,7 +46,10 @@ ALLOWED_TRANSITIONS: dict[CaseStatus, frozenset[CaseStatus]] = {
     CaseStatus.KNOWLEDGE_ARCHIVED: frozenset({CaseStatus.CLOSED}),
     CaseStatus.ROLLED_BACK: frozenset(),
     CaseStatus.CLOSED: frozenset(),
-    CaseStatus.FAILED: frozenset(),
+    # A failed write flow may only reopen into the safety path.  The recovery
+    # endpoint additionally proves that verification requested rollback and
+    # that the failed stage was a reversal/post-rollback verification stage.
+    CaseStatus.FAILED: frozenset({CaseStatus.ROLLBACK_REQUIRED}),
 }
 
 _FAILURE_SOURCES = frozenset(

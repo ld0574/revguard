@@ -126,12 +126,32 @@ wait_api() {
   return 1
 }
 
+guard_no_active_runs() {
+  [ "$RESET" = "true" ] && return 0
+  if ! docker inspect -f '{{.State.Running}}' revguard-api 2>/dev/null | grep -q true; then
+    return 0
+  fi
+  active_runs=$(docker exec revguard-api python -c '
+from revguard.api import store
+active = {"QUEUED", "STARTING", "RUNNING"}
+print(",".join(
+    case["case_id"] for case in store.list_cases()
+    if (case.get("team_run") or {}).get("status") in active
+))
+' 2>/dev/null || true)
+  [ -z "$active_runs" ] || fail \
+    "检测到活动 AgentTeams 运行: $active_runs；请等待结束或在录制库上显式使用 --reset"
+}
+
 env_set_if_missing REVGUARD_APPROVAL_SIGNING_KEY "$(openssl rand -hex 32)"
 env_set REVGUARD_ALLOW_INSECURE_DEMO_KEYS true
 env_set REVGUARD_ENABLE_LEGACY_TOOL_API false
 env_set REVGUARD_ENABLE_RECORDING_UI true
 env_set REVGUARD_RESET_ON_START false
 env_set_if_missing REVGUARD_VERIFICATION_TAMPER_AMOUNT 1
+env_set_if_missing REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS 600
+
+guard_no_active_runs
 
 if [ "$PROFILE" = "local" ]; then
   log "部署本地可复现环境（SQLite + MCP Team）"

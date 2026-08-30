@@ -90,6 +90,14 @@ MCP Client/Server reference harness。两条路径都只有在 `SUCCEEDED` Stage
 应用输出。L2 会真实停在 `WAITING_FOR_APPROVAL`，后续必须调用独立审批接口才能继续执行、
 验证与回滚。
 
+### `POST /api/v1/cases/{case_id}/team/resume`
+
+仅用于 `AGENTTEAMS_MATRIX` 且停在 `EXECUTING` 的超时运行。运行最后更新超过
+`REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS`（默认 600 秒）后才允许恢复，防止对正在运行的
+案件重复调度。L2 案件必须使用 `approver` Principal；新能力令牌只包含原审批
+边界内尚未消耗的组件额度。续跑会回放执行段，已成功写入由 `case_id + component`
+持久化幂等键抑制，并记录 `TEAM_RUN_RESUME_REQUESTED` / `TEAM_RUN_RECOVERED` 审计事件。
+
 ### `POST /api/v1/cases/{case_id}/approval`
 
 需要 `approver`。审批人来自 Bearer Principal：

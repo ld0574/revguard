@@ -328,6 +328,38 @@ class MatrixTeamRunner(McpTeamRunner):
         )
         return result
 
+    async def resume_rollback(self, case: dict) -> dict:
+        self.settings.validate()
+        self.run_id = (case.get("team_run") or {}).get("run_id") or new_id("RUN-AGT")
+        self._run_phase = "ROLLBACK"
+        completed = len([
+            item for item in self.store.list_agent_tasks(case["case_id"])
+            if item.get("status") == TaskStatus.SUCCEEDED.value
+        ])
+        self._update_run(
+            case, status="RUNNING", phase=self._run_phase,
+            current_stage="LedgerReverseSkill", completed_tasks=completed,
+            total_tasks=max((case.get("team_run") or {}).get("total_tasks", 0), completed + 2),
+            error=None,
+        )
+        try:
+            result = await super().resume_rollback(case)
+        except Exception as exc:
+            self._update_run(
+                case, status="FAILED", error={
+                    "type": type(exc).__name__, "message": str(exc),
+                },
+            )
+            raise
+        self._update_run(
+            case, status="COMPLETED", current_stage=None,
+            completed_tasks=len([
+                item for item in self.store.list_agent_tasks(case["case_id"])
+                if item.get("status") == TaskStatus.SUCCEEDED.value
+            ]),
+        )
+        return result
+
     async def _orchestrator_handshake(self, case: dict) -> None:
         started_at = utc_now()
         started = time.monotonic()

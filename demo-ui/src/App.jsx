@@ -128,6 +128,16 @@ const RUN_STATUS_LABELS = {
   FAILED: "运行失败",
 };
 
+const ACTIVE_RUN_STATUSES = new Set(["QUEUED", "STARTING", "RUNNING"]);
+const STALE_RUN_AFTER_MS = 10 * 60 * 1000;
+
+function isStaleTeamRun(run = {}) {
+  if (!ACTIVE_RUN_STATUSES.has(run.status)) return false;
+  const timestamp = run.updated_at || run.started_at || run.queued_at;
+  const updatedAt = timestamp ? new Date(timestamp).valueOf() : Number.NaN;
+  return Number.isFinite(updatedAt) && Date.now() - updatedAt >= STALE_RUN_AFTER_MS;
+}
+
 function skillLabel(skillName) {
   if (!skillName) return "等待下一状态";
   return SKILL_LABELS[skillName] || skillName.replace(/Skill$/, "");
@@ -200,7 +210,7 @@ async function api(path, key, options = {}) {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     const detail = body?.detail;
-    const message = typeof detail === "string" ? detail : detail?.code || `HTTP ${response.status}`;
+    const message = typeof detail === "string" ? detail : detail?.message || detail?.code || `HTTP ${response.status}`;
     throw new Error(message);
   }
   return response.json();
@@ -668,8 +678,16 @@ export function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState("decision");
-  const teamRunning = ["QUEUED", "STARTING", "RUNNING"].includes(snapshot?.case?.team_run?.status);
+  const teamRun = snapshot?.case?.team_run || {};
+  const teamStale = isStaleTeamRun(teamRun);
+  const teamRunning = ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
   const teamFailure = snapshot?.case?.team_run?.status === "FAILED" ? snapshot.case.team_run : null;
+  const rollbackRecoverable = Boolean(
+    teamFailure
+    && snapshot?.case?.status === "FAILED"
+    && ["LedgerReverseSkill", "PostRollbackVerifySkill"].includes(teamFailure.current_stage)
+    && snapshot?.verification?.rollback_required,
+  );
 
   const loadCases = useCallback(async () => {
     const page = await api("/api/v1/cases?limit=200", API_KEYS.viewer);
@@ -712,6 +730,7 @@ export function App() {
   });
   const onRun = () => perform("多智能体调查已启动，真实执行者的输入输出将写入任务账本", () => api(`/api/v1/cases/${caseId}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": `REQ-WEBUI-${caseId}-RUN` } }));
   const onApprove = () => perform("人工审批已记录，执行智能体与独立验证智能体正在后台运行", () => api(`/api/v1/cases/${caseId}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境按当前风险边界处理。" }) }));
+  const onResume = () => perform("人工重新授权已记录，未完成的安全链路正在幂等续跑", () => api(`/api/v1/cases/${caseId}/team/resume`, API_KEYS.approver, { method: "POST" }));
   const onInspect = () => { setTab("audit"); window.setTimeout(() => document.getElementById("rollback-evidence")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   const onLocateFailure = () => { setTab("decision"); window.setTimeout(() => document.getElementById("agent-task-ledger")?.scrollIntoView({ behavior: "smooth", block: "center" }), 60); };
   const onExport = async () => {
@@ -727,7 +746,8 @@ export function App() {
   return (
     <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
-      {!error && teamFailure && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={onLocateFailure}>定位任务</button></div>}
+      {!error && teamFailure && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "继续安全回滚" : "定位任务"}</button></div>}
+      {!error && teamStale && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；续跑会重新授权并用幂等键跳过已完成写入。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "继续执行"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>

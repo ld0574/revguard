@@ -1,6 +1,7 @@
 """风险分级与 Mock 工具契约测试（设计文档 14 / 13）。"""
 from __future__ import annotations
 
+import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
@@ -88,6 +89,31 @@ class TestToolContract(unittest.TestCase):
                          actor="revguard-evidence", scope=["payment:read"])
         self.assertTrue(second["success"])
 
+    def test_one_shot_verification_fault_stays_consumed_after_restart(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / "gateway.json"
+            first_gateway = ToolGateway(
+                FIXTURES, state_path=state_path, verification_tamper_amount="1",
+            )
+            first = first_gateway.call(
+                "finance.get_commission_ledger", {"order_id": "EZ202608001"},
+                case_id="CASE-TAMPER", actor="revguard-verifier",
+                scope=["ledger:read"],
+            )
+            restarted_gateway = ToolGateway(
+                FIXTURES, state_path=state_path, verification_tamper_amount="1",
+            )
+            second = restarted_gateway.call(
+                "finance.get_commission_ledger", {"order_id": "EZ202608001"},
+                case_id="CASE-TAMPER", actor="revguard-verifier",
+                scope=["ledger:read"],
+            )
+        self.assertEqual(
+            Decimal(first["data"]["entries"][-1]["amount"])
+            - Decimal(second["data"]["entries"][-1]["amount"]),
+            Decimal("1"),
+        )
+
     def _approved_draft(self, *, case_id="CASE-T", amount="100"):
         approval = self.gw.call("workflow.create_approval", {
             "case_id": case_id, "amount": amount, "currency": "KES",
@@ -144,6 +170,69 @@ class TestToolContract(unittest.TestCase):
             idempotency_key="k3")
         self.assertTrue(resp["success"])
         self.assertEqual(resp["data"]["reversal_entry"]["amount"], "-100")
+
+    def test_capability_renewal_only_authorizes_unconsumed_components(self):
+        case_id = "CASE-RECOVERY"
+        created = self.gw.call("workflow.create_approval", {
+            "case_id": case_id, "amount": "100", "currency": "KES",
+            "component_quota": {
+                "SALES_COMMISSION": "70", "COLLECTION_COMMISSION": "30",
+            },
+            "risk_level": "L2", "approver_role": "FINANCE_LEAD",
+            "action_summary": "recovery test",
+        }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])
+        decided = self.gw.call("workflow.decide_approval", {
+            "approval_id": created["data"]["approval_id"],
+            "decision": "APPROVED",
+        }, case_id=case_id, actor="finance.lead", scope=["approval:decide"])
+        sales = self.gw.call("commission.create_adjustment_draft", {
+            "order_id": "EZ202608001", "case_id": case_id,
+            "component": "SALES_COMMISSION", "amount": "70", "currency": "KES",
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:draft"])
+        submitted = self.gw.call("commission.submit_adjustment", {
+            "action_id": sales["data"]["action_id"],
+            "approval_token": decided["data"]["approval_token"],
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:write"],
+            idempotency_key=f"{case_id}:SALES_COMMISSION")
+        self.assertTrue(submitted["success"])
+
+        denied = self.gw.call("workflow.renew_approval_capability", {
+            "approval_id": created["data"]["approval_id"], "case_id": case_id,
+        }, case_id=case_id, actor="api-operator", scope=["approval:decide"])
+        self.assertFalse(denied["success"])
+        renewed = self.gw.call("workflow.renew_approval_capability", {
+            "approval_id": created["data"]["approval_id"], "case_id": case_id,
+        }, case_id=case_id, actor="finance.lead", scope=["approval:decide"])
+        self.assertTrue(renewed["success"])
+        self.assertEqual(
+            renewed["data"]["remaining_component_quota"],
+            {"COLLECTION_COMMISSION": "30"},
+        )
+
+        collection = self.gw.call("commission.create_adjustment_draft", {
+            "order_id": "EZ202608001", "case_id": case_id,
+            "component": "COLLECTION_COMMISSION", "amount": "30", "currency": "KES",
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:draft"])
+        resumed = self.gw.call("commission.submit_adjustment", {
+            "action_id": collection["data"]["action_id"],
+            "approval_token": renewed["data"]["approval_token"],
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:write"],
+            idempotency_key=f"{case_id}:COLLECTION_COMMISSION")
+        self.assertTrue(resumed["success"])
+
+        rollback = self.gw.call("workflow.renew_rollback_capability", {
+            "case_id": case_id,
+            "ledger_id": submitted["data"]["ledger_entry"]["ledger_id"],
+            "action_id": sales["data"]["action_id"],
+        }, case_id=case_id, actor="finance.lead", scope=["approval:decide"])
+        self.assertTrue(rollback["success"])
+        reversed_result = self.gw.call("commission.reverse_adjustment", {
+            "case_id": case_id,
+            "ledger_id": submitted["data"]["ledger_entry"]["ledger_id"],
+            "rollback_token": rollback["data"]["rollback_token"],
+        }, case_id=case_id, actor="revguard-executor",
+            scope=["commission:reverse"], idempotency_key=f"{case_id}:sales:rollback")
+        self.assertTrue(reversed_result["success"])
 
     def test_forged_token_and_scope_escalation_are_rejected(self):
         draft, _token = self._approved_draft()

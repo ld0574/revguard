@@ -43,6 +43,8 @@ TOOL_REQUIRED_SCOPES: dict[str, str] = {
     "workflow.create_approval": "approval:write",
     "workflow.get_approval_status": "approval:read",
     "workflow.decide_approval": "approval:decide",
+    "workflow.renew_approval_capability": "approval:decide",
+    "workflow.renew_rollback_capability": "approval:decide",
     "ticket.update_case": "ticket:write",
     "mail.create_reply_draft": "mail:draft",
 }

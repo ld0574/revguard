@@ -352,27 +352,44 @@ class McpTeamRunner:
     async def execute_after_approval(self, case: dict, *,
                                      state: dict | None = None) -> dict:
         """Continue an approved MCP Team case through write, verify and rollback."""
-        if case.get("status") != CaseStatus.READY_TO_EXECUTE.value:
+        recovering_execution = case.get("status") == CaseStatus.EXECUTING.value
+        if case.get("status") not in {
+            CaseStatus.READY_TO_EXECUTE.value,
+            CaseStatus.EXECUTING.value,
+        }:
             raise ValueError(f"案件状态 {case.get('status')} 不允许执行")
         state = state or self._rebuild_state(case)
         approval = state.get("approval") or self.store.get_approval(case["case_id"]) or {}
         state["approval"] = approval
         risk = RiskDecision(**state["risk_decision"])
-        await self._invoke(case, "PermissionCheckSkill", {
-            "action_type": (
-                "DRAFT" if risk.execution_constraints.get("write") == "draft_only"
-                else "LEDGER_ADJUST"
-            ),
-            "risk": state["risk_decision"],
-            "approval": (
-                {**approval, "approval_token": SERVER_INJECTION_REF}
-                if approval.get("approval_token") else approval
-            ),
-        })
-        transition_case(
-            self.store, case, CaseStatus.EXECUTING,
-            f"{self.display_name} Executor 通过服务端权限检查，开始受控执行",
-        )
+        if recovering_execution:
+            # The case state and every material write are durable.  When the API
+            # process restarts, replay only the execution segment: component
+            # idempotency keys suppress committed writes while unfinished
+            # components continue under a newly authorised capability.
+            self.store.audit(
+                case["case_id"], "revguard-orchestrator", "TEAM_RUN_RECOVERED", {
+                    "from_status": CaseStatus.EXECUTING.value,
+                    "strategy": "idempotent-execution-replay",
+                    "transport": self.transport,
+                },
+            )
+        else:
+            await self._invoke(case, "PermissionCheckSkill", {
+                "action_type": (
+                    "DRAFT" if risk.execution_constraints.get("write") == "draft_only"
+                    else "LEDGER_ADJUST"
+                ),
+                "risk": state["risk_decision"],
+                "approval": (
+                    {**approval, "approval_token": SERVER_INJECTION_REF}
+                    if approval.get("approval_token") else approval
+                ),
+            })
+            transition_case(
+                self.store, case, CaseStatus.EXECUTING,
+                f"{self.display_name} Executor 通过服务端权限检查，开始受控执行",
+            )
         executions = []
         for diff in state["root_cause_report"]["diffs"]:
             delta = Decimal(diff["delta"])
@@ -482,6 +499,10 @@ class McpTeamRunner:
                 f"variance={verification['variance']}，触发冲销",
             )
             await self._rollback(case, state)
+        if case.get("status") == CaseStatus.FAILED.value:
+            self.store.save_case(case)
+            self._export(case, state)
+            raise RuntimeError("回滚后独立验证未恢复安全基线")
         self.store.save_case(case)
         await self._archive(case, state)
         return self._export(case, state)
@@ -491,6 +512,68 @@ class McpTeamRunner:
         state = self._rebuild_state(case)
         if approval is not None:
             state["approval"] = approval
+        await self._archive(case, state)
+        return self._export(case, state)
+
+    async def resume_rollback(self, case: dict) -> dict:
+        """Continue only the fail-safe rollback segment after an interruption."""
+        if case.get("status") != CaseStatus.ROLLBACK_REQUIRED.value:
+            raise ValueError(f"案件状态 {case.get('status')} 不允许恢复回滚")
+        state = self._rebuild_state(case)
+        state["executions"] = self.store.list_executions(case["case_id"])
+        self.store.audit(
+            case["case_id"], "revguard-orchestrator", "ROLLBACK_RECOVERY_STARTED", {
+                "strategy": "resume-unreversed-executions",
+                "transport": self.transport,
+            },
+        )
+        pending = [
+            item for item in state["executions"]
+            if item.get("status") == "SUBMITTED" and item.get("ledger_entry")
+        ]
+        if pending:
+            await self._rollback(case, state)
+        else:
+            snapshots = [
+                item.get("before_snapshot") for item in state["executions"]
+                if item.get("before_snapshot")
+            ]
+            if not snapshots:
+                transition_case(
+                    self.store, case, CaseStatus.FAILED,
+                    "回滚恢复缺少执行前快照",
+                )
+            else:
+                rollback_verification = await self._invoke(
+                    case, "PostRollbackVerifySkill", {
+                        "order_id": case["order_id"],
+                        "expected_snapshot": snapshots[0],
+                    },
+                )
+                state["rollback"] = {"reversals": [], "verification": rollback_verification}
+                self.store.audit(
+                    case["case_id"], "revguard-verifier", "ROLLBACK_VERIFIED", {
+                        **rollback_verification, "transport": self.transport,
+                    },
+                )
+                transition_case(
+                    self.store, case,
+                    (
+                        CaseStatus.ROLLED_BACK
+                        if rollback_verification["verification_status"] == "PASSED"
+                        else CaseStatus.FAILED
+                    ),
+                    (
+                        f"{self.display_name} Verifier 确认反向冲销恢复执行前净额"
+                        if rollback_verification["verification_status"] == "PASSED"
+                        else "冲销后独立验证仍存在偏差"
+                    ),
+                )
+        if case.get("status") == CaseStatus.FAILED.value:
+            self.store.save_case(case)
+            self._export(case, state)
+            raise RuntimeError("回滚后独立验证未恢复安全基线")
+        self.store.save_case(case)
         await self._archive(case, state)
         return self._export(case, state)
 

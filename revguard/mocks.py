@@ -461,6 +461,106 @@ class ToolGateway:
             self._persist_state()
             return copy.deepcopy(approval)
 
+    def _tool_workflow_renew_approval_capability(
+        self, p: dict, *, actor="", **_kw,
+    ) -> dict:
+        """Re-authorise only the unconsumed portion of an approved decision.
+
+        A process restart must not silently extend a short-lived capability.
+        Recovery therefore requires the trusted approver again, and the new
+        token is bounded to components that have not already been submitted.
+        """
+        with self._lock:
+            approval = self._approvals.get(p.get("approval_id", ""))
+            if not approval:
+                raise ToolError("NOT_FOUND", f"审批单不存在: {p.get('approval_id')}")
+            if approval.get("status") != "APPROVED":
+                raise ToolError("DATA_CONFLICT", "只有已批准审批单可重新授权")
+            if p.get("case_id") and p["case_id"] != approval.get("case_id"):
+                raise ToolError("AUTH_FAILED", "审批单与案件不匹配")
+
+            consumed: dict[str, Decimal] = {}
+            for draft in self._adjustments.values():
+                if (draft.get("case_id") != approval.get("case_id")
+                        or draft.get("status") != "SUBMITTED"):
+                    continue
+                component = str(draft.get("component", ""))
+                consumed[component] = consumed.get(component, Decimal("0")) + abs(
+                    Decimal(str(draft.get("amount", "0")))
+                )
+            remaining_quota = {
+                component: str(max(
+                    Decimal(str(limit)) - consumed.get(component, Decimal("0")),
+                    Decimal("0"),
+                ))
+                for component, limit in approval.get("component_quota", {}).items()
+            }
+            remaining_quota = {
+                component: amount for component, amount in remaining_quota.items()
+                if Decimal(amount) > 0
+            }
+            remaining_amount = sum(
+                (Decimal(amount) for amount in remaining_quota.values()),
+                Decimal("0"),
+            )
+            token = ""
+            if remaining_amount > 0:
+                token = self._token_signer.issue("ledger_adjust", {
+                    "approval_id": approval["approval_id"],
+                    "case_id": approval["case_id"],
+                    "max_amount": str(remaining_amount),
+                    "component_quota": remaining_quota,
+                    "currency": approval["currency"],
+                    "risk_level": approval["risk_level"],
+                    "approver": actor,
+                    "approver_role": approval["approver_role"],
+                    "renewal": True,
+                }, ttl_seconds=900)
+            approval["approval_token"] = token
+            approval["capability_renewed_at"] = utc_now()
+            approval["capability_renewed_by"] = actor
+            approval["remaining_component_quota"] = remaining_quota
+            self._persist_state()
+            return copy.deepcopy(approval)
+
+    def _tool_workflow_renew_rollback_capability(
+        self, p: dict, *, actor="", **_kw,
+    ) -> dict:
+        """Re-authorise reversal of one still-active RevGuard ledger write."""
+        with self._lock:
+            case_id = str(p.get("case_id", ""))
+            ledger_id = str(p.get("ledger_id", ""))
+            action_id = str(p.get("action_id", ""))
+            entry = next(
+                (item for item in self._ledger if item.get("ledger_id") == ledger_id),
+                None,
+            )
+            draft = self._adjustments.get(action_id)
+            if not entry or not draft:
+                raise ToolError("NOT_FOUND", "待回滚台账或调整单不存在")
+            if (draft.get("case_id") != case_id
+                    or entry.get("source") != f"REVGUARD:{case_id}"
+                    or draft.get("action_id") != action_id):
+                raise ToolError("AUTH_FAILED", "回滚对象与案件不匹配")
+            if entry.get("reversed_by"):
+                raise ToolError("DATA_CONFLICT", "该台账记录已回滚")
+            token = self._token_signer.issue("ledger_reverse", {
+                "case_id": case_id,
+                "ledger_id": ledger_id,
+                "action_id": action_id,
+                "currency": entry.get("currency"),
+                "renewal": True,
+                "authorised_by": actor,
+            }, ttl_seconds=3600)
+            return {
+                "case_id": case_id,
+                "ledger_id": ledger_id,
+                "action_id": action_id,
+                "rollback_token": token,
+                "renewed_at": utc_now(),
+                "renewed_by": actor,
+            }
+
     # -------------------------------------------------------------- 工单/邮件
     def _tool_ticket_update_case(self, p: dict, **_kw) -> dict:
         record = {"system": "TICKET", "payload": copy.deepcopy(p), "at": utc_now()}
@@ -501,6 +601,17 @@ class ToolGateway:
         self._token_consumed_amount = state.get("token_consumed_amount", {})
         self._token_consumed_by_component = state.get("token_consumed_by_component", {})
         self._used_rollback_tokens = set(state.get("used_rollback_tokens", []))
+        # Older state files predate this field.  If a Verifier ledger read was
+        # already receipted while tamper injection is enabled, infer that the
+        # one-shot fault was consumed so a process restart cannot inject it again.
+        self._verification_tamper_used = bool(state.get(
+            "verification_tamper_used",
+            self._verification_tamper_amount != 0 and any(
+                item.get("actor") == "revguard-verifier"
+                and item.get("tool_name") == "finance.get_commission_ledger"
+                for item in self._receipts
+            ),
+        ))
 
     def _persist_state(self) -> None:
         if not self._state_path:
@@ -516,6 +627,7 @@ class ToolGateway:
             "token_consumed_amount": self._token_consumed_amount,
             "token_consumed_by_component": self._token_consumed_by_component,
             "used_rollback_tokens": sorted(self._used_rollback_tokens),
+            "verification_tamper_used": self._verification_tamper_used,
         }
         tmp = self._state_path.with_suffix(self._state_path.suffix + ".tmp")
         tmp.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")

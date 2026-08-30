@@ -586,6 +586,122 @@ class TestApiSmoke(unittest.TestCase):
         self.assertTrue(any(item.get("transport") == "mcp" for item in details))
         self.assertTrue(any(item.get("simulated_human") is False for item in details))
 
+    def test_15b_stale_matrix_run_requires_approver_and_is_requeued(self):
+        case_id = "CASE-STALE-MATRIX"
+        case = Case(
+            case_id=case_id,
+            case_type="COMMISSION_UNDERPAYMENT",
+            source="TEST",
+            status=CaseStatus.EXECUTING.value,
+            order_id="EZ202608001",
+            claim={"actual_amount": "0", "expected_amount": "100", "currency": "KES"},
+        ).to_dict()
+        case.update({
+            "execution_mode": "AGENTTEAMS_MATRIX",
+            "risk_decision": {
+                "risk_level": "L2", "approval_required": True,
+                "approver_role": "FINANCE_LEAD",
+                "execution_constraints": {"write": True},
+                "rollback_plan_required": True, "reason_codes": ["TEST"],
+            },
+            "team_run": {
+                "run_id": "RUN-STALE", "status": "RUNNING",
+                "phase": "EXECUTION", "updated_at": "2020-01-01T00:00:00Z",
+                "completed_tasks": 3, "total_tasks": 20,
+            },
+        })
+        store.save_case(case)
+        created = api_module.gateway.call("workflow.create_approval", {
+            "case_id": case_id, "amount": "100", "currency": "KES",
+            "component_quota": {"SALES_COMMISSION": "100"},
+            "risk_level": "L2", "approver_role": "FINANCE_LEAD",
+            "action_summary": "stale recovery",
+        }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])
+        decided = api_module.gateway.call("workflow.decide_approval", {
+            "approval_id": created["data"]["approval_id"], "decision": "APPROVED",
+        }, case_id=case_id, actor="finance.lead", scope=["approval:decide"])["data"]
+        store.save_approval({
+            "approval_id": decided["approval_id"], "case_id": case_id, **decided,
+        })
+
+        denied = self.client.post(
+            f"/api/v1/cases/{case_id}/team/resume", headers=self.operator,
+        )
+        self.assertEqual(denied.status_code, 403)
+        with patch("revguard.api._spawn_team_background") as spawn:
+            resumed = self.client.post(
+                f"/api/v1/cases/{case_id}/team/resume", headers=self.approver,
+            )
+        self.assertEqual(resumed.status_code, 202, resumed.text)
+        self.assertEqual(resumed.json()["state_status"], "QUEUED")
+        self.assertEqual(
+            store.get_case(case_id)["team_run"]["recovery"]["strategy"],
+            "idempotent-execution-replay",
+        )
+        spawn.assert_called_once_with(case_id, "EXECUTION")
+
+    def test_15c_failed_rollback_can_only_reopen_into_safety_path(self):
+        case_id = "CASE-FAILED-ROLLBACK"
+        created = api_module.gateway.call("workflow.create_approval", {
+            "case_id": case_id, "amount": "20", "currency": "KES",
+            "component_quota": {"SALES_COMMISSION": "20"},
+            "risk_level": "L2", "approver_role": "FINANCE_LEAD",
+            "action_summary": "rollback recovery",
+        }, case_id=case_id, actor="revguard-risk", scope=["approval:write"])
+        decided = api_module.gateway.call("workflow.decide_approval", {
+            "approval_id": created["data"]["approval_id"], "decision": "APPROVED",
+        }, case_id=case_id, actor="finance.lead", scope=["approval:decide"])["data"]
+        draft = api_module.gateway.call("commission.create_adjustment_draft", {
+            "order_id": "EZ202608001", "case_id": case_id,
+            "component": "SALES_COMMISSION", "amount": "20", "currency": "KES",
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:draft"])["data"]
+        submitted = api_module.gateway.call("commission.submit_adjustment", {
+            "action_id": draft["action_id"],
+            "approval_token": decided["approval_token"],
+        }, case_id=case_id, actor="revguard-executor", scope=["commission:write"],
+            idempotency_key=f"{case_id}:SALES_COMMISSION")["data"]
+        original_token = submitted["rollback_token"]
+        store.save_execution({
+            "action_id": draft["action_id"], "case_id": case_id,
+            "action_type": "LEDGER_ADJUST", "status": "SUBMITTED",
+            "amount": "20", "currency": "KES", "component": "SALES_COMMISSION",
+            "idempotency_key": f"{case_id}:SALES_COMMISSION",
+            "before_snapshot": submitted["before_snapshot"],
+            "after_snapshot": submitted["after_snapshot"],
+            "rollback_token": original_token,
+            "ledger_entry": submitted["ledger_entry"],
+        })
+        store.save_verification(case_id, {
+            "verification_status": "FAILED", "rollback_required": True,
+            "expected_amount": "0", "actual_amount": "20", "variance": "20",
+        })
+        case = Case(
+            case_id=case_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+            status=CaseStatus.FAILED.value, order_id="EZ202608001",
+        ).to_dict()
+        case.update({
+            "execution_mode": "AGENTTEAMS_MATRIX",
+            "team_run": {
+                "run_id": "RUN-ROLLBACK-FAILED", "status": "FAILED",
+                "phase": "EXECUTION", "current_stage": "LedgerReverseSkill",
+                "updated_at": "2020-01-01T00:00:00Z",
+            },
+        })
+        store.save_case(case)
+
+        with patch("revguard.api._spawn_team_background") as spawn:
+            resumed = self.client.post(
+                f"/api/v1/cases/{case_id}/team/resume", headers=self.approver,
+            )
+        self.assertEqual(resumed.status_code, 202, resumed.text)
+        recovered = store.get_case(case_id)
+        self.assertEqual(recovered["status"], CaseStatus.ROLLBACK_REQUIRED.value)
+        self.assertEqual(recovered["team_run"]["phase"], "ROLLBACK")
+        self.assertNotEqual(
+            store.list_executions(case_id)[0]["rollback_token"], original_token,
+        )
+        spawn.assert_called_once_with(case_id, "ROLLBACK")
+
 
 if __name__ == "__main__":
     unittest.main()

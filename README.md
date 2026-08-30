@@ -174,6 +174,7 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 - `POST /api/v1/cases/{id}/run`：运行确定性回放闭环；
 - `POST /api/v1/cases/{id}/team/run`：通过 scoped MCP 运行多 Worker 状态流，L2 停在人审；
+- `POST /api/v1/cases/{id}/team/resume`：审批人为超时的 Matrix 执行重新授权，按持久化幂等键续跑；
 - `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
 - `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
 - `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
