@@ -1,7 +1,7 @@
 {
-  "rg-demo-orchestrator-key": {
+    "rg-demo-orchestrator-key": {
     "actor": "revguard-orchestrator",
-    "roles": ["viewer", "dispatcher"]
+    "roles": ["viewer", "dispatcher", "operator"]
   },
   "rg-demo-operator-key": {"actor": "api-operator", "roles": ["viewer", "operator"]},
   "rg-demo-viewer-key-1": {"actor": "api-viewer", "roles": ["viewer"]},
