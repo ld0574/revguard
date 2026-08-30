@@ -656,7 +656,7 @@ function SafetyRail({ snapshot, onExport }) {
 }
 
 function DecisionView({ snapshot }) {
-  return <div className="decision-grid"><div className="decision-left"><EvidenceTable snapshot={snapshot} /><CalculationLedger snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><AgentMatrix snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div></div>;
+  return <div className="decision-grid"><div className="decision-left"><EvidenceTable snapshot={snapshot} /><CalculationLedger snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><AgentMatrix snapshot={snapshot} /></div></div>;
 }
 
 export function App() {
