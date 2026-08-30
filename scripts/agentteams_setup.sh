@@ -17,6 +17,7 @@ WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
 AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
 INSTALL_WORKER_SKILLS="${INSTALL_WORKER_SKILLS:-true}"
 CONFIGURE_MATRIX_WORKER_ROOMS="${CONFIGURE_MATRIX_WORKER_ROOMS:-true}"
+CONFIGURE_HIGRESS_MCP_GATEWAY="${CONFIGURE_HIGRESS_MCP_GATEWAY:-true}"
 REVGUARD_PRINCIPALS_FILE="${REVGUARD_PRINCIPALS_FILE:-$REVGUARD_HOME/config/demo_principals.json}"
 TEAM="revguard-team"
 WORKERS="orchestrator intake evidence policy calculation rootcause risk executor verifier knowledge"
@@ -98,11 +99,15 @@ if [ "$INSTALL_WORKER_SKILLS" = "true" ]; then
       "$controller_skill_dir/" \
       "agentteams/agentteams-storage/agents/$worker/skills/revguard-api/" >/dev/null
 
-    api_key=$(principal_for_actor "$worker")
-    printf '%s' "$api_key" | docker exec -i "$CONTROLLER" mc pipe \
-      "agentteams/agentteams-storage/agents/$worker/.copaw.secret/revguard_api_key" \
-      >/dev/null
-    unset api_key
+    # Orchestrator retains only the task-dispatch REST principal. Business
+    # Workers receive no backend API key; Higress injects it server-side.
+    if [ "$worker" = "revguard-orchestrator" ]; then
+      api_key=$(principal_for_actor "$worker")
+      printf '%s' "$api_key" | docker exec -i "$CONTROLLER" mc pipe \
+        "agentteams/agentteams-storage/agents/$worker/.copaw.secret/revguard_api_key" \
+        >/dev/null
+      unset api_key
+    fi
   done
 
   echo "等待 Worker 从持久存储同步 Adapter"
@@ -110,28 +115,29 @@ if [ "$INSTALL_WORKER_SKILLS" = "true" ]; then
     worker="revguard-$w"
     container="${WORKER_CONTAINER_PREFIX}${worker}"
     skill_script="/root/.copaw-worker/$worker/skills/revguard-api/scripts/revguard_call.py"
-    principal_file="/root/.copaw-worker/$worker/.copaw.secret/revguard_api_key"
     docker exec "$CONTROLLER" agt worker ensure-ready --name "$worker" >/dev/null
     for _ in $(seq 1 35); do
       running=$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null || true)
-      if [ "$running" = "true" ] \
-        && docker exec "$container" test -f "$skill_script" \
-        && docker exec "$container" test -s "$principal_file"; then
+      if [ "$running" = "true" ] && docker exec "$container" test -f "$skill_script"; then
         break
       fi
       sleep 2
     done
     running=$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null || true)
-    if [ "$running" != "true" ] \
-      || ! docker exec "$container" test -f "$skill_script" \
-      || ! docker exec "$container" test -s "$principal_file"; then
-      echo "Adapter 或独立 Principal 未同步到 Worker: $worker" >&2
+    if [ "$running" != "true" ] || ! docker exec "$container" test -f "$skill_script"; then
+      echo "Adapter 未同步到 Worker: $worker" >&2
       exit 1
     fi
     docker exec "$container" chmod 700 "$skill_script"
   done
 else
   echo "INSTALL_WORKER_SKILLS=false，跳过 Adapter 安装"
+fi
+
+if [ "$CONFIGURE_HIGRESS_MCP_GATEWAY" = "true" ]; then
+  echo "==> 配置 actor-scoped Higress MCP Gateway"
+  REVGUARD_HOME="$REVGUARD_HOME" CONTROLLER="$CONTROLLER" \
+    bash "$REVGUARD_HOME/scripts/setup_higress_mcp_gateway.sh"
 fi
 
 echo "==> 5/6 同步 CoPaw 运行时激活模型"
@@ -223,5 +229,5 @@ fi
 
 echo
 echo "完成。在 Element Web（http://<host>:8088）进入 revguard-team 聊天室即可演示。"
-echo "Worker 通过 $REVGUARD_API_BASE_URL/api/v1/skills/{name}/invoke 调用 RevGuard Skill 层。"
-echo "API key 必须由 AgentTeams Secret/Adapter 注入，禁止写入 SOUL 或聊天消息。"
+echo "Worker 通过 actor-scoped Higress MCP Gateway 调用 RevGuard Skill 层。"
+echo "后端 API key 仅保存在 Higress Server 配置中，不下发给业务 Worker。"

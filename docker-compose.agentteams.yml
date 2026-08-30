@@ -2,8 +2,11 @@
 services:
   revguard-api:
     networks:
-      - default
-      - agentteams
+      default: {}
+      agentteams:
+        aliases:
+          - revguard-api
+          - revguard-api.internal
 
 networks:
   agentteams:

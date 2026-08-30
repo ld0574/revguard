@@ -1,0 +1,95 @@
+server:
+  name: revguard-risk-mcp-server
+  config:
+    accessToken: ""
+
+tools:
+- name: RiskClassifySkill
+  description: 由 revguard-risk 在服务端任务边界内调用 RiskClassifySkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/RiskClassifySkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"
+
+- name: ApprovalRouteSkill
+  description: 由 revguard-risk 在服务端任务边界内调用 ApprovalRouteSkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/ApprovalRouteSkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"

@@ -1,0 +1,230 @@
+server:
+  name: revguard-executor-mcp-server
+  config:
+    accessToken: ""
+
+tools:
+- name: PermissionCheckSkill
+  description: 由 revguard-executor 在服务端任务边界内调用 PermissionCheckSkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/PermissionCheckSkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"
+
+- name: IdempotencyGuardSkill
+  description: 由 revguard-executor 在服务端任务边界内调用 IdempotencyGuardSkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/IdempotencyGuardSkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"
+
+- name: AdjustmentDraftSkill
+  description: 由 revguard-executor 在服务端任务边界内调用 AdjustmentDraftSkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/AdjustmentDraftSkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"
+
+- name: LedgerAdjustSkill
+  description: 由 revguard-executor 在服务端任务边界内调用 LedgerAdjustSkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/LedgerAdjustSkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"
+
+- name: LedgerReverseSkill
+  description: 由 revguard-executor 在服务端任务边界内调用 LedgerReverseSkill
+  args:
+  - name: caseId
+    type: string
+    required: true
+    description: 服务端已创建的案件编号
+  - name: input
+    type: object
+    required: true
+    description: 与当前 Skill 契约一致的输入对象
+  - name: messageId
+    type: string
+    required: true
+    description: AgentTeams Matrix 消息编号
+  - name: requestId
+    type: string
+    required: true
+    description: 端到端请求编号
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/skills/LedgerReverseSkill/invoke"
+    method: POST
+    body: |
+      {
+        "case_id": "{{.args.caseId}}",
+        "input": {{toJson .args.input}}
+      }
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+    - key: Content-Type
+      value: "application/json"
+    - key: X-AgentTeams-Message-ID
+      value: "{{.args.messageId}}"
+    - key: X-Request-ID
+      value: "{{.args.requestId}}"
+    - key: X-RevGuard-Task-ID
+      value: "{{.args.taskId}}"
+    - key: X-RevGuard-Transport
+      value: "higress-mcp"

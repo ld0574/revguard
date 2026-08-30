@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -35,6 +36,84 @@ def _credential_path() -> Path:
 
 def _worker_name() -> str:
     return os.getenv("AGENTTEAMS_WORKER_NAME", "").strip()
+
+
+def _mcporter_config(worker: str) -> Path | None:
+    candidates = [
+        Path.cwd() / "config" / "mcporter.json",
+        Path(f"/root/agentteams-fs/agents/{worker}/config/mcporter.json"),
+        Path(f"/root/.copaw-worker/{worker}/config/mcporter.json"),
+    ]
+    server = f"mcp-{worker}"
+    for path in candidates:
+        try:
+            config = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if server in (config.get("mcpServers") or {}):
+            return path
+    return None
+
+
+def _unwrap_mcporter_result(raw: object) -> dict:
+    """Normalize mcporter JSON output to the RevGuard Skill response body."""
+    if isinstance(raw, dict) and "success" in raw:
+        return raw
+    if isinstance(raw, dict):
+        content = raw.get("content")
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, dict) or item.get("type") != "text":
+                    continue
+                try:
+                    value = json.loads(str(item.get("text") or ""))
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(value, dict):
+                    return value
+        result = raw.get("result")
+        if isinstance(result, dict):
+            return _unwrap_mcporter_result(result)
+    raise ValueError("MCP response does not contain a RevGuard Skill envelope")
+
+
+def _invoke_higress_mcp(
+    worker: str,
+    skill: str,
+    *,
+    case_id: str,
+    skill_input: dict,
+    message_id: str,
+    request_id: str,
+    task_id: str,
+    config_path: Path,
+) -> dict:
+    arguments = {
+        "caseId": case_id,
+        "input": skill_input,
+        "messageId": message_id,
+        "requestId": request_id,
+        "taskId": task_id,
+    }
+    completed = subprocess.run(
+        [
+            "mcporter", "call", f"mcp-{worker}.{skill}",
+            "--args", json.dumps(arguments, ensure_ascii=False, separators=(",", ":")),
+            "--output", "json", "--timeout", "20000",
+        ],
+        cwd=config_path.parent.parent,
+        text=True,
+        capture_output=True,
+        timeout=25,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(f"mcporter exited with status {completed.returncode}")
+    result = _unwrap_mcporter_result(json.loads(completed.stdout))
+    result.setdefault("success", True)
+    result.setdefault("request_id", request_id)
+    result["transport"] = "higress-mcp"
+    return result
 
 
 def main() -> int:
@@ -87,6 +166,33 @@ def main() -> int:
                              "message": "Worker Skill invocation requires --task-id"}}))
             return 4
 
+    request_id = args.request_id or f"REQ-AGT-{uuid.uuid4().hex[:12].upper()}"
+    mcp_config = None if args.dispatch_skill else _mcporter_config(worker)
+    if mcp_config is not None:
+        try:
+            result = _invoke_higress_mcp(
+                worker,
+                args.skill,
+                case_id=args.case_id,
+                skill_input=skill_input,
+                message_id=message_id,
+                request_id=request_id,
+                task_id=args.task_id,
+                config_path=mcp_config,
+            )
+        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            result = {
+                "success": False,
+                "request_id": request_id,
+                "transport": "higress-mcp",
+                "error": {
+                    "type": "MCP_GATEWAY_UNAVAILABLE",
+                    "message": f"Higress MCP 调用失败（{type(exc).__name__}）",
+                },
+            }
+        print(json.dumps(result, ensure_ascii=False))
+        return 0 if result.get("success") else 1
+
     secret_path = _credential_path()
     try:
         api_key = secret_path.read_text(encoding="utf-8").strip()
@@ -99,7 +205,6 @@ def main() -> int:
                          "message": "RevGuard Worker Principal is empty"}}))
         return 3
 
-    request_id = args.request_id or f"REQ-AGT-{uuid.uuid4().hex[:12].upper()}"
     api_base = os.getenv("REVGUARD_API_BASE_URL", "http://revguard-api:9000").rstrip("/")
     if args.dispatch_skill:
         body_data = {"skill_name": args.dispatch_skill, "input": skill_input}
@@ -130,6 +235,7 @@ def main() -> int:
                 result["skill_receipt"] = response.headers.get(
                     "X-Skill-Receipt", result.get("skill_receipt")
                 )
+            result["transport"] = "rest-fallback"
     except urllib.error.HTTPError as exc:
         result = {
             "success": False,

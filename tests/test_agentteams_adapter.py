@@ -78,6 +78,30 @@ class TestAgentTeamsAdapter(unittest.TestCase):
         self.assertTrue(request.full_url.endswith("/skills/EvidenceCollectSkill/invoke"))
         self.assertEqual(request.headers["X-revguard-task-id"], "TASK-1")
 
+    def test_actor_scoped_higress_mcp_is_primary_and_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "config" / "mcporter.json"
+            config.parent.mkdir()
+            config.write_text(json.dumps({
+                "mcpServers": {"mcp-revguard-evidence": {"url": "http://gateway/mcp"}},
+            }), encoding="utf-8")
+            with patch.object(adapter, "_mcporter_config", return_value=config), \
+                    patch.object(adapter, "_invoke_higress_mcp", return_value={
+                        "success": True,
+                        "skill_receipt": "SKR-MCP",
+                        "transport": "higress-mcp",
+                    }) as invoke, \
+                    patch.object(adapter, "_credential_path") as secret:
+                code, result = self._run([
+                    "--skill", "EvidenceCollectSkill", "--task-id", "TASK-1",
+                    "--case-id", "CASE-1", "--input", "{}",
+                    "--message-id", "MATRIX-1", "--request-id", "REQ-MCP-1",
+                ], worker="revguard-evidence")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["transport"], "higress-mcp")
+        invoke.assert_called_once()
+        secret.assert_not_called()
+
     def test_hex_message_id_restores_exact_matrix_correlation(self):
         matrix_event_id = "$event-with-random-SU"
         with tempfile.TemporaryDirectory() as tmp:

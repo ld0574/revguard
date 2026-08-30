@@ -445,6 +445,14 @@ class ToolGateway:
             approval["status"] = "APPROVED" if decision == "APPROVED" else "REJECTED"
             # 审批人身份由可信 actor 决定，请求参数仅作兼容，不参与授权。
             approval["approver"] = actor
+            human_subject = str(p.get("human_subject") or "")
+            if human_subject:
+                approval["human_identity"] = {
+                    "sub": human_subject,
+                    "display_name": str(p.get("human_display_name") or human_subject),
+                    "auth_time": p.get("human_auth_time"),
+                    "auth_method": str(p.get("human_auth_method") or "matrix-password"),
+                }
             approval["comment"] = p.get("comment", "")
             approval["decided_at"] = utc_now()
             if approval["status"] == "APPROVED":
@@ -457,6 +465,8 @@ class ToolGateway:
                     "risk_level": approval["risk_level"],
                     "approver": actor,
                     "approver_role": approval["approver_role"],
+                    "human_subject": human_subject,
+                    "human_auth_time": p.get("human_auth_time"),
                 }, ttl_seconds=900)
             self._persist_state()
             return copy.deepcopy(approval)

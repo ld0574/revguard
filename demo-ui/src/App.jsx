@@ -29,7 +29,6 @@ const DEFAULT_CASE_ID = "CASE-2026-0008";
 const API_KEYS = {
   viewer: "rg-demo-viewer-key-1",
   operator: "rg-demo-operator-key",
-  approver: "rg-demo-approver-key",
 };
 
 const STAGE_META = [
@@ -202,7 +201,7 @@ async function api(path, key, options = {}) {
   const response = await fetch(path, {
     ...options,
     headers: {
-      Authorization: `Bearer ${key}`,
+      ...(key ? { Authorization: `Bearer ${key}` } : {}),
       ...(options.body ? { "Content-Type": "application/json" } : {}),
       ...options.headers,
     },
@@ -464,7 +463,7 @@ function AgentMatrix({ snapshot }) {
       {isMatrix && <div className={`team-runtime team-runtime-${runStatus.toLowerCase()}`}><div><span className="runtime-live-dot" /><strong title={runStatus}>{RUN_STATUS_LABELS[runStatus] || runStatus}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前执行者</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前阶段</span><strong title={run.current_stage || ""}>{skillLabel(run.current_stage)}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
       <div className="agent-task-ledger">
         {orchestrator && <details className="agent-task-card orchestrator-card" open>
-          <summary><span className="task-seq">编排</span><div><strong title="OrchestratorHandshake">协同任务编排</strong><code>revguard-orchestrator</code></div><span className="transport-cell">MATRIX</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
+          <summary><span className="task-seq">编排</span><div><strong title="OrchestratorHandshake">协同任务编排</strong><code>revguard-orchestrator</code></div><span className="transport-cell">Matrix</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
           <div className="task-evidence-grid"><div><span>控制输入</span><pre>{JSON.stringify(orchestrator.input || {}, null, 2)}</pre></div><div><span>控制输出</span><pre>{JSON.stringify(orchestrator.output || { status: "WAITING" }, null, 2)}</pre></div></div>
           <div className="correlation-strip"><code>dispatch {shortId(orchestrator.dispatch_event_id, 30)}</code><code>trigger {shortId(orchestrator.trigger_event_id, 30)}</code><code>response {shortId(orchestrator.response_event_id, 30)}</code></div>
         </details>}
@@ -477,14 +476,14 @@ function AgentMatrix({ snapshot }) {
             reason: run.error?.message || "AgentTeams 执行者未返回阶段结果",
           } : { status: task.status });
           return <details className={`agent-task-card ${isRunFailureTask ? "failed-task-card" : ""}`} key={task.task_id} open={isRunFailureTask || reverseIndex === 0}>
-            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong title={task.skill_name}>{skillLabel(task.skill_name)}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.transport === "agentteams-matrix" ? "MATRIX" : task.transport === "mcp" ? "MCP" : (task.transport || "—").toUpperCase()}</span><span className={`task-status task-${displayStatus.toLowerCase()}`}>{isRunFailureTask ? "未完成" : TASK_STATUS_LABELS[task.status] || task.status} · 第 {task.attempt} 次</span></summary>
+            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong title={task.skill_name}>{skillLabel(task.skill_name)}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.skill_transport === "higress-mcp" ? "MCP 网关" : task.transport === "agentteams-matrix" ? "Matrix" : task.transport === "mcp" ? "本地 MCP" : (task.transport || "—")}</span><span className={`task-status task-${displayStatus.toLowerCase()}`}>{isRunFailureTask ? "未完成" : TASK_STATUS_LABELS[task.status] || task.status} · 第 {task.attempt} 次</span></summary>
             {isRunFailureTask && <div className="task-failure-reason"><WarningCircle weight="fill" /><div><strong>执行者未提交阶段结果</strong><small>{run.error?.message || "AgentTeams Worker 未在时限内完成任务"}</small></div></div>}
             <div className="task-evidence-grid"><div><span>任务输入 · 不可变</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>任务输出 · 阶段结果</span><pre>{JSON.stringify(displayOutput, null, 2)}</pre></div></div>
-            <div className="correlation-strip"><code>task {shortId(task.task_id, 28)}</code><code>request {shortId(task.request_id, 28)}</code><code>room {shortId(task.matrix_room_id, 28)}</code><code>message {shortId(task.agentteams_message_id, 28)}</code><code>receipt {shortId(task.skill_receipt, 28)}</code><code>trace {shortId(span?.span_id, 28)}</code></div>
+            <div className="correlation-strip"><code>任务 {shortId(task.task_id, 28)}</code><code>请求 {shortId(task.request_id, 28)}</code><code>房间 {shortId(task.matrix_room_id, 28)}</code><code>消息 {shortId(task.agentteams_message_id, 28)}</code><code>回执 {shortId(task.skill_receipt, 28)}</code><code>追踪 {shortId(span?.span_id, 28)}</code>{task.skill_transport === "higress-mcp" && <code>技能入口 Higress MCP</code>}</div>
           </details>;
         }) : <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>}
       </div>
-      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "输入、输出、任务、请求、传输消息、回执与追踪标识逐项关联；只有持久化的阶段结果才能推进状态。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
+      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "输入、输出、任务、请求、Matrix 消息、Higress MCP 网关、回执与追踪标识逐项关联；只有持久化的阶段结果才能推进状态。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
     </section>
   );
 }
@@ -531,12 +530,13 @@ function Permissions({ snapshot }) {
   const approval = snapshot?.approval || {};
   const quotas = approval.component_quota || {};
   const currency = approval.currency || c.claim?.currency || "KES";
+  const human = approval.human_identity || {};
   const quotaRows = Object.entries(quotas).map(([component, amount]) => [componentLabel(component), money(amount, currency)]);
-  const rows = [["案件绑定", c.case_id || "—"], ["币种", currency], ["总额度上限", money(approvalAmount(snapshot), currency)], ...quotaRows, ["令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || c.risk_decision?.approver_role || "等待风险判断"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
+  const rows = [["案件绑定", c.case_id || "—"], ["币种", currency], ["总额度上限", money(approvalAmount(snapshot), currency)], ...quotaRows, ["能力令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || c.risk_decision?.approver_role || "等待风险判断"], ["人类审批人", human.display_name || "等待 AgentTeams 身份验证"], ["Matrix 身份", human.sub || "尚未绑定"], ["身份验证方式", human.auth_method === "matrix-password" ? "AgentTeams Matrix 密码验证" : human.auth_method || "尚未验证"], ["动作证明指纹", approval.human_assertion_id_ref || "提交审批后生成"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
   return (
     <div className="permissions-grid">
       <section className="detail-section permission-card"><div className="section-title"><LockKey weight="duotone" /><strong>审批与能力边界</strong></div><div className="permission-list">{rows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></section>
-      <section className="detail-section permission-card"><div className="section-title"><ShieldWarning weight="duotone" /><strong>四重约束</strong></div><div className="constraint-list"><div><span>01</span><strong>任务不漂移</strong><small>状态、技能、执行者、输入快照与案件版本绑定</small></div><div><span>02</span><strong>审批不自签</strong><small>财务负责人独立批准，执行智能体没有审批权限</small></div><div><span>03</span><strong>额度不外溢</strong><small>总额度与逐组件额度同时约束，防止重复写入</small></div><div><span>04</span><strong>权限不升级</strong><small>服务端身份、角色、权限范围与技能执行者白名单共同约束</small></div></div></section>
+      <section className="detail-section permission-card"><div className="section-title"><ShieldWarning weight="duotone" /><strong>四重约束</strong></div><div className="constraint-list"><div><span>01</span><strong>任务不漂移</strong><small>状态、技能、执行者、输入快照与案件版本绑定</small></div><div><span>02</span><strong>审批不自签</strong><small>后端独立验证 AgentTeams Matrix 人类身份；证明只绑定当前案件、审批单和动作</small></div><div><span>03</span><strong>额度不外溢</strong><small>总额度与逐组件额度同时约束，防止重复写入</small></div><div><span>04</span><strong>权限不升级</strong><small>服务端身份、角色、权限范围与技能执行者白名单共同约束</small></div></div></section>
       <section className="detail-section permission-card"><div className="section-title"><Fingerprint weight="duotone" /><strong>安全探针</strong></div><div className="probe-list">{["伪造令牌", "过期令牌", "跨案件调用", "组件额度滥用", "并发双写", "回滚令牌重放"].map((item) => <div key={item}><CheckCircle weight="fill" /><span>{item}</span><strong>已拒绝</strong></div>)}</div></section>
     </div>
   );
@@ -657,16 +657,95 @@ function SafetyRail({ snapshot, onExport }) {
   const approval = snapshot?.approval || {};
   const quotas = approval.component_quota || {};
   const currency = approval.currency || c.claim?.currency || "KES";
+  const human = approval.human_identity || {};
   const rolledBack = c.status === "ROLLED_BACK";
   return (
     <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">回滚后验证结果</span><strong className={`rail-state ${rolledBack ? "passed-state" : ""}`}>{rolledBack ? "已通过" : "等待验证"}</strong><span className="rail-label">安全基线（恢复后）</span><b>{money(c.claim?.actual_amount, currency)}</b><small>与该案件原始过账一致</small></section>
-      <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["绑定案件", c.case_id || "—"], ["币种", currency], ["总额度", money(approvalAmount(snapshot), currency)], ...Object.entries(quotas).map(([component, amount]) => [componentLabel(component), money(amount, currency)]), ["令牌有效期", "15 分钟"], ["策略范围", c.policy_decision?.policy_version || "待匹配"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
+      <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["绑定案件", c.case_id || "—"], ["币种", currency], ["总额度", money(approvalAmount(snapshot), currency)], ...Object.entries(quotas).map(([component, amount]) => [componentLabel(component), money(amount, currency)]), ["人类审批人", human.display_name || "尚未验证"], ["身份来源", human.sub ? "AgentTeams Matrix" : "等待验证"], ["令牌有效期", "15 分钟"], ["策略范围", c.policy_decision?.policy_version || "待匹配"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
       <section className="rail-section export-section"><span className="rail-label">导出证据包</span><button onClick={onExport} disabled={!snapshot?.report_available}><DownloadSimple weight="bold" />导出摘要报告</button><small>完整证据包包含追踪记录、审计日志、报告与校验清单。</small></section></aside>
   );
 }
 
 function DecisionView({ snapshot }) {
   return <div className="decision-grid"><div className="decision-left"><EvidenceTable snapshot={snapshot} /><CalculationLedger snapshot={snapshot} /><AuditTrail snapshot={snapshot} /></div><div className="decision-right"><PolicyTimeline snapshot={snapshot} /><AgentMatrix snapshot={snapshot} /></div></div>;
+}
+
+function HumanActionDialog({ intent, caseId, busy, onClose, onCommit }) {
+  const fixedResume = intent?.kind === "resume";
+  const [decision, setDecision] = useState("APPROVED");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [comment, setComment] = useState("证据完整，政策与金额复算一致，同意在当前风险边界内处理。");
+  const [proof, setProof] = useState(null);
+  const [dialogBusy, setDialogBusy] = useState(false);
+  const [dialogError, setDialogError] = useState("");
+
+  useEffect(() => {
+    if (!intent) return;
+    setDecision("APPROVED");
+    setUsername("");
+    setPassword("");
+    setComment(fixedResume ? "确认恢复未完成的安全链路，并继续执行幂等保护。" : "证据完整，政策与金额复算一致，同意在当前风险边界内处理。");
+    setProof(null);
+    setDialogBusy(false);
+    setDialogError("");
+  }, [intent, fixedResume]);
+
+  if (!intent) return null;
+  const action = fixedResume ? "RESUME" : decision;
+  const actionLabel = action === "APPROVED" ? "批准" : action === "REJECTED" ? "驳回" : "恢复执行";
+
+  const verifyIdentity = async (event) => {
+    event.preventDefault();
+    setDialogBusy(true); setDialogError(""); setProof(null);
+    try {
+      const verified = await api(`/api/v1/cases/${caseId}/human-action/assertion`, null, {
+        method: "POST",
+        body: JSON.stringify({ username, password, action }),
+      });
+      setPassword("");
+      setProof(verified);
+    } catch (err) {
+      setPassword("");
+      setDialogError(err.message);
+    } finally {
+      setDialogBusy(false);
+    }
+  };
+
+  const commit = async () => {
+    setDialogBusy(true); setDialogError("");
+    try {
+      await onCommit({ action, token: proof.assertion_token, comment });
+    } catch (err) {
+      setDialogError(err.message);
+      setProof(null);
+    } finally {
+      setDialogBusy(false);
+    }
+  };
+
+  return (
+    <div className="human-modal-backdrop" role="presentation">
+      <section className="human-modal" role="dialog" aria-modal="true" aria-labelledby="human-action-title">
+        <div className="human-modal-header"><div><span>人工控制边界</span><h2 id="human-action-title">AgentTeams 审批人身份验证</h2></div><button type="button" onClick={onClose} disabled={busy || dialogBusy} aria-label="关闭">×</button></div>
+        <div className="human-binding-strip"><LockKey weight="duotone" /><div><strong>证明只绑定本案与本次“{actionLabel}”动作</strong><small>密码由后端直接交给 AgentTeams Matrix 验证，智能体无法读取，也不会写入案件、日志或 Trace。</small></div></div>
+        {!fixedResume && <div className="decision-switch" aria-label="选择审批结论"><button type="button" className={decision === "APPROVED" ? "active approve" : ""} onClick={() => { setDecision("APPROVED"); setProof(null); }} disabled={dialogBusy}>批准</button><button type="button" className={decision === "REJECTED" ? "active reject" : ""} onClick={() => { setDecision("REJECTED"); setProof(null); }} disabled={dialogBusy}>驳回</button></div>}
+        {!proof ? <form className="human-login-form" onSubmit={verifyIdentity}>
+          <label><span>AgentTeams 审批账号</span><input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" placeholder="请输入 Matrix 账号" required /></label>
+          <label><span>密码</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="仅用于本次身份验证" required /></label>
+          {dialogError && <div className="human-dialog-error"><WarningCircle weight="fill" />{dialogError}</div>}
+          <button className="human-primary" type="submit" disabled={dialogBusy || busy}>{dialogBusy ? <SpinnerGap className="spin" weight="bold" /> : <Fingerprint weight="bold" />}验证人类身份</button>
+        </form> : <div className="human-proof-panel">
+          <div className="human-proof-success"><CheckCircle weight="fill" /><div><strong>{proof.identity?.display_name || proof.identity?.sub}</strong><small>{proof.identity?.sub} · AgentTeams Matrix 已验证</small></div><span>有效 {proof.expires_in_seconds} 秒</span></div>
+          <div className="human-proof-binding"><div><span>绑定案件</span><code>{proof.binding?.case_id}</code></div><div><span>绑定审批单</span><code>{shortId(proof.binding?.approval_id, 24)}</code></div><div><span>绑定动作</span><strong>{actionLabel}</strong></div></div>
+          {!fixedResume && <label className="human-comment"><span>审批意见</span><textarea value={comment} onChange={(event) => setComment(event.target.value)} rows="3" maxLength="500" /></label>}
+          {dialogError && <div className="human-dialog-error"><WarningCircle weight="fill" />{dialogError}</div>}
+          <div className="human-modal-actions"><button type="button" className="human-secondary" onClick={() => setProof(null)} disabled={dialogBusy || busy}>重新验证</button><button type="button" className={`human-primary ${action === "REJECTED" ? "danger" : ""}`} onClick={commit} disabled={dialogBusy || busy}>{dialogBusy || busy ? <SpinnerGap className="spin" weight="bold" /> : <UserCheck weight="bold" />}确认{actionLabel}</button></div>
+        </div>}
+      </section>
+    </div>
+  );
 }
 
 export function App() {
@@ -678,6 +757,7 @@ export function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState("decision");
+  const [humanAction, setHumanAction] = useState(null);
   const teamRun = snapshot?.case?.team_run || {};
   const teamStale = isStaleTeamRun(teamRun);
   const teamRunning = ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
@@ -729,8 +809,25 @@ export function App() {
     await loadCases();
   });
   const onRun = () => perform("多智能体调查已启动，真实执行者的输入输出将写入任务账本", () => api(`/api/v1/cases/${caseId}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": `REQ-WEBUI-${caseId}-RUN` } }));
-  const onApprove = () => perform("人工审批已记录，执行智能体与独立验证智能体正在后台运行", () => api(`/api/v1/cases/${caseId}/approval`, API_KEYS.approver, { method: "POST", body: JSON.stringify({ decision: "APPROVED", comment: "证据完整，政策与金额复算一致，同意在演示环境按当前风险边界处理。" }) }));
-  const onResume = () => perform("人工重新授权已记录，未完成的安全链路正在幂等续跑", () => api(`/api/v1/cases/${caseId}/team/resume`, API_KEYS.approver, { method: "POST" }));
+  const onApprove = () => setHumanAction({ kind: "approval" });
+  const onResume = () => setHumanAction({ kind: "resume" });
+  const commitHumanAction = async ({ action, token, comment }) => {
+    setBusy(true); setError(""); setNotice("");
+    try {
+      if (action === "RESUME") {
+        await api(`/api/v1/cases/${caseId}/team/resume`, token, { method: "POST" });
+        setNotice("人工身份与恢复动作已绑定，未完成链路正在幂等续跑");
+      } else {
+        await api(`/api/v1/cases/${caseId}/approval`, token, { method: "POST", body: JSON.stringify({ decision: action, comment }) });
+        setNotice(action === "APPROVED" ? "人工审批已记录，执行与独立验证正在后台运行" : "人工驳回已记录，执行权限未签发");
+      }
+      await load();
+      setHumanAction(null);
+    } finally {
+      setBusy(false);
+      window.setTimeout(() => setNotice(""), 2600);
+    }
+  };
   const onInspect = () => { setTab("audit"); window.setTimeout(() => document.getElementById("rollback-evidence")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   const onLocateFailure = () => { setTab("decision"); window.setTimeout(() => document.getElementById("agent-task-ledger")?.scrollIntoView({ behavior: "smooth", block: "center" }), 60); };
   const onExport = async () => {
@@ -751,7 +848,8 @@ export function App() {
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
-      </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />北京时间 · 2026-08-29</span></footer>
+      </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />北京时间 · 2026-08-31</span></footer>
+      <HumanActionDialog intent={humanAction} caseId={caseId} busy={busy} onClose={() => setHumanAction(null)} onCommit={commitHumanAction} />
     </div>
   );
 }

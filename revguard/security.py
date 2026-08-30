@@ -217,7 +217,11 @@ def secret_fingerprint(value: str) -> str:
 
 def redact_secrets(value):
     """递归清理 Trace/API 日志中的凭证字段。"""
-    sensitive = {"approval_token", "rollback_token", "authorization", "api_key", "signing_key"}
+    sensitive = {
+        "approval_token", "rollback_token", "assertion_token",
+        "human_assertion", "authorization", "api_key", "signing_key",
+        "password",
+    }
     if isinstance(value, dict):
         return {
             key: (f"<redacted:{secret_fingerprint(str(item))}>"

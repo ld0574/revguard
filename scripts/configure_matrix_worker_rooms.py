@@ -72,11 +72,18 @@ def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
     if missing:
         raise RuntimeError("AgentTeams Matrix 运行配置缺失: " + ", ".join(missing))
     rooms = collect_rooms(prefix)
+    matrix_username = required["AGENTTEAMS_ADMIN_USER"]
+    matrix_subject = (
+        matrix_username
+        if matrix_username.startswith("@")
+        else f"@{matrix_username}:{required['AGENTTEAMS_MATRIX_DOMAIN']}"
+    )
+    homeserver_url = runtime_homeserver_url(
+        required["AGENTTEAMS_MATRIX_URL"], controller,
+    )
     return {
         "REVGUARD_TEAM_TRANSPORT": "matrix",
-        "REVGUARD_MATRIX_HOMESERVER_URL": runtime_homeserver_url(
-            required["AGENTTEAMS_MATRIX_URL"], controller,
-        ),
+        "REVGUARD_MATRIX_HOMESERVER_URL": homeserver_url,
         "REVGUARD_MATRIX_ROOM_ID": required["AGENTTEAMS_WORKER_ROOM_ID"],
         "REVGUARD_MATRIX_WORKER_ROOMS_JSON": json.dumps(
             rooms, ensure_ascii=False, separators=(",", ":"),
@@ -85,6 +92,13 @@ def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
         "REVGUARD_MATRIX_USERNAME": required["AGENTTEAMS_ADMIN_USER"],
         "REVGUARD_MATRIX_PASSWORD": required["AGENTTEAMS_ADMIN_PASSWORD"],
         "REVGUARD_MATRIX_ACCESS_TOKEN": "",
+        "REVGUARD_HITL_MATRIX_HOMESERVER_URL": homeserver_url,
+        "REVGUARD_HITL_MATRIX_USERS_JSON": json.dumps({
+            matrix_subject: {
+                "actor": "finance.lead",
+                "display_name": "财务负责人（演示）",
+            },
+        }, ensure_ascii=False, separators=(",", ":")),
     }
 
 

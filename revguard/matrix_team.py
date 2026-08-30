@@ -130,6 +130,12 @@ class MatrixClient:
         response = await self.sync(timeout_ms=0)
         return str(response.get("next_batch") or "")
 
+    async def whoami(self) -> dict:
+        """Return the Matrix subject authenticated by the current access token."""
+        return await self._request(
+            "GET", "/_matrix/client/v3/account/whoami", None,
+        )
+
     async def send_text(
         self,
         body: str,

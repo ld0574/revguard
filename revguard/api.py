@@ -21,6 +21,13 @@ from typing import Literal
 
 from .agent_bridge import create_agent_task, execute_agent_task
 from .demo_dashboard import build_dashboard_snapshot
+from .hitl import (
+    HumanActionProof,
+    MatrixHumanIdentityProvider,
+    issue_human_action_assertion,
+    load_human_approvers,
+    verify_human_action_assertion,
+)
 from .matrix_team import MatrixSettings, MatrixTeamRunner
 from .mcp_server import hydrate_server_secrets
 from .mcp_team import McpTeamRunner
@@ -31,6 +38,7 @@ from .orchestrator import Orchestrator
 from .security import (
     TOOL_REQUIRED_SCOPES,
     ApiPrincipal,
+    CapabilityTokenSigner,
     SecurityError,
     constant_time_lookup,
     load_api_principals,
@@ -54,7 +62,7 @@ try:
         Response,
     )
     from fastapi.responses import PlainTextResponse
-    from pydantic import BaseModel, ConfigDict, Field
+    from pydantic import BaseModel, ConfigDict, Field, SecretStr
 except ImportError as exc:  # 本地纯标准库跑 Demo 时允许不安装 FastAPI
     raise ImportError("API 服务需要安装依赖：pip install -r requirements.txt") from exc
 
@@ -86,6 +94,19 @@ TEAM_TRANSPORT = os.getenv("REVGUARD_TEAM_TRANSPORT", "mcp").lower()
 TEAM_RUN_STALE_AFTER_SECONDS = float(os.getenv(
     "REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS", "600"
 ))
+HITL_ASSERTION_TTL_SECONDS = int(os.getenv(
+    "REVGUARD_HITL_ASSERTION_TTL_SECONDS", "120"
+))
+HITL_MAX_AUTH_AGE_SECONDS = int(os.getenv(
+    "REVGUARD_HITL_MAX_AUTH_AGE_SECONDS", "300"
+))
+HITL_MATRIX_HOMESERVER_URL = os.getenv(
+    "REVGUARD_HITL_MATRIX_HOMESERVER_URL",
+    os.getenv("REVGUARD_MATRIX_HOMESERVER_URL", ""),
+)
+HITL_MATRIX_SERVER_NAME = os.getenv(
+    "REVGUARD_MATRIX_SERVER_NAME", "matrix"
+)
 DEFAULT_DEMO_CASE_ID = os.getenv(
     "REVGUARD_DEFAULT_DEMO_CASE_ID", "CASE-2026-0008"
 )
@@ -109,6 +130,18 @@ if not SIGNING_KEY:
         SIGNING_KEY = "revguard-demo-signing-key-change-before-production-2026"
     else:
         raise RuntimeError("必须配置 REVGUARD_APPROVAL_SIGNING_KEY（至少 32 字节）")
+try:
+    HITL_APPROVERS = load_human_approvers(os.getenv(
+        "REVGUARD_HITL_MATRIX_USERS_JSON", ""
+    ))
+except SecurityError as exc:
+    raise RuntimeError(f"HITL 人类审批身份配置无效: {exc}") from exc
+HITL_SIGNER = CapabilityTokenSigner(SIGNING_KEY, issuer="revguard-hitl")
+HITL_IDENTITY_PROVIDER = MatrixHumanIdentityProvider(
+    HITL_MATRIX_HOMESERVER_URL,
+    HITL_APPROVERS,
+    server_name=HITL_MATRIX_SERVER_NAME,
+)
 if ENABLE_LEGACY_TOOL_API:
     LOGGER.warning(
         "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"
@@ -181,6 +214,39 @@ def require_roles(*roles: str):
         return principal
 
     return dependency
+
+
+def require_human_action(
+    authorization: str | None,
+    *,
+    case_id: str,
+    approval_id: str,
+    action: str,
+) -> HumanActionProof:
+    """Validate the short-lived proof created by an out-of-band human login."""
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(
+            401,
+            "需要先验证 AgentTeams 人类审批身份",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        return verify_human_action_assertion(
+            HITL_SIGNER,
+            token,
+            HITL_APPROVERS,
+            case_id=case_id,
+            approval_id=approval_id,
+            action=action,
+            max_auth_age_seconds=HITL_MAX_AUTH_AGE_SECONDS,
+        )
+    except SecurityError as exc:
+        raise HTTPException(
+            401,
+            str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
 
 
 def _orchestrator() -> Orchestrator:
@@ -294,6 +360,15 @@ class ApprovalDecision(BaseModel):
     comment: str = ""
 
 
+class HumanActionAssertionRequest(BaseModel):
+    """Transient AgentTeams login used only to bind a human action proof."""
+
+    model_config = ConfigDict(extra="forbid")
+    username: str = Field(min_length=1, max_length=255)
+    password: SecretStr
+    action: Literal["APPROVED", "REJECTED", "RESUME"]
+
+
 class ToolCall(BaseModel):
     model_config = ConfigDict(extra="forbid")
     tool_name: str
@@ -326,6 +401,84 @@ class AgentTaskCreate(BaseModel):
 class AgentTaskReassign(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: str = Field(min_length=3, max_length=500)
+
+
+# ---------------------------------------------------------- Human approval IDP
+@app.post("/api/v1/cases/{case_id}/human-action/assertion")
+async def create_human_action_assertion(
+    case_id: str,
+    payload: HumanActionAssertionRequest,
+):
+    """Verify a Matrix user and mint a two-minute, action-bound proof.
+
+    The submitted password is forwarded only to the configured Matrix
+    homeserver for authentication.  RevGuard neither stores it nor returns the
+    Matrix access token.
+    """
+    case = store.get_case(case_id)
+    if not case:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    approval = store.get_approval(case_id) or {}
+    approval_id = str(approval.get("approval_id") or "")
+    if not approval_id:
+        raise HTTPException(409, "案件尚未生成审批单")
+    if payload.action in {"APPROVED", "REJECTED"}:
+        if case.get("status") != CaseStatus.WAITING_FOR_APPROVAL.value:
+            raise HTTPException(409, f"案件状态 {case.get('status')} 不在等待审批节点")
+    elif case.get("execution_mode") != "AGENTTEAMS_MATRIX":
+        raise HTTPException(409, "只能为 AgentTeams Matrix 运行签发恢复证明")
+
+    try:
+        identity = await HITL_IDENTITY_PROVIDER.authenticate(
+            payload.username,
+            payload.password.get_secret_value(),
+        )
+    except SecurityError as exc:
+        raise HTTPException(
+            401,
+            str(exc),
+            headers={"WWW-Authenticate": "Matrix"},
+        ) from exc
+    assertion = issue_human_action_assertion(
+        HITL_SIGNER,
+        identity,
+        case_id=case_id,
+        approval_id=approval_id,
+        action=payload.action,
+        ttl_seconds=HITL_ASSERTION_TTL_SECONDS,
+    )
+    with Tracer(store, case_id).span(
+        "APPROVAL",
+        "HumanIdentityVerification",
+        actor=identity.actor,
+        inputs={
+            "provider": "agentteams-matrix",
+            "action": payload.action,
+            "approval_id": approval_id,
+        },
+    ) as span:
+        span["outputs"] = {
+            **identity.public(),
+            "assertion_ref": secret_fingerprint(assertion),
+            "expires_in_seconds": HITL_ASSERTION_TTL_SECONDS,
+        }
+    store.audit(case_id, identity.actor, "HUMAN_IDENTITY_VERIFIED", {
+        **identity.public(),
+        "provider": "agentteams-matrix",
+        "action": payload.action,
+        "approval_id": approval_id,
+        "assertion_ref": secret_fingerprint(assertion),
+    })
+    return {
+        "assertion_token": assertion,
+        "expires_in_seconds": HITL_ASSERTION_TTL_SECONDS,
+        "identity": identity.public(),
+        "binding": {
+            "case_id": case_id,
+            "approval_id": approval_id,
+            "action": payload.action,
+        },
+    }
 
 
 # --------------------------------------------------------------------- 案件
@@ -514,7 +667,7 @@ async def run_case_via_team(
 async def resume_interrupted_team_run(
     case_id: str,
     response: Response,
-    principal: ApiPrincipal = Depends(require_roles("approver", "operator")),
+    authorization: str | None = Header(default=None),
 ):
     """Resume a stale post-approval Matrix run through idempotent replay.
 
@@ -565,10 +718,14 @@ async def resume_interrupted_team_run(
         })
 
     approval = store.get_approval(case_id) or {}
+    proof = require_human_action(
+        authorization,
+        case_id=case_id,
+        approval_id=str(approval.get("approval_id") or ""),
+        action="RESUME",
+    )
+    human = proof.identity
     risk = case.get("risk_decision") or {}
-    if risk.get("approval_required") or recovering_rollback:
-        if "approver" not in principal.roles:
-            raise HTTPException(403, "写入或回滚恢复需要审批人重新授权")
     if recovering_execution and risk.get("approval_required"):
         renewed = gateway.call(
             "workflow.renew_approval_capability", {
@@ -576,7 +733,7 @@ async def resume_interrupted_team_run(
                 "case_id": case_id,
             },
             case_id=case_id,
-            actor=principal.actor,
+            actor=human.actor,
             scope=["approval:decide"],
         )
         if not renewed["success"]:
@@ -590,8 +747,9 @@ async def resume_interrupted_team_run(
             "case_id": case_id,
             **approval,
         })
-        store.audit(case_id, principal.actor, "APPROVAL_CAPABILITY_RENEWED", {
+        store.audit(case_id, human.actor, "APPROVAL_CAPABILITY_RENEWED", {
             "approval_id": approval["approval_id"],
+            "human_subject": human.sub,
             "remaining_component_quota": approval.get(
                 "remaining_component_quota", {}
             ),
@@ -615,7 +773,7 @@ async def resume_interrupted_team_run(
                     "action_id": execution.get("action_id"),
                 },
                 case_id=case_id,
-                actor=principal.actor,
+                actor=human.actor,
                 scope=["approval:decide"],
             )
             if not renewed["success"]:
@@ -626,14 +784,15 @@ async def resume_interrupted_team_run(
             execution["rollback_token"] = renewed["data"]["rollback_token"]
             store.save_execution(execution)
             renewed_ledgers.append(ledger["ledger_id"])
-        store.audit(case_id, principal.actor, "ROLLBACK_CAPABILITY_RENEWED", {
+        store.audit(case_id, human.actor, "ROLLBACK_CAPABILITY_RENEWED", {
             "ledger_ids": renewed_ledgers,
+            "human_subject": human.sub,
             "previous_run_id": run.get("run_id"),
         })
         transition_case(
             store, case, CaseStatus.ROLLBACK_REQUIRED,
             "审批人确认恢复未完成的安全回滚",
-            actor=principal.actor,
+            actor=human.actor,
         )
 
     recovered_at = utc_now()
@@ -647,15 +806,18 @@ async def resume_interrupted_team_run(
         "recovery": {
             "reason": "api-process-interrupted",
             "strategy": strategy,
-            "requested_by": principal.actor,
+            "requested_by": human.actor,
+            "requested_subject": human.sub,
             "requested_at": recovered_at,
             "stale_for_seconds": int(age_seconds or 0),
         },
     }
     store.save_case(case)
-    store.audit(case_id, principal.actor, "TEAM_RUN_RESUME_REQUESTED", {
+    store.audit(case_id, human.actor, "TEAM_RUN_RESUME_REQUESTED", {
         "run_id": run.get("run_id"),
         "phase": phase,
+        "human_subject": human.sub,
+        "assertion_id_ref": secret_fingerprint(proof.assertion_id),
         "stale_for_seconds": int(age_seconds or 0),
     })
     _spawn_team_background(case_id, phase)
@@ -670,7 +832,7 @@ async def resume_interrupted_team_run(
 @app.post("/api/v1/cases/{case_id}/approval")
 async def decide_approval(case_id: str, payload: ApprovalDecision,
                           response: Response,
-                          principal: ApiPrincipal = Depends(require_roles("approver"))):
+                          authorization: str | None = Header(default=None)):
     """人工审批节点：审批通过后自动续跑执行与独立验证。"""
     case = store.get_case(case_id)
     if not case:
@@ -681,17 +843,54 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
     if not approval:
         raise HTTPException(409, "未找到审批单")
 
-    resp = gateway.call("workflow.decide_approval", {
-        "approval_id": approval["approval_id"],
-        "decision": payload.decision,
-        "comment": payload.comment,
-    }, case_id=case_id, actor=principal.actor, scope=["approval:decide"])
+    proof = require_human_action(
+        authorization,
+        case_id=case_id,
+        approval_id=str(approval["approval_id"]),
+        action=payload.decision,
+    )
+    human = proof.identity
+
+    with Tracer(store, case_id).span(
+        "APPROVAL",
+        "HumanApprovalGate",
+        actor=human.actor,
+        inputs={
+            "approval_id": approval["approval_id"],
+            "decision": payload.decision,
+            "case_id": case_id,
+            "human_subject": human.sub,
+            "auth_method": human.auth_method,
+        },
+    ) as span:
+        resp = gateway.call("workflow.decide_approval", {
+            "approval_id": approval["approval_id"],
+            "decision": payload.decision,
+            "comment": payload.comment,
+            "human_subject": human.sub,
+            "human_display_name": human.display_name,
+            "human_auth_time": human.auth_time,
+            "human_auth_method": human.auth_method,
+        }, case_id=case_id, actor=human.actor, scope=["approval:decide"])
+        span["outputs"] = {
+            "status": (resp.get("data") or {}).get("status"),
+            "human_subject": human.sub,
+            "assertion_id_ref": secret_fingerprint(proof.assertion_id),
+        }
     if not resp["success"]:
         raise HTTPException(400, resp["error"])
     decided = resp["data"]
+    decided["human_assertion_id_ref"] = secret_fingerprint(proof.assertion_id)
     store.save_approval({"approval_id": decided["approval_id"], "case_id": case_id, **decided})
-    store.audit(case_id, principal.actor, "APPROVAL_DECIDED",
-                {"decision": decided["status"], "simulated_human": False})
+    store.audit(case_id, human.actor, "APPROVAL_DECIDED", {
+        "decision": decided["status"],
+        "simulated_human": False,
+        "human_subject": human.sub,
+        "human_display_name": human.display_name,
+        "human_auth_time": human.auth_time,
+        "human_auth_method": human.auth_method,
+        "assertion_id_ref": secret_fingerprint(proof.assertion_id),
+    })
 
     public_approval = {key: value for key, value in decided.items()
                        if key != "approval_token"}
@@ -701,9 +900,9 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
 
     if decided["status"] != "APPROVED":
         store.cancel_open_agent_tasks(
-            case_id, actor=principal.actor, reason="人工审批驳回，禁止继续执行"
+            case_id, actor=human.actor, reason="人工审批驳回，禁止继续执行"
         )
-        transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=principal.actor)
+        transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=human.actor)
         if case.get("execution_mode") in {"MCP_TEAM", "AGENTTEAMS_MATRIX"}:
             await _team_runner_for_case(case).finalize_terminal(case, approval=decided)
         else:
@@ -715,7 +914,7 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
                 "verification": None}
 
     transition_case(store, case, CaseStatus.READY_TO_EXECUTE,
-                    "人工审批通过", actor=principal.actor)
+                    "人工审批通过", actor=human.actor)
     if case.get("execution_mode") == "AGENTTEAMS_MATRIX":
         case["team_run"] = {
             **(case.get("team_run") or {}),
@@ -972,13 +1171,18 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
                             ),
                             agent_task_id: str | None = Header(
                                 default=None, alias="X-RevGuard-Task-ID"
+                            ),
+                            gateway_transport: str | None = Header(
+                                default=None, alias="X-RevGuard-Transport"
                             )):
     """调用版本化 Skill；身份来自 Bearer principal，不接受自报 actor/scope。"""
+    transport = "higress-mcp" if gateway_transport == "higress-mcp" else "rest"
     correlation = {
         "request_id": request_id or new_id("REQ"),
         "agentteams_message_id": agentteams_message_id,
         "traceparent": traceparent,
         "agent_task_id": agent_task_id,
+        "transport": transport,
     }
     if any(value is not None and len(value) > 256 for value in correlation.values()):
         raise HTTPException(400, "关联请求头长度不能超过 256")
@@ -997,7 +1201,7 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
                 task_id=agent_task_id, case_id=payload.case_id,
                 skill_name=skill_name, skill_input=payload.input,
                 actor=principal.actor, gateway=gateway, store=store,
-                correlation={**correlation, "transport": "rest"},
+                correlation=correlation,
                 execution_input=execution_input,
             )
             if injected:
@@ -1012,7 +1216,7 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
             result = invoke_skill(
                 skill_name, payload.input, actor=principal.actor,
                 case_id=payload.case_id, gateway=gateway, store=store,
-                correlation={**correlation, "transport": "rest"},
+                correlation=correlation,
             )
         response.headers["X-Request-ID"] = correlation["request_id"]
         response.headers["X-Skill-Receipt"] = result["skill_receipt"]

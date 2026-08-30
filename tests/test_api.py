@@ -14,10 +14,11 @@ import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 from decimal import Decimal
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -34,13 +35,20 @@ os.environ["REVGUARD_APPROVAL_SIGNING_KEY"] = "revguard-api-test-signing-key-at-
 os.environ["REVGUARD_GATEWAY_STATE_PATH"] = str(Path(_TMP) / "gateway.json")
 os.environ["REVGUARD_ENABLE_LEGACY_TOOL_API"] = "true"
 os.environ["REVGUARD_ENABLE_RECORDING_UI"] = "true"
+os.environ["REVGUARD_HITL_MATRIX_USERS_JSON"] = json.dumps({
+    "@finance-lead:test": {
+        "actor": "finance.lead",
+        "display_name": "测试财务负责人",
+    },
+})
 
 try:
     import httpx
 
     from revguard import api as api_module
     from revguard.api import app, store
-    from revguard.models import Case, CaseStatus, TaskStatus
+    from revguard.hitl import HumanIdentity, issue_human_action_assertion
+    from revguard.models import Case, CaseStatus, TaskStatus, utc_now
     from revguard.trace import Tracer
     _IMPORT_ERROR = None
 except ImportError as exc:  # pragma: no cover - 纯标准库环境跳过
@@ -76,7 +84,6 @@ class TestApiSmoke(unittest.TestCase):
         cls.operator = {"Authorization": "Bearer rg-demo-operator-key"}
         cls.orchestrator = {"Authorization": "Bearer rg-demo-orchestrator-key"}
         cls.viewer = {"Authorization": "Bearer rg-demo-viewer-key-1"}
-        cls.approver = {"Authorization": "Bearer rg-demo-approver-key"}
         cls.evidence = {"Authorization": "Bearer rg-demo-evidence-key"}
         cls.intake = {"Authorization": "Bearer rg-demo-intake-key-1"}
         cls.executor = {"Authorization": "Bearer rg-demo-executor-key"}
@@ -96,6 +103,24 @@ class TestApiSmoke(unittest.TestCase):
             status=CaseStatus.CREATED.value,
         ).to_dict()
         store.save_case(case)
+
+    @classmethod
+    def human_headers(cls, case_id: str, action: str) -> dict[str, str]:
+        approval = store.get_approval(case_id) or {}
+        token = issue_human_action_assertion(
+            api_module.HITL_SIGNER,
+            HumanIdentity(
+                sub="@finance-lead:test",
+                actor="finance.lead",
+                display_name="测试财务负责人",
+                auth_time=int(time.time()),
+            ),
+            case_id=case_id,
+            approval_id=approval.get("approval_id", ""),
+            action=action,
+            ttl_seconds=120,
+        )
+        return {"Authorization": f"Bearer {token}"}
 
     # 用例按名字字母序执行：test_01 → test_02 …… 依赖顺序用编号显式表达
     def test_01_health_and_skills(self):
@@ -143,11 +168,44 @@ class TestApiSmoke(unittest.TestCase):
         resp = self.client.post(f"/api/v1/cases/{self.case_id}/run", headers=self.operator)
         self.assertEqual(resp.status_code, 409)
 
+    def test_04a_matrix_login_issues_action_bound_human_proof(self):
+        static_key = self.client.post(
+            f"/api/v1/cases/{self.case_id}/approval",
+            json={"decision": "APPROVED"},
+            headers={"Authorization": "Bearer rg-demo-approver-key"},
+        )
+        self.assertEqual(static_key.status_code, 401)
+        identity = HumanIdentity(
+            sub="@finance-lead:test",
+            actor="finance.lead",
+            display_name="测试财务负责人",
+            auth_time=int(time.time()),
+        )
+        with patch.object(
+            api_module.HITL_IDENTITY_PROVIDER,
+            "authenticate",
+            AsyncMock(return_value=identity),
+        ):
+            resp = self.client.post(
+                f"/api/v1/cases/{self.case_id}/human-action/assertion",
+                json={
+                    "username": "finance-lead",
+                    "password": "not-persisted",
+                    "action": "APPROVED",
+                },
+            )
+        self.assertEqual(resp.status_code, 200, resp.text)
+        body = resp.json()
+        self.assertEqual(body["identity"]["sub"], "@finance-lead:test")
+        self.assertEqual(body["binding"]["case_id"], self.case_id)
+        self.assertEqual(body["binding"]["action"], "APPROVED")
+        self.assertNotIn("not-persisted", json.dumps(body))
+
     def test_05_approval_resumes_to_closed(self):
         """人工批准后自动续跑：受控执行 + 独立验证 + 归档。"""
         resp = self.client.post(f"/api/v1/cases/{self.case_id}/approval", json={
             "decision": "APPROVED", "comment": "差额属实，同意补付"},
-            headers=self.approver)
+            headers=self.human_headers(self.case_id, "APPROVED"))
         self.assertEqual(resp.status_code, 200, resp.text)
         body = resp.json()
         self.assertEqual(body["case"]["status"], CaseStatus.CLOSED.value)
@@ -157,7 +215,7 @@ class TestApiSmoke(unittest.TestCase):
 
         # 审批已完结，再次审批必须 409
         resp = self.client.post(f"/api/v1/cases/{self.case_id}/approval", json={
-            "decision": "APPROVED"}, headers=self.approver)
+            "decision": "APPROVED"}, headers=self.human_headers(self.case_id, "APPROVED"))
         self.assertEqual(resp.status_code, 409)
 
     def test_06_trace_and_report_exported(self):
@@ -221,11 +279,11 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(self.client.get(
             "/api/v1/cases", headers={"Authorization": "Bearer invalid-key-value"}
         ).status_code, 401)
-        # Evidence Worker 不能代替审批人。
+        # 静态 Worker/API key 不能代替动作绑定的人类身份证明。
         self.assertEqual(self.client.post(
-            "/api/v1/cases/CASE-NOPE/approval", json={"decision": "APPROVED"},
+            f"/api/v1/cases/{self.case_id}/approval", json={"decision": "APPROVED"},
             headers=self.evidence,
-        ).status_code, 403)
+        ).status_code, 409)
         old_legacy = api_module.ENABLE_LEGACY_TOOL_API
         try:
             api_module.ENABLE_LEGACY_TOOL_API = False
@@ -359,7 +417,8 @@ class TestApiSmoke(unittest.TestCase):
             "/api/v1/skills/CaseNormalizeSkill/invoke",
             json={"case_id": case_id, "input": skill_input},
             headers={**self.intake, "X-RevGuard-Task-ID": task["task_id"],
-                     "X-AgentTeams-Message-ID": "MATRIX-AGENT-BRIDGE"},
+                     "X-AgentTeams-Message-ID": "MATRIX-AGENT-BRIDGE",
+                     "X-RevGuard-Transport": "higress-mcp"},
         )
         self.assertEqual(completed.status_code, 200, completed.text)
         viewer = self.client.get(
@@ -370,6 +429,7 @@ class TestApiSmoke(unittest.TestCase):
             f"/api/v1/cases/{case_id}/agent-tasks", headers=self.intake
         ).json()["tasks"]
         self.assertEqual(tasks[0]["status"], "SUCCEEDED")
+        self.assertEqual(tasks[0]["skill_transport"], "higress-mcp")
         self.assertEqual(tasks[0]["skill_receipt"], completed.json()["skill_receipt"])
         self.assertEqual(tasks[0]["result"]["entities"]["partner_id"], "AGT-10001")
         results = self.client.get(
@@ -457,7 +517,7 @@ class TestApiSmoke(unittest.TestCase):
 
         rejected = self.client.post(f"/api/v1/cases/{case_id}/approval", json={
             "decision": "REJECTED", "comment": "证据不足，驳回",
-        }, headers=self.approver)
+        }, headers=self.human_headers(case_id, "REJECTED"))
         self.assertEqual(rejected.status_code, 200, rejected.text)
         body = rejected.json()
         self.assertEqual(body["case"]["status"], CaseStatus.CLOSED.value)
@@ -553,6 +613,91 @@ class TestApiSmoke(unittest.TestCase):
             "postgresql-polardb",
         )
 
+    def test_17_human_assertion_state_guards(self):
+        missing = self.client.post(
+            "/api/v1/cases/CASE-NOPE/human-action/assertion",
+            json={"username": "u", "password": "p", "action": "APPROVED"},
+        )
+        self.assertEqual(missing.status_code, 404)
+
+        case_id = "CASE-HITL-NO-APPROVAL"
+        store.save_case(Case(
+            case_id=case_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+        ).to_dict())
+        no_approval = self.client.post(
+            f"/api/v1/cases/{case_id}/human-action/assertion",
+            json={"username": "u", "password": "p", "action": "APPROVED"},
+        )
+        self.assertEqual(no_approval.status_code, 409)
+
+        closed = self.client.post(
+            f"/api/v1/cases/{self.case_id}/human-action/assertion",
+            json={"username": "u", "password": "p", "action": "APPROVED"},
+        )
+        self.assertEqual(closed.status_code, 409)
+        non_matrix_resume = self.client.post(
+            f"/api/v1/cases/{self.case_id}/human-action/assertion",
+            json={"username": "u", "password": "p", "action": "RESUME"},
+        )
+        self.assertEqual(non_matrix_resume.status_code, 409)
+
+    def test_18_matrix_team_run_is_enqueued_without_faking_worker_results(self):
+        case_id = "CASE-MATRIX-QUEUE"
+        store.save_case(Case(
+            case_id=case_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+        ).to_dict())
+        old_transport = api_module.TEAM_TRANSPORT
+        try:
+            api_module.TEAM_TRANSPORT = "matrix"
+            with patch("revguard.api._spawn_team_background") as spawn:
+                response = self.client.post(
+                    f"/api/v1/cases/{case_id}/team/run", headers=self.operator,
+                )
+        finally:
+            api_module.TEAM_TRANSPORT = old_transport
+        self.assertEqual(response.status_code, 202, response.text)
+        self.assertEqual(response.json()["state_status"], "QUEUED")
+        self.assertEqual(response.json()["agent_tasks"], [])
+        self.assertEqual(store.get_case(case_id)["execution_mode"], "AGENTTEAMS_MATRIX")
+        spawn.assert_called_once_with(case_id, "INVESTIGATION")
+
+    def test_19_resume_rejects_unknown_wrong_mode_and_active_runs(self):
+        self.assertEqual(self.client.post(
+            "/api/v1/cases/CASE-NOPE/team/resume",
+        ).status_code, 404)
+
+        local_id = "CASE-RESUME-LOCAL"
+        store.save_case(Case(
+            case_id=local_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+        ).to_dict())
+        self.assertEqual(self.client.post(
+            f"/api/v1/cases/{local_id}/team/resume",
+        ).status_code, 409)
+
+        idle_id = "CASE-RESUME-IDLE"
+        idle = Case(
+            case_id=idle_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+        ).to_dict()
+        idle["execution_mode"] = "AGENTTEAMS_MATRIX"
+        store.save_case(idle)
+        self.assertEqual(self.client.post(
+            f"/api/v1/cases/{idle_id}/team/resume",
+        ).status_code, 409)
+
+        active_id = "CASE-RESUME-ACTIVE"
+        active = Case(
+            case_id=active_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+            status=CaseStatus.EXECUTING.value,
+        ).to_dict()
+        active.update({
+            "execution_mode": "AGENTTEAMS_MATRIX",
+            "team_run": {"status": "RUNNING", "updated_at": utc_now()},
+        })
+        store.save_case(active)
+        self.assertEqual(self.client.post(
+            f"/api/v1/cases/{active_id}/team/resume",
+        ).status_code, 409)
+
     def test_15a_mcp_team_api_pauses_and_resumes_after_human_approval(self):
         case_id = "CASE-2026-0008"
         api_module.gateway._verification_tamper_amount = Decimal("1")
@@ -572,7 +717,7 @@ class TestApiSmoke(unittest.TestCase):
         approved = self.client.post(
             f"/api/v1/cases/{case_id}/approval",
             json={"decision": "APPROVED", "comment": "录制测试人工批准"},
-            headers=self.approver,
+            headers=self.human_headers(case_id, "APPROVED"),
         )
         self.assertEqual(approved.status_code, 200, approved.text)
         self.assertEqual(approved.json()["case"]["status"], CaseStatus.ROLLED_BACK.value)
@@ -627,10 +772,11 @@ class TestApiSmoke(unittest.TestCase):
         denied = self.client.post(
             f"/api/v1/cases/{case_id}/team/resume", headers=self.operator,
         )
-        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(denied.status_code, 401)
         with patch("revguard.api._spawn_team_background") as spawn:
             resumed = self.client.post(
-                f"/api/v1/cases/{case_id}/team/resume", headers=self.approver,
+                f"/api/v1/cases/{case_id}/team/resume",
+                headers=self.human_headers(case_id, "RESUME"),
             )
         self.assertEqual(resumed.status_code, 202, resumed.text)
         self.assertEqual(resumed.json()["state_status"], "QUEUED")
@@ -691,7 +837,8 @@ class TestApiSmoke(unittest.TestCase):
 
         with patch("revguard.api._spawn_team_background") as spawn:
             resumed = self.client.post(
-                f"/api/v1/cases/{case_id}/team/resume", headers=self.approver,
+                f"/api/v1/cases/{case_id}/team/resume",
+                headers=self.human_headers(case_id, "RESUME"),
             )
         self.assertEqual(resumed.status_code, 202, resumed.text)
         recovered = store.get_case(case_id)
