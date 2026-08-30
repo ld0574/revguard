@@ -1,5 +1,22 @@
 # RevGuard 部署与 AgentTeams 联调手册
 
+## 0. 推荐的一键入口
+
+伙伴复现不要分别手工执行本文后续命令，优先从仓库根目录运行：
+
+```bash
+# 最小可复现闭环，不要求已安装 AgentTeams
+bash scripts/deploy_demo.sh --local --reset
+
+# 与复赛录制机一致；要求宿主机已有 AgentTeams v1.2.0
+bash scripts/deploy_demo.sh --full --reset --model MiniMax-M3
+```
+
+`--full` 会依次完成 PolarDB 启动与 Schema、RevGuard API、AgentTeams 角色和 Team、
+skills-only Adapter 的 MinIO 持久化、Matrix 登录与独立房间自动发现、8 个 Golden Case
+播种以及最终健康验收。重复运行默认保留案件；只有显式传入 `--reset` 才重置合成库。
+脚本不会打印 Matrix 或数据库凭证，生成的 `.env` 权限为 `0600`。
+
 ## 1. 推荐拓扑
 
 ```text
@@ -141,8 +158,9 @@ bash scripts/agentteams_setup.sh
 3. 以 `revguard-orchestrator` 为 leader 组建 Team；
 4. 等待 Worker Ready，并向各 Worker 安装 skills-only `revguard-api` Adapter；
 5. 同步 CoPaw 激活模型并做 AI Gateway 请求预检；
-6. 把 9 个 Worker 的独立 Matrix room 映射写入权限为 0600 的 `.env`，再输出 Worker 和
-   Team 状态。设置 `INSTALL_WORKER_SKILLS=false` 可只更新 Worker/Team，设置
+6. 从 AgentTeams 容器自动发现 Matrix 登录、Orchestrator 控制房间和 9 个 Worker 独立
+   room，写入权限为 0600 的 `.env`，再输出 Worker 和 Team 状态。设置
+   `INSTALL_WORKER_SKILLS=false` 可只更新 Worker/Team，设置
    `CONFIGURE_MATRIX_WORKER_ROOMS=false` 可跳过房间映射。
 
 当前 CoPaw 运行时会在约 30 分钟空闲后把 Worker 自动置为 `Sleeping`，这是资源回收而非

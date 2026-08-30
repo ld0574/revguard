@@ -3,7 +3,7 @@ VENV ?= .venv
 VENV_PYTHON := $(VENV)/bin/python
 
 .PHONY: setup lint test coverage evaluate value-evaluate synthetic-validate evidence-bundle capacity postgres-integration openapi generated-check security \
-	verify verify-ci verify-release competition-verify demo-reset demo run demo-ui-build demo-ui
+	verify verify-ci verify-release competition-verify demo-reset demo run demo-ui-build demo-ui deploy-local deploy-full
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -90,3 +90,9 @@ demo-ui: demo-ui-build demo-reset
 	REVGUARD_VERIFICATION_TAMPER_AMOUNT=1 \
 	REVGUARD_APPROVAL_SIGNING_KEY=revguard-demo-signing-key-change-before-production-2026 \
 	$(VENV_PYTHON) -m uvicorn revguard.api:app --host 127.0.0.1 --port 9000
+
+deploy-local:
+	bash scripts/deploy_demo.sh --local
+
+deploy-full:
+	bash scripts/deploy_demo.sh --full

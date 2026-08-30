@@ -215,7 +215,7 @@ with urllib.request.urlopen(req, timeout=30) as response:
 PY
 
 if [ "$CONFIGURE_MATRIX_WORKER_ROOMS" = "true" ]; then
-  echo "==> 写入 Worker 独立 Matrix 房间映射（不输出凭证）"
+  echo "==> 写入 Matrix 登录、控制房间与 Worker 独立房间（不输出凭证）"
   python3 "$REVGUARD_HOME/scripts/configure_matrix_worker_rooms.py" \
     --env "$REVGUARD_HOME/.env" \
     --container-prefix "$WORKER_CONTAINER_PREFIX"
