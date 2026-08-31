@@ -261,6 +261,44 @@ class TestApiSmoke(unittest.TestCase):
         for token in raw_rollback_tokens:
             self.assertNotIn(token, serialized)
 
+        # A completed normal branch has 17 real tasks; the 20-task plan also
+        # reserves rollback stages that were never needed. Keep both counts,
+        # and do not rewrite stored history or pretend failed tasks succeeded.
+        tasks = [{"status": "SUCCEEDED"} for _ in range(17)]
+        original = store.get_case(self.case_id)
+        projected_case = {
+            **original,
+            "team_run": {"status": "COMPLETED", "completed_tasks": 17, "total_tasks": 20},
+        }
+        with patch.object(store, "get_case", return_value=projected_case), \
+                patch.object(store, "list_agent_tasks", return_value=tasks):
+            dashboard = self.client.get(
+                f"/api/v1/cases/{self.case_id}/dashboard", headers=self.viewer,
+            ).json()
+            run = dashboard["case"]["team_run"]
+            self.assertEqual((run["completed_tasks"], run["total_tasks"]), (17, 17))
+            self.assertEqual(run["planned_total_tasks"], 20)
+            self.assertEqual(run["progress_basis"], "persisted_stage_tasks")
+            self.assertEqual(projected_case["team_run"]["total_tasks"], 20)
+            tasks[-1]["status"] = "FAILED"
+            failed_task_view = self.client.get(
+                f"/api/v1/cases/{self.case_id}/dashboard", headers=self.viewer,
+            ).json()["case"]["team_run"]
+            self.assertEqual((failed_task_view["completed_tasks"], failed_task_view["total_tasks"]), (16, 17))
+            for status in ("RUNNING", "WAITING_HUMAN", "FAILED"):
+                projected_case["team_run"]["status"] = status
+                waiting = self.client.get(
+                    f"/api/v1/cases/{self.case_id}/dashboard", headers=self.viewer,
+                ).json()["case"]["team_run"]
+                self.assertEqual(waiting, projected_case["team_run"])
+            projected_case["team_run"]["status"] = "COMPLETED"
+            tasks.clear()
+            empty = self.client.get(
+                f"/api/v1/cases/{self.case_id}/dashboard", headers=self.viewer,
+            ).json()["case"]["team_run"]
+            self.assertEqual(empty, projected_case["team_run"])
+        self.assertEqual(store.get_case(self.case_id), original)
+
     def test_07_not_found(self):
         self.assertEqual(self.client.get("/api/v1/cases/CASE-NOPE", headers=self.viewer).status_code, 404)
         self.assertEqual(self.client.get("/api/v1/cases/CASE-NOPE/trace", headers=self.viewer).status_code, 404)

@@ -43,6 +43,26 @@ def _public_execution(execution: dict) -> dict:
     return redact_secrets(public)
 
 
+def _public_case(case: dict, agent_tasks: list[dict]) -> dict:
+    """Use actual tasks for completed-run progress, keeping the planned budget.
+
+    The execution plan reserves rollback stages. A normal closure never creates
+    those tasks, so its original 20-task budget is not unfinished work. This is
+    a read-only projection; neither task status nor stored run history changes.
+    """
+    public = dict(case)
+    run = case.get("team_run") or {}
+    if run.get("status") == "COMPLETED" and agent_tasks:
+        public["team_run"] = {
+            **run,
+            "planned_total_tasks": run.get("planned_total_tasks", run.get("total_tasks")),
+            "total_tasks": len(agent_tasks),
+            "completed_tasks": sum(item.get("status") == "SUCCEEDED" for item in agent_tasks),
+            "progress_basis": "persisted_stage_tasks",
+        }
+    return public
+
+
 def build_dashboard_snapshot(
     store: Any,
     case_id: str,
@@ -60,7 +80,7 @@ def build_dashboard_snapshot(
     agent_tasks = [redact_secrets(item) for item in store.list_agent_tasks(case_id)]
 
     return redact_secrets({
-        "case": case,
+        "case": _public_case(case, agent_tasks),
         "evidence": store.list_evidence(case_id),
         "approval": _public_approval(store.get_approval(case_id)),
         "executions": executions,
