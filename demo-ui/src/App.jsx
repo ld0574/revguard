@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { isVerifiedClosure } from "./pipeline-state.js";
 import {
   ArrowClockwise,
   ArrowCounterClockwise,
@@ -169,6 +170,10 @@ function approvalAmount(snapshot) {
   return null;
 }
 
+function signedMoney(value, currency = "KES") {
+  return `${Number(value) > 0 ? "+" : ""}${money(value, currency)}`;
+}
+
 function shortId(value, length = 18) {
   if (!value) return "—";
   return value.length > length ? `${value.slice(0, length)}…` : value;
@@ -225,6 +230,7 @@ function getStageState(snapshot, stageId) {
   const rank = STATUS_ORDER.indexOf(status);
   const terminal = ["ROLLED_BACK", "CLOSED", "FAILED"].includes(status);
   const draftOnly = snapshot?.verification?.verification_status === "NOT_APPLICABLE_DRAFT_ONLY";
+  if (isVerifiedClosure(snapshot) && ["rollback", "postcheck"].includes(stageId)) return "skipped";
   if (run.status === "FAILED" && SKILL_STAGE[run.current_stage] === stageId) return "error";
   const checks = {
     evidence: hasEvent(snapshot, "EVIDENCE_COLLECTED"),
@@ -256,19 +262,20 @@ function stageValue(snapshot, id) {
   const postings = executions.filter((item) => item.action_type !== "DRAFT" && item.status !== "DRAFT");
   const draftOnly = verification.verification_status === "NOT_APPLICABLE_DRAFT_ONLY";
   const closedWithoutWrite = caseData.status === "CLOSED" && postings.length === 0;
+  const verifiedClosure = isVerifiedClosure(snapshot);
   const values = {
     evidence: snapshot?.evidence?.length ? `${snapshot.evidence.length} 条` : "待收集",
     policy: caseData.policy_decision?.policy_version || "待匹配",
     calculation: money(caseData.calculation_result?.total_commission),
     approval: approval.amount !== undefined && approval.amount !== null ? money(approval.amount, approval.currency) : caseData.risk_decision?.approval_required === false ? "无需人工审批" : "等待风险判断",
     execution: postings.length
-      ? postings.map((item) => `${componentLabel(item.component)} +${Number(item.amount).toLocaleString()}`).join("  ")
+      ? postings.map((item) => `${componentLabel(item.component)} ${signedMoney(item.amount)}`).join("  ")
       : drafts.length
         ? `已生成 ${drafts.length} 份草稿`
       : "待授权",
     verification: draftOnly ? "草稿模式无需验证" : verification.actual_amount !== undefined && verification.actual_amount !== null ? `读取 ${money(verification.actual_amount)}` : closedWithoutWrite ? "无需写后验证" : "不同主体复核",
-    rollback: reversals.length ? reversals.map((item) => money(item.reversal?.amount)).join("  ") : draftOnly ? "无需回滚（未入账）" : closedWithoutWrite ? "未触发（无写入）" : "验证失败时触发",
-    postcheck: caseData.status === "ROLLED_BACK" ? "已通过" : draftOnly && caseData.status === "CLOSED" ? "安全关闭（未入账）" : closedWithoutWrite ? "已关闭（无写入）" : "等待回滚复核",
+    rollback: reversals.length ? reversals.map((item) => money(item.reversal?.amount)).join("  ") : verifiedClosure ? "无需回滚（验证通过）" : draftOnly ? "无需回滚（未入账）" : closedWithoutWrite ? "未触发（无写入）" : "验证失败时触发",
+    postcheck: caseData.status === "ROLLED_BACK" ? "已通过" : verifiedClosure ? "不适用（正常闭环）" : draftOnly && caseData.status === "CLOSED" ? "安全关闭（未入账）" : closedWithoutWrite ? "已关闭（无写入）" : "等待回滚复核",
   };
   return values[id];
 }
@@ -314,7 +321,7 @@ function SummaryStrip({ snapshot }) {
     ["预期佣金（正确）", money(expected, currency), "确定性规则内核"],
     ["本次审批金额", money(approvalAmount(snapshot), currency), approval.status || "PENDING"],
     ["最终状态", c.status || "CREATED", "案件终态保留"],
-    ["回滚后状态", c.status === "ROLLED_BACK" ? "已通过" : "—", c.status === "ROLLED_BACK" ? "恢复安全基线" : "等待验证"],
+    ["回滚后状态", c.status === "ROLLED_BACK" ? "已通过" : isVerifiedClosure(snapshot) ? "不适用" : "—", c.status === "ROLLED_BACK" ? "恢复安全基线" : isVerifiedClosure(snapshot) ? "验证通过，无需回滚" : "等待验证"],
   ];
   return (
     <section className="summary-strip" aria-label="案件摘要">
@@ -349,14 +356,16 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
   const verification = snapshot?.verification || {};
   const executions = snapshot?.executions || [];
   const drafts = executions.filter((item) => item.action_type === "DRAFT" || item.status === "DRAFT");
-  const postings = executions.filter((item) => item.action_type !== "DRAFT" && item.status !== "DRAFT" && Number(item.amount) > 0);
-  const reversalAmounts = executions.filter((item) => item.reversal).map((item) => item.reversal.amount);
+  const postings = executions.filter((item) => item.action_type !== "DRAFT" && item.status !== "DRAFT");
+  const reversals = executions.filter((item) => item.reversal);
+  const reversalAmounts = reversals.map((item) => item.reversal.amount);
   const calculated = Boolean(snapshot?.case?.calculation_result);
   const currency = c.calculation_result?.currency || c.claim?.currency || "KES";
   const selectedPolicy = c.policy_decision?.policy_version;
   const excludedPolicies = (c.policy_decision?.excluded_versions || []).map((item) => item.version);
   const draftOnly = verification.verification_status === "NOT_APPLICABLE_DRAFT_ONLY";
   const closedWithoutWrite = c.status === "CLOSED" && postings.length === 0;
+  const verifiedClosure = isVerifiedClosure(snapshot);
   const terminal = ["ROLLED_BACK", "CLOSED", "REJECTED", "FAILED"].includes(c.status);
   const postedTotal = postings.reduce((total, item) => total + Number(item.amount || 0), 0);
   const reversedTotal = reversalAmounts.reduce((total, amount) => total + Number(amount || 0), 0);
@@ -377,11 +386,11 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
       </div>
       <div className="pipeline-details">
         <div className="pipeline-note calculation-note"><span>政策选择</span>{calculated ? <><strong>{excludedPolicies.length ? `${excludedPolicies.join(" / ")}：已排除` : "无冲突版本"}</strong><strong>{selectedPolicy || "规则集已选定"}：已采用</strong></> : <strong>等待政策匹配与确定性复算</strong>}</div>
-        <div className="pipeline-note capability-note"><span>能力边界</span><div>组件上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} /><small>{approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : draftOnly ? "低风险案件仅生成草稿" : closedWithoutWrite ? "风险策略禁止自动写入" : "审批后签发短时能力"}</small></div>
-        <div className="pipeline-note execution-note"><span>{draftOnly ? "佣金调整草稿" : "模拟记账（入账）"}</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：+{money(item.amount, currency)}</strong>)}<div>合计：+{money(postedTotal, currency)}</div></> : drafts.length ? <>{drafts.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{money(item.amount, currency)}</strong>)}<div>共 {drafts.length} 份，未写入台账</div></> : <strong>{closedWithoutWrite ? "风险边界拦截，未发生写入" : "等待受限执行器写入"}</strong>}</div>
-        <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span>{draftOnly ? <><div>草稿未写入财务台账</div><div>实际写入：0.00 {currency}</div><strong>无需执行写后验证</strong></> : <><div>实际读取：{money(verification.actual_amount, currency)}</div><div>差异：{money(verification.variance, currency)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : closedWithoutWrite ? "无需写后验证" : "等待独立验证"}</strong></>}</div>
-        <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversalAmounts.length ? <>{reversalAmounts.map((amount, index) => <strong key={`${amount}-${index}`}>组件 {reversalAmounts.length - index}：{money(amount, currency)}</strong>)}<div>合计：{money(reversedTotal, currency)}</div></> : <strong>{draftOnly ? "无需回滚（草稿未入账）" : closedWithoutWrite ? "未触发（没有财务写入）" : "验证失败时由策略自动触发"}</strong>}</div>
-        <div className={`pipeline-note result-note ${run.status === "FAILED" ? "is-failed" : ""}`}><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{run.status === "FAILED" ? "运行失败" : c.status === "ROLLED_BACK" ? "已通过" : closedWithoutWrite ? "安全关闭" : "—"}</b><small>{run.status === "FAILED" ? `${skillLabel(run.current_stage)}：${run.error?.message || "未返回具体错误"}` : c.status === "ROLLED_BACK" ? "已恢复至安全基线" : draftOnly ? "仅形成调整草稿，未触碰台账" : closedWithoutWrite ? "风险策略阻止财务写入" : "尚未生成终态结论"}</small></div>
+        <div className="pipeline-note capability-note"><span>能力边界</span><div>总额度上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} /><small>{approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : draftOnly ? "低风险案件仅生成草稿" : closedWithoutWrite ? "风险策略禁止自动写入" : "审批后签发短时能力"}</small></div>
+        <div className="pipeline-note execution-note"><span>{draftOnly ? "佣金调整草稿" : "模拟记账（入账）"}</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{signedMoney(item.amount, currency)}</strong>)}<div>合计：{signedMoney(postedTotal, currency)}</div></> : drafts.length ? <>{drafts.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{signedMoney(item.amount, currency)}</strong>)}<div>共 {drafts.length} 份，未写入台账</div></> : <strong>{closedWithoutWrite ? "风险边界拦截，未发生写入" : "等待受限执行器写入"}</strong>}</div>
+        <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span>{draftOnly ? <><div>草稿未写入财务台账</div><div>实际写入：0.00 {currency}</div><strong>无需执行写后验证</strong></> : <><div>实际读取：{money(verification.actual_amount, currency)}</div><div>差异：{money(verification.variance, currency)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : verification.verification_status === "PASSED" ? "验证通过" : closedWithoutWrite ? "无需写后验证" : "等待独立验证"}</strong></>}</div>
+        <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversals.length ? <>{reversals.map((item) => <strong key={item.action_id}>{componentLabel(item.component)}：{signedMoney(item.reversal.amount, currency)}</strong>)}<div>合计：{signedMoney(reversedTotal, currency)}</div></> : <strong>{verifiedClosure ? "独立验证通过，无需回滚" : draftOnly ? "无需回滚（草稿未入账）" : closedWithoutWrite ? "未触发（没有财务写入）" : "验证失败时由策略自动触发"}</strong>}</div>
+        <div className={`pipeline-note result-note ${run.status === "FAILED" ? "is-failed" : ""}`}><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{run.status === "FAILED" ? "运行失败" : c.status === "ROLLED_BACK" ? "已通过" : verifiedClosure ? "正常闭环" : closedWithoutWrite ? "安全关闭" : "—"}</b><small>{run.status === "FAILED" ? `${skillLabel(run.current_stage)}：${run.error?.message || "未返回具体错误"}` : c.status === "ROLLED_BACK" ? "已恢复至安全基线" : verifiedClosure ? "独立验证通过，调整已完成" : draftOnly ? "仅形成调整草稿，未触碰台账" : closedWithoutWrite ? "风险策略阻止财务写入" : "尚未生成终态结论"}</small></div>
       </div>
     </section>
   );
@@ -505,7 +514,7 @@ function AuditTrail({ snapshot, full = false }) {
         const isRollback = item.event === "ROLLED_BACK";
         return <div className={`audit-row ${isError ? "audit-error" : ""} ${isRollback ? "audit-rollback" : ""}`} key={item.seq}><span className="audit-icon">{isError ? <XCircle weight="fill" /> : isRollback ? <ArrowCounterClockwise weight="bold" /> : <CheckCircle weight="fill" />}</span><time>{formatTime(item.created_at)}</time><div><strong>{item.event}</strong><small>{item.actor}</small></div><code>{shortId(item.detail?.request_id || item.detail?.task_id || item.detail?.action_id || item.detail?.reversal_id || "recorded", 20)}</code></div>;
       }) : <div className="empty-state"><Info weight="duotone" />启动案件后，真实审计事件会出现在这里。</div>}</div>
-      <div className="audit-summary"><span>执行摘要：</span><strong>{snapshot?.trace?.span_count || 0} spans</strong><span className="error-dot" />错误 {snapshot?.trace?.error_spans?.length || 0}<span>重试成功</span></div>
+      <div className="audit-summary"><span>执行摘要：</span><strong>{snapshot?.trace?.span_count || 0} 条追踪</strong><span className="error-dot" />错误 {snapshot?.trace?.error_spans?.length || 0}<span>以实际审计记录为准</span></div>
     </section>
   );
 }

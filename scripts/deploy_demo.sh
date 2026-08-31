@@ -175,6 +175,9 @@ else
   env_set REVGUARD_ALLOW_DATABASE_RESET true
   env_set REVGUARD_TEAM_TRANSPORT matrix
 
+  log "配置私密后端 Principal（不向职能 Worker 下发）"
+  python3 scripts/configure_demo_principals.py --env "$ENV_FILE"
+
   compose_full="docker compose -f docker-compose.yml -f docker-compose.agentteams.yml -f docker-compose.polardb.yml"
   log "启动 PolarDB-PG 并应用核心 Schema"
   $compose_full up -d polardb-pg

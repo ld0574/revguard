@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import urllib.error
@@ -62,19 +63,48 @@ def _unwrap_mcporter_result(raw: object) -> dict:
     if isinstance(raw, dict):
         content = raw.get("content")
         if isinstance(content, list):
+            errors = []
             for item in content:
                 if not isinstance(item, dict) or item.get("type") != "text":
                     continue
+                message = str(item.get("text") or "")
                 try:
-                    value = json.loads(str(item.get("text") or ""))
+                    value = json.loads(message)
                 except json.JSONDecodeError:
+                    if raw.get("isError"):
+                        errors.append(_mcp_error(message))
                     continue
-                if isinstance(value, dict):
+                if isinstance(value, dict) and "success" in value:
                     return value
+                if raw.get("isError"):
+                    errors.append(_mcp_error(message))
+            if errors:
+                return {"success": False, "error": errors[0]}
         result = raw.get("result")
         if isinstance(result, dict):
             return _unwrap_mcporter_result(result)
     raise ValueError("MCP response does not contain a RevGuard Skill envelope")
+
+
+def _mcp_error(message: str) -> dict:
+    """Expose actionable upstream failures without echoing request inputs/secrets."""
+    match = re.search(r"call failed, status: (\d+), response: (.*)", message, re.S)
+    error_type = f"HTTP_{match.group(1)}" if match else "MCP_TOOL_ERROR"
+    body = match.group(2) if match else message
+    try:
+        detail = json.loads(body).get("detail")
+    except (json.JSONDecodeError, AttributeError):
+        detail = None
+    if isinstance(detail, list):
+        summary = "; ".join(
+            f"{'.'.join(str(part) for part in item.get('loc', []))}: {item.get('msg', '')}"
+            for item in detail if isinstance(item, dict)
+        )
+    elif isinstance(detail, str):
+        summary = detail
+    else:
+        summary = "MCP 工具调用被拒绝，请按请求编号查看网关日志"
+    return {"type": error_type, "message": summary[:800]}
 
 
 def _invoke_higress_mcp(

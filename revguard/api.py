@@ -428,35 +428,29 @@ async def create_human_action_assertion(
     elif case.get("execution_mode") != "AGENTTEAMS_MATRIX":
         raise HTTPException(409, "只能为 AgentTeams Matrix 运行签发恢复证明")
 
-    try:
-        identity = await HITL_IDENTITY_PROVIDER.authenticate(
-            payload.username,
-            payload.password.get_secret_value(),
-        )
-    except SecurityError as exc:
-        raise HTTPException(
-            401,
-            str(exc),
-            headers={"WWW-Authenticate": "Matrix"},
-        ) from exc
-    assertion = issue_human_action_assertion(
-        HITL_SIGNER,
-        identity,
-        case_id=case_id,
-        approval_id=approval_id,
-        action=payload.action,
-        ttl_seconds=HITL_ASSERTION_TTL_SECONDS,
-    )
     with Tracer(store, case_id).span(
         "APPROVAL",
         "HumanIdentityVerification",
-        actor=identity.actor,
+        actor="human-identity-provider",
         inputs={
             "provider": "agentteams-matrix",
             "action": payload.action,
             "approval_id": approval_id,
         },
     ) as span:
+        try:
+            identity = await HITL_IDENTITY_PROVIDER.authenticate(
+                payload.username,
+                payload.password.get_secret_value(),
+            )
+        except SecurityError as exc:
+            raise HTTPException(
+                401, str(exc), headers={"WWW-Authenticate": "Matrix"},
+            ) from exc
+        assertion = issue_human_action_assertion(
+            HITL_SIGNER, identity, case_id=case_id, approval_id=approval_id,
+            action=payload.action, ttl_seconds=HITL_ASSERTION_TTL_SECONDS,
+        )
         span["outputs"] = {
             **identity.public(),
             "assertion_ref": secret_fingerprint(assertion),
@@ -884,7 +878,7 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
     store.save_approval({"approval_id": decided["approval_id"], "case_id": case_id, **decided})
     store.audit(case_id, human.actor, "APPROVAL_DECIDED", {
         "decision": decided["status"],
-        "simulated_human": False,
+        "identity_verified": True,
         "human_subject": human.sub,
         "human_display_name": human.display_name,
         "human_auth_time": human.auth_time,

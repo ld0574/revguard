@@ -27,15 +27,8 @@ TMP_SOUL_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_SOUL_DIR"' EXIT
 
 principal_for_actor() {
-  python3 - "$1" "$REVGUARD_PRINCIPALS_FILE" <<'PY'
-import json
-import sys
-
-actor, path = sys.argv[1:]
-with open(path, encoding="utf-8") as stream:
-    principals = json.load(stream)
-print(next(key for key, value in principals.items() if value["actor"] == actor))
-PY
+  python3 "$REVGUARD_HOME/scripts/configure_demo_principals.py" \
+    --env "$REVGUARD_HOME/.env" --template "$REVGUARD_PRINCIPALS_FILE" --lookup "$1"
 }
 
 echo "==> 0/6 核验 RevGuard API 与 AgentTeams 共用网络"

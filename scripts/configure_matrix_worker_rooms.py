@@ -108,6 +108,12 @@ def update_env(path: Path, values: dict[str, str]) -> None:
     remaining = dict(values)
     for line in lines:
         key = line.split("=", 1)[0] if "=" in line else ""
+        # A deployment rerun must never replace the operator's exact human
+        # allow-list with the default recording admin account.
+        if key == "REVGUARD_HITL_MATRIX_USERS_JSON" and line.split("=", 1)[1].strip():
+            remaining.pop(key, None)
+            updated.append(line)
+            continue
         if key in remaining:
             updated.append(f"{key}={remaining.pop(key)}")
             continue

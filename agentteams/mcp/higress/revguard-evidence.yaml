@@ -33,7 +33,7 @@ tools:
     body: |
       {
         "case_id": "{{.args.caseId}}",
-        "input": {{toJson .args.input}}
+        "input": {{.args.input}}
       }
     headers:
     - key: Authorization

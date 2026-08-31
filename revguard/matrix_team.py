@@ -565,8 +565,9 @@ class MatrixTeamRunner(McpTeamRunner):
             f"{worker_mxid}\n"
             "执行一个已由 RevGuard 服务端绑定的 StageTask。不要创建 taskflow，不要查看 "
             "shared/tasks，不要读取 Secret，不要向其他 Agent 发消息，也不要只用聊天文字声称完成。"
-            "只执行下方 adapter_command 一次；命令成功后立即回复 task_id、success=true、"
-            "request_id、skill_receipt。\n"
+            "只执行下方 adapter_command 一次；随后原样返回命令输出，并附 task_id。"
+            "成功时保留 success、request_id、skill_receipt；失败时保留 error.type 和 "
+            "error.message，不要把失败说成成功。\n"
             f"case_id={case['case_id']}\n"
             f"task_id={task['task_id']}\n"
             f"skill_name={skill_name}\n"
@@ -647,9 +648,14 @@ class MatrixTeamRunner(McpTeamRunner):
                                  })
             await asyncio.sleep(0.8)
         if persisted.get("status") != TaskStatus.SUCCEEDED.value:
+            task_error = persisted.get("error") or {}
+            detail = task_error.get("message") or (
+                f"等待 {int(self.settings.stage_timeout_seconds)} 秒仍未收到服务端回执；"
+                "请核对该 Worker 的模型额度、MCP 网关与 Matrix 回复"
+            )
             raise MatrixTransportError(
                 f"AgentTeams Worker {actor} 未完成 {task['task_id']}: "
-                f"{persisted.get('status')}"
+                f"{persisted.get('status')}；{detail}；request_id={request_id}"
             )
 
         response_event = await self.client.wait_for_event(

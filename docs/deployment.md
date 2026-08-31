@@ -12,10 +12,14 @@ bash scripts/deploy_demo.sh --local --reset
 bash scripts/deploy_demo.sh --full --reset --model MiniMax-M3
 ```
 
-`--full` 会依次完成 PolarDB 启动与 Schema、RevGuard API、AgentTeams 角色和 Team、
-skills-only Adapter 的 MinIO 持久化、Matrix 登录与独立房间自动发现、8 个 Golden Case
+`--full` 会依次完成私密后端 Principal、PolarDB 启动与 Schema、RevGuard API、AgentTeams 角色和 Team、
+skills-only Adapter 的 MinIO 持久化、9 个独立 Higress MCP Server 与精确 consumer 授权、Matrix 登录与独立房间自动发现、8 个 Golden Case
 播种以及最终健康验收。重复运行默认保留案件；只有显式传入 `--reset` 才重置合成库。
 脚本不会打印 Matrix 或数据库凭证，生成的 `.env` 权限为 `0600`。
+
+新版 L2 审批必须通过白名单 Matrix 账号验证。`--local` 不包含身份源，未配置 Matrix 时
+会停在人审，不能使用旧静态 approver key。完整录制方式与账号配置见
+[`hitl-mcp-recording.md`](hitl-mcp-recording.md)。
 
 为避免容器重建丢失进程内的后台协程，未传 `--reset` 时如果检测到
 `QUEUED / STARTING / RUNNING` 案件，脚本会拒绝重建 API。意外重启后，WebUI
@@ -25,8 +29,11 @@ skills-only Adapter 的 MinIO 持久化、Matrix 登录与独立房间自动发�
 ## 1. 推荐拓扑
 
 ```text
-AgentTeams Orchestrator / Workers
-        │  HTTPS + Bearer Principal（由 Secret/Adapter 注入）
+AgentTeams Matrix → 职能 Workers
+        │ MCP tools/call + consumer token
+        ▼
+Higress：9 个 actor-scoped MCP Server（后端凭证托管）
+        │ REST-to-MCP → HTTP + 后端 Principal
         ▼
 RevGuard API :9000
         ├── Skill Runtime / ToolGateway
@@ -36,7 +43,7 @@ RevGuard API :9000
         └── reports / case memory
 ```
 
-与 AgentTeams 同一 Docker 网络时使用 `http://revguard-api:9000`；跨主机部署必须通过
+Higress 与 RevGuard 同一 Docker 网络时使用 `http://revguard-api.internal:9000`；跨主机部署必须通过
 TLS Gateway 暴露，并配置限流、访问日志与网络白名单。SOUL 使用
 `{{REVGUARD_API_BASE_URL}}`，`agentteams_setup.sh` 在部署时渲染，不再硬编码 IP。
 
@@ -180,19 +187,17 @@ done
 agt get teams   # 预期 revguard-team Active / 1 Orchestrator + 9 Worker Ready
 ```
 
-API key 不写入 SOUL。所有 Worker 使用 `agentteams/skills/revguard-api/` 中的 skills-only
-Adapter，并从各自 `.copaw.secret/revguard_api_key` 注入专属 Principal。调用必须携带
-`X-AgentTeams-Message-ID` 与 `X-Request-ID`；聊天、日志和 Trace 均不得回显 Bearer 值。
-其他 Worker 也应按相同模式各自注入：
-
-```http
-Authorization: Bearer <worker-specific-key>
-```
+API key 不写入 SOUL。职能 Worker 使用 skills-only Adapter 经 mcporter 调用自己的
+Higress MCP Server，只有 consumer token；后端 key 只进入 Higress，旧 Worker key 文件
+会移除。完整部署把公开示例的 Worker/dispatcher key 升级为随机私密值，保存在宿主机
+0600 `.env`；重复部署保留已有私密值。公开 viewer/operator key 仅为内网演示页面保留，
+不得把该演示入口直接暴露公网。Orchestrator 只保留任务派发用的专用凭证。
+调用携带 `X-AgentTeams-Message-ID`、`X-Request-ID` 与 Task ID；不得回显任何 Bearer 值。
 
 至少配置 Orchestrator dispatcher 与 Intake、Evidence、Policy、Calculation、RootCause、Risk、
 Executor、Verifier、Knowledge 九个 Worker 的独立 Principal；Executor 仅有
 `commission:draft/write/reverse`，Verifier 仅有 `ledger:read`，Approver 使用独立的人类
-Principal。
+身份的短时动作证明，不再使用静态 approver Principal。
 
 新版部署保持 `REVGUARD_ENABLE_LEGACY_TOOL_API=false`。只有复放 2026-08-10 的历史
 `Matrix → /tools/call` 证据时才临时设为 `true`；复放结束应恢复关闭。

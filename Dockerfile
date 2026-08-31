@@ -1,5 +1,5 @@
 # RevGuard API 服务镜像
-# 与 AgentTeams 同机部署时，Worker 通过 http://revguard-api:9000 调用 Skill 层
+# 完整部署由 Higress MCP 代理到 Skill 层，职能 Worker 不持后端凭证
 ARG PYTHON_IMAGE=python:3.11-slim
 FROM node:20-alpine AS demo-ui-build
 

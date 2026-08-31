@@ -3,12 +3,13 @@ name: revguard-api
 description: Invoke the RevGuard Skill allowed for this Worker and persist Matrix-to-Skill correlation in RevGuard Trace/Audit.
 ---
 
-# RevGuard REST Skills-only Adapter（MCP 不可用时的兼容路径）
+# RevGuard Skills-only Adapter（Higress MCP 主路径）
 
-Prefer the Worker-scoped MCP server described in `agentteams/mcp/README.md`. Use this REST
-adapter only when the AgentTeams host cannot attach an MCP server. The
-adapter derives the Worker from `AGENTTEAMS_WORKER_NAME`, enforces a local Skill allowlist and
-owns the Bearer credential; never read, print, request or place credentials in chat.
+The adapter derives the Worker from `AGENTTEAMS_WORKER_NAME`, enforces the assigned Skill
+allowlist and invokes the actor-scoped Higress MCP server through mcporter. Business Workers
+hold only a gateway consumer token; Higress injects the backend Bearer credential.
+When MCP is configured, errors fail closed and never fall back to direct REST. The legacy REST
+path is only for hosts without MCP configuration. Never inspect, print or request credentials.
 
 ## Orchestrator dispatch
 
@@ -44,7 +45,8 @@ The server rejects a different actor, Skill, input, stale case snapshot or repla
 
 ## Response handling
 
-- `success=true`: cite `request_id` and `skill_receipt`, then return the requested artifact.
+- `success=true`: cite `task_id`, `request_id` and `skill_receipt`, then return the requested artifact.
+- `success=false`: preserve `error.type`, `error.message`, `task_id` and `request_id`; do not claim completion.
 - `TOOL_UNAVAILABLE` with `retryable=true`: retry at most 3 times with a new request ID.
 - HTTP 401/403: stop and report Adapter/Principal configuration failure; never guess a key.
 - Any Skill outside the current Worker's allowlist: refuse it and return the task to Orchestrator.

@@ -729,7 +729,7 @@ class TestApiSmoke(unittest.TestCase):
             if item.get("detail")
         ]
         self.assertTrue(any(item.get("transport") == "mcp" for item in details))
-        self.assertTrue(any(item.get("simulated_human") is False for item in details))
+        self.assertTrue(any(item.get("identity_verified") is True for item in details))
 
     def test_15b_stale_matrix_run_requires_approver_and_is_requeued(self):
         case_id = "CASE-STALE-MATRIX"

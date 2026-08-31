@@ -21,6 +21,10 @@
 - ❌ 不得自行批准高风险动作；
 - ❌ 不得替代规则引擎计算金额；
 - ❌ 不得跳过 Verifier 直接宣布案件成功。
+- 到 `WAITING_FOR_APPROVAL` 必须暂停并提示真人到 RevGuard 驾驶舱审批；不得调用
+  `/approval`、索要审批人密码、请求人类动作证明或创建 approver Agent。
+- 审批由独立网页验证 Matrix 账号并提交。后端收到合法证明后自行续跑；不要靠聊天
+  中的“我批准了”推进状态，也不要把普通 Worker consumer token 当作审批凭证。
 
 ## Inputs / Outputs
 

@@ -10,15 +10,8 @@ PRINCIPALS_FILE="${REVGUARD_PRINCIPALS_FILE:-$REVGUARD_HOME/config/demo_principa
 WORKERS="revguard-intake revguard-evidence revguard-policy revguard-calculation revguard-rootcause revguard-risk revguard-executor revguard-verifier revguard-knowledge"
 
 principal_for_actor() {
-  python3 - "$1" "$PRINCIPALS_FILE" <<'PY'
-import json
-import sys
-
-actor, path = sys.argv[1:]
-with open(path, encoding="utf-8") as stream:
-    principals = json.load(stream)
-print(next(key for key, value in principals.items() if value["actor"] == actor))
-PY
+  python3 "$REVGUARD_HOME/scripts/configure_demo_principals.py" \
+    --env "$REVGUARD_HOME/.env" --template "$PRINCIPALS_FILE" --lookup "$1"
 }
 
 for command in docker python3; do
@@ -39,9 +32,37 @@ for worker in $WORKERS; do
     set -Eeuo pipefail
     source /opt/agentteams/scripts/lib/gateway-api.sh
     gateway_ensure_session
-    bash /opt/agentteams/agent/skills/mcp-server-management/scripts/setup-mcp-server.sh \
-      "'"$worker"'" "$REVGUARD_MCP_BACKEND_KEY" \
-      --yaml-file "/tmp/revguard-higress-mcp/'"$worker"'.yaml"
+    worker="'"$worker"'"
+    server="mcp-$worker"
+    domain="${AGENTTEAMS_AI_GATEWAY_DOMAIN:-aigw-local.agentteams.io}"
+    # The bundled setup script grants every Worker access. Register directly so
+    # a deployment never temporarily grants executor tools to other roles.
+    request() {
+      local method="$1" path="$2" body="$3" response
+      response=$(curl -fsS -X "$method" "http://127.0.0.1:8001$path" \
+        -b "$HIGRESS_COOKIE_FILE" -H "Content-Type: application/json" -d "$body")
+      if [ -n "$response" ]; then
+        echo "$response" | jq -e ".success != false" >/dev/null || {
+          echo "Higress $method $path failed (response withheld: may contain credentials)" >&2
+          return 1
+        }
+      fi
+    }
+    source_body=$(jq -n --arg name "$worker-api" \
+      "{type:\"dns\",name:\$name,domain:\"revguard-api.internal\",port:9000,protocol:\"http\"}")
+    # Existing DNS sources are idempotent; only HTTP 409 is an allowed failure.
+    code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
+      http://127.0.0.1:8001/v1/service-sources -b "$HIGRESS_COOKIE_FILE" \
+      -H "Content-Type: application/json" -d "$source_body")
+    case "$code" in 200|201|204|409) ;; *) echo "DNS source failed: HTTP $code" >&2; exit 1;; esac
+    body=$(jq -n --arg server "$server" --arg domain "$domain" --arg worker "$worker" \
+      --rawfile yaml "/tmp/revguard-higress-mcp/$worker.yaml" \
+      --arg key "$REVGUARD_MCP_BACKEND_KEY" \
+      "{name:\$server,description:\$server,type:\"OPEN_API\",mcpServerName:\$server,
+        rawConfigurations:(\$yaml | sub(\"accessToken: \\\"\\\"\"; \"accessToken: \"+(\$key|tojson))),
+        domains:[\$domain],services:[{name:(\$worker+\"-api.dns\"),port:9000,weight:100}],
+        consumerAuthInfo:{type:\"key-auth\",enable:true,allowedConsumers:[\"worker-\"+\$worker]}}")
+    request PUT /v1/mcpServer "$body"
   '
   unset backend_key
 done
@@ -55,11 +76,26 @@ docker exec -e REVGUARD_MCP_WORKERS="$WORKERS" "$CONTROLLER" bash -lc '
   domain="${AGENTTEAMS_AI_GATEWAY_DOMAIN:-aigw-local.agentteams.io}"
   for worker in $REVGUARD_MCP_WORKERS; do
     server="mcp-$worker"
+    # PUT /consumers ADDS; it does not replace the allowlist in this version.
+    # Revoke only excess grants on this exact RevGuard server (never globally).
+    detail=$(curl -fsS -b "$HIGRESS_COOKIE_FILE" "http://127.0.0.1:8001/v1/mcpServer/$server")
+    excess=$(echo "$detail" | jq -c --arg consumer "worker-$worker" \
+      ".data.consumerAuthInfo.allowedConsumers | map(select(. != \$consumer))")
+    if [ "$excess" != "[]" ]; then
+      revoke=$(jq -n --arg server "$server" --argjson consumers "$excess" \
+        "{mcpServerName:\$server,consumers:\$consumers}")
+      response=$(curl -fsS -X DELETE "http://127.0.0.1:8001/v1/mcpServer/consumers" \
+        -b "$HIGRESS_COOKIE_FILE" -H "Content-Type: application/json" -d "$revoke")
+      [ -z "$response" ] || echo "$response" | jq -e ".success != false" >/dev/null
+    fi
     body=$(jq -n --arg server "$server" --arg consumer "worker-$worker" \
       "{mcpServerName:\$server,consumers:[\$consumer]}")
     response=$(curl -fsS -X PUT "http://127.0.0.1:8001/v1/mcpServer/consumers" \
       -b "$HIGRESS_COOKIE_FILE" -H "Content-Type: application/json" -d "$body")
-    echo "$response" | jq -e ".success != false" >/dev/null
+    [ -z "$response" ] || echo "$response" | jq -e ".success != false" >/dev/null
+    curl -fsS -b "$HIGRESS_COOKIE_FILE" "http://127.0.0.1:8001/v1/mcpServer/$server" \
+      | jq -e --arg consumer "worker-$worker" \
+        ".data.consumerAuthInfo | .enable == true and .allowedConsumers == [\$consumer]" >/dev/null
 
     creds="/data/worker-creds/$worker.env"
     worker_key=$(sed -n "s/^WORKER_GATEWAY_KEY=\"\(.*\)\"$/\1/p" "$creds")
@@ -88,7 +124,7 @@ for worker in $WORKERS; do
       'mkdir -p config && tee config/mcporter.json >/dev/null'
 done
 
-echo "==> 4/4 核验每个 Worker 只能发现自己的 MCP Server"
+echo "==> 4/4 核验配置与真实 MCP 访问隔离（含跨角色拒绝）"
 for worker in $WORKERS; do
   container="agentteams-worker-$worker"
   for _ in $(seq 1 30); do
@@ -105,5 +141,7 @@ for worker in $WORKERS; do
     exit 1
   }
 done
+
+python3 "$REVGUARD_HOME/scripts/verify_higress_isolation.py"
 
 echo "Higress MCP Gateway 已完成：9 个独立 Server，9 个单 Worker consumer allowlist。"

@@ -40,7 +40,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 | 约束 | 代码机制 | 可复核证据 |
 |---|---|---|
 | **任务不漂移** | 状态迁移白名单、Skill/状态绑定、case version 快照和 StageTask 约束任务范围。 | 非法迁移测试、旧任务失效测试、`STATE_TRANSITION` 审计事件。 |
-| **审批不自签** | 独立 Approver Principal、L2 签名能力令牌、L3 禁止自动执行、Executor 与 Verifier 分离。 | 签名、过期、用途测试，以及 L3 和故障回滚案例。 |
+| **审批不自签** | 带外 Matrix 账号验证、绑定案件/审批单/决定的 120 秒身份证明；拒绝静态审批 key；L2 短时执行能力、L3 禁止自动执行。 | 人类 subject/认证时间审计、跨案件/动作拒绝测试及回滚案例。 |
 | **额度不外溢** | 案件、币种、总额和逐组件额度绑定；幂等键防重复写入；冲销令牌一次性使用。 | 跨组件额度、并发双写和令牌重放安全探针。 |
 | **权限不升级** | Bearer 请求映射为服务端 Principal；每个 Skill 有 actor 白名单和最小 scope；响应与 Trace 脱敏。 | 401/403/422 边界测试和嵌套字符串脱敏测试。 |
 
@@ -51,7 +51,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 - 1 个 Orchestrator 加 9 个职能 Worker，共 10 个 Agent；Executor 负责受控写入，Verifier 独立复核。
 - 16 个版本化 Skill，每个 Skill 都有统一调用入口、允许身份、输入/输出格式、失败处理和复用说明。
 - 录制环境由真实 AgentTeams/Matrix 驱动状态型 Team 流程：Team room 做 Orchestrator
-  握手，9 个 Worker 独立 room 执行 skills-only Adapter；本地官方 MCP Client/Server
+  协同任务编排，9 个 Worker 独立 room 经 skills-only Adapter 调用各自的 Higress MCP Server；本地官方 MCP Client/Server
   保留为可复现 reference harness。底层 Tool 不暴露给模型，错 Worker、错 Skill、篡改输入、
   过期 task 和重放都会拒绝。
 - CASE-0008 实测 20 个成功 StageTask、9 个 Worker、16 种 Skill；L2 在 WebUI 真实暂停，
@@ -114,8 +114,12 @@ bash scripts/deploy_demo.sh --full --reset --model MiniMax-M3
 ```
 
 脚本会生成权限为 `0600` 的本地 `.env`，完成镜像构建、Schema、Golden Case、
-Worker Adapter、Matrix 房间和健康验收；不会输出或提交凭证。`--full` 建议为 Docker
+Worker Adapter、9 个精确授权的 Higress MCP Server、Matrix 房间和健康验收；不会输出或提交凭证。`--full` 建议为 Docker
 分配至少 6 GiB 内存。部署完成后访问 `http://<宿主机>:19000/demo/`。
+
+L2 审批现在要求登录白名单中的 AgentTeams Matrix 账号，不能使用旧 approver key。
+`--local` 不自带身份提供方，若未配置 Matrix，只能运行到人审暂停；完整自动化内核验证
+使用 `make verify-ci`。账号配置、录制边界见 [`docs/hitl-mcp-recording.md`](docs/hitl-mcp-recording.md)。
 
 开发与完整门禁使用以下命令：
 
@@ -141,6 +145,7 @@ make demo         # 干净重置并运行 8 个 Golden Case
 - `docs/evaluation-summary.json`：含 UTC、环境、重复次数、中位数与样本的发布快照。
 - `docs/evidence/demo-rehearsal/`：MCP Task、人审暂停、Audit、Trace、报告与证据哈希清单。
 - `docs/demo-script.md` / `docs/recording-shot-list.md`：复赛旁白、镜头和组员分工。
+- `docs/runtime-acceptance-2026-08-31.md`：最新运行验收、CASE-0002 恢复结果与正式录制前提。
 
 核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
@@ -244,8 +249,9 @@ revguard/
 
 ## MCP 与 RAG 边界
 
-MCP 已作为 Agent-facing Skill transport 接入，不是底层工具的无边界包装：每个 server 进程
-固定一个 Worker actor，`tools/list` 仅列出授权 Skill，每次调用必须绑定不可漂移的 StageTask；
+完整部署使用 Higress REST-to-MCP：9 个独立 Server 分别授权给对应 Worker consumer，
+后端 key 不下发给职能 Worker。每次调用必须绑定不可漂移的 StageTask；本地 stdio
+Server 仅作为参考测试。配置与验证见 [`agentteams/mcp/README.md`](agentteams/mcp/README.md)。
 MCP 与 REST 共用同一套 Schema、执行器、状态机、权限、StageResult 事务与 Audit。详见
 [`docs/adr/0007-scoped-mcp-skill-transport.md`](docs/adr/0007-scoped-mcp-skill-transport.md)。
 

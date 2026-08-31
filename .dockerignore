@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.git
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.coverage
+demo-ui/node_modules
+demo-ui/dist
+data/outputs
+tmp

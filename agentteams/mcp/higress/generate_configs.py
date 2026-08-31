@@ -65,7 +65,10 @@ def render_server(actor: str, skills: list[str]) -> str:
             "    body: |\n",
             "      {\n",
             '        "case_id": "{{.args.caseId}}",\n',
-            '        "input": {{toJson .args.input}}\n',
+            # GJSON Template already renders an object as raw JSON. Applying
+            # Sprig toJson again encodes that JSON as a string on AgentTeams'
+            # bundled Higress version and makes FastAPI reject the body (422).
+            '        "input": {{.args.input}}\n',
             "      }\n",
             "    headers:\n",
             "    - key: Authorization\n",

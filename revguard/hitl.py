@@ -21,7 +21,7 @@ from .security import (
 
 @dataclass(frozen=True)
 class HumanIdentity:
-    """Server-verified natural-person identity used at the approval boundary."""
+    """Verified allow-listed account, not proof of a natural person's presence."""
 
     sub: str
     actor: str

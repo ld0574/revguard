@@ -1,7 +1,9 @@
 # RevGuard AgentTeams API Few-shot Playbook
 
-本手册是所有 Worker SOUL 的强制执行契约。Bearer API key 只允许由
-AgentTeams Secret/Adapter 在传输层注入；模型输入、Matrix 消息、日志、Trace
+本手册是所有 Worker SOUL 的强制执行契约。完整部署中，职能 Worker 经 Higress MCP
+调用 Skill，后端 Bearer API key 只由 Higress 注入；Orchestrator 的派发凭证仍由专用
+Adapter 注入。下面的 HTTP 示例描述网关到后端的契约，不是让 Worker 手写 curl。
+模型输入、Matrix 消息、日志、Trace
 和回复中都不得出现 key、`RGC1.` 能力令牌原文或其它凭证。
 
 ## 每次请求必须携带的关联信息
@@ -10,7 +12,7 @@ AgentTeams Secret/Adapter 在传输层注入；模型输入、Matrix 消息、�
 - `X-Request-ID`：本次调用唯一 ID，例如 `REQ-MATRIX-20260810-001`；
 - `X-RevGuard-Task-ID`：Orchestrator 已派发且绑定当前 Worker/Skill 的 Task ID；
 - `case_id`：已有案件必须填写；
-- `Authorization`：只由 Adapter 注入，Worker 不生成、不猜测、不回显。
+- `Authorization`：后端 key 只由 Higress 注入，Worker 不生成、不猜测、不回显。
 
 API 返回 `X-Request-ID`、`X-Skill-Receipt`；Worker 在聊天中只报告这两个不可授权
 的引用和结构化业务结论。

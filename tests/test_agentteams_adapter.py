@@ -37,6 +37,32 @@ class _Response:
 
 
 class TestAgentTeamsAdapter(unittest.TestCase):
+    def test_mcp_upstream_error_keeps_status_and_reason_not_input(self):
+        result = adapter._unwrap_mcporter_result({
+            "content": [{"type": "text", "text":
+                'call failed, status: 422, response: {"detail":[{"loc":["body","input"],'
+                '"msg":"Input should be a valid dictionary","input":"secret-input"}]}'}],
+            "isError": True,
+        })
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"]["type"], "HTTP_422")
+        self.assertIn("body.input", result["error"]["message"])
+        self.assertNotIn("secret-input", json.dumps(result))
+
+    def test_mcp_success_unwraps_json_text(self):
+        envelope = {"success": True, "data": {"case_id": "CASE-1"}}
+        self.assertEqual(adapter._unwrap_mcporter_result({
+            "content": [{"type": "text", "text": json.dumps(envelope)}],
+        }), envelope)
+
+    def test_mcp_error_without_json_is_not_reported_as_success(self):
+        result = adapter._unwrap_mcporter_result({
+            "content": [{"type": "text", "text": "upstream connection failed"}],
+            "isError": True,
+        })
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"]["type"], "MCP_TOOL_ERROR")
+
     def _run(self, argv: list[str], *, worker: str):
         output = io.StringIO()
         with patch.dict(os.environ, {"AGENTTEAMS_WORKER_NAME": worker}, clear=False), \

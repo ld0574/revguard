@@ -6,6 +6,54 @@
     "version": "0.4.0"
   },
   "paths": {
+    "/api/v1/cases/{case_id}/human-action/assertion": {
+      "post": {
+        "summary": "Create Human Action Assertion",
+        "description": "Verify a Matrix user and mint a two-minute, action-bound proof.\n\nThe submitted password is forwarded only to the configured Matrix\nhomeserver for authentication.  RevGuard neither stores it nor returns the\nMatrix access token.",
+        "operationId": "create_human_action_assertion_api_v1_cases__case_id__human_action_assertion_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HumanActionAssertionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases": {
       "post": {
         "summary": "Create Case",
@@ -380,6 +428,60 @@
                 }
               ],
               "title": "X-Request-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/team/resume": {
+      "post": {
+        "summary": "Resume Interrupted Team Run",
+        "description": "Resume a stale post-approval Matrix run through idempotent replay.\n\nDurable StageResults and execution idempotency keys remain authoritative.\nL2 recovery requires a trusted approver to renew only the unconsumed part\nof the expired short-lived capability.",
+        "operationId": "resume_interrupted_team_run_api_v1_cases__case_id__team_resume_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
             }
           },
           {
@@ -1147,6 +1249,22 @@
             }
           },
           {
+            "name": "X-RevGuard-Transport",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Revguard-Transport"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -1573,6 +1691,40 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HumanActionAssertionRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password",
+            "writeOnly": true
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "RESUME"
+            ],
+            "title": "Action"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "password",
+          "action"
+        ],
+        "title": "HumanActionAssertionRequest",
+        "description": "Transient AgentTeams login used only to bind a human action proof."
       },
       "SkillInvoke": {
         "properties": {
