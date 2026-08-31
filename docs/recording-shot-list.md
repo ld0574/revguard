@@ -1,5 +1,10 @@
 # 复赛录制素材与分工清单
 
+**当前环境优先使用 [保留当前数据版完整脚本](demo-script-current-data.md)。**
+不点“重新准备”：0008 正常闭环、0002 故障回滚、CASE-226175B6 独立人审演示分别录制，
+每次切案带字幕。下列从初始态开始的单案清单仅适用于已获得全库重置确认的录制库。
+原片 1080p 清晰度和本人审批实录须由组员最终确认，参见 [页面验收](ui-recording-audit-2026-08-31.md)。
+
 ## 建议分工
 
 | 角色 | 负责录制 | 输出文件 | 验收点 |
@@ -7,7 +12,7 @@
 | A：主录屏 | Web 驾驶舱从重置到最终回滚的完整无剪辑操作 | `A01-cockpit-full.mp4` | 2560×1440 或 1920×1080；浏览器缩放 90–100%；清晰看到人工点击 |
 | B：AgentTeams | Team room 的 Orchestrator 握手，以及 3 个 Worker 独立 room 的接单与回执 | `B01-agentteams-room.mp4`、3 张 PNG | 同一 room/message/request/task/receipt 可与驾驶舱对账；不拍 Secret |
 | C：工程证据 | 测试、Higress 工具发现/隔离、开源 PolarDB-PG 版本/触发器证据 | `C01-engineering.mp4`、终端截图 | 展示真实网关拒绝与审计链 VALID；本地 stdio 和云 PITR 分清边界 |
-| D：剪辑/旁白 | 按 `demo-script.md` 合并、配字幕、音量和片尾 | `RevGuard-semifinal-v1.mp4` | 字幕统一；不改变运行顺序；关键状态不靠后期伪造 |
+| D：剪辑/旁白 | 当前数据用 `demo-script-current-data.md`；获准重置的单案录制用 `demo-script.md` | `RevGuard-semifinal-v1.mp4` | 字幕统一；不改变运行顺序；关键状态不靠后期伪造 |
 
 没有四位组员时，A/B 可由一人承担，C/D 可由一人承担。
 

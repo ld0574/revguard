@@ -184,6 +184,13 @@ async def structured_access_log(request: Request, call_next):
         }})
         raise
     response.headers.setdefault("X-Request-ID", request_id)
+    # State/identity responses and the UI entry point must not survive a run or
+    # deployment in browser caches. Hashed static assets remain cacheable.
+    if request.url.path.startswith("/api/") or (
+        request.url.path.startswith("/demo")
+        and "text/html" in response.headers.get("content-type", "")
+    ):
+        response.headers["Cache-Control"] = "no-store"
     LOGGER.info("http_request", extra={"revguard_fields": {
         "request_id": request_id, "method": request.method,
         "path": request.url.path, "status_code": response.status_code,
@@ -1290,7 +1297,7 @@ def engineering_evidence(
         "external_validation": {
             "production_business_baseline": "PENDING_COMPANY_DATA",
             "agentteams_room": (
-                "PASSED_9_WORKER_ROOMS"
+                "CONFIGURED_MATRIX_NOT_LIVENESS_CHECK"
                 if TEAM_TRANSPORT == "matrix" else "PENDING_EXTERNAL_CAPTURE"
             ),
             "self_hosted_polardb_pg": (

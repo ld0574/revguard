@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { isVerifiedClosure } from "./pipeline-state.js";
+import { externalValidationLabel, isVerifiedClosure, safetyRailState, securityRegressionSummary } from "./pipeline-state.js";
 import {
   ArrowClockwise,
   ArrowCounterClockwise,
@@ -534,19 +534,21 @@ function TraceView({ snapshot }) {
   );
 }
 
-function Permissions({ snapshot }) {
+function Permissions({ snapshot, evidence }) {
   const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
   const quotas = approval.component_quota || {};
   const currency = approval.currency || c.claim?.currency || "KES";
   const human = approval.human_identity || {};
+  const evaluation = evidence?.deterministic_evaluation;
+  const security = securityRegressionSummary(evaluation);
   const quotaRows = Object.entries(quotas).map(([component, amount]) => [componentLabel(component), money(amount, currency)]);
   const rows = [["案件绑定", c.case_id || "—"], ["币种", currency], ["总额度上限", money(approvalAmount(snapshot), currency)], ...quotaRows, ["能力令牌有效期", "15 分钟"], ["审批角色", approval.approver_role || c.risk_decision?.approver_role || "等待风险判断"], ["人类审批人", human.display_name || "等待 AgentTeams 身份验证"], ["Matrix 身份", human.sub || "尚未绑定"], ["身份验证方式", human.auth_method === "matrix-password" ? "AgentTeams Matrix 密码验证" : human.auth_method || "尚未验证"], ["动作证明指纹", approval.human_assertion_id_ref || "提交审批后生成"], ["能力指纹", approval.approval_token_ref || "批准后生成"]];
   return (
     <div className="permissions-grid">
       <section className="detail-section permission-card"><div className="section-title"><LockKey weight="duotone" /><strong>审批与能力边界</strong></div><div className="permission-list">{rows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></section>
       <section className="detail-section permission-card"><div className="section-title"><ShieldWarning weight="duotone" /><strong>四重约束</strong></div><div className="constraint-list"><div><span>01</span><strong>任务不漂移</strong><small>状态、技能、执行者、输入快照与案件版本绑定</small></div><div><span>02</span><strong>审批不自签</strong><small>后端独立验证 AgentTeams Matrix 人类身份；证明只绑定当前案件、审批单和动作</small></div><div><span>03</span><strong>额度不外溢</strong><small>总额度与逐组件额度同时约束，防止重复写入</small></div><div><span>04</span><strong>权限不升级</strong><small>服务端身份、角色、权限范围与技能执行者白名单共同约束</small></div></div></section>
-      <section className="detail-section permission-card"><div className="section-title"><Fingerprint weight="duotone" /><strong>安全探针</strong></div><div className="probe-list">{["伪造令牌", "过期令牌", "跨案件调用", "组件额度滥用", "并发双写", "回滚令牌重放"].map((item) => <div key={item}><CheckCircle weight="fill" /><span>{item}</span><strong>已拒绝</strong></div>)}</div></section>
+      <section className="detail-section permission-card"><div className="section-title"><Fingerprint weight="duotone" /><strong>安全回归证据</strong></div><div className="probe-list"><div>{security.passed ? <CheckCircle weight="fill" /> : <Clock weight="fill" />}<span>已存档回归快照</span><strong>{security.label}</strong></div></div><p className="boundary-note">来源：确定性评测 · {evaluation?.generated_at || "尚无时间记录"}。不是本次案件现场执行的安全探针。</p><p className="boundary-note">覆盖范围：伪造/过期令牌、跨案件调用、权限升级、组件额度、并发双写与回滚重放。</p></section>
     </div>
   );
 }
@@ -566,11 +568,11 @@ function EngineeringEvidence({ evidence }) {
     ["审计链", runtime.audit_chain?.enforced ? (runtime.audit_chain.valid ? "VALID" : "BROKEN") : "DEMO ONLY", runtime.audit_chain?.enforced ? `${runtime.audit_chain.rows_checked || 0} 条已校验` : "PolarDB 模式由 DB trigger 强制"],
     ["Trace 错误", String(runtime.trace_error_spans_total ?? 0), `${runtime.trace_spans_total || 0} spans 已持久化`],
     ["StageResult", String(runtime.agent_task_attempts_total ?? 0), "Task 终态与 Result 同事务"],
-    ["MCP 协同排练", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} 个执行者 · ${rehearsal.outcome?.skill_count || 0} 项技能`],
+    ["本地 stdio 排练", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} 个执行者 · 存档快照，非本次 AgentTeams 运行`],
     ["合成数据校验", synthetic.validation_status || "等待生成", `${synthetic.record_counts?.orders || 0} orders · ${synthetic.record_counts?.golden_cases || 0} cases`],
     ["本地 PostgreSQL", postgres.checks?.audit_chain_valid ? "PASSED" : "PENDING", postgres.classification ? "PG 18.6 兼容验证；非云验收" : "等待本地验证"],
     ["确定性评测", `${evaluation.passed || 0}/${evaluation.total_scenarios || 0}`, `通过率 ${Number(evaluation.pass_rate || 0) * 100}%`],
-    ["发布版本", evidence?.release || "—", "0 → 5% → 25% → 100% 灰度"],
+    ["发布版本", evidence?.release || "—", "灰度流程有配置模板；此处不是线上灰度记录"],
   ];
   const valueRows = [
     ["处理时长中位数", `${metrics.median_manual_processing_minutes ?? "—"} → ${metrics.median_revguard_processing_minutes ?? "—"} min`],
@@ -582,7 +584,7 @@ function EngineeringEvidence({ evidence }) {
   return (
     <div className="engineering-grid">
       <section className="detail-section engineering-section">
-        <div className="section-title"><Gauge weight="duotone" /><strong>可查询工程证据</strong><span>来自当前 API / Trace / Store</span></div>
+        <div className="section-title"><Gauge weight="duotone" /><strong>可查询工程证据</strong><span>实时存储指标与已标注的存档评测</span></div>
         <div className="evidence-ledger">{rows.map(([label, primary, note]) => <div className="evidence-row" key={label}><span>{label}</span><strong>{primary}</strong><small>{note}</small></div>)}</div>
       </section>
       <section className="detail-section engineering-section">
@@ -592,7 +594,7 @@ function EngineeringEvidence({ evidence }) {
       </section>
       <section className="detail-section pending-section">
         <div className="section-title"><Database weight="duotone" /><strong>外部环境验收</strong><span>不伪造完成状态</span></div>
-        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["AgentTeams 完整房间", external.agentteams_room], ["开源 PolarDB-PG", external.self_hosted_polardb_pg], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong>{state || "PENDING"}</strong></div>)}</div>
+        <div className="pending-checks">{[["企业真实基线", external.production_business_baseline], ["AgentTeams 通信配置", external.agentteams_room], ["开源 PolarDB-PG", external.self_hosted_polardb_pg], ["PolarDB 云端兼容", external.polardb_cloud_acceptance], ["PolarDB PITR 演练", external.polardb_pitr_drill]].map(([label, state]) => <div key={label}><Clock weight="fill" /><span>{label}</span><strong title={state}>{externalValidationLabel(state)}</strong></div>)}</div>
       </section>
     </div>
   );
@@ -668,8 +670,9 @@ function SafetyRail({ snapshot, onExport }) {
   const currency = approval.currency || c.claim?.currency || "KES";
   const human = approval.human_identity || {};
   const rolledBack = c.status === "ROLLED_BACK";
+  const safety = safetyRailState(snapshot);
   return (
-    <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">回滚后验证结果</span><strong className={`rail-state ${rolledBack ? "passed-state" : ""}`}>{rolledBack ? "已通过" : "等待验证"}</strong><span className="rail-label">安全基线（恢复后）</span><b>{money(c.claim?.actual_amount, currency)}</b><small>与该案件原始过账一致</small></section>
+    <aside className="safety-rail"><section className="rail-section"><span className="rail-label">当前安全状态</span><strong className={rolledBack ? "rail-state rollback-state" : "rail-state"}>{c.status || "CREATED"}</strong><span className="rail-label">{safety.label}</span><strong className={`rail-state ${safety.passed ? "passed-state" : ""}`}>{safety.result}</strong><span className="rail-label">{safety.balanceLabel}</span><b>{money(safety.amount, currency)}</b><small>{safety.note}</small></section>
       <section className="rail-section"><span className="rail-label">案例与审批边界</span>{[["绑定案件", c.case_id || "—"], ["币种", currency], ["总额度", money(approvalAmount(snapshot), currency)], ...Object.entries(quotas).map(([component, amount]) => [componentLabel(component), money(amount, currency)]), ["人类审批人", human.display_name || "尚未验证"], ["身份来源", human.sub ? "AgentTeams Matrix" : "等待验证"], ["令牌有效期", "15 分钟"], ["策略范围", c.policy_decision?.policy_version || "待匹配"]].map(([label, value]) => <div className="rail-kv" key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
       <section className="rail-section export-section"><span className="rail-label">导出证据包</span><button onClick={onExport} disabled={!snapshot?.report_available}><DownloadSimple weight="bold" />导出摘要报告</button><small>完整证据包包含追踪记录、审计日志、报告与校验清单。</small></section></aside>
   );
@@ -744,7 +747,7 @@ function HumanActionDialog({ intent, caseId, busy, onClose, onCommit }) {
           <label><span>AgentTeams 审批账号</span><input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" placeholder="请输入 Matrix 账号" required /></label>
           <label><span>密码</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="仅用于本次身份验证" required /></label>
           {dialogError && <div className="human-dialog-error"><WarningCircle weight="fill" />{dialogError}</div>}
-          <button className="human-primary" type="submit" disabled={dialogBusy || busy}>{dialogBusy ? <SpinnerGap className="spin" weight="bold" /> : <Fingerprint weight="bold" />}验证人类身份</button>
+          <button className="human-primary" type="submit" disabled={dialogBusy || busy}>{dialogBusy ? <SpinnerGap className="spin" weight="bold" /> : <Fingerprint weight="bold" />}验证审批账号</button>
         </form> : <div className="human-proof-panel">
           <div className="human-proof-success"><CheckCircle weight="fill" /><div><strong>{proof.identity?.display_name || proof.identity?.sub}</strong><small>{proof.identity?.sub} · AgentTeams Matrix 已验证</small></div><span>有效 {proof.expires_in_seconds} 秒</span></div>
           <div className="human-proof-binding"><div><span>绑定案件</span><code>{proof.binding?.case_id}</code></div><div><span>绑定审批单</span><code>{shortId(proof.binding?.approval_id, 24)}</code></div><div><span>绑定动作</span><strong>{actionLabel}</strong></div></div>
@@ -856,7 +859,7 @@ export function App() {
       {!error && teamStale && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；续跑会重新授权并用幂等键跳过已完成写入。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "继续执行"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
-        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
+        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
       </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />北京时间 · 2026-08-31</span></footer>
       <HumanActionDialog intent={humanAction} caseId={caseId} busy={busy} onClose={() => setHumanAction(null)} onCommit={commitHumanAction} />
     </div>

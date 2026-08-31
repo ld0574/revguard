@@ -582,6 +582,10 @@ class TestApiSmoke(unittest.TestCase):
     def test_16_health_and_queryable_metrics(self):
         live = self.client.get("/api/v1/health/live")
         self.assertEqual(live.status_code, 200)
+        self.assertEqual(live.headers.get("cache-control"), "no-store")
+        ui = self.client.get("/demo/")
+        if ui.status_code == 200:  # Frontend is optional in backend-only CI.
+            self.assertEqual(ui.headers.get("cache-control"), "no-store")
         ready = self.client.get("/api/v1/health/ready")
         self.assertEqual(ready.status_code, 200)
         self.assertEqual(ready.json()["backend"], "sqlite-demo")
@@ -611,6 +615,12 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(
             evidence.json()["self_hosted_polardb"]["deployment"]["application_backend"],
             "postgresql-polardb",
+        )
+        with patch.object(api_module, "TEAM_TRANSPORT", "matrix"):
+            configured = self.client.get("/api/v1/ops/evidence", headers=self.viewer)
+        self.assertEqual(
+            configured.json()["external_validation"]["agentteams_room"],
+            "CONFIGURED_MATRIX_NOT_LIVENESS_CHECK",
         )
 
     def test_17_human_assertion_state_guards(self):

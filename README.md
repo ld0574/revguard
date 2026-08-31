@@ -144,8 +144,10 @@ make demo         # 干净重置并运行 8 个 Golden Case
 - `data/outputs/evaluation_summary.json`：运行时评测产物（忽略目录）；
 - `docs/evaluation-summary.json`：含 UTC、环境、重复次数、中位数与样本的发布快照。
 - `docs/evidence/demo-rehearsal/`：MCP Task、人审暂停、Audit、Trace、报告与证据哈希清单。
-- `docs/demo-script.md` / `docs/recording-shot-list.md`：复赛旁白、镜头和组员分工。
+- [`docs/demo-script-current-data.md`](docs/demo-script-current-data.md)：当前环境优先使用的完整旁白，保留 0008 正常闭环与 0002 故障演练，不清库。
+- `docs/demo-script.md` / `docs/recording-shot-list.md`：单案重置版备选、镜头和组员分工。
 - `docs/runtime-acceptance-2026-08-31.md`：最新运行验收、CASE-0002 恢复结果与正式录制前提。
+- [`docs/ui-recording-audit-2026-08-31.md`](docs/ui-recording-audit-2026-08-31.md)：实际页面截图、脚本入口核对和未验收边界。
 
 核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
