@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { externalValidationLabel, isVerifiedClosure, safetyRailState, securityRegressionSummary } from "./pipeline-state.js";
+import {
+  externalValidationLabel,
+  formatTaskDuration,
+  formatTaskTokens,
+  isVerifiedClosure,
+  safetyRailState,
+  securityRegressionSummary,
+  taskTelemetry,
+} from "./pipeline-state.js";
 import {
   ArrowClockwise,
   ArrowCounterClockwise,
@@ -465,14 +473,18 @@ function AgentMatrix({ snapshot }) {
   const orchestrator = run.orchestrator;
   const isMatrix = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
   const traceSpans = snapshot?.trace?.spans || [];
+  const telemetry = taskTelemetry(tasks, traceSpans);
   const runStatus = run.status || "QUEUED";
+  const orchestratorSpan = traceSpans.find((item) => item.kind === "AGENT" && item.name === "AgentTeams.OrchestratorHandshake");
+  const orchestratorUsage = orchestrator?.token_usage || orchestratorSpan?.outputs?.token_usage;
   return (
     <section className="detail-section agent-section" id="agent-task-ledger">
       <div className="section-title"><UsersThree weight="duotone" /><strong>多智能体协同任务账本</strong><span>{tasks.length ? `${isMatrix ? "AgentTeams Matrix" : "本地 MCP"} · ${succeeded}/${tasks.length} 轮任务 · ${workerCount} 个执行者` : "责任与能力边界"}</span></div>
       {isMatrix && <div className={`team-runtime team-runtime-${runStatus.toLowerCase()}`}><div><span className="runtime-live-dot" /><strong title={runStatus}>{RUN_STATUS_LABELS[runStatus] || runStatus}</strong><small>{run.phase === "EXECUTION" ? "审批后受控执行" : "审批前调查"}</small></div><div><span>当前执行者</span><strong>{run.current_actor || "revguard-orchestrator"}</strong></div><div><span>当前阶段</span><strong title={run.current_stage || ""}>{skillLabel(run.current_stage)}</strong></div><div><span>进度</span><strong>{run.completed_tasks || 0} / {run.total_tasks || 8}</strong></div></div>}
       <div className="agent-task-ledger">
+        {tasks.length > 0 && <div className="agent-task-columns" aria-hidden="true"><span>序号</span><span>任务 / 执行者</span><span>通道</span><span>耗时</span><span>Token</span><span>状态</span></div>}
         {orchestrator && <details className="agent-task-card orchestrator-card" open>
-          <summary><span className="task-seq">编排</span><div><strong title="OrchestratorHandshake">协同任务编排</strong><code>revguard-orchestrator</code></div><span className="transport-cell">Matrix</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
+          <summary><span className="task-seq">编排</span><div><strong title="OrchestratorHandshake">协同任务编排</strong><code>revguard-orchestrator</code></div><span className="transport-cell">Matrix</span><span className="task-metric-cell" title="Agent Trace 端到端耗时">{formatTaskDuration(orchestratorSpan?.duration_ms)}</span><span className={`task-metric-cell ${orchestratorUsage ? "" : "metric-unavailable"}`} title={orchestratorUsage ? "输入与输出 Token 合计" : "该次编排未采集逐任务 Token"}>{formatTaskTokens(orchestratorUsage)}</span><span className={`task-status task-${orchestrator.status?.toLowerCase()}`}>{TASK_STATUS_LABELS[orchestrator.status] || orchestrator.status}</span></summary>
           <div className="task-evidence-grid"><div><span>控制输入</span><pre>{JSON.stringify(orchestrator.input || {}, null, 2)}</pre></div><div><span>控制输出</span><pre>{JSON.stringify(orchestrator.output || { status: "WAITING" }, null, 2)}</pre></div></div>
           <div className="correlation-strip"><code>dispatch {shortId(orchestrator.dispatch_event_id, 30)}</code><code>trigger {shortId(orchestrator.trigger_event_id, 30)}</code><code>response {shortId(orchestrator.response_event_id, 30)}</code></div>
         </details>}
@@ -484,15 +496,17 @@ function AgentMatrix({ snapshot }) {
             status: "未完成",
             reason: run.error?.message || "AgentTeams 执行者未返回阶段结果",
           } : { status: task.status });
+          const taskMetrics = telemetry[task.task_id] || {};
+          const tokenCount = formatTaskTokens(taskMetrics.token_usage);
           return <details className={`agent-task-card ${isRunFailureTask ? "failed-task-card" : ""}`} key={task.task_id} open={isRunFailureTask || reverseIndex === 0}>
-            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong title={task.skill_name}>{skillLabel(task.skill_name)}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.skill_transport === "higress-mcp" ? "MCP 网关" : task.transport === "agentteams-matrix" ? "Matrix" : task.transport === "mcp" ? "本地 MCP" : (task.transport || "—")}</span><span className={`task-status task-${displayStatus.toLowerCase()}`}>{isRunFailureTask ? "未完成" : TASK_STATUS_LABELS[task.status] || task.status} · 第 {task.attempt} 次</span></summary>
+            <summary><span className="task-seq">{String(tasks.length - reverseIndex).padStart(2, "0")}</span><div><strong title={task.skill_name}>{skillLabel(task.skill_name)}</strong><code>{task.assigned_actor}</code></div><span className="transport-cell">{task.skill_transport === "higress-mcp" ? "MCP 网关" : task.transport === "agentteams-matrix" ? "Matrix" : task.transport === "mcp" ? "本地 MCP" : (task.transport || "—")}</span><span className={`task-metric-cell ${taskMetrics.duration_ms == null ? "metric-unavailable" : ""}`} title={taskMetrics.duration_source === "agent_trace" ? "Agent Trace 端到端耗时" : "该任务未关联到 Agent Trace"}>{formatTaskDuration(taskMetrics.duration_ms)}</span><span className={`task-metric-cell ${tokenCount === "未采集" ? "metric-unavailable" : ""}`} title={tokenCount === "未采集" ? "AgentTeams 历史记录仅有按日汇总，未采集逐任务 Token" : "输入与输出 Token 合计"}>{tokenCount}</span><span className={`task-status task-${displayStatus.toLowerCase()}`}>{isRunFailureTask ? "未完成" : TASK_STATUS_LABELS[task.status] || task.status} · 第 {task.attempt} 次</span></summary>
             {isRunFailureTask && <div className="task-failure-reason"><WarningCircle weight="fill" /><div><strong>执行者未提交阶段结果</strong><small>{run.error?.message || "AgentTeams Worker 未在时限内完成任务"}</small></div></div>}
             <div className="task-evidence-grid"><div><span>任务输入 · 不可变</span><pre>{JSON.stringify(task.input || {}, null, 2)}</pre></div><div><span>任务输出 · 阶段结果</span><pre>{JSON.stringify(displayOutput, null, 2)}</pre></div></div>
             <div className="correlation-strip"><code>任务 {shortId(task.task_id, 28)}</code><code>请求 {shortId(task.request_id, 28)}</code><code>房间 {shortId(task.matrix_room_id, 28)}</code><code>消息 {shortId(task.agentteams_message_id, 28)}</code><code>回执 {shortId(task.skill_receipt, 28)}</code><code>追踪 {shortId(span?.span_id, 28)}</code>{task.skill_transport === "higress-mcp" && <code>技能入口 Higress MCP</code>}</div>
           </details>;
         }) : <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>}
       </div>
-      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "输入、输出、任务、请求、Matrix 消息、Higress MCP 网关、回执与追踪标识逐项关联；只有持久化的阶段结果才能推进状态。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
+      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "耗时来自 Agent Trace；Token 仅显示逐任务 usage，历史记录未采集时不做均摊估算。输入、输出、请求、Matrix 消息、MCP 回执与追踪标识逐项关联。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
     </section>
   );
 }
@@ -522,15 +536,8 @@ function AuditTrail({ snapshot, full = false }) {
 function TraceView({ snapshot }) {
   const spans = snapshot?.trace?.spans || [];
   const shown = spans.filter((span) => ["TOOL", "SKILL", "APPROVAL", "AGENT"].includes(span.kind)).slice(-28);
-  const duration = (milliseconds) => {
-    const value = Number(milliseconds);
-    if (!Number.isFinite(value)) return "—";
-    if (value < 1) return "<1 ms";
-    if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 1 : 2)} s`;
-    return `${value} ms`;
-  };
   return (
-    <div className="trace-grid"><section className="detail-section trace-section"><div className="section-title"><Gauge weight="duotone" /><strong>本次运行追踪耗时</strong><span>AGENT 类型记录 Matrix 与执行者的端到端耗时；SKILL / TOOL 类型记录 API 进程内耗时</span></div><div className="span-list">{shown.map((span) => <div className={`span-row span-${span.status?.toLowerCase()}`} key={span.span_id}><span className="span-kind">{span.kind}</span><strong>{span.name}</strong><code>{span.actor || "system"}</code><span>{duration(span.duration_ms)}</span><span>{span.status}</span></div>)}{!shown.length && <div className="empty-state"><Play weight="duotone" />启动调查后显示真实的智能体、技能和工具调用记录。</div>}</div></section><AuditTrail snapshot={snapshot} full /></div>
+    <div className="trace-grid"><section className="detail-section trace-section"><div className="section-title"><Gauge weight="duotone" /><strong>本次运行追踪耗时</strong><span>AGENT 类型记录 Matrix 与执行者的端到端耗时；SKILL / TOOL 类型记录 API 进程内耗时</span></div><div className="span-list">{shown.map((span) => <div className={`span-row span-${span.status?.toLowerCase()}`} key={span.span_id}><span className="span-kind">{span.kind}</span><strong>{span.name}</strong><code>{span.actor || "system"}</code><span>{formatTaskDuration(span.duration_ms)}</span><span>{span.status}</span></div>)}{!shown.length && <div className="empty-state"><Play weight="duotone" />启动调查后显示真实的智能体、技能和工具调用记录。</div>}</div></section><AuditTrail snapshot={snapshot} full /></div>
   );
 }
 

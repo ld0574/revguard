@@ -21,3 +21,6 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Core actions must use the RevGuard API; do not hard-code a successful or rolled-back outcome.
 - Use dark navy, cyan structure, orange governed action, red verification failure, and green safe
   restoration. Avoid generic dashboard KPI grids, chat UI, decorative graphs, and cyberpunk excess.
+- Keep Agent task rows dense: transport labels such as “MCP 网关” are compact metadata, while
+  duration and per-task Token usage have dedicated columns. Duration must come from Agent Trace;
+  missing per-task Token telemetry must say “未采集” instead of estimating from daily totals.
