@@ -405,6 +405,80 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
             "agentteams_worker_counter_delta",
         )
 
+    async def test_worker_usage_snapshot_is_optional_and_validates_counters(self):
+        settings = MatrixSettings(
+            "http://matrix.test", "!team:test", "test", access_token="token",
+            token_usage_url_template="http://worker-{actor}/api/token-usage",
+        )
+        runner = MatrixTeamRunner(
+            self.store, self.gateway, output_dir=Path(self.temp.name) / "usage-out",
+            report_dir=Path(self.temp.name) / "usage-report", settings=settings,
+            client=self.client,
+        )
+        with patch(
+            "revguard.matrix_team.request.urlopen",
+            return_value=JsonResponse(
+                b'{"total_prompt_tokens":100,"total_completion_tokens":20,"total_calls":2}'
+            ),
+        ):
+            snapshot = await runner._worker_usage_snapshot("revguard-intake")
+        self.assertEqual(snapshot, {
+            "prompt_tokens": 100, "completion_tokens": 20, "call_count": 2,
+        })
+
+        for response in [
+            JsonResponse(b"not-json"),
+            JsonResponse(b'{"total_prompt_tokens":-1,"total_completion_tokens":20,"total_calls":2}'),
+        ]:
+            with patch("revguard.matrix_team.request.urlopen", return_value=response):
+                self.assertIsNone(await runner._worker_usage_snapshot("revguard-intake"))
+        with patch(
+            "revguard.matrix_team.request.urlopen",
+            side_effect=error.HTTPError("http://worker", 503, "down", {}, None),
+        ):
+            self.assertIsNone(await runner._worker_usage_snapshot("revguard-intake"))
+        with patch("revguard.matrix_team.request.urlopen", side_effect=OSError("down")):
+            self.assertIsNone(await runner._worker_usage_snapshot("revguard-intake"))
+
+        malformed = MatrixTeamRunner(
+            self.store, self.gateway, output_dir=Path(self.temp.name) / "bad-usage-out",
+            report_dir=Path(self.temp.name) / "bad-usage-report",
+            settings=MatrixSettings(
+                "http://matrix.test", "!team:test", "test", access_token="token",
+                token_usage_url_template="http://worker-{missing}",
+            ),
+            client=self.client,
+        )
+        self.assertIsNone(await malformed._worker_usage_snapshot("revguard-intake"))
+        disabled = MatrixTeamRunner(
+            self.store, self.gateway, output_dir=Path(self.temp.name) / "disabled-usage-out",
+            report_dir=Path(self.temp.name) / "disabled-usage-report",
+            settings=MatrixSettings(
+                "http://matrix.test", "!team:test", "test", access_token="token",
+            ),
+            client=self.client,
+        )
+        self.assertIsNone(await disabled._worker_usage_snapshot("revguard-intake"))
+
+        with patch.object(runner, "_worker_usage_snapshot", new=AsyncMock(return_value=None)):
+            self.assertIsNone(await runner._capture_task_usage(
+                "TASK-NOT-PERSISTED", "revguard-intake", None,
+            ))
+        usage_case = {**self.case, "status": CaseStatus.EVIDENCE_COLLECTING.value}
+        task = create_agent_task(usage_case, "EvidenceCollectSkill", {
+            "partner": {},
+            "order_id": self.case["order_id"],
+        })
+        self.store.save_agent_task(task)
+        with patch.object(runner, "_worker_usage_snapshot", new=AsyncMock(return_value=None)):
+            self.assertIsNone(await runner._capture_task_usage(
+                task["task_id"], task["assigned_actor"], None,
+            ))
+        self.assertEqual(
+            self.store.get_agent_task(task["task_id"])["telemetry"]["token_collection_status"],
+            "UNAVAILABLE",
+        )
+
     async def test_orchestrator_timeout_is_persisted_as_failed_run(self):
         settings = MatrixSettings(
             "http://matrix.test", "!team:test", "test", access_token="token",
