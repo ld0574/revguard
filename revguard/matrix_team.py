@@ -271,7 +271,10 @@ class MatrixTeamRunner(McpTeamRunner):
         template = self.settings.token_usage_url_template
         if not template:
             return None
-        url = template.format(actor=actor)
+        try:
+            url = template.format(actor=actor)
+        except (KeyError, ValueError):
+            return None
 
         def perform() -> dict | None:
             try:
