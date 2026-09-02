@@ -330,6 +330,60 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/reprepare": {
+      "post": {
+        "summary": "Reprepare Recording Case",
+        "description": "Reprepare one terminal Golden Case without resetting the demo library.\n\nA human rejection remains an immutable business decision in the audit\nchain.  This recording-only action starts a fresh attempt from the fixture\nbaseline, clearing only derived case artifacts and mutable mock side\neffects for this case.",
+        "operationId": "reprepare_recording_case_api_v1_cases__case_id__reprepare_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/run": {
       "post": {
         "summary": "Run Case",

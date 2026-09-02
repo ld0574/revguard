@@ -21,6 +21,35 @@ from revguard.store import Store
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def case_from_spec(spec: dict) -> dict:
+    """Build a pristine CREATED case from one golden fixture."""
+    raw = spec["input"]
+    return Case(
+        case_id=raw["case_id"],
+        case_type=raw["case_type"],
+        source=raw["source"],
+        partner_id=raw.get("partner_id"),
+        partner_name=raw.get("partner_name"),
+        order_id=raw.get("order_id"),
+        description=raw.get("description", ""),
+        claim=raw.get("claim", {}),
+        entities={"partner_id": raw.get("partner_id"),
+                  "partner_name": raw.get("partner_name"),
+                  "order_id": raw.get("order_id"),
+                  "contract_id": raw.get("contract_id")},
+        status=CaseStatus.CREATED.value,
+    ).to_dict()
+
+
+def load_golden_case(case_id: str) -> dict | None:
+    """Return a fresh fixture case for the recording-only reprepare action."""
+    for fp in sorted((ROOT / "data" / "golden_cases").glob("*.json")):
+        spec = json.loads(fp.read_text(encoding="utf-8"))
+        if spec.get("input", {}).get("case_id") == case_id:
+            return case_from_spec(spec)
+    return None
+
+
 def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]:
     """Seed any Store-compatible backend without taking ownership of its lifecycle."""
     if reset:
@@ -35,21 +64,7 @@ def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]
             if not quiet:
                 print(f"  kept   {raw['case_id']}  ({spec['title']})")
             continue
-        case = Case(
-            case_id=raw["case_id"],
-            case_type=raw["case_type"],
-            source=raw["source"],
-            partner_id=raw.get("partner_id"),
-            partner_name=raw.get("partner_name"),
-            order_id=raw.get("order_id"),
-            description=raw.get("description", ""),
-            claim=raw.get("claim", {}),
-            entities={"partner_id": raw.get("partner_id"),
-                      "partner_name": raw.get("partner_name"),
-                      "order_id": raw.get("order_id"),
-                      "contract_id": raw.get("contract_id")},
-            status=CaseStatus.CREATED.value,
-        ).to_dict()
+        case = case_from_spec(spec)
         store.save_case(case)
         store.audit(case["case_id"], "seed", "CASE_CREATED", {"source": fp.name})
         cases.append(case)

@@ -148,6 +148,34 @@ class ToolGateway:
         with self._lock:
             return copy.deepcopy(self._outbox)
 
+    def reset_case(self, case_id: str) -> None:
+        """Reset mutable mock-side effects for one recording case only."""
+        source = f"REVGUARD:{case_id}"
+        with self._lock:
+            action_ids = {
+                action_id for action_id, draft in self._adjustments.items()
+                if draft.get("case_id") == case_id
+            }
+            self._adjustments = {
+                action_id: draft
+                for action_id, draft in self._adjustments.items()
+                if draft.get("case_id") != case_id
+            }
+            self._ledger = [
+                entry for entry in self._ledger
+                if entry.get("source") != source
+            ]
+            self._idempotency = {
+                key: action_id
+                for key, action_id in self._idempotency.items()
+                if not key.startswith(f"{case_id}:")
+                and action_id not in action_ids
+            }
+            # Keep receipts and outbox entries as gateway-level history; they
+            # are not reused for authorization and remain useful when auditing
+            # the rejected attempt before the new run.
+            self._persist_state()
+
     # ------------------------------------------------------------------- CRM
     def _tool_crm_get_order(self, p: dict, **_kw) -> dict:
         order = self._find("orders", "order_id", p.get("order_id"))

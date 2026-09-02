@@ -609,6 +609,32 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(snapshot["case"]["status"], CaseStatus.CREATED.value)
         self.assertEqual(snapshot["trace"]["span_count"], 0)
 
+        # Reprepare only the selected terminal Golden Case; the audit history
+        # remains, while derived artifacts and the run state return to CREATED.
+        case8 = store.get_case("CASE-2026-0008")
+        case8["status"] = CaseStatus.CLOSED.value
+        case8["team_run"] = {"status": "COMPLETED", "run_id": "RUN-OLD"}
+        store.save_case(case8)
+        store.audit(case8["case_id"], "test", "PRE_REPREPARE", {})
+        forbidden_single = self.client.post(
+            "/api/v1/cases/CASE-2026-0008/reprepare", headers=self.viewer,
+        )
+        self.assertEqual(forbidden_single.status_code, 403)
+        reprepare = self.client.post(
+            "/api/v1/cases/CASE-2026-0008/reprepare", headers=self.operator,
+        )
+        self.assertEqual(reprepare.status_code, 200, reprepare.text)
+        self.assertEqual(reprepare.json()["state_status"], CaseStatus.CREATED.value)
+        self.assertEqual(
+            reprepare.json()["snapshot"]["case"]["status"],
+            CaseStatus.CREATED.value,
+        )
+        self.assertEqual(store.list_evidence("CASE-2026-0008"), [])
+        self.assertTrue(any(
+            event["event"] == "DEMO_CASE_REPREPARED"
+            for event in store.list_audit("CASE-2026-0008")
+        ))
+
         old_recording = api_module.ENABLE_RECORDING_UI
         try:
             api_module.ENABLE_RECORDING_UI = False

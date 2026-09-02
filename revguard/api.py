@@ -574,6 +574,79 @@ def reset_recording_demo(
     }
 
 
+@app.post("/api/v1/cases/{case_id}/reprepare")
+def reprepare_recording_case(
+    case_id: str,
+    principal: ApiPrincipal = Depends(require_roles("operator")),
+):
+    """Reprepare one terminal Golden Case without resetting the demo library.
+
+    A human rejection remains an immutable business decision in the audit
+    chain.  This recording-only action starts a fresh attempt from the fixture
+    baseline, clearing only derived case artifacts and mutable mock side
+    effects for this case.
+    """
+    if not ENABLE_RECORDING_UI:
+        raise HTTPException(404, "录制模式未启用")
+    case = store.get_case(case_id)
+    if not case:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    if case.get("status") not in {
+        CaseStatus.REJECTED.value,
+        CaseStatus.CLOSED.value,
+        CaseStatus.ROLLED_BACK.value,
+        CaseStatus.FAILED.value,
+    }:
+        raise HTTPException(
+            409,
+            f"案件状态 {case.get('status')} 不支持重新准备；请先完成当前运行",
+        )
+    if _has_live_team_task(case_id):
+        raise HTTPException(409, "案件仍有本机 AgentTeams 任务运行，暂不能重新准备")
+
+    from scripts.seed_demo import load_golden_case
+
+    fresh_case = load_golden_case(case_id)
+    if fresh_case is None:
+        raise HTTPException(409, "只有 Golden Case 才支持录制模式的单案重新准备")
+
+    previous_status = case.get("status")
+    previous_run = case.get("team_run") or {}
+    cancelled = store.cancel_open_agent_tasks(
+        case_id, actor=principal.actor, reason="单案重新准备，结束旧运行"
+    )
+    reset_gateway_case = getattr(gateway, "reset_case", None)
+    if reset_gateway_case:
+        reset_gateway_case(case_id)
+    store.reset_case(case_id)
+    for path in (
+        Path(OUTPUT_DIR) / "traces" / f"{case_id}.json",
+        Path(OUTPUT_DIR) / "case_memory" / f"{case_id}.json",
+        Path(REPORT_DIR) / f"{case_id}.md",
+    ):
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+    store.save_case(fresh_case)
+    store.audit(case_id, principal.actor, "DEMO_CASE_REPREPARED", {
+        "previous_status": previous_status,
+        "previous_run_id": previous_run.get("run_id"),
+        "cancelled_task_ids": cancelled,
+        "synthetic_business_data": True,
+        "audit_history_preserved": True,
+    })
+    snapshot = build_dashboard_snapshot(
+        store, case_id, report_dir=REPORT_DIR,
+    )
+    return {
+        "case_id": case_id,
+        "previous_status": previous_status,
+        "state_status": CaseStatus.CREATED.value,
+        "snapshot": snapshot,
+    }
+
+
 @app.post("/api/v1/cases/{case_id}/run")
 def run_case(case_id: str, response: Response,
              principal: ApiPrincipal = Depends(require_roles("operator")),
