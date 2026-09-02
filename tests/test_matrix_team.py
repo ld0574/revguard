@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from urllib import error
 
-from revguard.agent_bridge import execute_agent_task
+from revguard.agent_bridge import create_agent_task, execute_agent_task
 from revguard.matrix_team import (
     MatrixClient,
     MatrixSettings,
@@ -148,12 +148,17 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
             "REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS": "4",
             "REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS": "5",
             "REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK": "false",
+            "REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE": "http://worker-{actor}/usage",
         }
         with patch.dict(os.environ, values, clear=True):
             settings = MatrixSettings.from_env()
         self.assertEqual(settings.homeserver_url, "http://matrix.test")
         self.assertEqual(settings.worker_rooms["revguard-intake"], "!dm:test")
         self.assertFalse(settings.require_orchestrator_ack)
+        self.assertEqual(
+            settings.token_usage_url_template,
+            "http://worker-{actor}/usage",
+        )
         settings.validate()
 
         with patch.dict(
@@ -351,6 +356,53 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.assertIn(
             "AgentTeams.OrchestratorHandshake",
             {span["name"] for span in agent_spans},
+        )
+
+    async def test_token_usage_uses_real_worker_counter_delta(self):
+        self.assertEqual(
+            self.runner._token_usage_delta(
+                {"prompt_tokens": 100, "completion_tokens": 20, "call_count": 2},
+                {"prompt_tokens": 260, "completion_tokens": 35, "call_count": 3},
+            ),
+            {
+                "input_tokens": 160,
+                "output_tokens": 15,
+                "total_tokens": 175,
+                "call_count": 1,
+            },
+        )
+        self.assertIsNone(self.runner._token_usage_delta(None, None))
+        self.assertIsNone(self.runner._token_usage_delta(
+            {"prompt_tokens": 100, "completion_tokens": 20, "call_count": 2},
+            {"prompt_tokens": 90, "completion_tokens": 20, "call_count": 3},
+        ))
+
+        usage_case = {**self.case, "status": CaseStatus.EVIDENCE_COLLECTING.value}
+        task = create_agent_task(usage_case, "EvidenceCollectSkill", {
+            "partner": {},
+            "order_id": self.case["order_id"],
+        })
+        self.store.save_agent_task(task)
+        with patch.object(
+            self.runner,
+            "_worker_usage_snapshot",
+            new=AsyncMock(return_value={
+                "prompt_tokens": 260,
+                "completion_tokens": 35,
+                "call_count": 3,
+            }),
+        ):
+            usage = await self.runner._capture_task_usage(
+                task["task_id"],
+                task["assigned_actor"],
+                {"prompt_tokens": 100, "completion_tokens": 20, "call_count": 2},
+            )
+        persisted = self.store.get_agent_task(task["task_id"])
+        self.assertEqual(usage["total_tokens"], 175)
+        self.assertEqual(persisted["token_usage"], usage)
+        self.assertEqual(
+            persisted["token_usage_source"],
+            "agentteams_worker_counter_delta",
         )
 
     async def test_orchestrator_timeout_is_persisted_as_failed_run(self):

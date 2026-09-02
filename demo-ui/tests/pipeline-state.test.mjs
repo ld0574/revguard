@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { externalValidationLabel, isVerifiedClosure, safetyRailState, securityRegressionSummary } from "../src/pipeline-state.js";
+import {
+  externalValidationLabel,
+  formatTaskDuration,
+  formatTaskTokens,
+  isVerifiedClosure,
+  safetyRailState,
+  securityRegressionSummary,
+  taskTelemetry,
+  taskTokenCount,
+} from "../src/pipeline-state.js";
 
 const completed = {
   case: { status: "CLOSED" },
@@ -58,4 +67,30 @@ test("external validation labels separate configuration from live verification",
   assert.equal(externalValidationLabel("PENDING_CLOUD_INSTANCE"), "待云端实例验收");
   assert.equal(externalValidationLabel("UNKNOWN"), "待核实");
   assert.equal(externalValidationLabel(undefined), "待核实");
+});
+
+test("task telemetry uses Agent Trace duration and never invents token usage", () => {
+  const tasks = [
+    { task_id: "TASK-1", skill_name: "EvidenceCollectSkill", assigned_actor: "revguard-evidence", created_at: "2026-09-01T12:00:00Z" },
+    { task_id: "TASK-2", skill_name: "EvidenceCollectSkill", assigned_actor: "revguard-evidence", created_at: "2026-09-01T12:01:00Z", token_usage: { prompt_tokens: 1200, completion_tokens: 34 } },
+  ];
+  const spans = [
+    { span_id: "SPAN-2", kind: "AGENT", name: "AgentTeams.EvidenceCollectSkill", actor: "revguard-evidence", started_at: "2026-09-01T12:01:01Z", duration_ms: 2050 },
+    { span_id: "SPAN-1", kind: "AGENT", name: "AgentTeams.EvidenceCollectSkill", actor: "revguard-evidence", started_at: "2026-09-01T12:00:01Z", duration_ms: 50140 },
+  ];
+  const telemetry = taskTelemetry(tasks, spans);
+  assert.equal(telemetry["TASK-1"].duration_ms, 50140);
+  assert.equal(telemetry["TASK-2"].duration_ms, 2050);
+  assert.equal(formatTaskTokens(telemetry["TASK-1"].token_usage), "未采集");
+  assert.equal(formatTaskTokens(telemetry["TASK-2"].token_usage), "1,234");
+});
+
+test("duration and token formatting preserve zero and reject missing data", () => {
+  assert.equal(formatTaskDuration(0), "<1 ms");
+  assert.equal(formatTaskDuration(3558), "3.56 s");
+  assert.equal(formatTaskDuration(50140), "50.1 s");
+  assert.equal(formatTaskDuration(null), "未采集");
+  assert.equal(taskTokenCount({ total_tokens: 0 }), 0);
+  assert.equal(taskTokenCount({ input_tokens: 800, output_tokens: 20 }), 820);
+  assert.equal(taskTokenCount(null), null);
 });

@@ -1,6 +1,8 @@
 # 正式 AgentTeams 同机部署覆盖层：把 RevGuard API 接入 Worker 所在网络。
 services:
   revguard-api:
+    environment:
+      REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE: "http://agentteams-worker-{actor}:8088/api/token-usage"
     networks:
       default: {}
       agentteams:
