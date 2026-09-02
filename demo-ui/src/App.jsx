@@ -511,7 +511,7 @@ function AgentMatrix({ snapshot }) {
           </details>;
         }) : <div className="compact-table">{AGENT_ROWS.map(([role, actor, access, duty]) => <div className="compact-row" key={`${role}-${duty}`}><strong>{role}</strong><code>{actor}</code><span>{access}</span><span>{duty}</span></div>)}</div>}
       </div>
-      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "耗时来自 Agent Trace；新任务 Token 来自 AgentTeams Worker 执行窗口前后真实计数差值，历史记录未采集时不做均摊估算。输入、输出、请求、Matrix 消息、MCP 回执与追踪标识逐项关联。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
+      <p className="boundary-note"><ShieldCheck weight="fill" />{tasks.length ? "耗时来自 Agent Trace； Token 来自 AgentTeams Worker 执行窗口前后真实计数差值。输入、输出、请求、Matrix 消息、MCP 回执与追踪标识逐项关联。" : "执行智能体与验证智能体相互独立；验证结果不能由执行者自证。"}</p>
     </section>
   );
 }
