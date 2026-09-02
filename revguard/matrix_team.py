@@ -44,6 +44,7 @@ class MatrixSettings:
     retry_nudge_seconds: tuple[float, ...] = (45.0, 120.0)
     orchestrator_timeout_seconds: float = 120.0
     require_orchestrator_ack: bool = True
+    token_usage_url_template: str = ""
 
     @classmethod
     def from_env(cls) -> MatrixSettings:
@@ -87,6 +88,9 @@ class MatrixSettings:
             require_orchestrator_ack=os.getenv(
                 "REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK", "true"
             ).lower() == "true",
+            token_usage_url_template=os.getenv(
+                "REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE", ""
+            ),
         )
 
     def validate(self) -> None:
@@ -262,6 +266,74 @@ class MatrixTeamRunner(McpTeamRunner):
         case["team_run"] = run
         self.store.save_case(case)
 
+    async def _worker_usage_snapshot(self, actor: str) -> dict | None:
+        """Read a Worker's real cumulative CoPaw token counters when configured."""
+        template = self.settings.token_usage_url_template
+        if not template:
+            return None
+        url = template.format(actor=actor)
+
+        def perform() -> dict | None:
+            try:
+                req = request.Request(url, headers={"Accept": "application/json"})
+                with request.urlopen(req, timeout=2.0) as response:
+                    payload = json.load(response)
+            except (OSError, ValueError, error.HTTPError):
+                return None
+            counters = {
+                "prompt_tokens": payload.get("total_prompt_tokens"),
+                "completion_tokens": payload.get("total_completion_tokens"),
+                "call_count": payload.get("total_calls"),
+            }
+            if not all(
+                isinstance(value, int) and value >= 0
+                for value in counters.values()
+            ):
+                return None
+            return counters
+
+        return await asyncio.to_thread(perform)
+
+    @staticmethod
+    def _token_usage_delta(before: dict | None, after: dict | None) -> dict | None:
+        """Return actual counter growth; never estimate missing or reset counters."""
+        if not before or not after:
+            return None
+        prompt = after["prompt_tokens"] - before["prompt_tokens"]
+        completion = after["completion_tokens"] - before["completion_tokens"]
+        calls = after["call_count"] - before["call_count"]
+        if min(prompt, completion, calls) < 0 or calls == 0:
+            return None
+        return {
+            "input_tokens": prompt,
+            "output_tokens": completion,
+            "total_tokens": prompt + completion,
+            "call_count": calls,
+        }
+
+    async def _capture_task_usage(
+        self,
+        task_id: str,
+        actor: str,
+        before: dict | None,
+    ) -> dict | None:
+        after = await self._worker_usage_snapshot(actor)
+        usage = self._token_usage_delta(before, after)
+        task = self.store.get_agent_task(task_id)
+        if not task:
+            return usage
+        telemetry = dict(task.get("telemetry") or {})
+        telemetry.update({
+            "token_collection_status": "CAPTURED" if usage else "UNAVAILABLE",
+            "token_source": "agentteams_worker_counter_delta" if usage else None,
+        })
+        task["telemetry"] = telemetry
+        if usage:
+            task["token_usage"] = usage
+            task["token_usage_source"] = "agentteams_worker_counter_delta"
+        self.store.save_agent_task(task)
+        return usage
+
     async def run_to_human_gate(self, case: dict) -> dict:
         self.settings.validate()
         self.run_id = new_id("RUN-AGT")
@@ -369,8 +441,10 @@ class MatrixTeamRunner(McpTeamRunner):
     async def _orchestrator_handshake(self, case: dict) -> None:
         started_at = utc_now()
         started = time.monotonic()
+        usage_before = await self._worker_usage_snapshot("revguard-orchestrator")
         status = "OK"
         error_text = None
+        token_usage = None
         try:
             await self._orchestrator_handshake_transport(case)
         except Exception as exc:
@@ -378,7 +452,16 @@ class MatrixTeamRunner(McpTeamRunner):
             error_text = f"{type(exc).__name__}: {exc}"
             raise
         finally:
+            usage_after = await self._worker_usage_snapshot("revguard-orchestrator")
+            token_usage = self._token_usage_delta(usage_before, usage_after)
             orchestrator = (case.get("team_run") or {}).get("orchestrator") or {}
+            if token_usage:
+                orchestrator = {
+                    **orchestrator,
+                    "token_usage": token_usage,
+                    "token_usage_source": "agentteams_worker_counter_delta",
+                }
+                self._update_run(case, orchestrator=orchestrator)
             Tracer(self.store, case["case_id"]).record_completed_span(
                 "AGENT",
                 "AgentTeams.OrchestratorHandshake",
@@ -391,6 +474,7 @@ class MatrixTeamRunner(McpTeamRunner):
                 outputs={
                     "status": orchestrator.get("status"),
                     "response_event_id": orchestrator.get("response_event_id"),
+                    "token_usage": token_usage,
                 },
                 status=status,
                 error=error_text,
@@ -516,6 +600,7 @@ class MatrixTeamRunner(McpTeamRunner):
         request_id = new_id("REQ-AGT")
         cursor = await self.client.cursor()
         actor = task["assigned_actor"]
+        usage_before = await self._worker_usage_snapshot(actor)
         worker_mxid = self._mxid(actor)
         worker_room_id = self.settings.worker_rooms.get(
             actor, self.settings.room_id,
@@ -677,6 +762,7 @@ class MatrixTeamRunner(McpTeamRunner):
                                  "matrix_room_id": worker_room_id,
                                  "transport": self.transport,
                              })
+        await self._capture_task_usage(task["task_id"], actor, usage_before)
         succeeded += 1
         self._update_run(case, completed_tasks=succeeded)
         return persisted["result"]
