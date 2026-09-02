@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   externalValidationLabel,
+  formatBeijingDateTime,
   formatTaskDuration,
   formatTaskTokens,
   isVerifiedClosure,
@@ -782,6 +783,7 @@ export function App() {
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState("decision");
   const [humanAction, setHumanAction] = useState(null);
+  const [beijingNow, setBeijingNow] = useState(() => new Date());
   const teamRun = snapshot?.case?.team_run || {};
   const teamStale = isStaleTeamRun(teamRun);
   const teamRunning = ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
@@ -815,6 +817,10 @@ export function App() {
     const timer = window.setInterval(load, 1400);
     return () => window.clearInterval(timer);
   }, [load, teamRunning]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setBeijingNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const perform = useCallback(async (label, action) => {
     setBusy(true); setError(""); setNotice("");
@@ -872,7 +878,7 @@ export function App() {
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
-      </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />北京时间 · 2026-08-31</span></footer>
+      </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />{formatBeijingDateTime(beijingNow)}</span></footer>
       <HumanActionDialog intent={humanAction} caseId={caseId} busy={busy} onClose={() => setHumanAction(null)} onCommit={commitHumanAction} />
     </div>
   );

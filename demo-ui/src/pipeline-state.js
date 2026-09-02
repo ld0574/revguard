@@ -75,6 +75,25 @@ export function formatTaskDuration(milliseconds) {
   return `${Math.round(value)} ms`;
 }
 
+export function formatBeijingDateTime(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.valueOf())) return "北京时间 · —";
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date).reduce((result, part) => {
+    result[part.type] = part.value;
+    return result;
+  }, {});
+  return `北京时间 · ${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
 export function taskTokenCount(usage) {
   if (!usage || typeof usage !== "object") return null;
   const total = Number(usage.total_tokens);
