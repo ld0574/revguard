@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   externalValidationLabel,
+  formatBeijingDateTime,
   formatTaskDuration,
   formatTaskTokens,
   isVerifiedClosure,
@@ -93,4 +94,12 @@ test("duration and token formatting preserve zero and reject missing data", () =
   assert.equal(taskTokenCount({ total_tokens: 0 }), 0);
   assert.equal(taskTokenCount({ input_tokens: 800, output_tokens: 20 }), 820);
   assert.equal(taskTokenCount(null), null);
+});
+
+test("Beijing clock formats the configured timezone instead of a fixed date", () => {
+  assert.equal(
+    formatBeijingDateTime("2026-09-02T00:00:00Z"),
+    "北京时间 · 2026-09-02 08:00:00",
+  );
+  assert.equal(formatBeijingDateTime("not-a-date"), "北京时间 · —");
 });
