@@ -441,6 +441,44 @@ class MatrixTeamRunner(McpTeamRunner):
         )
         return result
 
+    async def finalize_terminal(self, case: dict, *, approval: dict | None = None) -> dict:
+        """Archive a rejected case and close the Matrix run cleanly.
+
+        Rejection is a business terminal state, but the Knowledge Worker still
+        produces one final StageTask.  Keep that task under the original run
+        id and mark the durable ``team_run`` as completed afterwards; otherwise
+        the cockpit treats the already-finished rejection as an active run and
+        disables its recording controls indefinitely.
+        """
+        run = case.get("team_run") or {}
+        self.run_id = run.get("run_id") or new_id("RUN-AGT")
+        self._run_phase = run.get("phase") or "INVESTIGATION"
+        try:
+            result = await super().finalize_terminal(case, approval=approval)
+        except Exception as exc:
+            self._update_run(
+                case, status="FAILED", current_stage=None,
+                error={"type": type(exc).__name__, "message": str(exc)},
+            )
+            raise
+        completed = len([
+            item for item in self.store.list_agent_tasks(case["case_id"])
+            if item.get("status") == TaskStatus.SUCCEEDED.value
+        ])
+        self._update_run(
+            case,
+            status="COMPLETED",
+            phase=self._run_phase,
+            current_stage=None,
+            current_actor=None,
+            current_task_id=None,
+            completed_tasks=completed,
+            total_tasks=max(int(run.get("total_tasks") or 0), completed),
+            final_status=case.get("status"),
+            error=None,
+        )
+        return result
+
     async def _orchestrator_handshake(self, case: dict) -> None:
         started_at = utc_now()
         started = time.monotonic()

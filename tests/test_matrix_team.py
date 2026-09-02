@@ -358,6 +358,37 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
             {span["name"] for span in agent_spans},
         )
 
+    async def test_rejected_terminal_case_closes_and_finishes_team_run(self):
+        await self.runner.run_to_human_gate(self.case)
+        waiting = self.store.get_case(self.case["case_id"])
+        approval = self.store.get_approval(self.case["case_id"])
+        decided = self.gateway.call(
+            "workflow.decide_approval",
+            {"approval_id": approval["approval_id"], "decision": "REJECTED"},
+            case_id=self.case["case_id"], actor="finance.lead",
+            scope=["approval:decide"],
+        )["data"]
+        self.store.save_approval({
+            "approval_id": decided["approval_id"],
+            "case_id": self.case["case_id"],
+            **decided,
+        })
+        self.store.cancel_open_agent_tasks(
+            self.case["case_id"], actor="finance.lead", reason="测试审批驳回",
+        )
+        transition_case(
+            self.store, waiting, CaseStatus.REJECTED,
+            "测试审批驳回", actor="finance.lead",
+        )
+        await self.runner.finalize_terminal(waiting, approval=decided)
+
+        final = self.store.get_case(self.case["case_id"])
+        self.assertEqual(final["status"], CaseStatus.CLOSED.value)
+        self.assertEqual(final["team_run"]["status"], "COMPLETED")
+        self.assertEqual(final["team_run"]["final_status"], CaseStatus.CLOSED.value)
+        self.assertIsNone(final["team_run"]["current_stage"])
+        self.assertGreaterEqual(final["team_run"]["completed_tasks"], 9)
+
     async def test_token_usage_uses_real_worker_counter_delta(self):
         self.assertEqual(
             self.runner._token_usage_delta(

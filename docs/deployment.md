@@ -77,6 +77,10 @@ REVGUARD_RESET_ON_START=true docker compose up -d --build
 - `--reset`：原子清空案件、证据、审批、执行、验证、审计和 Trace，再 seed；
 - `--gateway-state`：reset 时同步删除指定的 ToolGateway 状态文件。
 
+录制中如果人工驳回了某个 Golden Case，不需要重置整套案件库。WebUI 的“重新准备当前案件”调用
+`POST /api/v1/cases/{case_id}/reprepare`，只清理该案件的证据、任务、Trace、审批与模拟写入，保留原审批审计链，
+再从对应 Golden Case 恢复为 `CREATED`；该端点仅在 `REVGUARD_ENABLE_RECORDING_UI=true` 且由 operator 调用时开放。
+
 正式故障演练可在干净状态下让 Verifier 的首次读取产生可控偏差：
 
 ```bash

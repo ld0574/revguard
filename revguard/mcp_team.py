@@ -687,7 +687,7 @@ class McpTeamRunner:
             "terminal_status_preserved": terminal,
             "transport": self.transport,
         })
-        if terminal == CaseStatus.RESOLVED.value:
+        if terminal in {CaseStatus.RESOLVED.value, CaseStatus.REJECTED.value}:
             transition_case(
                 self.store, case, CaseStatus.KNOWLEDGE_ARCHIVED,
                 f"{self.display_name} Knowledge Worker 已沉淀可回放样本",

@@ -141,6 +141,19 @@ class Store:
             """)
             self.conn.execute("DELETE FROM sqlite_sequence WHERE name='audit_events'")
 
+    def reset_case(self, case_id: str) -> None:
+        """清理一个案件的可重跑产物，保留案件行和不可篡改审计链。"""
+        with self._lock, self.conn:
+            # Results reference agent_tasks in the PostgreSQL schema, so keep
+            # the deletion order identical across both Store backends.
+            for table in (
+                "trace_spans", "agent_task_results", "agent_tasks",
+                "verifications", "executions", "approvals", "evidence",
+            ):
+                self.conn.execute(
+                    f"DELETE FROM {table} WHERE case_id=?", (case_id,)
+                )
+
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
         with self._lock, self.conn:

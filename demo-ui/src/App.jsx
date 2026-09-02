@@ -237,7 +237,7 @@ function getStageState(snapshot, stageId) {
   const status = snapshot?.case?.status || "CREATED";
   const run = snapshot?.case?.team_run || {};
   const rank = STATUS_ORDER.indexOf(status);
-  const terminal = ["ROLLED_BACK", "CLOSED", "FAILED"].includes(status);
+  const terminal = ["ROLLED_BACK", "CLOSED", "REJECTED", "FAILED"].includes(status);
   const draftOnly = snapshot?.verification?.verification_status === "NOT_APPLICABLE_DRAFT_ONLY";
   if (isVerifiedClosure(snapshot) && ["rollback", "postcheck"].includes(stageId)) return "skipped";
   if (run.status === "FAILED" && SKILL_STAGE[run.current_stage] === stageId) return "error";
@@ -307,8 +307,8 @@ function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange }) {
       <div className="disclosure">合成业务数据 · 真实运行链路</div>
       <div className="top-actions">
         <span className="health-pill"><span className="health-dot" />安全优先模式：已激活</span>
-        <button className="icon-button" onClick={onReset} disabled={busy} title="重新准备演示案件">
-          <ArrowClockwise className={busy ? "spin" : ""} weight="bold" /><span>重新准备</span>
+        <button className="icon-button" onClick={onReset} disabled={busy} title="谨慎操作：重置全部演示案件，会影响其他案件">
+          <ArrowClockwise className={busy ? "spin" : ""} weight="bold" /><span>重置全部</span>
         </button>
         <span className={`status-mini status-${status.toLowerCase()}`}>{status}</span>
       </div>
@@ -343,22 +343,26 @@ function SummaryStrip({ snapshot }) {
   );
 }
 
-function PrimaryAction({ snapshot, busy, onRun, onApprove, onInspect }) {
+function PrimaryAction({ snapshot, busy, onRun, onApprove, onInspect, onReprepare }) {
   const status = snapshot?.case?.status || "CREATED";
   const run = snapshot?.case?.team_run || {};
-  const running = ["QUEUED", "STARTING", "RUNNING"].includes(run.status);
   const currency = snapshot?.case?.claim?.currency || "KES";
+  const rejected = status === "REJECTED" || snapshot?.approval?.status === "REJECTED";
+  const running = !rejected && ["QUEUED", "STARTING", "RUNNING"].includes(run.status);
   if (status === "CREATED") {
     return <button className="primary-action" onClick={onRun} disabled={busy || running}>{busy || running ? <SpinnerGap className="spin" weight="bold" /> : <Play weight="fill" />}{running ? `AgentTeams 调度中 ${run.completed_tasks || 0}/${run.total_tasks || 8}` : busy ? "正在启动真实调查链路…" : "启动多智能体调查"}</button>;
   }
   if (status === "WAITING_FOR_APPROVAL") {
     return <button className="primary-action" onClick={onApprove} disabled={busy}>{busy ? <SpinnerGap className="spin" weight="bold" /> : <UserCheck weight="bold" />}{busy ? "正在执行并独立验证…" : `批准 ${money(approvalAmount(snapshot), currency)}`}</button>;
   }
+  if (rejected) {
+    return <button className="primary-action reprepare-action" onClick={onReprepare} disabled={busy || running}><ArrowClockwise className={busy ? "spin" : ""} weight="bold" />{busy ? "正在重新准备…" : "重新准备当前案件"}</button>;
+  }
   const rolledBack = status === "ROLLED_BACK";
   return <button className="primary-action evidence-action" onClick={onInspect}><ClipboardText weight="bold" />{rolledBack ? "查看回滚证据" : "查看审计证据"}</button>;
 }
 
-function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
+function Pipeline({ snapshot, busy, onRun, onApprove, onInspect, onReprepare }) {
   const c = snapshot?.case || {};
   const run = c.team_run || {};
   const approval = snapshot?.approval || {};
@@ -395,11 +399,11 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect }) {
       </div>
       <div className="pipeline-details">
         <div className="pipeline-note calculation-note"><span>政策选择</span>{calculated ? <><strong>{excludedPolicies.length ? `${excludedPolicies.join(" / ")}：已排除` : "无冲突版本"}</strong><strong>{selectedPolicy || "规则集已选定"}：已采用</strong></> : <strong>等待政策匹配与确定性复算</strong>}</div>
-        <div className="pipeline-note capability-note"><span>能力边界</span><div>总额度上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} /><small>{approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : draftOnly ? "低风险案件仅生成草稿" : closedWithoutWrite ? "风险策略禁止自动写入" : "审批后签发短时能力"}</small></div>
+        <div className="pipeline-note capability-note"><span>能力边界</span><div>总额度上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /><small>{approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : draftOnly ? "低风险案件仅生成草稿" : closedWithoutWrite ? "风险策略禁止自动写入" : snapshot?.approval?.status === "REJECTED" ? "人工驳回已留痕，可重新准备本案" : "审批后签发短时能力"}</small></div>
         <div className="pipeline-note execution-note"><span>{draftOnly ? "佣金调整草稿" : "模拟记账（入账）"}</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{signedMoney(item.amount, currency)}</strong>)}<div>合计：{signedMoney(postedTotal, currency)}</div></> : drafts.length ? <>{drafts.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{signedMoney(item.amount, currency)}</strong>)}<div>共 {drafts.length} 份，未写入台账</div></> : <strong>{closedWithoutWrite ? "风险边界拦截，未发生写入" : "等待受限执行器写入"}</strong>}</div>
         <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span>{draftOnly ? <><div>草稿未写入财务台账</div><div>实际写入：0.00 {currency}</div><strong>无需执行写后验证</strong></> : <><div>实际读取：{money(verification.actual_amount, currency)}</div><div>差异：{money(verification.variance, currency)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : verification.verification_status === "PASSED" ? "验证通过" : closedWithoutWrite ? "无需写后验证" : "等待独立验证"}</strong></>}</div>
         <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversals.length ? <>{reversals.map((item) => <strong key={item.action_id}>{componentLabel(item.component)}：{signedMoney(item.reversal.amount, currency)}</strong>)}<div>合计：{signedMoney(reversedTotal, currency)}</div></> : <strong>{verifiedClosure ? "独立验证通过，无需回滚" : draftOnly ? "无需回滚（草稿未入账）" : closedWithoutWrite ? "未触发（没有财务写入）" : "验证失败时由策略自动触发"}</strong>}</div>
-        <div className={`pipeline-note result-note ${run.status === "FAILED" ? "is-failed" : ""}`}><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{run.status === "FAILED" ? "运行失败" : c.status === "ROLLED_BACK" ? "已通过" : verifiedClosure ? "正常闭环" : closedWithoutWrite ? "安全关闭" : "—"}</b><small>{run.status === "FAILED" ? `${skillLabel(run.current_stage)}：${run.error?.message || "未返回具体错误"}` : c.status === "ROLLED_BACK" ? "已恢复至安全基线" : verifiedClosure ? "独立验证通过，调整已完成" : draftOnly ? "仅形成调整草稿，未触碰台账" : closedWithoutWrite ? "风险策略阻止财务写入" : "尚未生成终态结论"}</small></div>
+        <div className={`pipeline-note result-note ${run.status === "FAILED" ? "is-failed" : ""}`}><span>最终结果</span><strong>{terminal ? c.status : "等待终态"}</strong><b>{run.status === "FAILED" ? "运行失败" : c.status === "ROLLED_BACK" ? "已通过" : snapshot?.approval?.status === "REJECTED" ? "人工驳回" : verifiedClosure ? "正常闭环" : closedWithoutWrite ? "安全关闭" : "—"}</b><small>{run.status === "FAILED" ? `${skillLabel(run.current_stage)}：${run.error?.message || "未返回具体错误"}` : c.status === "ROLLED_BACK" ? "已恢复至安全基线" : snapshot?.approval?.status === "REJECTED" ? "拒绝决定已留痕；可重新准备当前案件" : verifiedClosure ? "独立验证通过，调整已完成" : draftOnly ? "仅形成调整草稿，未触碰台账" : closedWithoutWrite ? "风险策略阻止财务写入" : "尚未生成终态结论"}</small></div>
       </div>
     </section>
   );
@@ -517,7 +521,7 @@ function AgentMatrix({ snapshot }) {
   );
 }
 
-const IMPORTANT_EVENTS = new Set(["CASE_CREATED", "EVIDENCE_COLLECTED", "POLICY_MATCHED", "CALCULATED", "RISK_CLASSIFIED", "APPROVAL_DECIDED", "EXECUTED", "VERIFIED", "ROLLED_BACK", "ROLLBACK_VERIFIED", "KNOWLEDGE_ARCHIVED", "TEAM_RUN_FAILED", "DEMO_RESET"]);
+const IMPORTANT_EVENTS = new Set(["CASE_CREATED", "EVIDENCE_COLLECTED", "POLICY_MATCHED", "CALCULATED", "RISK_CLASSIFIED", "APPROVAL_DECIDED", "EXECUTED", "VERIFIED", "ROLLED_BACK", "ROLLBACK_VERIFIED", "KNOWLEDGE_ARCHIVED", "TEAM_RUN_FAILED", "DEMO_RESET", "DEMO_CASE_REPREPARED"]);
 
 function AuditTrail({ snapshot, full = false }) {
   const events = (snapshot?.audit_events || []).filter((item) => full || IMPORTANT_EVENTS.has(item.event));
@@ -785,8 +789,9 @@ export function App() {
   const [humanAction, setHumanAction] = useState(null);
   const [beijingNow, setBeijingNow] = useState(() => new Date());
   const teamRun = snapshot?.case?.team_run || {};
-  const teamStale = isStaleTeamRun(teamRun);
-  const teamRunning = ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
+  const terminalCase = new Set(["REJECTED", "CLOSED", "ROLLED_BACK", "FAILED"]).has(snapshot?.case?.status);
+  const teamStale = !terminalCase && isStaleTeamRun(teamRun);
+  const teamRunning = !terminalCase && ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
   const teamFailure = snapshot?.case?.team_run?.status === "FAILED" ? snapshot.case.team_run : null;
   const rollbackRecoverable = Boolean(
     teamFailure
@@ -834,8 +839,15 @@ export function App() {
     window.history.replaceState({}, "", url);
     setError(""); setNotice(""); setCaseId(nextCaseId);
   };
-  const onReset = () => perform("已恢复全部合成案件初始状态", async () => {
-    await api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" });
+  const onReset = () => {
+    if (!window.confirm("这会清空全部演示案件的运行记录。只想处理当前案件时，请使用“重新准备当前案件”。确定继续吗？")) return;
+    return perform("已恢复全部合成案件初始状态", async () => {
+      await api("/api/v1/demo/reset", API_KEYS.operator, { method: "POST" });
+      await loadCases();
+    });
+  };
+  const onReprepare = () => perform("当前案件已重新准备，可再次启动调查", async () => {
+    await api(`/api/v1/cases/${caseId}/reprepare`, API_KEYS.operator, { method: "POST" });
     await loadCases();
   });
   const onRun = () => perform("多智能体调查已启动，真实执行者的输入输出将写入任务账本", () => api(`/api/v1/cases/${caseId}/team/run`, API_KEYS.operator, { method: "POST", headers: { "X-Request-ID": `REQ-WEBUI-${caseId}-RUN` } }));
@@ -876,7 +888,7 @@ export function App() {
       {!error && teamFailure && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "继续安全回滚" : "定位任务"}</button></div>}
       {!error && teamStale && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；续跑会重新授权并用幂等键跳过已完成写入。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "继续执行"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
-      <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} />
+      <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
       </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />{formatBeijingDateTime(beijingNow)}</span></footer>
       <HumanActionDialog intent={humanAction} caseId={caseId} busy={busy} onClose={() => setHumanAction(null)} onCommit={commitHumanAction} />

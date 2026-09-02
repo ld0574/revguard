@@ -98,6 +98,8 @@ main { padding: 10px; }
 .primary-action:hover { background: #ffa64c; }
 .primary-action:disabled { opacity: .66; cursor: wait; }
 .evidence-action { color: white; background: #075c91; border-color: var(--cyan); }
+.reprepare-action { color: #e8f8ff; background: #0a557a; border-color: var(--cyan); }
+.reprepare-action:hover { background: #0c6c98; }
 
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 168px; gap: 9px; margin-top: 9px; }
 .content-area { min-width: 0; }

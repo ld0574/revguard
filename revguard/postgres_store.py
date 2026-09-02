@@ -122,6 +122,19 @@ class PostgresStore:
             conn.execute("CREATE SCHEMA public")
             conn.execute(self._core_schema())
 
+    def reset_case(self, case_id: str) -> None:
+        """清理一个案件的可重跑产物，保留案件行和审计链。"""
+        # Keep audit_events append-only: the new attempt is linked to the
+        # previous terminal decision by DEMO_CASE_REPREPARED.  Child rows are
+        # deleted in FK-safe order and the case itself is replaced by the
+        # caller with a fresh Golden Case snapshot.
+        with self._write_pool.connection() as conn, conn.transaction():
+            for table in (
+                "trace_spans", "agent_task_results", "agent_tasks",
+                "verifications", "executions", "approvals", "evidence",
+            ):
+                conn.execute(f"DELETE FROM {table} WHERE case_id=%s", (case_id,))
+
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
         claim = case_dict.get("claim") or {}
