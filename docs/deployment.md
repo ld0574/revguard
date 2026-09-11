@@ -33,6 +33,8 @@ Worker 继续使用各自的内部网关凭证。CoPaw 的 Chat Completions 工�
 不能把数据库恢复或请求超时当作可直接重试的依据。协议见
 [`adr/0004-money-outcome-recovery.md`](adr/0004-money-outcome-recovery.md)。
 
+2026-09-12 已在202专属 Docker-in-Docker 环境从空状态执行 `--local --observability`，并重复部署验证数据保留；详见 [最小部署验收](evidence/ui-cold-review-20260912/README.md)。这不包含 AgentTeams 全新安装。通用脚本当前的开头状态检查尚不能覆盖构建期间新进入的请求，因此升级需在停机维护窗口进行；0.5.8 的实际发布另持有独占运行租约保护 API 替换。
+
 ## 1. 推荐拓扑
 
 ```text
