@@ -3,7 +3,7 @@
   "info": {
     "title": "RevGuard API",
     "description": "面向企业渠道佣金结算异常的多智能体治理平台",
-    "version": "0.5.6"
+    "version": "0.5.7"
   },
   "paths": {
     "/api/v1/cases/{case_id}/human-action/assertion": {
@@ -3065,9 +3065,9 @@
     },
     {
       "name": "PermissionCheckSkill",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "type": "policy",
-      "description": "执行前权限与审批凭证校验",
+      "description": "执行前权限与已提交恢复核验权限校验",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -3076,7 +3076,8 @@
             "enum": [
               "DRAFT",
               "LEDGER_ADJUST",
-              "LEDGER_REVERSE"
+              "LEDGER_REVERSE",
+              "VERIFY_COMMITTED"
             ]
           },
           "risk": {

@@ -176,6 +176,8 @@ class MoneyJournal:
         if not key:
             raise ValueError("资金操作必须携带稳定的operation/idempotency ID")
         with self.transaction() as tx:
+            from .task_guard import assert_active_claim
+            assert_active_claim(tx, case_id)
             op = tx.operation(key)
             if op:
                 if op["request_hash"] != digest or op["case_id"] != case_id:
@@ -226,33 +228,38 @@ class MoneyJournal:
         """
         self.check_recovery_lock()
         with self.transaction() as tx:
-            rows = tx.execute("SELECT operation_id FROM money_operations WHERE case_id=?",
-                              (case_id,)).fetchall()
-            operations = []
-            epoch = (tx.state() or {}).get("recording_epochs", {}).get(case_id, 0)
-            for row in rows:
-                key = row["operation_id"]
-                if (epoch and not key.endswith(f":recording-{epoch}")) or (not epoch and ":recording-" in key):
-                    continue
-                op = tx.operation(row["operation_id"])
-                if op["status"] in {"PREPARED", "RESULT_UNKNOWN"}:
-                    tx.execute("UPDATE money_operations SET status='NOT_COMMITTED',generation=generation+1,"
-                               "updated_at=? WHERE operation_id=?", (utc_now(), op["operation_id"]))
-                    op = tx.operation(op["operation_id"])
-                if op["status"] == "COMMITTED":
-                    for execution in (op["result"] or {}).get("executions", []):
-                        # Only refresh execution projection from the latest
-                        # gateway image, including any already committed reversal.
-                        state = tx.state() or {}
-                        current = state.get("execution_results", {}).get(execution["idempotency_key"], execution)
-                        tx.execution(current)
-                operations.append(op)
-            tx.execute("DELETE FROM money_holds WHERE case_id=?", (case_id,))
-            tx.audit(case_id, "MONEY_RECOVERY_RECONCILED", {
-                "operations": [{"operation_id": o["operation_id"], "status": o["status"],
-                                "generation": o["generation"]} for o in operations],
-            })
-            return operations
+            return self.reconcile_with_tx(tx, case_id)
+
+    def reconcile_with_tx(self, tx, case_id: str) -> list[dict]:
+        """Participate in the caller's atomic human recovery transaction."""
+        self.check_recovery_lock()
+        rows = tx.execute("SELECT operation_id FROM money_operations WHERE case_id=?",
+                          (case_id,)).fetchall()
+        operations = []
+        epoch = (tx.state() or {}).get("recording_epochs", {}).get(case_id, 0)
+        for row in rows:
+            key = row["operation_id"]
+            if (epoch and not key.endswith(f":recording-{epoch}")) or (not epoch and ":recording-" in key):
+                continue
+            op = tx.operation(row["operation_id"])
+            if op["status"] in {"PREPARED", "RESULT_UNKNOWN"}:
+                tx.execute("UPDATE money_operations SET status='NOT_COMMITTED',generation=generation+1,"
+                           "updated_at=? WHERE operation_id=?", (utc_now(), op["operation_id"]))
+                op = tx.operation(op["operation_id"])
+            if op["status"] == "COMMITTED":
+                for execution in (op["result"] or {}).get("executions", []):
+                    # Only refresh execution projection from the latest
+                    # gateway image, including any already committed reversal.
+                    state = tx.state() or {}
+                    current = state.get("execution_results", {}).get(execution["idempotency_key"], execution)
+                    tx.execution(current)
+            operations.append(op)
+        tx.execute("DELETE FROM money_holds WHERE case_id=?", (case_id,))
+        tx.audit(case_id, "MONEY_RECOVERY_RECONCILED", {
+            "operations": [{"operation_id": o["operation_id"], "status": o["status"],
+                            "generation": o["generation"]} for o in operations],
+        })
+        return operations
 
     def hold(self, channel: str, case_id: str, reason: str) -> None:
         with self.transaction() as tx:
@@ -263,12 +270,16 @@ class MoneyJournal:
     def freeze_case(self, case_id: str) -> None:
         try:
             with self.transaction() as tx:
-                rows = tx.execute("SELECT DISTINCT channel FROM money_operations WHERE case_id=?", (case_id,)).fetchall()
-                for row in rows:
-                    tx.execute("INSERT INTO money_holds(channel,case_id,reason,updated_at) VALUES(?,?,?,?) "
-                               "ON CONFLICT(channel,case_id) DO NOTHING", (row["channel"], case_id, "RESULT_UNKNOWN", utc_now()))
+                self.freeze_case_with_tx(tx, case_id)
         except Exception:
             LOGGER.exception("money_channel_freeze_pending", extra={"revguard_fields": {"case_id": case_id}})
+
+    @staticmethod
+    def freeze_case_with_tx(tx, case_id: str) -> None:
+        rows = tx.execute("SELECT DISTINCT channel FROM money_operations WHERE case_id=?", (case_id,)).fetchall()
+        for row in rows:
+            tx.execute("INSERT INTO money_holds(channel,case_id,reason,updated_at) VALUES(?,?,?,?) "
+                       "ON CONFLICT(channel,case_id) DO NOTHING", (row["channel"], case_id, "RESULT_UNKNOWN", utc_now()))
 
     def metrics(self) -> dict:
         with self.transaction() as tx:

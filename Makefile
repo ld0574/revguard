@@ -52,7 +52,7 @@ postgres-integration:
 	@test -n "$(REVGUARD_TEST_POSTGRES_DSN)" || \
 		(echo "set REVGUARD_TEST_POSTGRES_DSN to a disposable PostgreSQL database" >&2; exit 2)
 	@REVGUARD_TEST_POSTGRES_DSN="$(REVGUARD_TEST_POSTGRES_DSN)" \
-		$(VENV_PYTHON) -m unittest tests.test_postgres_store_integration tests.test_money_recovery_postgres tests.test_migrations_postgres tests.test_runtime_safety_postgres tests.test_recording_consistency_postgres tests.test_approval_consistency_postgres tests.test_workflow_concurrency_postgres -v
+		$(VENV_PYTHON) -m unittest tests.test_postgres_store_integration tests.test_money_recovery_postgres tests.test_migrations_postgres tests.test_runtime_safety_postgres tests.test_recording_consistency_postgres tests.test_approval_consistency_postgres tests.test_workflow_concurrency_postgres tests.test_recovery_consistency_postgres -v
 
 openapi:
 	$(VENV_PYTHON) scripts/gen_skill_docs.py

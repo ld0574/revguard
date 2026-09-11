@@ -387,18 +387,23 @@ class McpTeamRunner:
                     "transport": self.transport,
                 },
             )
-        else:
-            await self._invoke(case, "PermissionCheckSkill", {
-                "action_type": (
-                    "DRAFT" if risk.execution_constraints.get("write") == "draft_only"
-                    else "LEDGER_ADJUST"
-                ),
-                "risk": state["risk_decision"],
-                "approval": (
-                    {**approval, "approval_token": SERVER_INJECTION_REF}
-                    if approval.get("approval_token") else approval
-                ),
-            })
+        diffs = [diff for diff in state["root_cause_report"]["diffs"] if Decimal(diff["delta"]) != 0]
+        replay_only = recovering_execution and bool(diffs) and all(
+            self.store.get_execution_by_idempotency(f"{case['case_id']}:{diff['component']}")
+            for diff in diffs
+        )
+        await self._invoke(case, "PermissionCheckSkill", {
+            "action_type": (
+                "VERIFY_COMMITTED" if replay_only else
+                "DRAFT" if risk.execution_constraints.get("write") == "draft_only" else "LEDGER_ADJUST"
+            ),
+            "risk": state["risk_decision"],
+            "approval": (
+                {**approval, "approval_token": SERVER_INJECTION_REF}
+                if approval.get("approval_token") else {key: value for key, value in approval.items() if key != "approval_token"}
+            ),
+        })
+        if not recovering_execution:
             transition_case(
                 self.store, case, CaseStatus.EXECUTING,
                 f"{self.display_name} Executor 通过服务端权限检查，开始受控执行",
@@ -418,6 +423,8 @@ class McpTeamRunner:
                 self.store.audit(case["case_id"], "revguard-executor",
                                  "IDEMPOTENCY_SUPPRESSED", {"key": idempotency_key})
                 continue
+            if replay_only:
+                raise McpStageError("已提交回执发生变化，请重新核对；只读恢复不能新增写入")
             draft = await self._invoke(case, "AdjustmentDraftSkill", {
                 "order_id": case["order_id"],
                 "component": diff["component"],

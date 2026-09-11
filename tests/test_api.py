@@ -905,15 +905,16 @@ class TestApiSmoke(unittest.TestCase):
         approval = {"approval_id": "APR-RENEWAL-FAILURE", "case_id": case_id, "status": "APPROVED"}
         store.save_approval(approval)
         headers = self.human_headers(case_id, "RESUME")
+        from revguard.mocks import ToolError
         with patch("revguard.api._spawn_team_background") as spawn:
-            with patch.object(api_module.gateway, "call", return_value={
-                "success": False, "error": {"message": "temporary renewal failure"},
-            }):
+            # Renewal now participates in the recovery transaction directly.
+            with patch.object(api_module.gateway, "_tool_workflow_renew_approval_capability",
+                              side_effect=ToolError("TOOL_UNAVAILABLE", "temporary renewal failure")):
                 failed = self.client.post(f"/api/v1/cases/{case_id}/team/resume", headers=headers)
             self.assertEqual(failed.status_code, 409, failed.text)
             self.assertEqual(store.get_case(case_id), case)
             spawn.assert_not_called()
-            with patch.object(api_module.gateway, "call", return_value={"success": True, "data": approval}):
+            with patch.object(api_module.gateway, "_tool_workflow_renew_approval_capability", return_value=approval):
                 resumed = self.client.post(f"/api/v1/cases/{case_id}/team/resume", headers=headers)
             self.assertEqual(resumed.status_code, 202, resumed.text)
             spawn.assert_called_once_with(case_id, "EXECUTION")

@@ -16,7 +16,7 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
 | `DifferenceExplainSkill` v1.0.0 | deterministic | 差异解释与根因判定 | - | evidence_conflict | read_only=True, pii=False | commission_dispute, audit |
 | `RiskClassifySkill` v1.0.0 | policy | L0-L3 风险分级与审批路由判定 | - | unknown_policy, missing_threshold | write_permission=False | commission_dispute, batch_reconciliation, any_write_action |
 | `ApprovalRouteSkill` v1.0.0 | tool | 创建审批单并路由审批角色 | workflow.create_approval | workflow_unavailable | write_permission=approval | any_approval_needed_case |
-| `PermissionCheckSkill` v1.0.0 | policy | 执行前权限与审批凭证校验 | - | auth_failed, missing_token | write_permission=False | any_write_action |
+| `PermissionCheckSkill` v1.1.0 | policy | 执行前权限与已提交恢复核验权限校验 | - | auth_failed, missing_token | write_permission=False | any_write_action |
 | `IdempotencyGuardSkill` v1.0.0 | policy | 幂等键冲突检查 | store | idempotency_conflict | write_permission=False | any_write_action |
 | `AdjustmentDraftSkill` v1.0.0 | tool | 创建不生效的佣金调整草稿 | commission.create_adjustment_draft | tool_unavailable | write_permission=commission_draft | commission_dispute |
 | `LedgerAdjustSkill` v2.0.0 | tool | 提交调整写入台账（签名审批凭证+幂等） | commission.submit_adjustment | auth_failed, idempotency_conflict | write_permission=commission_post | commission_dispute |
@@ -839,7 +839,7 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
 - 输出：`authorized`
 - 调用：`POST /api/v1/skills/PermissionCheckSkill/invoke`
 - 允许身份：`revguard-executor`
-- 说明：执行前权限与审批凭证校验
+- 说明：执行前权限与已提交恢复核验权限校验
 
 <details><summary>Input / Output JSON Schema</summary>
 
@@ -853,7 +853,8 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
         "enum": [
           "DRAFT",
           "LEDGER_ADJUST",
-          "LEDGER_REVERSE"
+          "LEDGER_REVERSE",
+          "VERIFY_COMMITTED"
         ]
       },
       "risk": {
