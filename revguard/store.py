@@ -18,7 +18,8 @@ from threading import RLock
 
 from .models import utc_now
 from .money_journal import SCHEMA as MONEY_SCHEMA
-from .money_journal import MoneyTransaction
+from .money_journal import MoneyJournal, MoneyTransaction
+from .workflow_persistence import versioned_case_write
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS cases (
@@ -157,11 +158,7 @@ class Store:
                            (json.dumps(gateway_state),))
                 tx.ledger(gateway_state)
             for case, source in seed_cases:
-                self.conn.execute(
-                    "INSERT INTO cases(case_id,data,status,updated_at) VALUES (?,?,?,?)",
-                    (case["case_id"], json.dumps(case, ensure_ascii=False),
-                     case["status"], case.get("updated_at") or utc_now()),
-                )
+                self._save_case_with_conn(self.conn, {**case, "_case_revision": 0})
                 self.conn.execute(
                     "INSERT INTO audit_events(case_id,actor,event,detail,created_at) VALUES (?,?,?,?,?)",
                     (case["case_id"], "seed", "CASE_CREATED", json.dumps({"source": source}), utc_now()),
@@ -192,16 +189,20 @@ class Store:
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
-        with self._lock, self.conn:
-            self._save_case_with_conn(self.conn, case_dict)
+        with MoneyJournal(self).transaction() as tx:
+            updated = self._save_case_with_conn(tx.conn, case_dict)
+        case_dict.clear()
+        case_dict.update(updated)
 
     @staticmethod
-    def _save_case_with_conn(conn, case_dict: dict) -> None:
+    def _save_case_with_conn(conn, case_dict: dict, *, recording_replace: bool = False) -> dict:
+        case_dict = versioned_case_write(conn, case_dict, postgres=False, recording_replace=recording_replace)
         conn.execute(
                 "INSERT OR REPLACE INTO cases(case_id, data, status, updated_at) VALUES (?,?,?,?)",
                 (case_dict["case_id"], json.dumps(case_dict, ensure_ascii=False),
                  case_dict["status"], utc_now()),
             )
+        return case_dict
 
     def get_case(self, case_id: str) -> dict | None:
         with self._lock:
@@ -339,15 +340,18 @@ class Store:
 
     # ------------------------------------------------------------- agent tasks
     def save_agent_task(self, task: dict) -> None:
+        """Insert a new immutable task identity; updates use guarded operations."""
         with self._lock, self.conn:
-            self.conn.execute(
-                """INSERT OR REPLACE INTO agent_tasks
+            inserted = self.conn.execute(
+                """INSERT INTO agent_tasks
                    (task_id, case_id, skill_name, assigned_actor, status, data, updated_at)
-                   VALUES (?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?) ON CONFLICT(task_id) DO NOTHING""",
                 (task["task_id"], task["case_id"], task["skill_name"],
                  task["assigned_actor"], task["status"],
                  json.dumps(task, ensure_ascii=False), utc_now()),
             )
+            if inserted.rowcount != 1:
+                raise ValueError("任务已存在，不允许覆盖原任务身份或回执")
 
     def get_agent_task(self, task_id: str) -> dict | None:
         with self._lock:
@@ -366,7 +370,7 @@ class Store:
     def transition_agent_task(self, task_id: str, *, expected: set[str],
                               status: str, updates: dict | None = None) -> dict:
         """Atomically change a task only from an explicitly allowed status."""
-        with self._lock, self.conn:
+        with MoneyJournal(self).transaction():
             row = self.conn.execute(
                 "SELECT data FROM agent_tasks WHERE task_id=?", (task_id,)
             ).fetchone()
@@ -389,6 +393,7 @@ class Store:
         return task
 
     def complete_agent_task(self, task_id: str, *, status: str,
+                            expected_attempt: int | None = None,
                             result: dict | None = None,
                             skill_receipt: str | None = None,
                             error: dict | None = None) -> tuple[dict, dict]:
@@ -396,7 +401,7 @@ class Store:
         terminal_statuses = {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL", "RESULT_UNKNOWN"}
         if status not in terminal_statuses:
             raise ValueError(f"非法 StageResult 状态: {status}")
-        with self._lock, self.conn:
+        with MoneyJournal(self).transaction():
             row = self.conn.execute(
                 "SELECT data FROM agent_tasks WHERE task_id=?", (task_id,)
             ).fetchone()
@@ -407,6 +412,8 @@ class Store:
                 raise ValueError(
                     f"Agent task {task_id} 状态 {task['status']} 不允许完成"
                 )
+            if expected_attempt is not None and int(task.get("attempt", 0)) != expected_attempt:
+                raise ValueError("StageTask 执行代次已变化，拒绝旧回执")
             now = utc_now()
             task.update({
                 "status": status,
@@ -438,6 +445,8 @@ class Store:
                 (stage_result["result_id"], task_id, task["case_id"], attempt,
                  status, json.dumps(stage_result, ensure_ascii=False), now),
             )
+            from .workflow_persistence import audit_task_completion
+            audit_task_completion(MoneyTransaction(self.conn, postgres=False), task)
         return task, stage_result
 
     def list_agent_task_results(self, task_id: str) -> list[dict]:
@@ -452,7 +461,7 @@ class Store:
                            actor: str, reason: str) -> tuple[dict, dict]:
         """Cancel a failed task and persist its replacement atomically."""
         allowed = {"FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}
-        with self._lock, self.conn:
+        with MoneyJournal(self).transaction():
             row = self.conn.execute(
                 "SELECT data FROM agent_tasks WHERE task_id=?", (old_task_id,)
             ).fetchone()
@@ -493,7 +502,7 @@ class Store:
     def cancel_open_agent_tasks(self, case_id: str, *, actor: str,
                                 reason: str) -> list[str]:
         """Cancel tasks that must not outlive a case pause or human rejection."""
-        with self._lock, self.conn:
+        with MoneyJournal(self).transaction():
             return self._cancel_open_agent_tasks_with_conn(self.conn, case_id, actor=actor, reason=reason)
 
     def _cancel_open_agent_tasks_with_conn(self, conn, case_id: str, *, actor: str, reason: str) -> list[str]:

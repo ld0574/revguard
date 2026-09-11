@@ -82,7 +82,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.5")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.6")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -159,6 +159,14 @@ if ENABLE_LEGACY_TOOL_API:
 
 app = FastAPI(title="RevGuard API", version=RELEASE_VERSION,
               description="面向企业渠道佣金结算异常的多智能体治理平台")
+
+
+@app.exception_handler(StaleCaseTransition)
+async def case_snapshot_conflict(_request: Request, _exc: StaleCaseTransition):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=409, content={"detail": {
+        "code": "CASE_CHANGED", "message": "案件已被其他操作更新，请刷新后继续。",
+    }})
 
 # Demo 单进程即可：共享一份 Store / Mock 系统状态
 store = create_store(
@@ -710,6 +718,8 @@ def run_case(case_id: str, response: Response,
         raise HTTPException(409, f"案件状态 {case['status']} 不允许从头运行")
     try:
         state = _orchestrator().run_case(case)
+    except StaleCaseTransition:
+        raise
     except Exception as exc:
         store.audit(case_id, principal.actor, "CASE_RUN_FAILED", redact_secrets({
             "request_id": correlation_id,
@@ -771,6 +781,8 @@ async def run_case_via_team(
         }
     try:
         state = await _mcp_team().run_to_human_gate(case)
+    except StaleCaseTransition:
+        raise
     except Exception as exc:
         raise HTTPException(500, {
             "code": "TEAM_RUN_FAILED",

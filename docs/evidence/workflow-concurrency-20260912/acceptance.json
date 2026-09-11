@@ -1,0 +1,40 @@
+{
+  "verified_at": "2026-09-11T20:08:39.872234+00:00",
+  "environment": "10.10.10.202 Docker",
+  "release": "0.5.6",
+  "whole_project_review_complete": false,
+  "tests": {
+    "unique_covered": 267,
+    "main_passed": 208,
+    "postgres_passed": 59,
+    "coverage_percent_displayed": 91,
+    "frontend_changed": false,
+    "frontend_tests_reused_from": "0.5.5",
+    "deterministic_evaluation_passed": 105,
+    "deterministic_evaluation_total": 105
+  },
+  "security": {
+    "python_dependency_audit": "passed",
+    "bandit": "passed",
+    "image_fixable_high_critical": 0,
+    "scan_ignore_unfixed": true,
+    "production_image_matches_scan": true
+  },
+  "production_data_preserved": true,
+  "case_count": 8,
+  "ledger_count": 9,
+  "audit_chain": {
+    "enforced": true,
+    "valid": true,
+    "rows_checked": 261,
+    "broken_links": 0
+  },
+  "grafana_embed_available": true,
+  "prometheus_all_four_targets_up": true,
+  "limits": [
+    "Browser identity uses an isolated Matrix contract fixture; the real RevGuard API/MCP workflow ran inside Docker.",
+    "Old running Worker effect fencing and atomic recovery renewal/queue remain under review.",
+    "Owned-database transactions do not prove external ERP Saga or cloud HA/PITR.",
+    "Cold deployment, remaining UI states and competition materials remain on the full-review checklist."
+  ]
+}

@@ -265,11 +265,8 @@ class MatrixTeamRunner(McpTeamRunner):
         return f"@{actor}:{self.settings.server_name}"
 
     def _update_run(self, case: dict, **updates) -> None:
-        run = dict(case.get("team_run") or {})
-        run.update(updates)
-        run["updated_at"] = utc_now()
-        case["team_run"] = run
-        self.store.save_case(case)
+        from .workflow_persistence import update_case_run
+        update_case_run(self.store, case, updates)
 
     async def _worker_usage_snapshot(self, actor: str) -> dict | None:
         """Read a Worker's real cumulative CoPaw token counters when configured."""
@@ -343,7 +340,10 @@ class MatrixTeamRunner(McpTeamRunner):
             task["token_usage"] = usage
             # metric provenance, not a credential
             task["token_usage_source"] = "agentteams_worker_counter_delta"  # nosec B105
-        self.store.save_agent_task(task)
+        from .workflow_persistence import update_task_metadata
+        update_task_metadata(self.store, task_id, {
+            key: task[key] for key in ("telemetry", "token_usage", "token_usage_source") if key in task
+        })
         return usage
 
     async def run_to_human_gate(self, case: dict) -> dict:
@@ -730,9 +730,8 @@ class MatrixTeamRunner(McpTeamRunner):
         # A fast Worker may finish before Matrix returns the trigger event id.
         # Merge into the latest persisted task so a stale PENDING snapshot never
         # overwrites an already committed StageResult.
-        latest_task = self.store.get_agent_task(task["task_id"]) or task
-        latest_task["matrix_trigger_event_id"] = trigger_event_id
-        self.store.save_agent_task(latest_task)
+        from .workflow_persistence import update_task_metadata
+        update_task_metadata(self.store, task["task_id"], {"matrix_trigger_event_id": trigger_event_id})
         self.store.audit(case["case_id"], "revguard-orchestrator",
                          "AGENT_TASK_DISPATCHED", {
                              "run_id": self.run_id,
@@ -767,11 +766,13 @@ class MatrixTeamRunner(McpTeamRunner):
             if persisted.get("status") in {
                 TaskStatus.SUCCEEDED.value,
                 TaskStatus.FAILED_FINAL.value,
-                TaskStatus.CANCELLED.value,
+                TaskStatus.CANCELLED.value, TaskStatus.RESULT_UNKNOWN.value,
             }:
                 break
             elapsed = time.monotonic() - started_waiting
-            if pending_nudges and elapsed >= pending_nudges[0]:
+            if pending_nudges and elapsed >= pending_nudges[0] and persisted.get("status") in {
+                TaskStatus.PENDING.value, TaskStatus.FAILED_RETRYABLE.value,
+            }:
                 nudge_after = pending_nudges.pop(0)
                 retry_event_id = await self.client.send_text(
                     f"{worker_mxid}\n"
@@ -781,9 +782,7 @@ class MatrixTeamRunner(McpTeamRunner):
                     "adapter_command=" + adapter_command,
                     mentions=[worker_mxid], room_id=worker_room_id,
                 )
-                persisted = self.store.get_agent_task(task["task_id"]) or task
-                persisted.setdefault("matrix_retry_event_ids", []).append(retry_event_id)
-                self.store.save_agent_task(persisted)
+                persisted = update_task_metadata(self.store, task["task_id"], {}, retry_event_id=retry_event_id)
                 self.store.audit(case["case_id"], "revguard-orchestrator",
                                  "AGENT_TASK_RETRY_NUDGED", {
                                      "task_id": task["task_id"],
@@ -814,8 +813,9 @@ class MatrixTeamRunner(McpTeamRunner):
             ),
         )
         if response_event:
-            persisted["matrix_response_event_id"] = response_event.get("event_id")
-            self.store.save_agent_task(persisted)
+            persisted = update_task_metadata(self.store, task["task_id"], {
+                "matrix_response_event_id": response_event.get("event_id"),
+            })
             self.store.audit(case["case_id"], actor,
                              "AGENTTEAMS_MATRIX_RESPONSE_CAPTURED", {
                                  "task_id": task["task_id"],

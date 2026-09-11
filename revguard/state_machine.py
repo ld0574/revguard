@@ -117,7 +117,7 @@ def persist_case_transition(store, tx, case: dict, to: CaseStatus, reason: str,
         raise StaleCaseTransition("案件状态或录制批次已变化，请刷新后操作")
     updated = copy.deepcopy(case)
     updated.update(status=to.value, updated_at=utc_now(), _state_version=new_id("STATE"))
-    store._save_case_with_conn(tx.conn, updated)
+    updated = store._save_case_with_conn(tx.conn, updated)
     tx.audit(case["case_id"], "STATE_TRANSITION", {
         "from": old.value,
         "to": to.value,

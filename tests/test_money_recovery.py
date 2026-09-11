@@ -53,7 +53,10 @@ class TestMoneyRecovery(unittest.IsolatedAsyncioTestCase):
 
     def test_reconciling_one_case_cannot_release_another_cases_channel_hold(self):
         other = "CASE-OTHER-RECOVERY"
-        self.store.save_case({**self.fixture.case, "case_id": other})
+        other_case = {**self.fixture.case, "case_id": other}
+        # A new identity is a fresh insert, not an update of the source case.
+        other_case.pop("_case_revision", None)
+        self.store.save_case(other_case)
         channel = "order:EZ202608001"
         self.gateway.journal.hold(channel, self.case_id, "verification interrupted")
         self.gateway.journal.hold(channel, other, "verification interrupted")

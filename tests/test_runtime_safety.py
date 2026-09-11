@@ -159,7 +159,11 @@ class TestRuntimeSafety(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(result.status_code, 409, result.text)
                     self.assertEqual(self.store.list_cases(), before)
                     self.assertEqual(self.state_path.read_text(), "preserve-before-reset")
-                    self.store.save_case(case)
+                    # Restore the test fixture using its current revision;
+                    # reusing the original snapshot is now correctly rejected.
+                    restored = {**case, "_case_revision": self.store.get_case(self.case_id).get("_case_revision", 0)}
+                    self.store.save_case(restored)
+                    case = restored
                     self.gateway.journal.reconcile(self.case_id)
 
     async def test_reprepare_refuses_unreconciled_terminal_case(self):

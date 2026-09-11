@@ -397,7 +397,12 @@ class ToolGateway:
                                    "('PENDING','RUNNING','WAITING_TOOL','WAITING_HUMAN','FAILED_RETRYABLE')", (case_id,)).fetchall()
                 tx.save_state(state)
                 self.journal.store._reset_case_with_conn(tx.conn, case_id)
-                self.journal.store._save_case_with_conn(tx.conn, fresh_case)
+                # The snapshot equality above authorizes a new generation;
+                # carry its predecessor's revision into the guarded replace.
+                self.journal.store._save_case_with_conn(
+                    tx.conn, {**fresh_case, "_case_revision": current.get("_case_revision", 0)},
+                    recording_replace=True,
+                )
                 tx.audit(case_id, "DEMO_CASE_REPREPARED", {
                     "previous_status": current["status"],
                     "previous_run_id": (current.get("team_run") or {}).get("run_id"),
