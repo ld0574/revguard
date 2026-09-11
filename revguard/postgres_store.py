@@ -249,10 +249,14 @@ class PostgresStore:
 
     # --------------------------------------------------------------- approval
     def save_approval(self, approval: dict) -> None:
+        with self._conn() as conn:
+            self._save_approval_with_conn(conn, approval)
+
+    @staticmethod
+    def _save_approval_with_conn(conn, approval: dict) -> None:
         created_at = (approval.get("created_at") or approval.get("decided_at")
                       or utc_now())
-        with self._conn() as conn:
-            conn.execute(
+        conn.execute(
                 """INSERT INTO approvals(approval_id, case_id, data, created_at)
                    VALUES (%s,%s,%s::jsonb,%s)
                    ON CONFLICT (approval_id) DO UPDATE SET
@@ -478,31 +482,34 @@ class PostgresStore:
 
     def cancel_open_agent_tasks(self, case_id: str, *, actor: str,
                                 reason: str) -> list[str]:
+        with self._conn() as conn, conn.transaction():
+            return self._cancel_open_agent_tasks_with_conn(conn, case_id, actor=actor, reason=reason)
+
+    def _cancel_open_agent_tasks_with_conn(self, conn, case_id: str, *, actor: str, reason: str) -> list[str]:
         open_statuses = {"PENDING", "RUNNING", "WAITING_TOOL", "WAITING_HUMAN",
                          "FAILED_RETRYABLE"}
         cancelled: list[str] = []
-        with self._conn() as conn, conn.transaction():
-            rows = conn.execute(
-                "SELECT task_id, data FROM agent_tasks WHERE case_id=%s FOR UPDATE",
-                (case_id,),
-            ).fetchall()
-            now = utc_now()
-            for row in rows:
-                task = row["data"]
-                if task["status"] not in open_statuses:
-                    continue
-                task.update({"status": "CANCELLED", "updated_at": now,
-                             "cancellation_reason": reason})
-                conn.execute(
-                    "UPDATE agent_tasks SET status='CANCELLED', data=%s::jsonb, "
-                    "updated_at=%s WHERE task_id=%s",
-                    (_json(task), now, task["task_id"]),
-                )
-                cancelled.append(task["task_id"])
-            if cancelled:
-                self._audit_with_conn(conn, case_id, actor, "AGENT_TASKS_CANCELLED", {
-                    "task_ids": cancelled, "reason": reason,
-                })
+        rows = conn.execute(
+            "SELECT task_id, data FROM agent_tasks WHERE case_id=%s FOR UPDATE",
+            (case_id,),
+        ).fetchall()
+        now = utc_now()
+        for row in rows:
+            task = row["data"]
+            if task["status"] not in open_statuses:
+                continue
+            task.update({"status": "CANCELLED", "updated_at": now,
+                         "cancellation_reason": reason})
+            conn.execute(
+                "UPDATE agent_tasks SET status='CANCELLED', data=%s::jsonb, "
+                "updated_at=%s WHERE task_id=%s",
+                (_json(task), now, task["task_id"]),
+            )
+            cancelled.append(task["task_id"])
+        if cancelled:
+            self._audit_with_conn(conn, case_id, actor, "AGENT_TASKS_CANCELLED", {
+                "task_ids": cancelled, "reason": reason,
+            })
         return cancelled
 
     # ------------------------------------------------------------------ audit

@@ -283,7 +283,11 @@ class Store:
     # --------------------------------------------------------------- approval
     def save_approval(self, approval: dict) -> None:
         with self._lock, self.conn:
-            self.conn.execute(
+            self._save_approval_with_conn(self.conn, approval)
+
+    @staticmethod
+    def _save_approval_with_conn(conn, approval: dict) -> None:
+        conn.execute(
                 "INSERT OR REPLACE INTO approvals(approval_id, case_id, data) VALUES (?,?,?)",
                 (approval["approval_id"], approval["case_id"], json.dumps(approval, ensure_ascii=False)),
             )
@@ -489,34 +493,37 @@ class Store:
     def cancel_open_agent_tasks(self, case_id: str, *, actor: str,
                                 reason: str) -> list[str]:
         """Cancel tasks that must not outlive a case pause or human rejection."""
+        with self._lock, self.conn:
+            return self._cancel_open_agent_tasks_with_conn(self.conn, case_id, actor=actor, reason=reason)
+
+    def _cancel_open_agent_tasks_with_conn(self, conn, case_id: str, *, actor: str, reason: str) -> list[str]:
         open_statuses = {"PENDING", "RUNNING", "WAITING_TOOL", "WAITING_HUMAN",
                          "FAILED_RETRYABLE"}
         cancelled: list[str] = []
-        with self._lock, self.conn:
-            rows = self.conn.execute(
-                "SELECT task_id, data FROM agent_tasks WHERE case_id=?", (case_id,)
-            ).fetchall()
-            now = utc_now()
-            for row in rows:
-                task = json.loads(row["data"])
-                if task["status"] not in open_statuses:
-                    continue
-                task.update({"status": "CANCELLED", "updated_at": now,
-                             "cancellation_reason": reason})
-                self.conn.execute(
-                    "UPDATE agent_tasks SET status='CANCELLED', data=?, updated_at=? "
-                    "WHERE task_id=?", (json.dumps(task, ensure_ascii=False), now,
-                                        task["task_id"]),
-                )
-                cancelled.append(task["task_id"])
-            if cancelled:
-                self.conn.execute(
-                    "INSERT INTO audit_events(case_id, actor, event, detail, created_at) "
-                    "VALUES (?,?,?,?,?)",
-                    (case_id, actor, "AGENT_TASKS_CANCELLED",
-                     json.dumps({"task_ids": cancelled, "reason": reason},
-                                ensure_ascii=False), now),
-                )
+        rows = conn.execute(
+            "SELECT task_id, data FROM agent_tasks WHERE case_id=?", (case_id,)
+        ).fetchall()
+        now = utc_now()
+        for row in rows:
+            task = json.loads(row["data"])
+            if task["status"] not in open_statuses:
+                continue
+            task.update({"status": "CANCELLED", "updated_at": now,
+                         "cancellation_reason": reason})
+            conn.execute(
+                "UPDATE agent_tasks SET status='CANCELLED', data=?, updated_at=? "
+                "WHERE task_id=?", (json.dumps(task, ensure_ascii=False), now,
+                                    task["task_id"]),
+            )
+            cancelled.append(task["task_id"])
+        if cancelled:
+            conn.execute(
+                "INSERT INTO audit_events(case_id, actor, event, detail, created_at) "
+                "VALUES (?,?,?,?,?)",
+                (case_id, actor, "AGENT_TASKS_CANCELLED",
+                 json.dumps({"task_ids": cancelled, "reason": reason},
+                            ensure_ascii=False), now),
+            )
         return cancelled
 
     # ------------------------------------------------------------------ audit

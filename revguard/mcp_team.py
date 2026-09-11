@@ -19,7 +19,7 @@ from . import skills, telemetry
 from .agent_bridge import create_agent_task
 from .artifacts import artifact_path, write_artifact
 from .mcp_server import SERVER_INJECTION_REF, build_scoped_server
-from .models import CaseStatus, RiskDecision, new_id, utc_now
+from .models import CaseStatus, RiskDecision, TaskStatus, new_id, utc_now
 from .orchestrator import EVIDENCE_SCORE_THRESHOLD, Orchestrator
 from .security import redact_secrets
 from .state_machine import transition_case
@@ -764,6 +764,19 @@ class McpTeamRunner:
 
     def _export(self, case: dict, state: dict) -> dict:
         """Export trace/report without running a hidden second business workflow."""
+        # The reference MCP runner has no Matrix progress wrapper. Close its
+        # durable approval handoff when execution has reached a terminal state.
+        if self.execution_mode == "MCP_TEAM" and case.get("team_run") and case.get("status") in {
+            CaseStatus.CLOSED.value, CaseStatus.ROLLED_BACK.value,
+        }:
+            completed = sum(task["status"] == TaskStatus.SUCCEEDED.value
+                            for task in self.store.list_agent_tasks(case["case_id"]))
+            case["team_run"] = {
+                **case["team_run"], "status": "COMPLETED", "current_stage": None,
+                "completed_tasks": completed, "total_tasks": completed,
+                "updated_at": utc_now(), "error": None,
+            }
+            self.store.save_case(case)
         Orchestrator(
             self.store, self.gateway,
             output_dir=self.output_dir, report_dir=self.report_dir,

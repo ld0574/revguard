@@ -12,13 +12,15 @@
 | Vite / PostCSS 等存在 5 项 npm 审计问题（4 high、1 moderate） | 构建工具仍携带已知漏洞 | Vite 更新为 6.4.3，修复传递依赖，npm 审计为 0；完整门禁、构建和浏览器验证通过 |
 | README、部署/依赖文档与现状不符 | 容易把读取偏差、旧任务数、无 MCP、标准库边界或历史 CI 当作当前事实 | 更新当前文档，保留历史证据；明确资金结果未知恢复、Grafana、依赖和 202 Docker 入口 |
 
-0.5.2 的部署门禁验收见 [project-audit-20260912](evidence/project-audit-20260912/README.md)，0.5.3 的运行互斥与未知资金回执验收见 [runtime-safety-20260912](evidence/runtime-safety-20260912/README.md)。本轮 0.5.4 已部署至 202，223 项测试与发布门禁通过，覆盖率 90%，发布镜像的 Debian/Python 可修复 HIGH/CRITICAL 扫描为 0，原 8 个案件、执行记录、9 条 ledger 和 261 行审计链前后一致。详见 [recording-consistency-20260912](evidence/recording-consistency-20260912/README.md)。这些结果证明本轮修复，不代表整项目复核已经结束。
+0.5.2 的部署门禁验收见 [project-audit-20260912](evidence/project-audit-20260912/README.md)，0.5.3 的运行互斥与未知资金回执验收见 [runtime-safety-20260912](evidence/runtime-safety-20260912/README.md)。0.5.4 批次已部署至 202，223 项测试与发布门禁通过，覆盖率 90%，发布镜像的 Debian/Python 可修复 HIGH/CRITICAL 扫描为 0，原 8 个案件、执行记录、9 条 ledger 和 261 行审计链前后一致。详见 [recording-consistency-20260912](evidence/recording-consistency-20260912/README.md)。这些结果证明本轮修复，不代表整项目复核已经结束。
 
 HTTP Skill 任务绑定、`RESULT_UNKNOWN` 回执、运行与后台任务互斥、能力续签失败时的恢复状态保留已完成验证。单案重新准备和全量重置的网关/案件/审计已纳入同一数据库事务；报告、Trace 导出与 Case Memory 通过录制批次隔离，原文件保留。隔离数据库拒绝写入、审计失败、旧文件只读和旧 JSON 损坏均纳入本轮故障测试。
 
+0.5.5 已修正人工审批与案件迁移分开提交的问题，以及审批已通过但执行交接中断后无法恢复的边界。审批网关、投影、审计、状态和排队一次提交；驳回同时取消未完成任务。普通状态迁移也以事务提交审计，并用状态代次拒绝旧回调。新增 SQLite/PostgreSQL 故障与并发测试，最终 241 项测试覆盖、91% 显示覆盖率；隔离浏览器走通审批失败、正常审批和启动中断恢复。原生产案件和账务保持不变，详见 [approval-consistency-20260912](evidence/approval-consistency-20260912/README.md)。
+
 ## 整体复核仍需完成的项目
 
-- 复核人审、过期任务/回执、恢复失败后的状态一致性及网关持久化的边界，新增测试应针对实际失效场景。
+- 继续复核 StageTask 快照与领取的并发窗口、普通案件字段/Matrix 进度写入和恢复续签后的状态一致性；状态迁移事务不代表所有投影写入均已具备 CAS。
 - 检查完整部署入口的冷启动和升级路径；不能把单模块测试扩大为完整 AgentTeams 安装已重新验收。
 - 继续对实际业务 UI 各状态和错误路径做浏览器检查；本轮已完成升级后的 Grafana 嵌入、全屏、移动宽度与数据保留验证。
 - 对决赛答辩口径、历史 PPT/视频、当前演示数据和工程证据逐项对齐；第一题原题库口径按用户要求保留。

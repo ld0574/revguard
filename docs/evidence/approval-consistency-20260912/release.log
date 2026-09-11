@@ -1,0 +1,390 @@
+/usr/local/bin/python -m ruff check revguard scripts tests
+All checks passed!
+REVGUARD_TEST_POSTGRES_DSN= /usr/local/bin/python -m coverage run --source=revguard -m unittest discover -s tests
+{"timestamp": "2026-09-11T19:34:15.153636Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-11T19:34:15.271347Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/app/demo-ui/dist/client"}
+........{"timestamp": "2026-09-11T19:34:15.347100Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-28C4EC60", "method": "GET", "path": "/api/v1/health", "status_code": 200, "duration_ms": 2, "trace_id": "affc07235d0776d34d152594e8774481", "span_id": "e2b5faf0c245318e"}
+{"timestamp": "2026-09-11T19:34:15.356914Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-D65BF633", "method": "GET", "path": "/api/v1/skills", "status_code": 200, "duration_ms": 7, "trace_id": "d3abf19e9a5992642526f3f7088408c9", "span_id": "eeb5f6a7155472f2"}
+.{"timestamp": "2026-09-11T19:34:15.371917Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-API-TEST", "method": "POST", "path": "/api/v1/tools/call", "status_code": 200, "duration_ms": 11, "trace_id": "aff55e64d2c6ebf5332c4e627f7d742a", "span_id": "bfd2ac25fdb5f08b"}
+{"timestamp": "2026-09-11T19:34:15.378227Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0F3FE0F2", "method": "POST", "path": "/api/v1/tools/call", "status_code": 403, "duration_ms": 3, "trace_id": "c9d80b38096f538fa85cd2c01e39785b", "span_id": "3e66ff9b1ba031e5"}
+.{"timestamp": "2026-09-11T19:34:15.568423Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0FA26072", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/run", "status_code": 200, "duration_ms": 188, "trace_id": "fcaae0a843be40d563018720f0d7fcfe", "span_id": "7742e37881e7e245"}
+.{"timestamp": "2026-09-11T19:34:15.572845Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-343AB80C", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/run", "status_code": 409, "duration_ms": 1, "trace_id": "4d1887a0703d57bddf49fde2ec65795a", "span_id": "8dfe7c2bf1067bec"}
+.{"timestamp": "2026-09-11T19:34:15.580101Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7B196514", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/approval", "status_code": 401, "duration_ms": 5, "trace_id": "30fd8771d71960558d9a74ada5abc214", "span_id": "38a07fe3880322d3"}
+{"timestamp": "2026-09-11T19:34:15.589953Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-500389C8", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/human-action/assertion", "status_code": 200, "duration_ms": 7, "trace_id": "51ecb715ccdef4b35681e91c2f377e92", "span_id": "39a66d11781685d3"}
+.{"timestamp": "2026-09-11T19:34:15.680655Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-D2FA0A0B", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/approval", "status_code": 200, "duration_ms": 87, "trace_id": "8cc2f2f880f892de63ab850aba9c67e2", "span_id": "7b116c0cca453d54"}
+{"timestamp": "2026-09-11T19:34:15.686442Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-BB2C6E57", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/approval", "status_code": 409, "duration_ms": 2, "trace_id": "bf81b53d5e0aa32935a3e190637ef2c1", "span_id": "9a9716322eef6a80"}
+.{"timestamp": "2026-09-11T19:34:15.700653Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-3C675092", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/trace", "status_code": 200, "duration_ms": 12, "trace_id": "08c3f0508248d925dd1ca9b767bcf7c7", "span_id": "ce98fe14b2d476c9"}
+{"timestamp": "2026-09-11T19:34:15.706534Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-E90D4003", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/report", "status_code": 200, "duration_ms": 2, "trace_id": "9e2e0c859d89de9d899c8e42810b0f81", "span_id": "ecc32e3ca0ca16e1"}
+.{"timestamp": "2026-09-11T19:34:15.727847Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0F887BC2", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 19, "trace_id": "db5dfbca85be86e47f89ed6c60c56327", "span_id": "cb03a45ddc8e058d"}
+{"timestamp": "2026-09-11T19:34:15.750100Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-5DCEDEBB", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 18, "trace_id": "c482a7315f66bee5a426b1006a379a5a", "span_id": "66894d75addb35b4"}
+{"timestamp": "2026-09-11T19:34:15.773331Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-257D87AA", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 21, "trace_id": "8a64c87f433ada54e95522bb2379aaea", "span_id": "6dca78d497f44724"}
+{"timestamp": "2026-09-11T19:34:15.793246Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-DB9BDC8B", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 17, "trace_id": "f1edd049c13d3cb60ed9ad3c3596466f", "span_id": "95fb95dd2465f8ca"}
+{"timestamp": "2026-09-11T19:34:15.814975Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B4A251D0", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 19, "trace_id": "78205001a07f7f9cb610be0485e3b96c", "span_id": "94cabc1ee2083245"}
+{"timestamp": "2026-09-11T19:34:15.835069Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-EDD871F5", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 17, "trace_id": "5cc365bf4e34b8cb257fa69e9f408a54", "span_id": "805d1c65b825feb0"}
+{"timestamp": "2026-09-11T19:34:15.856773Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-1EAA93C4", "method": "GET", "path": "/api/v1/cases/CASE-2026-0001/dashboard", "status_code": 200, "duration_ms": 19, "trace_id": "348e819739f52003e579d183eeb90f51", "span_id": "de282fdfc8d5ed8f"}
+.{"timestamp": "2026-09-11T19:34:15.861593Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0F5AE4C7", "method": "GET", "path": "/api/v1/cases/CASE-NOPE", "status_code": 404, "duration_ms": 2, "trace_id": "74c780715cb7cecb0e0d4f8751c9cabf", "span_id": "858e5e509511f631"}
+{"timestamp": "2026-09-11T19:34:15.865382Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6FFB309A", "method": "GET", "path": "/api/v1/cases/CASE-NOPE/trace", "status_code": 404, "duration_ms": 1, "trace_id": "800d5a436c42ce889bd7db4b3890dd56", "span_id": "a8aa72a12d68418b"}
+.{"timestamp": "2026-09-11T19:34:15.873997Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F2D3733A", "method": "POST", "path": "/api/v1/cases", "status_code": 201, "duration_ms": 6, "trace_id": "1966f5cdb392fe9bc193b15208b64df3", "span_id": "4316cc1f03ba8065"}
+.{"timestamp": "2026-09-11T19:34:15.877819Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-1F0CB7F4", "method": "GET", "path": "/api/v1/cases", "status_code": 401, "duration_ms": 1, "trace_id": "2837df17cdef0fdf7fe85ee3de388d63", "span_id": "3ec142e4869c42ea"}
+{"timestamp": "2026-09-11T19:34:15.880941Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-BBBE114F", "method": "GET", "path": "/api/v1/cases", "status_code": 401, "duration_ms": 1, "trace_id": "7e543291c233984c097998d7658ca708", "span_id": "d54098e8f428124e"}
+{"timestamp": "2026-09-11T19:34:15.884280Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-303299EE", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/approval", "status_code": 409, "duration_ms": 1, "trace_id": "c967bbab9b9fd52c6e02caef2e1dd53c", "span_id": "8008335d97f1a5c5"}
+{"timestamp": "2026-09-11T19:34:15.887814Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6707CB8A", "method": "POST", "path": "/api/v1/tools/call", "status_code": 410, "duration_ms": 2, "trace_id": "b6ac41ccf40bfca910e34fff0680723c", "span_id": "13188305fad65ba6"}
+{"timestamp": "2026-09-11T19:34:15.891483Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-60E225C9", "method": "POST", "path": "/api/v1/tools/call", "status_code": 403, "duration_ms": 2, "trace_id": "e1ce44a85a89bf18d526b13fd15574c7", "span_id": "cd15c97f94a85ba0"}
+{"timestamp": "2026-09-11T19:34:15.895144Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-8819A24C", "method": "POST", "path": "/api/v1/tools/call", "status_code": 403, "duration_ms": 2, "trace_id": "66c7c625159952105419d4f82515f693", "span_id": "2d815fd6f126f336"}
+.{"timestamp": "2026-09-11T19:34:15.899119Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-77AA6E95", "method": "GET", "path": "/api/v1/cases", "status_code": 200, "duration_ms": 2, "trace_id": "7c29acf37ab670f8494ee3af16839a4c", "span_id": "2ba5ad8ad846416c"}
+{"timestamp": "2026-09-11T19:34:15.903610Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F974EE69", "method": "GET", "path": "/api/v1/cases", "status_code": 200, "duration_ms": 2, "trace_id": "f4fd463aed34bf496b3f0c6f195ceab0", "span_id": "4e572542af622565"}
+{"timestamp": "2026-09-11T19:34:15.907250Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-67A62E26", "method": "GET", "path": "/api/v1/cases", "status_code": 400, "duration_ms": 1, "trace_id": "7627a337e6594c4cc53776338b8ba219", "span_id": "926c9ab1995cd651"}
+.{"timestamp": "2026-09-11T19:34:15.917689Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-4F199D6D", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 422, "duration_ms": 5, "trace_id": "1d49429d0f514c03dac12397e8ddef4a", "span_id": "0f3666c0377890d1"}
+{"timestamp": "2026-09-11T19:34:15.933362Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-SKILL-API", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 200, "duration_ms": 13, "trace_id": "47d301fa083d4ad3f3618481fc7c519e", "span_id": "11ff4d89a8569355"}
+{"timestamp": "2026-09-11T19:34:15.942033Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-8AF1F97F", "method": "GET", "path": "/api/v1/skills", "status_code": 200, "duration_ms": 6, "trace_id": "17c6f8899fd748b4b28b19d30451bfd3", "span_id": "a6adb1495d549c9d"}
+{"timestamp": "2026-09-11T19:34:15.946305Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-C2CFDBD9", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 422, "duration_ms": 2, "trace_id": "73f18b391c5d71efddbd688ff8998d20", "span_id": "20ab99df17430e54"}
+{"timestamp": "2026-09-11T19:34:15.950644Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-79E876B2", "method": "POST", "path": "/api/v1/skills/LedgerAdjustSkill/invoke", "status_code": 403, "duration_ms": 2, "trace_id": "80bb57ef768822d5905a683339cebee9", "span_id": "29495344fd65228f"}
+.{"timestamp": "2026-09-11T19:34:15.992943Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B90166DE", "method": "POST", "path": "/api/v1/cases/CASE-EVIDENCE-RESUME/run", "status_code": 200, "duration_ms": 38, "trace_id": "5a0655709fac750b120d9f0dfde16ccc", "span_id": "4f868d5c1147f471"}
+{"timestamp": "2026-09-11T19:34:16.144693Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0D5FE9C9", "method": "POST", "path": "/api/v1/cases/CASE-EVIDENCE-RESUME/evidence/resume", "status_code": 200, "duration_ms": 149, "trace_id": "0d09dd72a46e5f1a9f1d93a45353f9e5", "span_id": "7d2d52185b0a4b63"}
+.{"timestamp": "2026-09-11T19:34:16.156159Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-CD746408", "method": "POST", "path": "/api/v1/cases/CASE-AGENT-BRIDGE/agent-tasks", "status_code": 201, "duration_ms": 7, "trace_id": "12d9879ad3313e000f6c1cd02831eccb", "span_id": "f02f21be9b509cb7"}
+{"timestamp": "2026-09-11T19:34:16.160538Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-831DA4A6", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 403, "duration_ms": 2, "trace_id": "2d74a2948352bfaf3f15979b985cd06b", "span_id": "c1378395103c50fa"}
+{"timestamp": "2026-09-11T19:34:16.205234Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-8D2A98EE", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 200, "duration_ms": 43, "trace_id": "c431c3c87a18769be563450d80f735f6", "span_id": "3baf8ff8aed4aabf"}
+{"timestamp": "2026-09-11T19:34:16.211508Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-EED49864", "method": "GET", "path": "/api/v1/cases/CASE-AGENT-BRIDGE/agent-tasks", "status_code": 403, "duration_ms": 3, "trace_id": "5b81e4cf693eada04c4b478eb0285cdc", "span_id": "db05deeaf16ba394"}
+{"timestamp": "2026-09-11T19:34:16.215007Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-8B7EE424", "method": "GET", "path": "/api/v1/cases/CASE-AGENT-BRIDGE/agent-tasks", "status_code": 200, "duration_ms": 1, "trace_id": "ceca1b39b529d115710e4237709bf797", "span_id": "727371ac7d23a03c"}
+{"timestamp": "2026-09-11T19:34:16.218504Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0F8C7BDF", "method": "GET", "path": "/api/v1/agent-tasks/TASK-1C8C44B8/results", "status_code": 200, "duration_ms": 2, "trace_id": "3d59944f98806d9e1b332516a50b32d8", "span_id": "2aa9470d9f406e6f"}
+{"timestamp": "2026-09-11T19:34:16.222940Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-817B4CC1", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 409, "duration_ms": 2, "trace_id": "f00c4863939576bb7477ff2d70aa3588", "span_id": "6606e1b426d18ca0"}
+{"timestamp": "2026-09-11T19:34:16.241698Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-AB012E7D", "method": "POST", "path": "/api/v1/cases/CASE-AGENT-BRIDGE/agent-tasks", "status_code": 201, "duration_ms": 16, "trace_id": "eedbfb52e36e98884aa4282762f59de4", "span_id": "e57bc8a680281564"}
+{"timestamp": "2026-09-11T19:34:16.246368Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-3D7EB75F", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 409, "duration_ms": 2, "trace_id": "d3d30404cff49a23cf278622671f72b5", "span_id": "f811777ea974b263"}
+{"timestamp": "2026-09-11T19:34:16.256462Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-DB6896FC", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 409, "duration_ms": 3, "trace_id": "cb9cfd04d44dd07a2e117fd535f5af10", "span_id": "75ff898786e8a17c"}
+{"timestamp": "2026-09-11T19:34:16.260165Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0CC62B14", "method": "GET", "path": "/api/v1/cases/CASE-AGENT-BRIDGE/agent-tasks", "status_code": 200, "duration_ms": 2, "trace_id": "1c267f70b4072f67d1c92e3162585e51", "span_id": "c6eea365dc7ec3db"}
+{"timestamp": "2026-09-11T19:34:16.266356Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-E1399897", "method": "POST", "path": "/api/v1/cases/CASE-AGENT-BRIDGE/agent-tasks", "status_code": 201, "duration_ms": 4, "trace_id": "a7fd9a7a0c2be1df433bfb11ca6cbb0f", "span_id": "eb662f732713fe67"}
+{"timestamp": "2026-09-11T19:34:16.274304Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-66ECAD8B", "method": "POST", "path": "/api/v1/agent-tasks/TASK-D8EB79C3/reassign", "status_code": 201, "duration_ms": 4, "trace_id": "dd0016405c9ebe4c12fe6ef66430781a", "span_id": "0db68124c4bed99e"}
+.{"timestamp": "2026-09-11T19:34:16.361398Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-REJECT-RUN", "method": "POST", "path": "/api/v1/cases/CASE-API-REJECT/run", "status_code": 200, "duration_ms": 84, "trace_id": "cbefbda48a2fc4bd403ac53282fe44f0", "span_id": "160e8d864a2562cf"}
+{"timestamp": "2026-09-11T19:34:16.394683Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-CF143E18", "method": "POST", "path": "/api/v1/cases/CASE-API-REJECT/approval", "status_code": 200, "duration_ms": 30, "trace_id": "22775bddca3541d11ecc9aad791c0c02", "span_id": "8536700c51599148"}
+.{"timestamp": "2026-09-11T19:34:16.401543Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-STABLE-500", "method": "POST", "path": "/api/v1/cases/CASE-API-ERROR/run", "status_code": 500, "duration_ms": 3, "trace_id": "4f6e7d81b5d79d7cec0bd652a2a3500c", "span_id": "cf00a6209300928a"}
+.{"timestamp": "2026-09-11T19:34:16.406263Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-FDE22ADC", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 403, "duration_ms": 2, "trace_id": "7850557bc27d7e4ce4cb1eaf9ee9807d", "span_id": "bb013ab24ab36554"}
+{"timestamp": "2026-09-11T19:34:16.414372Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-55342A0A", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 6, "trace_id": "bf09efb16504e466b31501b439725f2f", "span_id": "482f62551e579ff0"}
+{"timestamp": "2026-09-11T19:34:16.419739Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-08D097B9", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 403, "duration_ms": 2, "trace_id": "532fe5b77bc4064602af7fbb3b370a84", "span_id": "4d9d9e2eae269f82"}
+{"timestamp": "2026-09-11T19:34:16.426030Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-D9356228", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 200, "duration_ms": 4, "trace_id": "a7bf85645384af83aab95fd716ae5154", "span_id": "e16777332c7de579"}
+{"timestamp": "2026-09-11T19:34:16.429247Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F2190DB3", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 404, "duration_ms": 1, "trace_id": "103af4a3dff0ff233bdb85f4248705dd", "span_id": "374266600d0b20b3"}
+.{"timestamp": "2026-09-11T19:34:16.782915Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-MCP-TEAM-API", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/run", "status_code": 200, "duration_ms": 352, "trace_id": "ea1f302429168a8c61d3823314312524", "span_id": "140167aa394a3d05"}
+{"timestamp": "2026-09-11T19:34:17.053681Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-77FC40CC", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 200, "duration_ms": 268, "trace_id": "0e0d0709613b0bceef9915ba0858df5a", "span_id": "63a11dea74f61364"}
+.{"timestamp": "2026-09-11T19:34:17.069208Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-559FC4F0", "method": "POST", "path": "/api/v1/cases/CASE-STALE-MATRIX/team/resume", "status_code": 401, "duration_ms": 6, "trace_id": "92fd37291162f9dbde7c3bac8c736609", "span_id": "c5fa082588d7ef8a"}
+{"timestamp": "2026-09-11T19:34:17.080325Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-E034DD6C", "method": "POST", "path": "/api/v1/cases/CASE-STALE-MATRIX/team/resume", "status_code": 202, "duration_ms": 8, "trace_id": "69f67717ba6ffa0d4777722f1cb6ba8f", "span_id": "e644159cd085ce60"}
+.{"timestamp": "2026-09-11T19:34:17.085901Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-3363D73E", "method": "POST", "path": "/api/v1/cases/CASE-MCP-RECOVERY-LOCK/team/resume", "status_code": 401, "duration_ms": 1, "trace_id": "497575c85eb1417a5ec5a507b6d6b7ef", "span_id": "28c82e2ab10bfaa3"}
+{"timestamp": "2026-09-11T19:34:17.089461Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-76750466", "method": "POST", "path": "/api/v1/cases/CASE-MCP-RECOVERY-LOCK/team/resume", "status_code": 409, "duration_ms": 1, "trace_id": "afaeb18bb21e5289820f3bc04294ad7d", "span_id": "c5eafd92d2ba4fca"}
+{"timestamp": "2026-09-11T19:34:17.098583Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-3EBD258A", "method": "POST", "path": "/api/v1/cases/CASE-MCP-RECOVERY-LOCK/team/resume", "status_code": 202, "duration_ms": 7, "trace_id": "d254b2176ea663e209d43bcfa0fe4955", "span_id": "f34719abc789aef9"}
+.{"timestamp": "2026-09-11T19:34:17.106195Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-4DF70BD0", "method": "POST", "path": "/api/v1/cases/CASE-RENEWAL-FAILURE/team/resume", "status_code": 409, "duration_ms": 3, "trace_id": "b8ddbcc9b501ebf99d32d0b54ba7e213", "span_id": "85d8616928786b95"}
+{"timestamp": "2026-09-11T19:34:17.115789Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-5410D1AC", "method": "POST", "path": "/api/v1/cases/CASE-RENEWAL-FAILURE/team/resume", "status_code": 202, "duration_ms": 7, "trace_id": "92c627add131d9f20139469e96db16b0", "span_id": "5dbf6bfeb7398da4"}
+.{"timestamp": "2026-09-11T19:34:17.139156Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-514FF22B", "method": "POST", "path": "/api/v1/cases/CASE-FAILED-ROLLBACK/team/resume", "status_code": 202, "duration_ms": 10, "trace_id": "f8bfab19e06212ab0c4adbf2ce3fef36", "span_id": "2d1f71ebdc5f0ccb"}
+.{"timestamp": "2026-09-11T19:34:17.142364Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-58AF3C5F", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 1, "trace_id": "a3121bcefde2419b65fe38db73c84383", "span_id": "630747c3ea0f82fe"}
+{"timestamp": "2026-09-11T19:34:17.144118Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-284E40C7", "method": "GET", "path": "/demo/", "status_code": 404, "duration_ms": 0, "trace_id": "8848183add4697ae8bf55f70609ee32e", "span_id": "b6ef4c414fac5cd7"}
+{"timestamp": "2026-09-11T19:34:17.146747Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F11EEC27", "method": "GET", "path": "/api/v1/health/ready", "status_code": 200, "duration_ms": 1, "trace_id": "84c3889f2284ca37d7cffa5e62c0852d", "span_id": "f2cb146e10516a70"}
+{"timestamp": "2026-09-11T19:34:17.150093Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B332C2A7", "method": "GET", "path": "/api/v1/ops/metrics", "status_code": 200, "duration_ms": 1, "trace_id": "aba7088427cd7878afed4ee5210a0d12", "span_id": "c5032e5a202bd8a3"}
+{"timestamp": "2026-09-11T19:34:17.153920Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-FA6ACCFA", "method": "GET", "path": "/api/v1/ops/metrics/prometheus", "status_code": 200, "duration_ms": 2, "trace_id": "8096c1fc43c9d7a20b19458c510d5384", "span_id": "5e80bd9dfc6be8e5"}
+{"timestamp": "2026-09-11T19:34:17.159215Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-A047867A", "method": "GET", "path": "/api/v1/ops/evidence", "status_code": 200, "duration_ms": 3, "trace_id": "6890d88b6210de37a6dc9a2a855e6c83", "span_id": "3fa7dd8787a9cddf"}
+{"timestamp": "2026-09-11T19:34:17.164049Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-46C04E39", "method": "GET", "path": "/api/v1/ops/evidence", "status_code": 200, "duration_ms": 3, "trace_id": "3bff59a71714a41520d5a27c0b5c3d15", "span_id": "c89438516f774ed1"}
+.{"timestamp": "2026-09-11T19:34:17.167355Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-68242F8A", "method": "POST", "path": "/api/v1/cases/CASE-NOPE/human-action/assertion", "status_code": 404, "duration_ms": 1, "trace_id": "720d8d1fdbf43de870dfb3c130530186", "span_id": "eac945d8bc63d154"}
+{"timestamp": "2026-09-11T19:34:17.171270Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-8F56D021", "method": "POST", "path": "/api/v1/cases/CASE-HITL-NO-APPROVAL/human-action/assertion", "status_code": 409, "duration_ms": 1, "trace_id": "fe3c8b9dec4b2f17de690c730b4a1734", "span_id": "ecc77ec10d32eaca"}
+{"timestamp": "2026-09-11T19:34:17.174152Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-5BBE92B1", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/human-action/assertion", "status_code": 409, "duration_ms": 1, "trace_id": "69b0c061f6003d8502cab7ee7ca0f4a8", "span_id": "fdd8080e62894487"}
+{"timestamp": "2026-09-11T19:34:17.177345Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-32FDA199", "method": "POST", "path": "/api/v1/cases/CASE-2026-0001/human-action/assertion", "status_code": 409, "duration_ms": 1, "trace_id": "827c50878e36f8197927eebb356c5d81", "span_id": "2e6acf95fd336b52"}
+.{"timestamp": "2026-09-11T19:34:17.184088Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-404A77E0", "method": "POST", "path": "/api/v1/cases/CASE-MATRIX-QUEUE/team/run", "status_code": 202, "duration_ms": 3, "trace_id": "782d3dd171eedc1eca1092b1ece6c0d5", "span_id": "06b9f8addfe86745"}
+.{"timestamp": "2026-09-11T19:34:17.187293Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7D38F110", "method": "POST", "path": "/api/v1/cases/CASE-NOPE/team/resume", "status_code": 404, "duration_ms": 1, "trace_id": "b757e2bf9d2ee9f22139cfe9d14a8030", "span_id": "5ad77b1ead0bf2c5"}
+{"timestamp": "2026-09-11T19:34:17.191091Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B0AB1CFB", "method": "POST", "path": "/api/v1/cases/CASE-RESUME-LOCAL/team/resume", "status_code": 409, "duration_ms": 0, "trace_id": "8c4b9d314d0cf66c1c2db01383754fe3", "span_id": "b0a06644aec5afbe"}
+{"timestamp": "2026-09-11T19:34:17.194349Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-95EA831C", "method": "POST", "path": "/api/v1/cases/CASE-RESUME-IDLE/team/resume", "status_code": 409, "duration_ms": 0, "trace_id": "29091bdcca40a7aec9c4fcd432fff8e2", "span_id": "fbab47e79ca80b36"}
+{"timestamp": "2026-09-11T19:34:17.197640Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-96E21428", "method": "POST", "path": "/api/v1/cases/CASE-RESUME-ACTIVE/team/resume", "status_code": 409, "duration_ms": 1, "trace_id": "1ab2b1046e9018858acf10c062b3ac42", "span_id": "ddc64954aab65a69"}
+.Executing <Task pending name='Task-350' coro=<TestApprovalConsistency.test_approval_case_write_failure_rolls_back_every_decision_projection() running at /app/tests/test_approval_consistency.py:80> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.139 seconds
+{"timestamp": "2026-09-11T19:34:17.417453Z", "level": "ERROR", "logger": "revguard.api", "message": "approval_commit_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "IntegrityError", "trace_id": "e5258a237c046ac726874b61a68cf088", "span_id": "75b3992e83242d6d"}
+{"timestamp": "2026-09-11T19:34:17.419804Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-40457F96", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 503, "duration_ms": 15, "trace_id": "e5258a237c046ac726874b61a68cf088", "span_id": "f68e7376c941b8a2"}
+{"timestamp": "2026-09-11T19:34:17.487308Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-2B755F59", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 202, "duration_ms": 60, "trace_id": "2b12e874d2be3c15a297505c6f3a08ee", "span_id": "974e438a8baf18a1"}
+.Executing <Task pending name='Task-360' coro=<TestApprovalConsistency.test_committed_approval_lost_reply_is_readable_after_restart_and_recoverable() running at /app/tests/test_approval_consistency.py:230> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.161 seconds
+{"timestamp": "2026-09-11T19:34:17.737003Z", "level": "ERROR", "logger": "revguard.api", "message": "approval_commit_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "ConnectionError", "trace_id": "ec72d39b442c6bfb6875c96f2356b3ab", "span_id": "99e81aa89c4c29fc"}
+{"timestamp": "2026-09-11T19:34:17.739251Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-67F8ACB2", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 503, "duration_ms": 14, "trace_id": "ec72d39b442c6bfb6875c96f2356b3ab", "span_id": "4c3e28f0c3af5aa9"}
+{"timestamp": "2026-09-11T19:34:17.747036Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-5A9B9D9E", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 409, "duration_ms": 2, "trace_id": "645e3bf5673cbdc2405aaee68c286b21", "span_id": "b254ec8b53cc3c00"}
+{"timestamp": "2026-09-11T19:34:17.769455Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-85E21066", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 16, "trace_id": "56155b66c0b5ad62f704a04b57b023be", "span_id": "974460ee63ae4668"}
+..Executing <Task pending name='Task-372' coro=<TestApprovalConsistency.test_execution_start_failure_retains_approved_state_for_human_recovery() running at /app/tests/test_approval_consistency.py:166> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.147 seconds
+{"timestamp": "2026-09-11T19:34:18.226049Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-AAE86E0F", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 202, "duration_ms": 15, "trace_id": "9f80a94436b399439ea3efc3febae374", "span_id": "275220ebfb1fe3b9"}
+{"timestamp": "2026-09-11T19:34:18.230295Z", "level": "ERROR", "logger": "revguard.api", "message": "team_run_failed", "case_id": "CASE-2026-0008", "phase": "EXECUTION", "error_type": "ConnectionError"}
+{"timestamp": "2026-09-11T19:34:18.251677Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-905A8A95", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 16, "trace_id": "38f42957afbe28a502a0a34ef9b440f7", "span_id": "97568866fe241619"}
+..Executing <Task pending name='Task-384' coro=<TestApprovalConsistency.test_reference_mcp_completion_closes_durable_approval_queue() running at /app/tests/test_approval_consistency.py:188> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.141 seconds
+{"timestamp": "2026-09-11T19:34:18.924359Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-BB92866E", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 200, "duration_ms": 367, "trace_id": "990e7dbc56b84bb4fbb74d9a9801a35d", "span_id": "968cb885fda2277c"}
+.Executing <Task pending name='Task-392' coro=<TestApprovalConsistency.test_rejection_failure_preserves_pending_tasks_and_all_approval_state() running at /app/tests/test_approval_consistency.py:147> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.137 seconds
+{"timestamp": "2026-09-11T19:34:19.148852Z", "level": "ERROR", "logger": "revguard.api", "message": "approval_commit_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "IntegrityError", "trace_id": "881746aaeae39376a7cbdad09d086c6c", "span_id": "82ff4a28d2eb305b"}
+{"timestamp": "2026-09-11T19:34:19.151291Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-499D0AA0", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 503, "duration_ms": 11, "trace_id": "881746aaeae39376a7cbdad09d086c6c", "span_id": "9c9654d7880682b0"}
+{"timestamp": "2026-09-11T19:34:19.172502Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6C991A01", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 200, "duration_ms": 15, "trace_id": "f68dcaa8474c1110fa599dfeaf4c2208", "span_id": "7010da60f3942c40"}
+...sssssssss..................................Executing <Task finished name='Task-462' coro=<TestMatrixTeamRunner.test_interrupted_execution_resumes_with_idempotent_replay() done, defined at /app/tests/test_matrix_team.py:562> result=None created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.667 seconds
+...Executing <Task finished name='Task-477' coro=<TestMatrixTeamRunner.test_real_transport_contract_persists_input_output_and_correlations() done, defined at /app/tests/test_matrix_team.py:304> result=None created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.728 seconds
+.Executing <Task finished name='Task-482' coro=<TestMatrixTeamRunner.test_rejected_terminal_case_closes_and_finishes_team_run() done, defined at /app/tests/test_matrix_team.py:361> result=None created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.486 seconds
+..........Executing <Task pending name='Task-532' coro=<TestMcpTeamRunner.test_mcp_team_l1_creates_drafts_only() running at /app/tests/test_mcp_team.py:172> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.103 seconds
+...ss...{"timestamp": "2026-09-11T19:34:34.241967Z", "level": "ERROR", "logger": "revguard.trace", "message": "trace_store_unavailable", "case_id": "CASE-2026-0008", "error_type": "OperationalError"}
+{"timestamp": "2026-09-11T19:34:34.242568Z", "level": "ERROR", "logger": "revguard.trace", "message": "trace_persistence_failed", "case_id": "CASE-2026-0008", "span_name": "fault-injection", "error_type": "OperationalError"}
+....Executing <Task pending name='Task-580' coro=<TestMoneyRecovery.test_missing_execution_projection_is_rebuilt_from_committed_operation() running at /app/tests/test_money_recovery.py:214> wait_for=<Future pending cb=[Task.task_wakeup()] created at /usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py:946> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.323 seconds
+..........ssssssssssssssssss.................ss.Executing <Task pending name='Task-632' coro=<TestRecordingConsistency.test_failed_case_insert_preserves_gateway_executions_and_audit() running at /app/tests/test_recording_consistency.py:55> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.316 seconds
+{"timestamp": "2026-09-11T19:34:45.423863Z", "level": "ERROR", "logger": "revguard.api", "message": "recording_reprepare_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "IntegrityError", "trace_id": "ccd840c116fb796fe393b508343ddd8c", "span_id": "1246bfd6f7e3b99a"}
+{"timestamp": "2026-09-11T19:34:45.424629Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-00C666BD", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 503, "duration_ms": 11, "trace_id": "ccd840c116fb796fe393b508343ddd8c", "span_id": "1246bfd6f7e3b99a"}
+.Executing <Task pending name='Task-637' coro=<TestRecordingConsistency.test_full_reset_seeds_gateway_and_changes_artifact_generation() running at /app/tests/test_recording_consistency.py:95> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.263 seconds
+{"timestamp": "2026-09-11T19:34:45.793792Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-FA88D477", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 13, "trace_id": "bb5bfa02d19cb02929af56ba6a3e00a6", "span_id": "e60a856d95207ffd"}
+{"timestamp": "2026-09-11T19:34:45.803058Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-398CFFD0", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/report", "status_code": 404, "duration_ms": 5, "trace_id": "8afcf65d76f0a53da62dceea48914f76", "span_id": "c717fe8767216fc1"}
+{"timestamp": "2026-09-11T19:34:45.817997Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-9E8F3721", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 11, "trace_id": "edf82ab54152dc2e3b5e18aa59b33276", "span_id": "9c6dbef62fadfc02"}
+.Executing <Task pending name='Task-642' coro=<TestRecordingConsistency.test_readonly_old_artifacts_do_not_block_reprepare_or_leak_into_new_run() running at /app/tests/test_recording_consistency.py:66> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.240 seconds
+{"timestamp": "2026-09-11T19:34:46.202372Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-5F8F30B1", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 200, "duration_ms": 14, "trace_id": "a1dedaa3b8bc8e52393aad9ce4b9f9fc", "span_id": "a944e8b550ec26e7"}
+{"timestamp": "2026-09-11T19:34:46.211245Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-27C35228", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/report", "status_code": 404, "duration_ms": 5, "trace_id": "aebc398fdddc0e202e8bdf7c93f20485", "span_id": "15e7528042fb3a13"}
+Executing <Task pending name='Task-642' coro=<TestRecordingConsistency.test_readonly_old_artifacts_do_not_block_reprepare_or_leak_into_new_run() running at /app/tests/test_recording_consistency.py:75> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181, WorkerThread.stop()] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.225 seconds
+{"timestamp": "2026-09-11T19:34:46.443906Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-8F2AFA3E", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/report", "status_code": 200, "duration_ms": 6, "trace_id": "0527e3c5bb44ce331bddec52d083693b", "span_id": "3745f86d72cd0259"}
+{"timestamp": "2026-09-11T19:34:46.471071Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-56A97EDE", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/dashboard", "status_code": 200, "duration_ms": 23, "trace_id": "95e7bef4907b2107e1d1047d5f517e10", "span_id": "32b0f705f73d384c"}
+.Executing <Task pending name='Task-647' coro=<TestRecordingConsistency.test_reset_audit_failure_rolls_back_cases_and_gateway_together() running at /app/tests/test_recording_consistency.py:113> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.298 seconds
+{"timestamp": "2026-09-11T19:34:46.876335Z", "level": "ERROR", "logger": "revguard.api", "message": "http_request_failed", "request_id": "REQ-61DCBC94", "method": "POST", "path": "/api/v1/demo/reset", "duration_ms": 10, "trace_id": "46f0665aa7c0af9dbd79009aceb60da7", "span_id": "71f8f744ca9eef0c", "error_type": "RuntimeError"}
+.sssss...............................{"timestamp": "2026-09-11T19:34:47.223117Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B26B6853", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/run", "status_code": 202, "duration_ms": 12, "trace_id": "78aa81aa34c3c99e411667173c4d9898", "span_id": "991a438885d5a0d1"}
+{"timestamp": "2026-09-11T19:34:47.231128Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7DC50839", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 2, "trace_id": "4bca490899f1bbeb2e79d30ecd697d8b", "span_id": "0bbf5e34ba76313c"}
+{"timestamp": "2026-09-11T19:34:47.240731Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-EC3EFF80", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 6, "trace_id": "6e177cebc323ac4ede888e41a1d4be92", "span_id": "4015b4fcd6f3e610"}
+...{"timestamp": "2026-09-11T19:34:47.572718Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-1E748F22", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 5, "trace_id": "eee499288ca5c17e86c6f3c98ec728d3", "span_id": "24fd1567e92055f9"}
+{"timestamp": "2026-09-11T19:34:47.587225Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-74261342", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 4, "trace_id": "c1b62043d720b6bffb664caf72728146", "span_id": "d6abefeeba687e81"}
+{"timestamp": "2026-09-11T19:34:47.602623Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B8F326DC", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 6, "trace_id": "9e374bd356434fc0f348a95df2586656", "span_id": "915b2ee7a78dc478"}
+{"timestamp": "2026-09-11T19:34:47.617025Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6F4E0363", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 4, "trace_id": "dcd07fbeea084b22da75d8f6dfc03fba", "span_id": "eb3b32136c6bd731"}
+.{"timestamp": "2026-09-11T19:34:47.747162Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7E74E3EF", "method": "GET", "path": "/api/v1/cases", "status_code": 409, "duration_ms": 2, "trace_id": "a0a2084d7ea3e27da35f563a392a22bd", "span_id": "530d3847e6c7454e"}
+{"timestamp": "2026-09-11T19:34:47.750712Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-EFABD227", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/run", "status_code": 409, "duration_ms": 1, "trace_id": "64ee5715b2676bc47e3dfc6720818fe9", "span_id": "1dd0858ae47b2870"}
+{"timestamp": "2026-09-11T19:34:47.754571Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-94F11C03", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 2, "trace_id": "d7aa129d8cdad3035cd734668c035877", "span_id": "6f8172e0133b962c"}
+{"timestamp": "2026-09-11T19:34:47.769572Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-51E29F90", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 30, "trace_id": "342e8300a44cd85fce37064687033b68", "span_id": "709b120a5d9bb811"}
+..{"timestamp": "2026-09-11T19:34:47.971802Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7C20BDF8", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 503, "duration_ms": 3, "trace_id": "b4428385f0dac72e4809708f009e6d01", "span_id": "14c456652665b271"}
+{"timestamp": "2026-09-11T19:34:47.977866Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-D6FC77F3", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 3, "trace_id": "c2d0f9a636cd22e1452ea9910a1358f1", "span_id": "fba71a868d211713"}
+.{"timestamp": "2026-09-11T19:34:48.201286Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-38A75A9C", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 409, "duration_ms": 6, "trace_id": "4a7197d876f10fea14a5668ebe1a0e84", "span_id": "27938004d4de9c96"}
+.{"timestamp": "2026-09-11T19:34:48.317239Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7358EE40", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 2, "trace_id": "9b613f51069d22cd180daf78d5b4fd4c", "span_id": "451306a9586a0b65"}
+{"timestamp": "2026-09-11T19:34:48.321484Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6BEAEE6C", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 2, "trace_id": "0cb0ac1dee8bb85d441f90429a47eec7", "span_id": "a8b32057fd6915a5"}
+{"timestamp": "2026-09-11T19:34:48.323630Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F91B3F14", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/run", "status_code": 200, "duration_ms": 16, "trace_id": "0278fc8cd2574f9009d5201f9a5768fa", "span_id": "1c5783f45c8e32d2"}
+{"timestamp": "2026-09-11T19:34:48.338865Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6C512013", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 12, "trace_id": "2a3ff2015a28456e61d5ed8973f71e7e", "span_id": "395658cc407192cd"}
+..ssssssssss....................
+----------------------------------------------------------------------
+Ran 241 tests in 34.112s
+
+OK (skipped=46)
+/usr/local/bin/python -m coverage report --omit=revguard/postgres_store.py --fail-under=90
+Name                          Stmts   Miss  Cover
+-------------------------------------------------
+revguard/__init__.py              1      0   100%
+revguard/agent_bridge.py         66      7    89%
+revguard/api.py                 713    107    85%
+revguard/artifacts.py            27      0   100%
+revguard/demo_dashboard.py       46      3    93%
+revguard/grafana_embed.py        78     11    86%
+revguard/hitl.py                 86      4    95%
+revguard/json_schema.py          43      9    79%
+revguard/matrix_team.py         355     21    94%
+revguard/mcp_server.py          115     10    91%
+revguard/mcp_team.py            314     20    94%
+revguard/mocks.py               594     70    88%
+revguard/models.py              131      1    99%
+revguard/money_journal.py       160     16    90%
+revguard/observability.py        63      2    97%
+revguard/orchestrator.py        332     20    94%
+revguard/policy_matcher.py       55      5    91%
+revguard/report.py              238     11    95%
+revguard/risk.py                 35      2    94%
+revguard/rule_engine.py         109     11    90%
+revguard/runtime_barrier.py     102     15    85%
+revguard/schema.py               13     13     0%
+revguard/security.py            119     18    85%
+revguard/skill_runtime.py        82      4    95%
+revguard/skill_schemas.py        15      0   100%
+revguard/skills.py              240     15    94%
+revguard/state_machine.py        38      3    92%
+revguard/store.py               263     14    95%
+revguard/telemetry.py            60      2    97%
+revguard/trace.py                90      2    98%
+-------------------------------------------------
+TOTAL                          4583    416    91%
+/usr/local/bin/python scripts/run_evaluation.py
+{
+  "generated_at": "2026-09-11T19:34:52Z",
+  "environment": {
+    "python": "3.11.16",
+    "implementation": "CPython",
+    "platform": "Linux-7.0.14-12-pve-x86_64-with-glibc2.41"
+  },
+  "method": "external_expected_matrix_and_golden_holdout",
+  "expected_dataset": "data/expected/risk_matrix.csv",
+  "total_scenarios": 105,
+  "passed": 105,
+  "pass_rate": 1.0,
+  "security_probe_pass_rate": 1.0,
+  "security_probe_scope": "forged/expired/cross-case capability tokens, actor-scope escalation, concurrent double-submit, component quota abuse, and rollback-token replay",
+  "categories": {
+    "golden_e2e": {
+      "scenarios": 8,
+      "passed": 8,
+      "failures": []
+    },
+    "risk_boundaries": {
+      "scenarios": 80,
+      "passed": 80,
+      "failures": []
+    },
+    "policy_dates": {
+      "scenarios": 8,
+      "passed": 8,
+      "failures": []
+    },
+    "security_probes": {
+      "scenarios": 9,
+      "passed": 9,
+      "failures": []
+    }
+  },
+  "parallel_benchmark": {
+    "method": "median_of_latency_injection_runs",
+    "iterations": 7,
+    "injected_delay_ms_per_tool": 50,
+    "parallel_batch_ms": 52,
+    "parallel_batch_ms_samples": [
+      52,
+      52,
+      52,
+      51,
+      52,
+      52,
+      52
+    ],
+    "end_to_end_ms": 52,
+    "end_to_end_ms_samples": [
+      52,
+      52,
+      53,
+      52,
+      52,
+      52,
+      52
+    ],
+    "serial_io_baseline_ms": 350,
+    "estimated_speedup": 6.73,
+    "workers": 7,
+    "task_count": 7
+  }
+}
+/usr/local/bin/python scripts/run_value_evaluation.py \
+	--input data/value_baseline/synthetic_demo.csv \
+	--output docs/value-evaluation-synthetic.json
+/usr/local/bin/python scripts/gen_skill_docs.py --check
+verified /app/docs/skills.md (16 skills)
+/usr/local/bin/python scripts/export_openapi.py --check
+verified /app/docs/openapi.json
+/usr/local/bin/python scripts/validate_evaluation_snapshot.py
+verified /app/docs/evaluation-summary.json: 105/105, UTC, median benchmark
+/usr/local/bin/python scripts/validate_synthetic_dataset.py \
+	--check docs/synthetic-data-validation.json
+{"timestamp": "2026-09-11T19:34:55.125184Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-11T19:34:55.207394Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/app/demo-ui/dist/client"}
+test_mcp_call_persists_stage_result_in_postgresql (tests.test_postgres_store_integration.TestPostgresStoreIntegration.test_mcp_call_persists_stage_result_in_postgresql) ... ok
+test_numeric_audit_chain_and_atomic_stage_result (tests.test_postgres_store_integration.TestPostgresStoreIntegration.test_numeric_audit_chain_and_atomic_stage_result) ... ok
+test_batch_second_component_failure_rolls_back_every_effect (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_batch_second_component_failure_rolls_back_every_effect) ... ok
+test_committed_result_is_bound_to_original_case_and_parameters (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_committed_result_is_bound_to_original_case_and_parameters) ... ok
+test_database_commit_failure_blocks_new_keys_until_reconciled (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_database_commit_failure_blocks_new_keys_until_reconciled) ... ok
+test_database_outage_does_not_mask_original_exception_or_stop_otel (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_database_outage_does_not_mask_original_exception_or_stop_otel) ... {"timestamp": "2026-09-11T19:34:57.854077Z", "level": "ERROR", "logger": "revguard.trace", "message": "trace_store_unavailable", "case_id": "CASE-2026-0008", "error_type": "OperationalError"}
+{"timestamp": "2026-09-11T19:34:57.854431Z", "level": "ERROR", "logger": "revguard.trace", "message": "trace_persistence_failed", "case_id": "CASE-2026-0008", "span_name": "fault-injection", "error_type": "OperationalError"}
+ok
+test_legacy_ledger_is_durable_before_first_new_money_operation (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_legacy_ledger_is_durable_before_first_new_money_operation) ... ok
+test_lost_compensation_response_only_reconciles_committed_batch (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_lost_compensation_response_only_reconciles_committed_batch) ... ok
+test_lost_submit_response_recovers_without_reposting (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_lost_submit_response_recovers_without_reposting) ... ok
+test_missing_execution_projection_is_rebuilt_from_committed_operation (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_missing_execution_projection_is_rebuilt_from_committed_operation) ... ok
+test_money_timeout_attempted_once_and_never_treated_as_safe_retry (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_money_timeout_attempted_once_and_never_treated_as_safe_retry) ... ok
+test_otel_propagates_agent_parent_to_skill_and_tool (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_otel_propagates_agent_parent_to_skill_and_tool) ... ok
+test_other_valid_transaction_does_not_trigger_compensation (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_other_valid_transaction_does_not_trigger_compensation) ... ok
+test_reconciling_one_case_cannot_release_another_cases_channel_hold (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_reconciling_one_case_cannot_release_another_cases_channel_hold) ... ok
+test_recording_reset_keeps_history_without_replaying_old_money (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_recording_reset_keeps_history_without_replaying_old_money) ... ok
+test_restore_lock_blocks_reconciliation_and_money_effects (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_restore_lock_blocks_reconciliation_and_money_effects) ... ok
+test_second_compensation_failure_cannot_leave_half_reversed_batch (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_second_compensation_failure_cannot_leave_half_reversed_batch) ... ok
+test_stale_executor_is_fenced_after_reconciliation (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_stale_executor_is_fenced_after_reconciliation) ... ok
+test_terminated_database_connection_rolls_back_ledger_and_result_together (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_terminated_database_connection_rolls_back_ledger_and_result_together) ... discarding closed connection: <psycopg.Connection [BAD] at 0x7449582a7050>
+ok
+test_transient_read_mismatch_does_not_reverse_good_posting (tests.test_money_recovery_postgres.TestPostgresMoneyRecovery.test_transient_read_mismatch_does_not_reverse_good_posting) ... ok
+test_legacy_core_only_database_is_rejected_before_serving (tests.test_migrations_postgres.TestPostgresMigrations.test_legacy_core_only_database_is_rejected_before_serving) ... ok
+test_migration_entrypoint_is_complete_repeatable_and_preserves_history (tests.test_migrations_postgres.TestPostgresMigrations.test_migration_entrypoint_is_complete_repeatable_and_preserves_history) ... PolarDB schema applied: cases, tasks, append-only audit and money recovery ready
+PolarDB schema applied: cases, tasks, append-only audit and money recovery ready
+ok
+test_background_retains_request_lease_until_cancelled (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_background_retains_request_lease_until_cancelled) ... {"timestamp": "2026-09-11T19:35:06.035863Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-C09EC27E", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/run", "status_code": 202, "duration_ms": 16, "trace_id": "e4a6c433405414f954bd10dcf76b29b9", "span_id": "e01819484519f3ec"}
+{"timestamp": "2026-09-11T19:35:06.046164Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6A54A1F3", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 7, "trace_id": "e9c70b3de38f1ebfa5a13e18956b2356", "span_id": "5360ab8a52de2419"}
+{"timestamp": "2026-09-11T19:35:06.064307Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-EEDF3C18", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 10, "trace_id": "1923ea4219cfbe4cc55675d12d7a1b4e", "span_id": "a424dbffaf3c327f"}
+ok
+test_cancel_before_coroutine_start_releases_background_lease (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_cancel_before_coroutine_start_releases_background_lease) ... ok
+test_direct_mcp_task_cannot_invoke_during_reset (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_direct_mcp_task_cannot_invoke_during_reset) ... ok
+test_durable_recovery_and_money_holds_cannot_be_erased (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_durable_recovery_and_money_holds_cannot_be_erased) ... {"timestamp": "2026-09-11T19:35:06.445974Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-70687FCD", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 10, "trace_id": "4cbf6e81f6d8fcac64b13402fe7d1e74", "span_id": "e7328205d22040a8"}
+{"timestamp": "2026-09-11T19:35:06.462042Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-79DE2A63", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 9, "trace_id": "7f22180288ce437ceb8d23ab4d0f06af", "span_id": "b787c48047fb7a1c"}
+{"timestamp": "2026-09-11T19:35:06.476720Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-20A6A3C4", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 9, "trace_id": "f7349744b65084ba5265101ac99d2dc4", "span_id": "c1dc3182909aa760"}
+{"timestamp": "2026-09-11T19:35:06.493225Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-CA6BDEF6", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 10, "trace_id": "0cca9c379cc4c7e6e6d4968d2e44a66c", "span_id": "8022450dedf84d56"}
+ok
+test_exclusive_reset_blocks_new_requests_but_not_liveness (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_exclusive_reset_blocks_new_requests_but_not_liveness) ... {"timestamp": "2026-09-11T19:35:06.628535Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-484B373E", "method": "GET", "path": "/api/v1/cases", "status_code": 409, "duration_ms": 8, "trace_id": "f8adb1bbc25ec3d67576d6f376b3e516", "span_id": "5e48553262ae4cf6"}
+{"timestamp": "2026-09-11T19:35:06.637862Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-DF3659D8", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/run", "status_code": 409, "duration_ms": 7, "trace_id": "23d57e5dd614e7bf71c2aad253892887", "span_id": "ac59c36baecc3511"}
+{"timestamp": "2026-09-11T19:35:06.640927Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-FC5888D3", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 1, "trace_id": "cd5d19d8242144580a5a87e87fe333ce", "span_id": "c4c930d639257728"}
+{"timestamp": "2026-09-11T19:35:06.738773Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-913290D2", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 131, "trace_id": "5c0939d7fd13b259aeef29ac59c20036", "span_id": "6c3c26163e376aa8"}
+ok
+test_independent_sessions_exclude_reset_without_consuming_write_pool (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_independent_sessions_exclude_reset_without_consuming_write_pool) ... ok
+test_lock_unavailable_fails_closed_without_exposing_connection_details (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_lock_unavailable_fails_closed_without_exposing_connection_details) ... {"timestamp": "2026-09-11T19:35:06.983127Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-04155F82", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 503, "duration_ms": 1, "trace_id": "0251aeeb4841296e92ac2873eac885b1", "span_id": "b947f3651cb76d74"}
+{"timestamp": "2026-09-11T19:35:06.986051Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-5ED5932C", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 1, "trace_id": "c173b15ac70b1c69a397979c61fb9c97", "span_id": "dd17c688fa96435d"}
+ok
+test_reprepare_refuses_unreconciled_terminal_case (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_reprepare_refuses_unreconciled_terminal_case) ... {"timestamp": "2026-09-11T19:35:07.107817Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B51DE0AF", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 409, "duration_ms": 12, "trace_id": "cd65084dc8a4d09cdac887f9dd64c1c3", "span_id": "764c58e6a8db5f00"}
+ok
+test_reset_cannot_race_an_inflight_request (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_reset_cannot_race_an_inflight_request) ... {"timestamp": "2026-09-11T19:35:07.239257Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-69973590", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 409, "duration_ms": 7, "trace_id": "343ff75976ced5251cd5504de5973af3", "span_id": "0be07f71928d5da1"}
+{"timestamp": "2026-09-11T19:35:07.242647Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-7943696D", "method": "GET", "path": "/api/v1/health/live", "status_code": 200, "duration_ms": 1, "trace_id": "28a1beddca512ee671ada441e3ce73e0", "span_id": "d6794ac000bb9880"}
+{"timestamp": "2026-09-11T19:35:07.244348Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-79B01A8F", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/run", "status_code": 200, "duration_ms": 23, "trace_id": "6f0aaa9aaf8ac3b97bb64d2baf4a6c55", "span_id": "6418e29b0ac0da5e"}
+{"timestamp": "2026-09-11T19:35:07.345387Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-4242A601", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 99, "trace_id": "d6660d3249bf78f8e02457d0196e5ca9", "span_id": "e5ff9cbb560a1a72"}
+ok
+test_seed_failure_rolls_back_entire_reset_and_audit (tests.test_runtime_safety_postgres.TestPostgresRuntimeSafety.test_seed_failure_rolls_back_entire_reset_and_audit) ... ok
+test_durable_gateway_ignores_corrupt_legacy_json (tests.test_recording_consistency_postgres.TestPostgresRecordingConsistency.test_durable_gateway_ignores_corrupt_legacy_json) ... ok
+test_failed_case_insert_preserves_gateway_executions_and_audit (tests.test_recording_consistency_postgres.TestPostgresRecordingConsistency.test_failed_case_insert_preserves_gateway_executions_and_audit) ... Executing <Task pending name='Task-147' coro=<TestRecordingConsistency.test_failed_case_insert_preserves_gateway_executions_and_audit() running at /app/tests/test_recording_consistency.py:55> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.102 seconds
+{"timestamp": "2026-09-11T19:35:07.967307Z", "level": "ERROR", "logger": "revguard.api", "message": "recording_reprepare_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "RaiseException", "trace_id": "35f40f0e451059dffa0b760769ec2be6", "span_id": "56b9df6ea5ad4226"}
+{"timestamp": "2026-09-11T19:35:07.967946Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-4B78D452", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 503, "duration_ms": 17, "trace_id": "35f40f0e451059dffa0b760769ec2be6", "span_id": "56b9df6ea5ad4226"}
+ok
+test_full_reset_seeds_gateway_and_changes_artifact_generation (tests.test_recording_consistency_postgres.TestPostgresRecordingConsistency.test_full_reset_seeds_gateway_and_changes_artifact_generation) ... {"timestamp": "2026-09-11T19:35:08.266939Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0A7DC1E8", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 94, "trace_id": "e5c22c6927c4f7acfd58732143b6f397", "span_id": "590fc7917f03c787"}
+{"timestamp": "2026-09-11T19:35:08.279501Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F2C41FA4", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/report", "status_code": 404, "duration_ms": 10, "trace_id": "025a55ec186c497fd75d533aea3e8f4e", "span_id": "9544bda457c46db1"}
+{"timestamp": "2026-09-11T19:35:08.377054Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-6CB044A0", "method": "POST", "path": "/api/v1/demo/reset", "status_code": 200, "duration_ms": 95, "trace_id": "762509bae72b99b0d59e436cc6995b63", "span_id": "a981f5966e8812a7"}
+ok
+test_readonly_old_artifacts_do_not_block_reprepare_or_leak_into_new_run (tests.test_recording_consistency_postgres.TestPostgresRecordingConsistency.test_readonly_old_artifacts_do_not_block_reprepare_or_leak_into_new_run) ... {"timestamp": "2026-09-11T19:35:08.600725Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-69D7C552", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/reprepare", "status_code": 200, "duration_ms": 21, "trace_id": "86a776a0dcdb24a54ed2f18099e062ea", "span_id": "296307f21346704a"}
+{"timestamp": "2026-09-11T19:35:08.612948Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-711F7AB3", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/report", "status_code": 404, "duration_ms": 10, "trace_id": "154fb0680650c855777936d7f0eee0ea", "span_id": "fa7df86c3ca6df80"}
+{"timestamp": "2026-09-11T19:35:08.719143Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0397335D", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/report", "status_code": 200, "duration_ms": 10, "trace_id": "d84d717bf8132c10e5d3d892cf8f0613", "span_id": "10704d199944416b"}
+{"timestamp": "2026-09-11T19:35:08.744480Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-82FB5182", "method": "GET", "path": "/api/v1/cases/CASE-2026-0008/dashboard", "status_code": 200, "duration_ms": 23, "trace_id": "d0e66cd596273865ba4f3e59fdecf435", "span_id": "fb1059dfca675353"}
+ok
+test_reset_audit_failure_rolls_back_cases_and_gateway_together (tests.test_recording_consistency_postgres.TestPostgresRecordingConsistency.test_reset_audit_failure_rolls_back_cases_and_gateway_together) ... {"timestamp": "2026-09-11T19:35:09.032964Z", "level": "ERROR", "logger": "revguard.api", "message": "http_request_failed", "request_id": "REQ-CF2EABF6", "method": "POST", "path": "/api/v1/demo/reset", "duration_ms": 87, "trace_id": "cfc6f3c9b3c2887684c47bb508d14c58", "span_id": "c9049196501137f5", "error_type": "RuntimeError"}
+ok
+test_approval_case_write_failure_rolls_back_every_decision_projection (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_approval_case_write_failure_rolls_back_every_decision_projection) ... {"timestamp": "2026-09-11T19:35:09.229606Z", "level": "ERROR", "logger": "revguard.api", "message": "approval_commit_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "RaiseException", "trace_id": "dc57adc6c1a619d75440127062bf724d", "span_id": "183909a653d66009"}
+{"timestamp": "2026-09-11T19:35:09.230517Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-DA875E96", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 503, "duration_ms": 18, "trace_id": "dc57adc6c1a619d75440127062bf724d", "span_id": "43258237d86c0138"}
+{"timestamp": "2026-09-11T19:35:09.252193Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-FC2758A2", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 202, "duration_ms": 16, "trace_id": "cb01111e72f6c7d855a0a64e1e19c22c", "span_id": "94a6bb4f5920abea"}
+ok
+test_committed_approval_lost_reply_is_readable_after_restart_and_recoverable (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_committed_approval_lost_reply_is_readable_after_restart_and_recoverable) ... {"timestamp": "2026-09-11T19:35:09.436738Z", "level": "ERROR", "logger": "revguard.api", "message": "approval_commit_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "ConnectionError", "trace_id": "a8c8f21ebf9c6c1802e058fa3ba76744", "span_id": "00f99ceccf974217"}
+{"timestamp": "2026-09-11T19:35:09.437516Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-74F3EBD9", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 503, "duration_ms": 16, "trace_id": "a8c8f21ebf9c6c1802e058fa3ba76744", "span_id": "457b6b1fc1a84dfa"}
+{"timestamp": "2026-09-11T19:35:09.453968Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-776D42FD", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 409, "duration_ms": 10, "trace_id": "ddb1c49cadc0783a29eb37afb558db1e", "span_id": "30690ec567ab9f77"}
+{"timestamp": "2026-09-11T19:35:09.471219Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-82DEDAB8", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 14, "trace_id": "8ed590d03130adfadd3d364707e2d625", "span_id": "f8acbb65ac980f85"}
+ok
+test_competing_human_decisions_commit_only_once (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_competing_human_decisions_commit_only_once) ... ok
+test_execution_start_failure_retains_approved_state_for_human_recovery (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_execution_start_failure_retains_approved_state_for_human_recovery) ... {"timestamp": "2026-09-11T19:35:09.826105Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-1B61A113", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 202, "duration_ms": 17, "trace_id": "8b68bed108bf02d1dd1f0b2954146948", "span_id": "5f098e6e9e598ac5"}
+{"timestamp": "2026-09-11T19:35:09.829171Z", "level": "ERROR", "logger": "revguard.api", "message": "team_run_failed", "case_id": "CASE-2026-0008", "phase": "EXECUTION", "error_type": "ConnectionError"}
+{"timestamp": "2026-09-11T19:35:09.848707Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-DFC5505D", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 16, "trace_id": "668ce66167f6ce0f673a8ccd69c1fce1", "span_id": "3ac481ac8d4a4da3"}
+ok
+test_late_transition_audit_failure_rolls_back_state_and_preserves_input (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_late_transition_audit_failure_rolls_back_state_and_preserves_input) ... ok
+test_reference_mcp_completion_closes_durable_approval_queue (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_reference_mcp_completion_closes_durable_approval_queue) ... {"timestamp": "2026-09-11T19:35:10.359074Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B7CA77D9", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 200, "duration_ms": 231, "trace_id": "f289210171bc62fda9d8133cc4fc0e42", "span_id": "09566426b04b1119"}
+ok
+test_rejection_failure_preserves_pending_tasks_and_all_approval_state (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_rejection_failure_preserves_pending_tasks_and_all_approval_state) ... {"timestamp": "2026-09-11T19:35:10.547135Z", "level": "ERROR", "logger": "revguard.api", "message": "approval_commit_unconfirmed", "case_id": "CASE-2026-0008", "error_type": "RaiseException", "trace_id": "ca23ffa461b98c16f3fd3a0ab4c376b9", "span_id": "3beaa9393e6e5dba"}
+{"timestamp": "2026-09-11T19:35:10.548136Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-87B905F2", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 503, "duration_ms": 17, "trace_id": "ca23ffa461b98c16f3fd3a0ab4c376b9", "span_id": "f7f75ea745779161"}
+{"timestamp": "2026-09-11T19:35:10.572312Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-C42765B0", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/approval", "status_code": 200, "duration_ms": 18, "trace_id": "c30a94ee129e74baa522d0d56797e82d", "span_id": "3cfec3006f595b49"}
+ok
+test_state_generation_rejects_stale_claim_even_after_return_to_same_status (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_state_generation_rejects_stale_claim_even_after_return_to_same_status) ... ok
+test_state_write_failure_preserves_input_and_durable_audit (tests.test_approval_consistency_postgres.TestPostgresApprovalConsistency.test_state_write_failure_preserves_input_and_durable_audit) ... ok
+
+----------------------------------------------------------------------
+Ran 46 tests in 15.629s
+
+OK
+/usr/local/bin/python -m pip_audit -r requirements.lock
+No known vulnerabilities found
+/usr/local/bin/python -m bandit -q -r revguard scripts
+[tester]	WARNING	nosec encountered (B105), but no failed test on file revguard/matrix_team.py:345
+[tester]	WARNING	nosec encountered (B105), but no failed test on file revguard/matrix_team.py:511
+[tester]	WARNING	nosec encountered (B105), but no failed test on file revguard/matrix_team.py:513
+[tester]	WARNING	nosec encountered (B608), but no failed test on file revguard/postgres_store.py:153
+[manager]	WARNING	Test in comment: literal is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: allowlist is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B608), but no failed test on file revguard/runtime_barrier.py:149
+[tester]	WARNING	nosec encountered (B608), but no failed test on file revguard/store.py:190
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:86
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:87
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:88
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:89
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:92
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:93
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:94
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:97
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:98
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:86
+[tester]	WARNING	nosec encountered (B105), but no failed test on file scripts/configure_matrix_worker_rooms.py:96

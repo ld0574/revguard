@@ -798,6 +798,7 @@ export function App() {
   const teamRunning = !terminalCase && ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
   const teamFailure = snapshot?.case?.team_run?.status === "FAILED" ? snapshot.case.team_run : null;
   const recoveryRequired = snapshot?.case?.status === "RECOVERY_REQUIRED";
+  const executionStartRecoverable = snapshot?.case?.status === "READY_TO_EXECUTE" && Boolean(teamFailure);
   const rollbackRecoverable = recoveryRequired || Boolean(
     teamFailure
     && snapshot?.case?.status === "FAILED"
@@ -892,7 +893,7 @@ export function App() {
     <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} monitoring={tab === "observability"} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
       {tab !== "observability" && !error && recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>资金结果需要核对</strong><small>相关写入已暂停。先核对原操作是否提交，再恢复未完成阶段。</small></div><button onClick={onResume} disabled={busy}>核对并恢复</button></div>}
-      {tab !== "observability" && !error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
+      {tab !== "observability" && !error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{executionStartRecoverable ? "审批已通过，执行尚未启动" : `${skillLabel(teamFailure.current_stage)}未完成`}</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable || executionStartRecoverable ? onResume : onLocateFailure} disabled={busy}>{executionStartRecoverable ? "核对并恢复执行" : rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
       {tab !== "observability" && !error && teamStale && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；恢复会先查询原资金操作，确认结果后再继续。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "核对并恢复"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main>{tab !== "observability" && <><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /></>}

@@ -1,0 +1,40 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.71kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 217B done
+#3 DONE 0.0s
+
+#4 [demo-ui-build 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 1.03kB done
+#5 DONE 0.0s
+
+#6 [demo-ui-build 5/6] COPY demo-ui/ ./
+#6 CACHED
+
+#7 [demo-ui-build 2/6] WORKDIR /ui
+#7 CACHED
+
+#8 [demo-ui-build 3/6] COPY demo-ui/package.json demo-ui/package-lock.json ./
+#8 CACHED
+
+#9 [demo-ui-build 4/6] RUN npm ci
+#9 CACHED
+
+#10 [demo-ui-build 6/6] RUN npm run build
+#10 CACHED
+
+#11 exporting to image
+#11 exporting layers 0.0s done
+#11 writing image sha256:aa229262e54a1cf77dabd4e1bb181404c24473381636e7930a4403f8a5d25a73 done
+#11 naming to docker.io/library/revguard-approval-ui:0.5.5 done
+#11 DONE 0.0s

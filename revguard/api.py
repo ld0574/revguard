@@ -34,7 +34,7 @@ from .hitl import (
 from .matrix_team import MatrixSettings, MatrixTeamRunner
 from .mcp_server import hydrate_server_secrets
 from .mcp_team import McpTeamRunner
-from .mocks import ToolGateway
+from .mocks import ToolError, ToolGateway
 from .models import Case, CaseStatus, new_id, utc_now
 from .money_journal import RecoveryRequired
 from .observability import HTTP_METRICS, configure_structured_logging, prometheus_text
@@ -57,7 +57,7 @@ from .security import (
 )
 from .skill_runtime import SKILL_ACTORS, SkillInvocationError, validate_skill_request
 from .skills import list_skills
-from .state_machine import transition_case
+from .state_machine import StaleCaseTransition, transition_case
 from .store import create_store
 from .trace import Tracer
 
@@ -82,7 +82,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.4")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.5")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -348,6 +348,10 @@ async def _run_team_background(case_id: str, phase: str) -> None:
             await runner.resume_rollback(case)
         else:
             await runner.execute_after_approval(case)
+    except StaleCaseTransition:
+        LOGGER.warning("team_state_claim_superseded", extra={"revguard_fields": {
+            "case_id": case_id, "phase": phase,
+        }})
     except Exception as exc:
         LOGGER.exception("team_run_failed", extra={"revguard_fields": {
             "case_id": case_id, "phase": phase, "error_type": type(exc).__name__,
@@ -367,6 +371,12 @@ async def _run_team_background(case_id: str, phase: str) -> None:
                 latest["recovery_phase"] = "ROLLBACK" if phase == "ROLLBACK" or (
                     (store.get_verification(case_id) or {}).get("rollback_required") is True
                 ) else "EXECUTION"
+                store.save_case(latest)
+            elif latest.get("status") == CaseStatus.READY_TO_EXECUTE.value:
+                latest["team_run"] = {
+                    **(latest.get("team_run") or {}), "status": "FAILED",
+                    "updated_at": utc_now(), "error": {"message": "审批已保存，执行启动失败；请核对并恢复。"},
+                }
                 store.save_case(latest)
             elif latest.get("status") not in {CaseStatus.CLOSED.value, CaseStatus.ROLLED_BACK.value,
                                               CaseStatus.FAILED.value, CaseStatus.RECOVERY_REQUIRED.value}:
@@ -804,7 +814,7 @@ async def resume_interrupted_team_run(
     )
     recovering_execution = not recovering_rollback and (
         recovery_state or (
-            case.get("status") in {CaseStatus.EXECUTING.value, CaseStatus.VERIFYING.value}
+            case.get("status") in {CaseStatus.READY_TO_EXECUTE.value, CaseStatus.EXECUTING.value, CaseStatus.VERIFYING.value}
             and run.get("status") in ACTIVE_TEAM_RUN_STATUSES | {"FAILED"}
         )
     )
@@ -817,7 +827,8 @@ async def resume_interrupted_team_run(
             ),
         })
     age_seconds = _team_run_age_seconds(case)
-    if recovering_execution and not recovery_state and (
+    start_failed = case.get("status") == CaseStatus.READY_TO_EXECUTE.value and run.get("status") == "FAILED"
+    if recovering_execution and not recovery_state and not start_failed and (
         age_seconds is None or age_seconds < TEAM_RUN_STALE_AFTER_SECONDS
     ):
         raise HTTPException(409, {
@@ -919,7 +930,7 @@ async def resume_interrupted_team_run(
     # Keep the recoverable state when capability renewal or persistence fails.
     # Changing to EXECUTING earlier would make an immediate corrected retry
     # fail the active/stale gate despite no background execution being queued.
-    if recovering_execution and case.get("status") != CaseStatus.EXECUTING.value:
+    if recovering_execution and case.get("status") not in {CaseStatus.READY_TO_EXECUTE.value, CaseStatus.EXECUTING.value}:
         if case.get("status") != CaseStatus.RECOVERY_REQUIRED.value:
             transition_case(store, case, CaseStatus.RECOVERY_REQUIRED, "写后核验中断，先核对原操作")
         transition_case(store, case, CaseStatus.EXECUTING, "原操作已在主库完成对账")
@@ -991,34 +1002,30 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
             "auth_method": human.auth_method,
         },
     ) as span:
-        resp = gateway.call("workflow.decide_approval", {
-            "approval_id": approval["approval_id"],
-            "decision": payload.decision,
-            "comment": payload.comment,
-            "human_subject": human.sub,
-            "human_display_name": human.display_name,
-            "human_auth_time": human.auth_time,
-            "human_auth_method": human.auth_method,
-        }, case_id=case_id, actor=human.actor, scope=["approval:decide"])
+        try:
+            decided = gateway.decide_case_approval(case, {
+                "approval_id": approval["approval_id"],
+                "decision": payload.decision,
+                "comment": payload.comment,
+                "human_subject": human.sub,
+                "human_display_name": human.display_name,
+                "human_auth_time": human.auth_time,
+                "human_auth_method": human.auth_method,
+            }, actor=human.actor, assertion_ref=secret_fingerprint(proof.assertion_id))
+        except (StaleCaseTransition, ToolError) as exc:
+            raise HTTPException(409, {"code": "APPROVAL_CONFLICT", "message": str(exc)}) from exc
+        except Exception as exc:
+            LOGGER.exception("approval_commit_unconfirmed", extra={"revguard_fields": {
+                "case_id": case_id, "error_type": type(exc).__name__,
+            }})
+            raise HTTPException(503, {
+                "code": "APPROVAL_UNCONFIRMED",
+                "message": "审批提交结果未确认，请刷新案件核对；仍待审批时可重新提交，已批准时使用恢复入口。",
+            }) from exc
         span["outputs"] = {
-            "status": (resp.get("data") or {}).get("status"),
-            "human_subject": human.sub,
+            "status": decided["status"], "human_subject": human.sub,
             "assertion_id_ref": secret_fingerprint(proof.assertion_id),
         }
-    if not resp["success"]:
-        raise HTTPException(400, resp["error"])
-    decided = resp["data"]
-    decided["human_assertion_id_ref"] = secret_fingerprint(proof.assertion_id)
-    store.save_approval({"approval_id": decided["approval_id"], "case_id": case_id, **decided})
-    store.audit(case_id, human.actor, "APPROVAL_DECIDED", {
-        "decision": decided["status"],
-        "identity_verified": True,
-        "human_subject": human.sub,
-        "human_display_name": human.display_name,
-        "human_auth_time": human.auth_time,
-        "human_auth_method": human.auth_method,
-        "assertion_id_ref": secret_fingerprint(proof.assertion_id),
-    })
 
     public_approval = {key: value for key, value in decided.items()
                        if key != "approval_token"}
@@ -1027,10 +1034,6 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
     )
 
     if decided["status"] != "APPROVED":
-        store.cancel_open_agent_tasks(
-            case_id, actor=human.actor, reason="人工审批驳回，禁止继续执行"
-        )
-        transition_case(store, case, CaseStatus.REJECTED, "人工审批驳回", actor=human.actor)
         if case.get("execution_mode") in {"MCP_TEAM", "AGENTTEAMS_MATRIX"}:
             await _team_runner_for_case(case).finalize_terminal(case, approval=decided)
         else:
@@ -1041,17 +1044,14 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
         return {"case": store.get_case(case_id), "approval": public_approval,
                 "verification": None}
 
-    transition_case(store, case, CaseStatus.READY_TO_EXECUTE,
-                    "人工审批通过", actor=human.actor)
     if case.get("execution_mode") == "AGENTTEAMS_MATRIX":
-        case["team_run"] = {
-            **(case.get("team_run") or {}),
-            "status": "QUEUED", "phase": "EXECUTION",
-            "current_stage": None, "total_tasks": 20,
-            "queued_at": utc_now(), "error": None,
-        }
-        store.save_case(case)
-        _spawn_team_background(case_id, "EXECUTION")
+        try:
+            _spawn_team_background(case_id, "EXECUTION")
+        except Exception as exc:
+            raise HTTPException(503, {
+                "code": "APPROVAL_EXECUTION_PENDING",
+                "message": "审批已保存，执行尚未启动；请刷新查看并在运行过期后核对恢复。",
+            }) from exc
         response.status_code = 202
         return {"case": store.get_case(case_id), "approval": public_approval,
                 "verification": None}
