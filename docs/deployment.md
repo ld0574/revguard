@@ -81,12 +81,16 @@ REVGUARD_RESET_ON_START=true docker compose up -d --build
 `seed_demo.py` 的语义：
 
 - 默认模式：已有案件保持原状态，只补充不存在的 Golden Case；
-- `--reset`：原子清空案件、证据、审批、执行、验证、审计和 Trace，再 seed；
+- `--reset`：先完整读取 Golden fixtures，再在同一数据库事务中清空运行数据并播种；播种失败回滚全部数据库变更；
 - `--gateway-state`：reset 时同步删除指定的 ToolGateway 状态文件。
 
 录制中如果人工驳回了某个 Golden Case，不需要重置整套案件库。WebUI 的“重新准备当前案件”调用
 `POST /api/v1/cases/{case_id}/reprepare`，只清理该案件的证据、任务、Trace、审批与模拟写入，保留原审批审计链，
 再从对应 Golden Case 恢复为 `CREATED`；该端点仅在 `REVGUARD_ENABLE_RECORDING_UI=true` 且由 operator 调用时开放。
+
+API 全量重置和单案重新准备持有独占运行锁，与其他业务请求、HTTP/MCP Skill 和后台任务互斥；存在冲突返回 409。后台任务在请求返回后仍持有共享锁，取消时释放。主库中的活动运行、资金恢复状态、未决操作和冻结通道也会拒绝清理，不能靠进程重启绕过。锁不可用时请求返回 503，`/api/v1/health/live` 保持独立。
+
+这些运行锁协调应用入口，不约束直接操作数据库的管理员或独立 seed CLI；CLI 只用于停机后的隔离演示库。PostgreSQL 使用独立主库会话，不占用业务连接池；SQLite 使用稳定的 `.runtime.lock` 文件，不能在运行中删除。运行锁不能替代数据库 HA 隔离或资金 journal 的恢复门禁。
 
 只在隔离容器中设置故障变量。当前版本会重查一次短暂的 Verifier 读取偏差，不会因此冲销正确账务；`REVGUARD_VERIFICATION_TAMPER_AMOUNT=1` 的正确结果应为正常闭环。若要验证真实错记后的补偿，使用独立测试项目和资金恢复测试：
 

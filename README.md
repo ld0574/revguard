@@ -196,7 +196,7 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
 - `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
 - `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
-- `POST /api/v1/skills/{skill}/invoke`：版本化 Skill 调用入口；
+- `POST /api/v1/skills/{skill}/invoke`：版本化 Skill 调用入口，必须提供 `X-RevGuard-Task-ID` 并匹配服务端派发快照；
 - `POST /api/v1/tools/call`：默认关闭的历史兼容入口；启用后也只允许 Evidence 身份调用只读工具；
 - `GET /api/v1/cases?limit=50&cursor=...`：稳定 keyset 分页；
 - `GET /api/v1/cases/{id}/trace`：Trace 回放；

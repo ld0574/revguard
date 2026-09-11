@@ -7,6 +7,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from revguard import skills, telemetry
+from revguard.agent_bridge import execute_agent_task
 from revguard.mocks import ToolError
 from revguard.models import CaseStatus
 from revguard.money_journal import MoneyTransaction
@@ -147,6 +148,25 @@ class TestMoneyRecovery(unittest.IsolatedAsyncioTestCase):
             op = tx.execute("SELECT generation,status FROM money_operations").fetchone()
         self.assertEqual(op["generation"], 2)
         self.assertEqual(op["status"], "NOT_COMMITTED")
+        # The gateway's uncertainty must survive the StageTask bridge. It must
+        # not be masked by a secondary persistence error or become retryable.
+        task = next(t for t in self.store.list_agent_tasks(self.case_id)
+                    if t["skill_name"] == "LedgerAdjustSkill")
+        self.assertEqual(task["status"], "RESULT_UNKNOWN")
+        results = self.store.list_agent_task_results(task["task_id"])
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["status"], "RESULT_UNKNOWN")
+        with self.assertRaisesRegex(ValueError, "状态不允许执行"):
+            execute_agent_task(
+                task_id=task["task_id"], case_id=self.case_id,
+                skill_name=task["skill_name"], skill_input=task["input"],
+                actor=task["assigned_actor"], gateway=self.gateway, store=self.store,
+            )
+        with self.assertRaisesRegex(ValueError, "不允许重派"):
+            self.store.replace_agent_task(
+                task["task_id"], {**task, "task_id": "TASK-UNSAFE-REPLACEMENT"},
+                actor="revguard-orchestrator", reason="unsafe retry",
+            )
 
     async def test_transient_read_mismatch_does_not_reverse_good_posting(self):
         self.gateway._verification_tamper_amount = Decimal("1")

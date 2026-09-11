@@ -12,6 +12,7 @@ import json
 from .json_schema import validate_json
 from .mocks import ToolError
 from .models import CaseStatus, TaskStatus, new_id, utc_now
+from .runtime_barrier import acquire_runtime_lease
 from .skill_runtime import SKILL_ACTORS, invoke_skill
 from .skills import SKILL_REGISTRY
 
@@ -110,6 +111,20 @@ def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
                        skill_input: dict, actor: str, gateway, store,
                        correlation: dict | None = None,
                        execution_input: dict | None = None) -> dict:
+    # Covers scoped MCP servers as well as the HTTP adapter, including a
+    # Worker paused between snapshot validation and its first tool invocation.
+    with acquire_runtime_lease(store):
+        return _execute_agent_task(
+            task_id=task_id, case_id=case_id, skill_name=skill_name,
+            skill_input=skill_input, actor=actor, gateway=gateway, store=store,
+            correlation=correlation, execution_input=execution_input,
+        )
+
+
+def _execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
+                        skill_input: dict, actor: str, gateway, store,
+                        correlation: dict | None = None,
+                        execution_input: dict | None = None) -> dict:
     """Execute one server-bound StageTask through REST or MCP.
 
     Transport adapters are deliberately thin: this function owns the common

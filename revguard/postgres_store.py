@@ -104,7 +104,7 @@ class PostgresStore:
             self._read_pool.close()
         self._write_pool.close()
 
-    def reset(self) -> None:
+    def reset(self, *, seed_cases: list[tuple[dict, str]] = ()) -> None:
         if os.getenv("REVGUARD_ALLOW_DATABASE_RESET", "false").lower() != "true":
             raise RuntimeError(
                 "PolarDB 正式审计库禁止 Demo reset；仅独立合成录制库可显式设置 "
@@ -117,6 +117,9 @@ class PostgresStore:
             conn.execute("DROP SCHEMA public CASCADE")
             conn.execute("CREATE SCHEMA public")
             conn.execute(self._core_schema())
+            for case, source in seed_cases:
+                self._save_case_with_conn(conn, case)
+                self._audit_with_conn(conn, case["case_id"], "seed", "CASE_CREATED", {"source": source})
 
     def reset_case(self, case_id: str) -> None:
         """清理一个案件的可重跑产物，保留案件行和审计链。"""
@@ -134,11 +137,15 @@ class PostgresStore:
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
+        with self._conn() as conn:
+            self._save_case_with_conn(conn, case_dict)
+
+    @staticmethod
+    def _save_case_with_conn(conn, case_dict: dict) -> None:
         claim = case_dict.get("claim") or {}
         created_at = case_dict.get("created_at") or utc_now()
         updated_at = case_dict.get("updated_at") or utc_now()
-        with self._conn() as conn:
-            conn.execute(
+        conn.execute(
                 """INSERT INTO cases
                    (case_id, data, status, claim_actual_amount,
                     claim_expected_amount, currency, created_at, updated_at)
@@ -364,7 +371,7 @@ class PostgresStore:
                             result: dict | None = None,
                             skill_receipt: str | None = None,
                             error: dict | None = None) -> tuple[dict, dict]:
-        if status not in {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL"}:
+        if status not in {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL", "RESULT_UNKNOWN"}:
             raise ValueError(f"非法 StageResult 状态: {status}")
         with self._conn() as conn, conn.transaction():
             row = conn.execute(

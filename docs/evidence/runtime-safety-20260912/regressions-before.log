@@ -1,0 +1,41 @@
+{"timestamp": "2026-09-11T18:26:34.252405Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-11T18:26:34.331313Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/app/demo-ui/dist/client"}
+test_stale_executor_is_fenced_after_reconciliation (tests.test_money_recovery.TestMoneyRecovery.test_stale_executor_is_fenced_after_reconciliation) ... FAIL
+test_10_versioned_skill_invoke_contract (tests.test_api.TestApiSmoke.test_10_versioned_skill_invoke_contract) ... {"timestamp": "2026-09-11T18:26:35.031879Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-DFF08253", "method": "POST", "path": "/api/v1/skills/CaseNormalizeSkill/invoke", "status_code": 200, "duration_ms": 6, "trace_id": "2bba0c8842480781f79ffe971f36a25f", "span_id": "e6fb4ea74167d9cb"}
+FAIL
+
+======================================================================
+FAIL: test_stale_executor_is_fenced_after_reconciliation (tests.test_money_recovery.TestMoneyRecovery.test_stale_executor_is_fenced_after_reconciliation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/app/tests/test_money_recovery.py", line 155, in test_stale_executor_is_fenced_after_reconciliation
+    self.assertEqual(task["status"], "RESULT_UNKNOWN")
+AssertionError: 'RUNNING' != 'RESULT_UNKNOWN'
+- RUNNING
++ RESULT_UNKNOWN
+
+
+======================================================================
+FAIL: test_10_versioned_skill_invoke_contract (tests.test_api.TestApiSmoke.test_10_versioned_skill_invoke_contract)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_api.py", line 380, in test_10_versioned_skill_invoke_contract
+    self.assertEqual(unbound.status_code, 422, unbound.text)
+AssertionError: 200 != 422 : {"success":true,"data":{"entities":{"partner_id":"AGT-10001","partner_name":null,"order_id":"EZ202608001","contract_id":null},"missing_fields":[],"claim":{}},"error":null,"skill_receipt":"SKR-F600F9E7","skill":"CaseNormalizeSkill","version":"1.0.0"}
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.701s
+
+FAILED (failures=2)
