@@ -3,7 +3,7 @@
   "info": {
     "title": "RevGuard API",
     "description": "面向企业渠道佣金结算异常的多智能体治理平台",
-    "version": "0.5.0"
+    "version": "0.5.1"
   },
   "paths": {
     "/api/v1/cases/{case_id}/human-action/assertion": {
@@ -1563,6 +1563,50 @@
         "summary": "Engineering Evidence",
         "description": "Recording-safe engineering and value evidence with data provenance.",
         "operationId": "engineering_evidence_api_v1_ops_evidence_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/observability": {
+      "get": {
+        "summary": "Observability Dashboard",
+        "operationId": "observability_dashboard_api_v1_ops_observability_get",
         "parameters": [
           {
             "name": "authorization",

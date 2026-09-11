@@ -32,6 +32,11 @@ def main():
     if not password.exists():
         password.write_text(secrets.token_urlsafe(24))
     password.chmod(0o600)
+    public_token = directory / "grafana-public-token"
+    if not public_token.exists():
+        public_token.write_text("")
+    # This is the selected dashboard's public sharing identifier, not an admin key.
+    public_token.chmod(0o644)
     lines = [line for line in lines if not line.startswith("REVGUARD_API_KEYS_JSON=")]
     lines.append("REVGUARD_API_KEYS_JSON=" + json.dumps(principals, separators=(",", ":")))
     path.write_text("\n".join(lines) + "\n")

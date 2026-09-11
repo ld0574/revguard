@@ -1,6 +1,6 @@
 # Prototype Instructions
 
-Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
+Run all builds, tests and preview services in Docker on `10.10.10.202`. Use the browser to inspect that remote preview; do not run a local server. Local files are for editing and synchronization only.
 
 Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal. When the user gives durable prototype-specific design feedback, preferences, or decisions, record them in `AGENTS.md`.
 
@@ -19,6 +19,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
   constraints, Agent responsibility matrix, and immutable audit trail from the approved fusion.
 - The UI must disclose synthetic business data and real executable workflow at all times.
 - Core actions must use the RevGuard API; do not hard-code a successful or rolled-back outcome.
+- The Grafana tab is a full-width, read-only view of all cases. Hide selected-case controls there, retain the synthetic-data disclosure, and never substitute static numbers for unavailable telemetry.
 - Use dark navy, cyan structure, orange governed action, red verification failure, and green safe
   restoration. Avoid generic dashboard KPI grids, chat UI, decorative graphs, and cyberpunk excess.
 - Keep Agent task rows dense: transport labels such as “MCP 网关” are compact metadata, while

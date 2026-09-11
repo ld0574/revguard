@@ -1,0 +1,17 @@
+{
+  "Dockerfile": "fbd404a28461152c68d38038a57b3d24d9818c03191e08a99dc0ecd8d71a5ad2",
+  "requirements.txt": "251a0d9691ad4d814601fc3c7a31187a19067a15ed1d76cce8b9b5da8d2676de",
+  "docker-compose.yml": "20f6267e4c028421da5da165b8a9335148c1ceda6041678f94113f5a48929c32",
+  "docker-compose.observability.yml": "c0e937a9a138201ea70b64380f3ffab9097e8c7c9f407f3fbb73fdd47263afc0",
+  "revguard/api.py": "5644f15cf698a81f8b5723f1d863899655c1dc127bf26741278faaba7fa777ad",
+  "revguard/grafana_embed.py": "055820d2da3cdced34019cca59a49fd1d6c947c8d1669fe81261de4fa5f047ce",
+  "demo-ui/src/App.jsx": "d0a06e83c640d80cf0a3fede278115054fbcfe2fad84f381f750e3e6791e7ebf",
+  "demo-ui/src/ObservabilityView.jsx": "1cedb3db08176c8eec1191ab56b3ffae5b14d09779cfea3126d51ecbf94f330f",
+  "demo-ui/src/styles.css": "f347193c1a71cd6e1ab1f409c0633c9b541c455fa6d64650ce00922b2b7e3e88",
+  "demo-ui/index.html": "a81c72493b5f8e5357205b4e621caf9bcb817195a312920f7cab91841d8c654a",
+  "config/observability/grafana/dashboards/revguard.json": "680a5c2dd6172df7d36d462d0dea5dae070984e54a0849efc5e1a96d4f1bc3f4",
+  "scripts/prepare_observability.py": "1819b5e5b9d1391246e97a95bd88280d095c40d7de78e07dff09638dedc396e5",
+  "scripts/prepare_grafana_embed.py": "d1010bd33ce993245850f3970b3e49c2c869409932c565d00cb3b781c726c530",
+  "scripts/deploy_observability.sh": "8273ecd92c4ea7b03b49b8c934abfcdec2415bb280fae45475404186592a2fee",
+  "tests/test_grafana_embed.py": "a79c99666c19ccf360af71310c79e53986aba030c02c90a468367163998e0439"
+}
