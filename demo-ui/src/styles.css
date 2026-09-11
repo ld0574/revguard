@@ -48,6 +48,9 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .health-dot { display: inline-block; width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-right: 6px; }
 .icon-button { display: flex; align-items: center; gap: 6px; color: #c9dceb; background: transparent; border: 1px solid var(--line-bright); border-radius: 6px; padding: 7px 9px; cursor: pointer; }
 .icon-button:hover { background: var(--surface-3); }
+.recording-again { display: block; margin: 5px auto 0; padding: 3px 6px; border: 0; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.recording-again:hover { color: var(--cyan); }
+.recording-again:disabled { opacity: .5; cursor: wait; }
 .status-mini { font: 700 9px/1 InterVariable, sans-serif; max-width: 145px; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 
 main { padding: 10px; }

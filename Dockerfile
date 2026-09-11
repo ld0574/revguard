@@ -17,7 +17,7 @@ USER root
 
 ARG PIP_INDEX_URL=https://pypi.org/simple
 
-ARG REVGUARD_VERSION=0.5.3
+ARG REVGUARD_VERSION=0.5.4
 LABEL org.opencontainers.image.title="RevGuard" \
       org.opencontainers.image.version="$REVGUARD_VERSION"
 

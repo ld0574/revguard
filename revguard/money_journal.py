@@ -86,11 +86,11 @@ class MoneyTransaction:
         result["result"] = json.loads(result["result"]) if result["result"] else None
         return result
 
-    def audit(self, case_id: str, event: str, detail: dict) -> None:
+    def audit(self, case_id: str, event: str, detail: dict, *, actor: str = "revguard-executor") -> None:
         sql = "INSERT INTO audit_events(case_id,actor,event,detail,created_at) VALUES (?,?,?,?,?)"
         if self.postgres:
             sql = sql.replace("VALUES (?,?,?,?,?)", "VALUES (?,?,?,?::jsonb,?)")
-        self.execute(sql, (case_id, "revguard-executor", event,
+        self.execute(sql, (case_id, actor, event,
                            json.dumps(detail), utc_now()))
 
     def execution(self, record: dict) -> None:

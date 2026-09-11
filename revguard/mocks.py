@@ -95,13 +95,20 @@ class ToolGateway:
         self._execution_results: dict[str, dict] = {}
         self._recording_epochs: dict[str, int] = {}
         self._in_transaction = False
-        self._load_state()
+        self._initial_state = copy.deepcopy(self._state_snapshot())
+        self._initial_finance_fail_times = finance_fail_times
         self._owns_store = store is None
         if store is None:
             from .store import Store
             store = Store(str(self._state_path) + ".money.sqlite3" if self._state_path else ":memory:")
         self.journal = MoneyJournal(store)
-        if not self._execution_results and not self._owns_store:
+        with self.journal.transaction() as tx:
+            durable_state = tx.state()
+        if durable_state is None:
+            self._load_state()
+        else:
+            self._apply_state(durable_state)
+        if durable_state is None and not self._execution_results and not self._owns_store:
             for case in store.list_cases():
                 for execution in store.list_executions(case["case_id"]):
                     if execution.get("idempotency_key"):
@@ -279,35 +286,64 @@ class ToolGateway:
 
     def reset_case(self, case_id: str) -> None:
         """Reset mutable mock-side effects for one recording case only."""
-        source = f"REVGUARD:{case_id}"
         with self._lock:
             with self.journal.transaction() as tx:
-                self._apply_state(tx.state())
-                self._recording_epochs[case_id] = self._recording_epochs.get(case_id, 0) + 1
-                self._execution_results = {k: v for k, v in self._execution_results.items() if v.get("case_id") != case_id}
-                action_ids = {
-                    action_id for action_id, draft in self._adjustments.items()
-                    if draft.get("case_id") == case_id
-                }
-                self._adjustments = {
-                    action_id: draft
-                    for action_id, draft in self._adjustments.items()
-                    if draft.get("case_id") != case_id
-                }
-                self._ledger = [
-                    entry for entry in self._ledger
-                    if entry.get("source") != source
-                ]
-                self._idempotency = {
-                    key: action_id
-                    for key, action_id in self._idempotency.items()
-                    if not key.startswith(f"{case_id}:")
-                    and action_id not in action_ids
-                }
-                # Keep receipts and outbox entries as gateway-level history; they
-                # are not reused for authorization and remain useful when auditing
-                # the rejected attempt before the new run.
-                tx.save_state(self._state_snapshot())
+                state = self._reset_case_state(tx.state(), case_id)
+                tx.save_state(state)
+            self._apply_state(state)
+
+    @staticmethod
+    def _reset_case_state(state: dict, case_id: str) -> dict:
+        state = copy.deepcopy(state)
+        epochs = state.setdefault("recording_epochs", {})
+        epochs[case_id] = epochs.get(case_id, 0) + 1
+        state["execution_results"] = {k: v for k, v in state.get("execution_results", {}).items()
+                                      if v.get("case_id") != case_id}
+        actions = {k for k, v in state.get("adjustments", {}).items() if v.get("case_id") == case_id}
+        state["adjustments"] = {k: v for k, v in state.get("adjustments", {}).items() if k not in actions}
+        state["ledger"] = [v for v in state["ledger"] if v.get("source") != f"REVGUARD:{case_id}"]
+        state["idempotency"] = {k: v for k, v in state.get("idempotency", {}).items()
+                                 if not k.startswith(f"{case_id}:") and v not in actions}
+        return state
+
+    def reprepare_case(self, fresh_case: dict, *, expected_case: dict, actor: str) -> None:
+        """One database commit for the recording generation, gateway and audit.
+
+        The HTTP caller also holds the exclusive runtime lease. Files belong
+        to their recording generation and require no deletion for this commit.
+        """
+        case_id = fresh_case["case_id"]
+        with self._lock:
+            with self.journal.transaction() as tx:
+                row = tx.execute("SELECT data FROM cases WHERE case_id=?", (case_id,)).fetchone()
+                current = json.loads(row["data"]) if row and isinstance(row["data"], str) else row["data"] if row else None
+                if current != expected_case or fresh_case.get("status") != "CREATED":
+                    raise ValueError("案件快照已变化，拒绝重新准备")
+                state = self._reset_case_state(tx.state(), case_id)
+                tasks = tx.execute("SELECT task_id FROM agent_tasks WHERE case_id=? AND status IN "
+                                   "('PENDING','RUNNING','WAITING_TOOL','WAITING_HUMAN','FAILED_RETRYABLE')", (case_id,)).fetchall()
+                tx.save_state(state)
+                self.journal.store._reset_case_with_conn(tx.conn, case_id)
+                self.journal.store._save_case_with_conn(tx.conn, fresh_case)
+                tx.audit(case_id, "DEMO_CASE_REPREPARED", {
+                    "previous_status": current["status"],
+                    "previous_run_id": (current.get("team_run") or {}).get("run_id"),
+                    "previous_recording_id": current.get("recording_id"),
+                    "recording_id": fresh_case["recording_id"],
+                    "cancelled_task_ids": [r["task_id"] for r in tasks],
+                    "synthetic_business_data": True, "audit_history_preserved": True,
+                }, actor=actor)
+            self._apply_state(state)
+
+    def reset_recording(self, seed_cases: list[tuple[dict, str]], *, actor: str | None = None) -> None:
+        """Commit the full fixture and gateway baseline before updating cache."""
+        with self._lock:
+            baseline = copy.deepcopy(self._initial_state)
+            reset_audit = (actor, {"synthetic_business_data": True,
+                                   "verification_tamper_amount": str(self._verification_tamper_amount)}) if actor else None
+            self.journal.store.reset(seed_cases=seed_cases, gateway_state=baseline, reset_audit=reset_audit)
+            self._apply_state(baseline)
+            self._finance_fail_left = self._initial_finance_fail_times
 
     # ------------------------------------------------------------------- CRM
     def _tool_crm_get_order(self, p: dict, **_kw) -> dict:

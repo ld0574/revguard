@@ -104,7 +104,8 @@ class PostgresStore:
             self._read_pool.close()
         self._write_pool.close()
 
-    def reset(self, *, seed_cases: list[tuple[dict, str]] = ()) -> None:
+    def reset(self, *, seed_cases: tuple[tuple[dict, str], ...] | list[tuple[dict, str]] = (),
+              gateway_state: dict | None = None, reset_audit: tuple[str, dict] | None = None) -> None:
         if os.getenv("REVGUARD_ALLOW_DATABASE_RESET", "false").lower() != "true":
             raise RuntimeError(
                 "PolarDB 正式审计库禁止 Demo reset；仅独立合成录制库可显式设置 "
@@ -117,9 +118,21 @@ class PostgresStore:
             conn.execute("DROP SCHEMA public CASCADE")
             conn.execute("CREATE SCHEMA public")
             conn.execute(self._core_schema())
+            if gateway_state is not None:
+                from .money_journal import MoneyTransaction
+                tx = MoneyTransaction(conn, postgres=True)
+                tx.execute("INSERT INTO money_gateway_state(singleton,data) VALUES(1,?)",
+                           (json.dumps(gateway_state),))
+                tx.ledger(gateway_state)
             for case, source in seed_cases:
                 self._save_case_with_conn(conn, case)
                 self._audit_with_conn(conn, case["case_id"], "seed", "CASE_CREATED", {"source": source})
+                if reset_audit:
+                    from .money_journal import MoneyTransaction
+                    MoneyTransaction(conn, postgres=True).audit(
+                        case["case_id"], "DEMO_RESET",
+                        {**reset_audit[1], "recording_id": case.get("recording_id")}, actor=reset_audit[0],
+                    )
 
     def reset_case(self, case_id: str) -> None:
         """清理一个案件的可重跑产物，保留案件行和审计链。"""
@@ -128,12 +141,16 @@ class PostgresStore:
         # deleted in FK-safe order and the case itself is replaced by the
         # caller with a fresh Golden Case snapshot.
         with self._write_pool.connection() as conn, conn.transaction():
-            for table in (
-                "trace_spans", "agent_task_results", "agent_tasks",
-                "verifications", "executions", "approvals", "evidence",
-            ):
-                # table is from the literal allowlist above
-                conn.execute(f"DELETE FROM {table} WHERE case_id=%s", (case_id,))  # nosec B608
+            self._reset_case_with_conn(conn, case_id)
+
+    @staticmethod
+    def _reset_case_with_conn(conn, case_id: str) -> None:
+        for table in (
+            "trace_spans", "agent_task_results", "agent_tasks",
+            "verifications", "executions", "approvals", "evidence",
+        ):
+            # table is from the literal allowlist above
+            conn.execute(f"DELETE FROM {table} WHERE case_id=%s", (case_id,))  # nosec B608
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:

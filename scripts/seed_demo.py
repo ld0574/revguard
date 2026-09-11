@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from revguard.models import Case, CaseStatus
+from revguard.models import Case, CaseStatus, new_id
 from revguard.store import Store
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,7 +50,8 @@ def load_golden_case(case_id: str) -> dict | None:
     return None
 
 
-def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]:
+def seed_store(store, *, reset: bool = False, quiet: bool = False, gateway=None,
+               reset_actor: str | None = None) -> list[dict]:
     """Seed any Store-compatible backend without taking ownership of its lifecycle."""
     # Read and validate every fixture before touching the existing recording.
     fixtures = [(fp, json.loads(fp.read_text(encoding="utf-8")))
@@ -58,8 +59,14 @@ def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]
     if not fixtures:
         raise ValueError("Golden fixtures are empty; refusing to seed or reset")
     if reset:
-        prepared = [(case_from_spec(spec), fp.name) for fp, spec in fixtures]
-        store.reset(seed_cases=prepared)
+        prepared = [({**case_from_spec(spec), "recording_id": new_id("REC")}, fp.name)
+                    for fp, spec in fixtures]
+        if gateway is None:
+            store.reset(seed_cases=prepared)
+        else:
+            if gateway.journal.store is not store:
+                raise ValueError("Recording gateway and case store must share the same database")
+            gateway.reset_recording(prepared, actor=reset_actor)
         if not quiet:
             print(f"  reset and seeded {len(prepared)} cases atomically")
         return [case for case, _ in prepared]
@@ -84,7 +91,12 @@ def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]
 def seed(db_path: str, *, reset: bool = False, quiet: bool = False) -> list[dict]:
     store = Store(db_path)
     try:
-        return seed_store(store, reset=reset, quiet=quiet)
+        if reset:
+            from revguard.mocks import ToolGateway
+            gateway = ToolGateway(ROOT / "data" / "fixtures", store=store)
+        else:
+            gateway = None
+        return seed_store(store, reset=reset, quiet=quiet, gateway=gateway)
     finally:
         store.close()
 
@@ -95,12 +107,8 @@ if __name__ == "__main__":
     parser.add_argument("--reset", action="store_true",
                         help="先原子清空案件/证据/审批/执行/验证/审计/Trace")
     parser.add_argument("--gateway-state", default="",
-                        help="--reset 时同步删除 ToolGateway 持久化状态文件")
+                        help="兼容旧参数；重置以数据库为准，旧 JSON 保留为历史文件")
     args = parser.parse_args()
     print(f"Seeding demo cases into {args.db}")
     seed(args.db, reset=args.reset)
-    if args.reset and args.gateway_state:
-        gateway_state = Path(args.gateway_state).resolve()
-        if gateway_state.exists() and gateway_state.is_file():
-            gateway_state.unlink()
     print("Done.")

@@ -12,12 +12,12 @@
 | Vite / PostCSS 等存在 5 项 npm 审计问题（4 high、1 moderate） | 构建工具仍携带已知漏洞 | Vite 更新为 6.4.3，修复传递依赖，npm 审计为 0；完整门禁、构建和浏览器验证通过 |
 | README、部署/依赖文档与现状不符 | 容易把读取偏差、旧任务数、无 MCP、标准库边界或历史 CI 当作当前事实 | 更新当前文档，保留历史证据；明确资金结果未知恢复、Grafana、依赖和 202 Docker 入口 |
 
-上一阶段 0.5.2 的验收见 [project-audit-20260912](evidence/project-audit-20260912/README.md)。本轮 0.5.3 已部署至 202，补齐下述运行与恢复边界；211 项测试与发布门禁通过，覆盖率 90%，发布镜像的 Debian/Python 可修复 HIGH/CRITICAL 扫描为 0，原 8 个案件、执行记录、9 条 ledger 和 261 行审计链前后一致。详见 [runtime-safety-20260912](evidence/runtime-safety-20260912/README.md)。这些结果证明本轮修复，不代表整项目复核已经结束。
+0.5.2 的部署门禁验收见 [project-audit-20260912](evidence/project-audit-20260912/README.md)，0.5.3 的运行互斥与未知资金回执验收见 [runtime-safety-20260912](evidence/runtime-safety-20260912/README.md)。本轮 0.5.4 已部署至 202，223 项测试与发布门禁通过，覆盖率 90%，发布镜像的 Debian/Python 可修复 HIGH/CRITICAL 扫描为 0，原 8 个案件、执行记录、9 条 ledger 和 261 行审计链前后一致。详见 [recording-consistency-20260912](evidence/recording-consistency-20260912/README.md)。这些结果证明本轮修复，不代表整项目复核已经结束。
+
+HTTP Skill 任务绑定、`RESULT_UNKNOWN` 回执、运行与后台任务互斥、能力续签失败时的恢复状态保留已完成验证。单案重新准备和全量重置的网关/案件/审计已纳入同一数据库事务；报告、Trace 导出与 Case Memory 通过录制批次隔离，原文件保留。隔离数据库拒绝写入、审计失败、旧文件只读和旧 JSON 损坏均纳入本轮故障测试。
 
 ## 整体复核仍需完成的项目
 
-- 本轮继续修正 HTTP 无任务 Skill 旁路、`RESULT_UNKNOWN` 回执落库、并发重置保护与播种事务、恢复能力续签失败时的状态保留；验收记录单独保存至 `evidence/runtime-safety-20260912`。
-- 继续复核单案重新准备在网关清理、产物删除、案件保存之间的持久化失败边界；已实现运行互斥，但不能把互斥当作跨文件与数据库事务原子性。
 - 复核人审、过期任务/回执、恢复失败后的状态一致性及网关持久化的边界，新增测试应针对实际失效场景。
 - 检查完整部署入口的冷启动和升级路径；不能把单模块测试扩大为完整 AgentTeams 安装已重新验收。
 - 继续对实际业务 UI 各状态和错误路径做浏览器检查；本轮已完成升级后的 Grafana 嵌入、全屏、移动宽度与数据保留验证。

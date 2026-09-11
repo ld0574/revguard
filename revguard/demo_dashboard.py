@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .artifacts import artifact_path
 from .security import redact_secrets, secret_fingerprint
 from .trace import Tracer
 
@@ -75,7 +76,7 @@ def build_dashboard_snapshot(
         return None
 
     trace = Tracer(store, case_id).export()
-    report_path = Path(report_dir) / f"{case_id}.md"
+    report_path = artifact_path(report_dir, case, ".md")
     executions = [_public_execution(item) for item in store.list_executions(case_id)]
     agent_tasks = [redact_secrets(item) for item in store.list_agent_tasks(case_id)]
 
