@@ -1,0 +1,1212 @@
+Read-only metrics credential and Grafana password prepared in .runtime/observability
+
+==> 部署本地可复现环境（SQLite + MCP Team）
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+#0 building with "default" instance using docker driver
+
+#1 [revguard-api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.71kB done
+#1 DONE 0.0s
+
+#2 [revguard-api internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 0.0s
+
+#3 [revguard-api internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [revguard-api internal] load .dockerignore
+#4 transferring context: 217B done
+#4 DONE 0.0s
+
+#5 [revguard-api internal] load build context
+#5 transferring context: 861.64kB 0.0s done
+#5 DONE 0.1s
+
+#6 [revguard-api stage-1  1/15] FROM docker.io/library/python:3.11-slim
+#6 DONE 0.1s
+
+#7 [revguard-api demo-ui-build 1/6] FROM docker.io/library/node:20-alpine
+#7 DONE 0.1s
+
+#8 [revguard-api demo-ui-build 2/6] WORKDIR /ui
+#8 DONE 0.1s
+
+#9 [revguard-api stage-1  2/15] WORKDIR /app
+#9 DONE 0.1s
+
+#10 [revguard-api demo-ui-build 3/6] COPY demo-ui/package.json demo-ui/package-lock.json ./
+#10 DONE 0.0s
+
+#11 [revguard-api stage-1  3/15] COPY requirements.txt requirements.lock ./
+#11 DONE 0.0s
+
+#12 [revguard-api stage-1  4/15] RUN pip install --no-cache-dir -r requirements.lock &&     pip uninstall --yes setuptools
+#12 2.996 Collecting annotated-doc==0.0.5 (from -r requirements.lock (line 2))
+#12 3.229   Downloading annotated_doc-0.0.5-py3-none-any.whl.metadata (6.5 kB)
+#12 3.326 Collecting annotated-types==0.8.0 (from -r requirements.lock (line 3))
+#12 3.396   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#12 3.613 Collecting anyio==4.14.2 (from -r requirements.lock (line 4))
+#12 3.684   Downloading anyio-4.14.2-py3-none-any.whl.metadata (4.6 kB)
+#12 3.795 Collecting attrs==26.1.0 (from -r requirements.lock (line 5))
+#12 3.865   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+#12 4.004 Collecting certifi==2026.7.22 (from -r requirements.lock (line 6))
+#12 4.073   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+#12 4.430 Collecting cffi==2.1.1 (from -r requirements.lock (line 7))
+#12 4.499   Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+#12 4.718 Collecting charset-normalizer==3.4.9 (from -r requirements.lock (line 8))
+#12 4.789   Downloading charset_normalizer-3.4.9-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (41 kB)
+#12 4.856      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 41.7/41.7 kB 531.8 kB/s eta 0:00:00
+#12 4.957 Collecting click==8.4.2 (from -r requirements.lock (line 9))
+#12 5.027   Downloading click-8.4.2-py3-none-any.whl.metadata (2.6 kB)
+#12 5.353 Collecting cryptography==50.0.1 (from -r requirements.lock (line 10))
+#12 5.422   Downloading cryptography-50.0.1-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+#12 5.565 Collecting fastapi==0.141.1 (from -r requirements.lock (line 11))
+#12 ...
+
+#13 [revguard-api demo-ui-build 4/6] RUN npm ci
+#13 5.252
+#13 5.252 added 67 packages, and audited 68 packages in 5s
+#13 5.252
+#13 5.252 10 packages are looking for funding
+#13 5.252   run `npm fund` for details
+#13 5.253
+#13 5.253 found 0 vulnerabilities
+#13 5.254 npm notice
+#13 5.254 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#13 5.254 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#13 5.254 npm notice To update run: npm install -g npm@12.0.2
+#13 5.254 npm notice
+#13 DONE 5.7s
+
+#12 [revguard-api stage-1  4/15] RUN pip install --no-cache-dir -r requirements.lock &&     pip uninstall --yes setuptools
+#12 5.635   Downloading fastapi-0.141.1-py3-none-any.whl.metadata (27 kB)
+#12 ...
+
+#14 [revguard-api demo-ui-build 5/6] COPY demo-ui/ ./
+#14 DONE 0.0s
+
+#12 [revguard-api stage-1  4/15] RUN pip install --no-cache-dir -r requirements.lock &&     pip uninstall --yes setuptools
+#12 5.742 Collecting googleapis-common-protos==1.75.3 (from -r requirements.lock (line 12))
+#12 5.811   Downloading googleapis_common_protos-1.75.3-py3-none-any.whl.metadata (8.5 kB)
+#12 5.906 Collecting h11==0.16.0 (from -r requirements.lock (line 13))
+#12 5.976   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#12 6.070 Collecting httpcore2==2.12.0 (from -r requirements.lock (line 14))
+#12 6.140   Downloading httpcore2-2.12.0-py3-none-any.whl.metadata (25 kB)
+#12 6.261 Collecting httptools==0.8.0 (from -r requirements.lock (line 15))
+#12 6.330   Downloading httptools-0.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+#12 6.591 Collecting httpx2==2.12.0 (from -r requirements.lock (line 16))
+#12 6.660   Downloading httpx2-2.12.0-py3-none-any.whl.metadata (9.5 kB)
+#12 6.760 Collecting idna==3.18 (from -r requirements.lock (line 17))
+#12 6.830   Downloading idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+#12 6.937 Collecting jsonschema==4.26.0 (from -r requirements.lock (line 18))
+#12 7.006   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+#12 7.101 Collecting jsonschema-specifications==2025.9.1 (from -r requirements.lock (line 19))
+#12 7.170   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+#12 7.272 Collecting mcp==2.1.1 (from -r requirements.lock (line 20))
+#12 7.342   Downloading mcp-2.1.1-py3-none-any.whl.metadata (7.8 kB)
+#12 7.431 Collecting mcp-types==2.1.1 (from -r requirements.lock (line 21))
+#12 7.501   Downloading mcp_types-2.1.1-py3-none-any.whl.metadata (1.9 kB)
+#12 7.605 Collecting opentelemetry-api==1.44.0 (from -r requirements.lock (line 22))
+#12 7.676   Downloading opentelemetry_api-1.44.0-py3-none-any.whl.metadata (1.4 kB)
+#12 7.771 Collecting opentelemetry-exporter-otlp-proto-common==1.44.0 (from -r requirements.lock (line 23))
+#12 7.840   Downloading opentelemetry_exporter_otlp_proto_common-1.44.0-py3-none-any.whl.metadata (1.8 kB)
+#12 7.938 Collecting opentelemetry-exporter-otlp-proto-http==1.44.0 (from -r requirements.lock (line 24))
+#12 8.007   Downloading opentelemetry_exporter_otlp_proto_http-1.44.0-py3-none-any.whl.metadata (2.4 kB)
+#12 8.107 Collecting opentelemetry-proto==1.44.0 (from -r requirements.lock (line 25))
+#12 8.177   Downloading opentelemetry_proto-1.44.0-py3-none-any.whl.metadata (2.3 kB)
+#12 8.281 Collecting opentelemetry-sdk==1.44.0 (from -r requirements.lock (line 26))
+#12 8.351   Downloading opentelemetry_sdk-1.44.0-py3-none-any.whl.metadata (1.6 kB)
+#12 8.516 Collecting opentelemetry-semantic-conventions==0.65b0 (from -r requirements.lock (line 27))
+#12 8.585   Downloading opentelemetry_semantic_conventions-0.65b0-py3-none-any.whl.metadata (2.4 kB)
+#12 8.838 Collecting protobuf==6.33.6 (from -r requirements.lock (line 28))
+#12 8.908   Downloading protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+#12 9.007 Collecting psycopg==3.3.4 (from -r requirements.lock (line 29))
+#12 9.077   Downloading psycopg-3.3.4-py3-none-any.whl.metadata (4.3 kB)
+#12 9.311 Collecting psycopg-binary==3.3.4 (from -r requirements.lock (line 30))
+#12 9.381   Downloading psycopg_binary-3.3.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.7 kB)
+#12 9.472 Collecting psycopg-pool==3.3.1 (from -r requirements.lock (line 31))
+#12 9.542   Downloading psycopg_pool-3.3.1-py3-none-any.whl.metadata (2.8 kB)
+#12 9.630 Collecting pycparser==3.0 (from -r requirements.lock (line 32))
+#12 9.700   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+#12 9.961 Collecting pydantic==2.13.4 (from -r requirements.lock (line 33))
+#12 10.03   Downloading pydantic-2.13.4-py3-none-any.whl.metadata (109 kB)
+#12 10.11      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 109.4/109.4 kB 1.4 MB/s eta 0:00:00
+#12 ...
+
+#15 [revguard-api demo-ui-build 6/6] RUN npm run build
+#15 0.232
+#15 0.232 > demo-ui@0.0.0 build
+#15 0.232 > vite build && node scripts/prepare-sites-build.mjs
+#15 0.232
+#15 0.395 vite v6.4.3 building for production...
+#15 0.444 transforming...
+#15 4.284 ✓ 4572 modules transformed.
+#15 4.457 rendering chunks...
+#15 4.463 computing gzip size...
+#15 4.473 dist/client/index.html                                              0.88 kB │ gzip:   0.55 kB
+#15 4.473 dist/client/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2     10.25 kB
+#15 4.473 dist/client/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2      11.23 kB
+#15 4.473 dist/client/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2       18.75 kB
+#15 4.474 dist/client/assets/inter-greek-wght-normal-CkhJZR-_.woff2          19.00 kB
+#15 4.474 dist/client/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2   25.96 kB
+#15 4.474 dist/client/assets/inter-latin-wght-normal-Dx4kXJAl.woff2          48.26 kB
+#15 4.474 dist/client/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2      85.07 kB
+#15 4.474 dist/client/assets/index-tsFSL5St.css                              36.44 kB │ gzip:   8.39 kB
+#15 4.474 dist/client/assets/index-CYP-yYmy.js                              335.47 kB │ gzip: 100.19 kB
+#15 4.474 ✓ built in 4.06s
+#15 4.585 Prepared Sites build: dist/server/index.js and dist/.openai/hosting.json
+#15 DONE 4.6s
+
+#12 [revguard-api stage-1  4/15] RUN pip install --no-cache-dir -r requirements.lock &&     pip uninstall --yes setuptools
+#12 10.99 Collecting pydantic_core==2.46.4 (from -r requirements.lock (line 34))
+#12 11.06   Downloading pydantic_core-2.46.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+#12 11.15 Collecting PyJWT==2.13.0 (from -r requirements.lock (line 35))
+#12 11.22   Downloading pyjwt-2.13.0-py3-none-any.whl.metadata (3.4 kB)
+#12 11.32 Collecting python-dotenv==1.2.2 (from -r requirements.lock (line 36))
+#12 11.39   Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+#12 11.49 Collecting python-multipart==0.0.32 (from -r requirements.lock (line 37))
+#12 11.56   Downloading python_multipart-0.0.32-py3-none-any.whl.metadata (2.1 kB)
+#12 11.67 Collecting PyYAML==6.0.3 (from -r requirements.lock (line 38))
+#12 11.74   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#12 11.92 Collecting referencing==0.37.0 (from -r requirements.lock (line 39))
+#12 11.99   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+#12 12.09 Collecting requests==2.34.2 (from -r requirements.lock (line 40))
+#12 12.16   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+#12 12.49 Collecting rpds-py==2026.6.3 (from -r requirements.lock (line 41))
+#12 12.56   Downloading rpds_py-2026.6.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+#12 12.66 Collecting sse-starlette==3.4.8 (from -r requirements.lock (line 42))
+#12 12.73   Downloading sse_starlette-3.4.8-py3-none-any.whl.metadata (15 kB)
+#12 12.84 Collecting starlette==1.5.0 (from -r requirements.lock (line 43))
+#12 12.92   Downloading starlette-1.5.0-py3-none-any.whl.metadata (6.4 kB)
+#12 13.01 Collecting truststore==0.10.4 (from -r requirements.lock (line 44))
+#12 13.08   Downloading truststore-0.10.4-py3-none-any.whl.metadata (4.4 kB)
+#12 13.17 Collecting typing-inspection==0.4.2 (from -r requirements.lock (line 45))
+#12 13.24   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+#12 13.36 Collecting typing_extensions==4.16.0 (from -r requirements.lock (line 46))
+#12 13.43   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#12 13.54 Collecting urllib3==2.7.0 (from -r requirements.lock (line 47))
+#12 13.61   Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+#12 13.72 Collecting uvicorn==0.52.1 (from -r requirements.lock (line 48))
+#12 13.79   Downloading uvicorn-0.52.1-py3-none-any.whl.metadata (6.6 kB)
+#12 13.90 Collecting uvloop==0.22.1 (from -r requirements.lock (line 49))
+#12 13.97   Downloading uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+#12 14.11 Collecting watchfiles==1.2.0 (from -r requirements.lock (line 50))
+#12 14.18   Downloading watchfiles-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#12 14.44 Collecting websockets==17.0.1 (from -r requirements.lock (line 51))
+#12 14.51   Downloading websockets-17.0.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.3 kB)
+#12 15.02 Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+#12 15.09 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#12 15.16 Downloading anyio-4.14.2-py3-none-any.whl (125 kB)
+#12 15.18    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 125.8/125.8 kB 6.4 MB/s eta 0:00:00
+#12 15.25 Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+#12 15.26    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.5/67.5 kB 8.9 MB/s eta 0:00:00
+#12 15.33 Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+#12 15.36    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 137.0/137.0 kB 4.5 MB/s eta 0:00:00
+#12 15.43 Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+#12 15.46    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 217.8/217.8 kB 8.4 MB/s eta 0:00:00
+#12 15.53 Downloading charset_normalizer-3.4.9-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (221 kB)
+#12 15.54    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 221.3/221.3 kB 14.2 MB/s eta 0:00:00
+#12 15.61 Downloading click-8.4.2-py3-none-any.whl (119 kB)
+#12 15.62    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 119.2/119.2 kB 15.4 MB/s eta 0:00:00
+#12 15.69 Downloading cryptography-50.0.1-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+#12 15.92    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 21.0 MB/s eta 0:00:00
+#12 15.99 Downloading fastapi-0.141.1-py3-none-any.whl (131 kB)
+#12 15.99    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 132.0/132.0 kB 370.7 MB/s eta 0:00:00
+#12 16.06 Downloading googleapis_common_protos-1.75.3-py3-none-any.whl (306 kB)
+#12 16.06    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 307.0/307.0 kB 148.5 MB/s eta 0:00:00
+#12 16.13 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#12 16.20 Downloading httpcore2-2.12.0-py3-none-any.whl (83 kB)
+#12 16.20    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 83.1/83.1 kB 241.9 MB/s eta 0:00:00
+#12 16.27 Downloading httptools-0.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (464 kB)
+#12 16.28    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 464.7/464.7 kB 146.6 MB/s eta 0:00:00
+#12 16.35 Downloading httpx2-2.12.0-py3-none-any.whl (95 kB)
+#12 16.35    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 95.4/95.4 kB 210.0 MB/s eta 0:00:00
+#12 16.42 Downloading idna-3.18-py3-none-any.whl (65 kB)
+#12 16.42    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 65.5/65.5 kB 263.6 MB/s eta 0:00:00
+#12 16.49 Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+#12 16.49    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 kB 300.7 MB/s eta 0:00:00
+#12 16.56 Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+#12 16.63 Downloading mcp-2.1.1-py3-none-any.whl (357 kB)
+#12 16.63    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 357.9/357.9 kB 152.9 MB/s eta 0:00:00
+#12 16.70 Downloading mcp_types-2.1.1-py3-none-any.whl (69 kB)
+#12 16.70    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.7/69.7 kB 345.6 MB/s eta 0:00:00
+#12 16.77 Downloading opentelemetry_api-1.44.0-py3-none-any.whl (60 kB)
+#12 16.78    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.0/60.0 kB 290.6 MB/s eta 0:00:00
+#12 16.85 Downloading opentelemetry_exporter_otlp_proto_common-1.44.0-py3-none-any.whl (17 kB)
+#12 16.91 Downloading opentelemetry_exporter_otlp_proto_http-1.44.0-py3-none-any.whl (21 kB)
+#12 16.98 Downloading opentelemetry_proto-1.44.0-py3-none-any.whl (72 kB)
+#12 16.99    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 72.5/72.5 kB 264.7 MB/s eta 0:00:00
+#12 17.06 Downloading opentelemetry_sdk-1.44.0-py3-none-any.whl (137 kB)
+#12 17.06    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 137.2/137.2 kB 326.5 MB/s eta 0:00:00
+#12 17.13 Downloading opentelemetry_semantic_conventions-0.65b0-py3-none-any.whl (204 kB)
+#12 17.13    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 204.6/204.6 kB 250.6 MB/s eta 0:00:00
+#12 17.20 Downloading protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+#12 17.20    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 323.4/323.4 kB 175.5 MB/s eta 0:00:00
+#12 17.27 Downloading psycopg-3.3.4-py3-none-any.whl (213 kB)
+#12 17.27    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 213.0/213.0 kB 271.3 MB/s eta 0:00:00
+#12 17.34 Downloading psycopg_binary-3.3.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.2 MB)
+#12 17.39    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 120.6 MB/s eta 0:00:00
+#12 17.46 Downloading psycopg_pool-3.3.1-py3-none-any.whl (40 kB)
+#12 17.46    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.0/40.0 kB 283.2 MB/s eta 0:00:00
+#12 17.53 Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+#12 17.53    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.2/48.2 kB 264.2 MB/s eta 0:00:00
+#12 17.60 Downloading pydantic-2.13.4-py3-none-any.whl (472 kB)
+#12 17.60    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 472.3/472.3 kB 137.3 MB/s eta 0:00:00
+#12 17.67 Downloading pydantic_core-2.46.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+#12 17.69    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 122.0 MB/s eta 0:00:00
+#12 17.76 Downloading pyjwt-2.13.0-py3-none-any.whl (31 kB)
+#12 17.83 Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+#12 17.90 Downloading python_multipart-0.0.32-py3-none-any.whl (30 kB)
+#12 17.97 Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+#12 17.98    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 135.4 MB/s eta 0:00:00
+#12 18.05 Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+#12 18.12 Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#12 18.12    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.1/73.1 kB 283.6 MB/s eta 0:00:00
+#12 18.19 Downloading rpds_py-2026.6.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+#12 18.19    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 371.3/371.3 kB 162.2 MB/s eta 0:00:00
+#12 18.26 Downloading sse_starlette-3.4.8-py3-none-any.whl (16 kB)
+#12 18.33 Downloading starlette-1.5.0-py3-none-any.whl (74 kB)
+#12 18.33    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 74.3/74.3 kB 331.8 MB/s eta 0:00:00
+#12 18.40 Downloading truststore-0.10.4-py3-none-any.whl (18 kB)
+#12 18.47 Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+#12 18.54 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#12 18.54    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 247.6 MB/s eta 0:00:00
+#12 18.61 Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+#12 18.61    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 131.1/131.1 kB 196.1 MB/s eta 0:00:00
+#12 18.68 Downloading uvicorn-0.52.1-py3-none-any.whl (79 kB)
+#12 18.68    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 79.9/79.9 kB 339.6 MB/s eta 0:00:00
+#12 18.75 Downloading uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.8 MB)
+#12 18.78    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 122.0 MB/s eta 0:00:00
+#12 18.85 Downloading watchfiles-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+#12 18.86    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 456.9/456.9 kB 176.5 MB/s eta 0:00:00
+#12 18.93 Downloading websockets-17.0.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (219 kB)
+#12 18.93    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 219.9/219.9 kB 276.4 MB/s eta 0:00:00
+#12 19.11 Installing collected packages: websockets, uvloop, urllib3, typing_extensions, truststore, rpds-py, PyYAML, python-multipart, python-dotenv, PyJWT, pycparser, psycopg-binary, protobuf, idna, httptools, h11, click, charset-normalizer, certifi, attrs, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, referencing, pydantic_core, psycopg-pool, psycopg, opentelemetry-proto, opentelemetry-api, httpcore2, googleapis-common-protos, cffi, anyio, watchfiles, starlette, pydantic, opentelemetry-semantic-conventions, opentelemetry-exporter-otlp-proto-common, jsonschema-specifications, httpx2, cryptography, sse-starlette, opentelemetry-sdk, mcp-types, jsonschema, fastapi, opentelemetry-exporter-otlp-proto-http, mcp
+#12 21.85 Successfully installed PyJWT-2.13.0 PyYAML-6.0.3 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.14.2 attrs-26.1.0 certifi-2026.7.22 cffi-2.1.1 charset-normalizer-3.4.9 click-8.4.2 cryptography-50.0.1 fastapi-0.141.1 googleapis-common-protos-1.75.3 h11-0.16.0 httpcore2-2.12.0 httptools-0.8.0 httpx2-2.12.0 idna-3.18 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mcp-2.1.1 mcp-types-2.1.1 opentelemetry-api-1.44.0 opentelemetry-exporter-otlp-proto-common-1.44.0 opentelemetry-exporter-otlp-proto-http-1.44.0 opentelemetry-proto-1.44.0 opentelemetry-sdk-1.44.0 opentelemetry-semantic-conventions-0.65b0 protobuf-6.33.6 psycopg-3.3.4 psycopg-binary-3.3.4 psycopg-pool-3.3.1 pycparser-3.0 pydantic-2.13.4 pydantic_core-2.46.4 python-dotenv-1.2.2 python-multipart-0.0.32 referencing-0.37.0 requests-2.34.2 rpds-py-2026.6.3 sse-starlette-3.4.8 starlette-1.5.0 truststore-0.10.4 typing-inspection-0.4.2 typing_extensions-4.16.0 urllib3-2.7.0 uvicorn-0.52.1 uvloop-0.22.1 watchfiles-1.2.0 websockets-17.0.1
+#12 21.85 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#12 22.17
+#12 22.17 [notice] A new release of pip is available: 24.0 -> 26.2.1
+#12 22.17 [notice] To update, run: pip install --upgrade pip
+#12 23.56 Found existing installation: setuptools 79.0.1
+#12 23.58 Uninstalling setuptools-79.0.1:
+#12 23.71   Successfully uninstalled setuptools-79.0.1
+#12 23.72 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#12 DONE 23.8s
+
+#16 [revguard-api stage-1  5/15] COPY revguard/ ./revguard/
+#16 DONE 0.0s
+
+#17 [revguard-api stage-1  6/15] COPY scripts/ ./scripts/
+#17 DONE 0.0s
+
+#18 [revguard-api stage-1  7/15] COPY migrations/ ./migrations/
+#18 DONE 0.0s
+
+#19 [revguard-api stage-1  8/15] COPY config/demo_principals.json ./config/demo_principals.json
+#19 DONE 0.0s
+
+#20 [revguard-api stage-1  9/15] COPY data/fixtures/ ./data/fixtures/
+#20 DONE 0.0s
+
+#21 [revguard-api stage-1 10/15] COPY data/golden_cases/ ./data/golden_cases/
+#21 DONE 0.0s
+
+#22 [revguard-api stage-1 11/15] COPY docs/evaluation-summary.json      docs/value-evaluation-synthetic.json      docs/synthetic-data-validation.json      docs/polardb-local-verification-2026-08-27.json      docs/polardb-local-instance-acceptance-2026-08-29.json      ./docs/
+#22 DONE 0.1s
+
+#23 [revguard-api stage-1 12/15] COPY docs/evidence/demo-rehearsal/manifest.json ./docs/evidence/demo-rehearsal/manifest.json
+#23 DONE 0.1s
+
+#24 [revguard-api stage-1 13/15] COPY --from=demo-ui-build /ui/dist/client/ ./demo-ui/dist/client/
+#24 DONE 0.0s
+
+#25 [revguard-api stage-1 14/15] RUN getent group revguard >/dev/null || addgroup --system revguard;     id -u revguard >/dev/null 2>&1 || adduser --system --ingroup revguard revguard
+#25 DONE 0.3s
+
+#26 [revguard-api stage-1 15/15] RUN mkdir -p /app/data/outputs /app/docs/reports /app/runtime &&     chmod +x /app/scripts/start_api.sh &&     chown -R revguard:revguard /app
+#26 DONE 0.8s
+
+#27 [revguard-api] exporting to image
+#27 exporting layers
+#27 exporting layers 0.5s done
+#27 writing image sha256:d4fb3552b1076426e9d4aae77b8c8abbea730e20dbf8f0f753a4d5f2e652be67 done
+#27 naming to docker.io/library/workspace-revguard-api done
+#27 DONE 0.5s
+
+#28 [revguard-api] resolving provenance for metadata file
+#28 DONE 0.0s
+ revguard-api  Built
+ Network workspace_default  Creating
+ Network workspace_default  Created
+ Volume "workspace_revguard-outputs"  Creating
+ Volume "workspace_revguard-outputs"  Created
+ Volume "workspace_revguard-reports"  Creating
+ Volume "workspace_revguard-reports"  Created
+ Volume "workspace_revguard-db"  Creating
+ Volume "workspace_revguard-db"  Created
+ Container revguard-api  Creating
+ Container revguard-api  Created
+ Container revguard-api  Starting
+ Container revguard-api  Started
+
+==> 校验并启动可观测组件和只读 Grafana 共享看板
+ Volume "workspace_prometheus-data"  Creating
+ Volume "workspace_prometheus-data"  Created
+ prometheus Pulling
+ 9fa9226be034 Pulling fs layer
+ 1617e25568b2 Pulling fs layer
+ 097a69c6efe6 Pulling fs layer
+ 2ee6cb77bebd Pulling fs layer
+ a4e782810d03 Pulling fs layer
+ 76619c1908eb Pulling fs layer
+ 2dfc70ad9941 Pulling fs layer
+ fd1d3a5a5f79 Pulling fs layer
+ 5e4c02bc6754 Pulling fs layer
+ 208063e2dcbb Pulling fs layer
+ 76619c1908eb Waiting
+ 2dfc70ad9941 Waiting
+ fd1d3a5a5f79 Waiting
+ 5e4c02bc6754 Waiting
+ 2ee6cb77bebd Waiting
+ 208063e2dcbb Waiting
+ a4e782810d03 Waiting
+ 1617e25568b2 Verifying Checksum
+ 1617e25568b2 Download complete
+ 097a69c6efe6 Downloading  557.1kB
+ 097a69c6efe6 Downloading  2.218MB
+ 097a69c6efe6 Downloading  5.538MB
+ 9fa9226be034 Downloading  557.1kB
+ 9fa9226be034 Verifying Checksum
+ 9fa9226be034 Download complete
+ 9fa9226be034 Extracting  557.1kB
+ 9fa9226be034 Extracting    783kB
+ 9fa9226be034 Pull complete
+ 097a69c6efe6 Downloading  10.55MB
+ 1617e25568b2 Extracting  480.9kB
+ 1617e25568b2 Pull complete
+ 097a69c6efe6 Downloading  13.86MB
+ 097a69c6efe6 Downloading  17.73MB
+ 2ee6cb77bebd Downloading  532.5kB
+ 097a69c6efe6 Downloading  26.02MB
+ 2ee6cb77bebd Downloading   3.31MB
+ 097a69c6efe6 Downloading  28.77MB
+ 2ee6cb77bebd Downloading  6.062MB
+ 2ee6cb77bebd Downloading  9.372MB
+ 097a69c6efe6 Downloading  33.78MB
+ 2ee6cb77bebd Downloading  12.68MB
+ 097a69c6efe6 Downloading  38.76MB
+ 2ee6cb77bebd Downloading  16.02MB
+ 097a69c6efe6 Downloading  41.55MB
+ 2ee6cb77bebd Downloading  19.33MB
+ 2ee6cb77bebd Downloading   23.2MB
+ 2ee6cb77bebd Downloading  26.51MB
+ 097a69c6efe6 Downloading  50.99MB
+ 2ee6cb77bebd Downloading  30.41MB
+ 097a69c6efe6 Downloading  61.54MB
+ 2ee6cb77bebd Downloading  34.31MB
+ 2ee6cb77bebd Downloading  38.73MB
+ 097a69c6efe6 Verifying Checksum
+ 097a69c6efe6 Download complete
+ 097a69c6efe6 Extracting  557.1kB
+ 2ee6cb77bebd Downloading   42.6MB
+ 097a69c6efe6 Extracting  12.81MB
+ 2ee6cb77bebd Downloading  46.47MB
+ 097a69c6efe6 Extracting  26.18MB
+ 2ee6cb77bebd Downloading  49.81MB
+ 097a69c6efe6 Extracting  56.82MB
+ 097a69c6efe6 Extracting  64.04MB
+ 2ee6cb77bebd Downloading  53.67MB
+ 097a69c6efe6 Pull complete
+ 2ee6cb77bebd Downloading  57.57MB
+ 2ee6cb77bebd Verifying Checksum
+ 2ee6cb77bebd Download complete
+ 2ee6cb77bebd Extracting  557.1kB
+ a4e782810d03 Verifying Checksum
+ a4e782810d03 Download complete
+ 2ee6cb77bebd Extracting  13.93MB
+ 2ee6cb77bebd Extracting  26.18MB
+ 2ee6cb77bebd Extracting  58.42MB
+ 2ee6cb77bebd Pull complete
+ a4e782810d03 Extracting     638B
+ a4e782810d03 Pull complete
+ 76619c1908eb Verifying Checksum
+ 76619c1908eb Download complete
+ 76619c1908eb Extracting  4.023kB
+ 76619c1908eb Pull complete
+ fd1d3a5a5f79 Verifying Checksum
+ fd1d3a5a5f79 Download complete
+ 5e4c02bc6754 Verifying Checksum
+ 5e4c02bc6754 Download complete
+ 2dfc70ad9941 Verifying Checksum
+ 2dfc70ad9941 Download complete
+ 2dfc70ad9941 Extracting   1.44kB
+ 2dfc70ad9941 Pull complete
+ fd1d3a5a5f79 Extracting  60.68kB
+ 208063e2dcbb Verifying Checksum
+ 208063e2dcbb Download complete
+ fd1d3a5a5f79 Pull complete
+ 5e4c02bc6754 Extracting     100B
+ 5e4c02bc6754 Pull complete
+ 208063e2dcbb Extracting     693B
+ 208063e2dcbb Pull complete
+ prometheus Pulled
+Checking /etc/prometheus/prometheus.yaml
+  SUCCESS: 1 rule files found
+ SUCCESS: /etc/prometheus/prometheus.yaml is valid prometheus config file syntax
+
+Checking /etc/prometheus/alerts.yaml
+  SUCCESS: 7 rules found
+
+ otel-collector Pulling
+ loki Pulling
+ blackbox Pulling
+ grafana Pulling
+ alertmanager Pulling
+ tempo Pulling
+ alloy Pulling
+ fd59d35e26d9 Pulling fs layer
+ a54a95f0c646 Pulling fs layer
+ f533b25d500f Pulling fs layer
+ 9824c27679d3 Pulling fs layer
+ b5f55c75514d Pulling fs layer
+ d394204a1bdc Pulling fs layer
+ cc8d890506a2 Pulling fs layer
+ d4acc02fae7c Pulling fs layer
+ 8c90a7c3d0e1 Pulling fs layer
+ 85954acfa484 Pulling fs layer
+ 164de8f14b64 Pulling fs layer
+ be3398fa2dbf Pulling fs layer
+ 8711a47cb968 Pulling fs layer
+ 9824c27679d3 Waiting
+ b5f55c75514d Waiting
+ d394204a1bdc Waiting
+ cc8d890506a2 Waiting
+ d4acc02fae7c Waiting
+ 8c90a7c3d0e1 Waiting
+ 164de8f14b64 Waiting
+ be3398fa2dbf Waiting
+ 85954acfa484 Waiting
+ 8711a47cb968 Waiting
+ 9fa9226be034 Already exists
+ 1617e25568b2 Already exists
+ 38a802b6ddaf Pulling fs layer
+ d414688c427a Pulling fs layer
+ 38a802b6ddaf Waiting
+ d414688c427a Waiting
+ 9fa9226be034 Already exists
+ 1617e25568b2 Already exists
+ 545c14a5a415 Pulling fs layer
+ 6fcbfeb5877c Pulling fs layer
+ a9c7f41169bf Pulling fs layer
+ 5759234535c5 Pulling fs layer
+ 4f4fb700ef54 Pulling fs layer
+ 545c14a5a415 Waiting
+ 5759234535c5 Waiting
+ a9c7f41169bf Waiting
+ 4f4fb700ef54 Waiting
+ 6fcbfeb5877c Waiting
+ 400fe5c6b87b Pulling fs layer
+ 2e4cf50eeb92 Pulling fs layer
+ 4e9f20d26c87 Pulling fs layer
+ e1089d61b200 Pulling fs layer
+ 0f8b424aa0b9 Pulling fs layer
+ d557676654e5 Pulling fs layer
+ d82bc7a76a83 Pulling fs layer
+ d858cbc252ad Pulling fs layer
+ 1069fc2daed1 Pulling fs layer
+ b40161cd83fc Pulling fs layer
+ 3f4e2c586348 Pulling fs layer
+ eb8f5749650b Pulling fs layer
+ 5391af8231d5 Pulling fs layer
+ 48b526ded0d5 Pulling fs layer
+ fd83a3426d7c Pulling fs layer
+ 946f55b0b525 Pulling fs layer
+ c66ae67a6eb7 Pulling fs layer
+ e62c82fa8efb Pulling fs layer
+ 400fe5c6b87b Waiting
+ 9bcd400eed98 Pulling fs layer
+ 2e4cf50eeb92 Waiting
+ 4e9f20d26c87 Waiting
+ e1089d61b200 Waiting
+ b40161cd83fc Waiting
+ 5391af8231d5 Waiting
+ d82bc7a76a83 Waiting
+ 3f4e2c586348 Waiting
+ eb8f5749650b Waiting
+ d858cbc252ad Waiting
+ e62c82fa8efb Waiting
+ 1069fc2daed1 Waiting
+ c66ae67a6eb7 Waiting
+ 946f55b0b525 Waiting
+ 9bcd400eed98 Waiting
+ 0f8b424aa0b9 Waiting
+ fd83a3426d7c Waiting
+ 48b526ded0d5 Waiting
+ a54a95f0c646 Downloading    546kB
+ a54a95f0c646 Downloading  1.638MB
+ a54a95f0c646 Downloading  4.424MB
+ a54a95f0c646 Downloading   8.29MB
+ a54a95f0c646 Downloading  11.04MB
+ a54a95f0c646 Downloading  12.16MB
+ 400fe5c6b87b Pulling fs layer
+ 2e4cf50eeb92 Pulling fs layer
+ 4e9f20d26c87 Pulling fs layer
+ e1089d61b200 Pulling fs layer
+ 0f8b424aa0b9 Pulling fs layer
+ d557676654e5 Pulling fs layer
+ d82bc7a76a83 Pulling fs layer
+ d858cbc252ad Pulling fs layer
+ 1069fc2daed1 Pulling fs layer
+ b40161cd83fc Pulling fs layer
+ 3f4e2c586348 Pulling fs layer
+ eb8f5749650b Pulling fs layer
+ 5391af8231d5 Pulling fs layer
+ b505999dcc3b Pulling fs layer
+ b73fd178e2f0 Pulling fs layer
+ 8509bbf299f4 Pulling fs layer
+ 6805e14ef2f4 Pulling fs layer
+ 400fe5c6b87b Waiting
+ 2e4cf50eeb92 Waiting
+ 4e9f20d26c87 Waiting
+ e1089d61b200 Waiting
+ 0f8b424aa0b9 Waiting
+ d557676654e5 Waiting
+ d82bc7a76a83 Waiting
+ d858cbc252ad Waiting
+ 1069fc2daed1 Waiting
+ b40161cd83fc Waiting
+ 3f4e2c586348 Waiting
+ eb8f5749650b Waiting
+ 5391af8231d5 Waiting
+ b505999dcc3b Waiting
+ b73fd178e2f0 Waiting
+ 8509bbf299f4 Waiting
+ 6805e14ef2f4 Waiting
+ a54a95f0c646 Downloading  16.61MB
+ f533b25d500f Verifying Checksum
+ f533b25d500f Download complete
+ a54a95f0c646 Downloading  18.28MB
+ a54a95f0c646 Downloading   19.4MB
+ b71466b94f26 Pulling fs layer
+ b9fb14f41167 Pulling fs layer
+ 7a77df0115f5 Pulling fs layer
+ c5f1c4cca061 Pulling fs layer
+ b71466b94f26 Waiting
+ 95f4d4b3924d Pulling fs layer
+ b9fb14f41167 Waiting
+ 7a77df0115f5 Waiting
+ c5f1c4cca061 Waiting
+ 95f4d4b3924d Waiting
+ a54a95f0c646 Downloading  22.18MB
+ fd59d35e26d9 Download complete
+ fd59d35e26d9 Extracting  122.7kB
+ fd59d35e26d9 Pull complete
+ a54a95f0c646 Downloading  23.86MB
+ a54a95f0c646 Downloading  29.43MB
+ a54a95f0c646 Downloading  29.98MB
+ a54a95f0c646 Downloading  34.41MB
+ 9824c27679d3 Downloading  557.1kB
+ a54a95f0c646 Downloading  37.19MB
+ b5f55c75514d Verifying Checksum
+ b5f55c75514d Download complete
+ 9824c27679d3 Downloading  2.228MB
+ 9824c27679d3 Verifying Checksum
+ 9824c27679d3 Download complete
+ a54a95f0c646 Downloading  39.42MB
+ 9824c27679d3 Extracting  557.1kB
+ 9824c27679d3 Extracting    3.8MB
+ 9824c27679d3 Pull complete
+ b5f55c75514d Extracting     139B
+ b5f55c75514d Pull complete
+ a54a95f0c646 Downloading  41.65MB
+ a54a95f0c646 Downloading  44.43MB
+ a54a95f0c646 Downloading  47.78MB
+ a54a95f0c646 Downloading     50MB
+ a54a95f0c646 Downloading  52.78MB
+ a54a95f0c646 Downloading  56.07MB
+ a54a95f0c646 Downloading  58.26MB
+ a54a95f0c646 Downloading  58.82MB
+ a54a95f0c646 Downloading  62.16MB
+ a54a95f0c646 Downloading  64.39MB
+ d394204a1bdc Downloading  557.1kB
+ d394204a1bdc Downloading  2.783MB
+ a54a95f0c646 Downloading   67.7MB
+ d394204a1bdc Downloading  3.626MB
+ d394204a1bdc Download complete
+ d394204a1bdc Extracting  557.1kB
+ d394204a1bdc Extracting  3.626MB
+ a54a95f0c646 Downloading  69.93MB
+ d394204a1bdc Pull complete
+ cc8d890506a2 Downloading  557.1kB
+ a54a95f0c646 Downloading  70.48MB
+ a54a95f0c646 Downloading  74.93MB
+ cc8d890506a2 Downloading  1.114MB
+ a54a95f0c646 Downloading  77.69MB
+ a54a95f0c646 Downloading  79.36MB
+ cc8d890506a2 Downloading  1.671MB
+ a54a95f0c646 Downloading  79.92MB
+ a54a95f0c646 Downloading  82.71MB
+ cc8d890506a2 Downloading  2.228MB
+ d4acc02fae7c Verifying Checksum
+ d4acc02fae7c Download complete
+ a54a95f0c646 Downloading   84.9MB
+ a54a95f0c646 Downloading  86.02MB
+ cc8d890506a2 Downloading  2.785MB
+ a54a95f0c646 Downloading  87.65MB
+ a54a95f0c646 Downloading  88.77MB
+ a54a95f0c646 Verifying Checksum
+ a54a95f0c646 Download complete
+ cc8d890506a2 Downloading  3.342MB
+ a54a95f0c646 Extracting  557.1kB
+ cc8d890506a2 Downloading  3.899MB
+ a54a95f0c646 Extracting  13.37MB
+ a54a95f0c646 Extracting   23.4MB
+ cc8d890506a2 Downloading  4.456MB
+ a54a95f0c646 Extracting  36.21MB
+ a54a95f0c646 Extracting  47.35MB
+ cc8d890506a2 Downloading  5.014MB
+ a54a95f0c646 Extracting  58.49MB
+ a54a95f0c646 Extracting  64.62MB
+ 8c90a7c3d0e1 Verifying Checksum
+ 8c90a7c3d0e1 Download complete
+ cc8d890506a2 Downloading  5.571MB
+ cc8d890506a2 Downloading  6.128MB
+ cc8d890506a2 Downloading  6.685MB
+ 85954acfa484 Downloading  557.1kB
+ cc8d890506a2 Downloading  7.242MB
+ 85954acfa484 Downloading  1.114MB
+ cc8d890506a2 Downloading  7.799MB
+ cc8d890506a2 Downloading  8.356MB
+ 85954acfa484 Downloading  1.671MB
+ cc8d890506a2 Verifying Checksum
+ cc8d890506a2 Download complete
+ 85954acfa484 Downloading  2.228MB
+ a54a95f0c646 Extracting  65.73MB
+ cc8d890506a2 Extracting  557.1kB
+ cc8d890506a2 Extracting  8.735MB
+ cc8d890506a2 Pull complete
+ d4acc02fae7c Extracting  59.03kB
+ a54a95f0c646 Extracting  80.77MB
+ d4acc02fae7c Pull complete
+ 8c90a7c3d0e1 Extracting  28.36kB
+ 8c90a7c3d0e1 Pull complete
+ 85954acfa484 Downloading  3.867MB
+ a54a95f0c646 Extracting  91.42MB
+ a54a95f0c646 Pull complete
+ f533b25d500f Extracting     715B
+ f533b25d500f Pull complete
+ otel-collector Pulled
+ 164de8f14b64 Downloading    551kB
+ 85954acfa484 Downloading  4.424MB
+ 85954acfa484 Downloading  5.538MB
+ 164de8f14b64 Downloading  1.081MB
+ 85954acfa484 Downloading  6.095MB
+ 85954acfa484 Downloading  7.209MB
+ 164de8f14b64 Downloading  1.638MB
+ 85954acfa484 Downloading  8.321MB
+ 85954acfa484 Downloading  9.404MB
+ be3398fa2dbf Verifying Checksum
+ be3398fa2dbf Download complete
+ 85954acfa484 Downloading  9.961MB
+ 164de8f14b64 Downloading  2.195MB
+ 85954acfa484 Downloading  11.08MB
+ 164de8f14b64 Downloading  2.753MB
+ 85954acfa484 Downloading  11.63MB
+ 85954acfa484 Downloading  12.75MB
+ 164de8f14b64 Downloading   3.31MB
+ 85954acfa484 Downloading  13.86MB
+ 85954acfa484 Downloading  14.94MB
+ 85954acfa484 Downloading   15.5MB
+ 164de8f14b64 Downloading  3.867MB
+ 85954acfa484 Downloading  16.61MB
+ 85954acfa484 Downloading  17.73MB
+ 164de8f14b64 Downloading  4.424MB
+ 85954acfa484 Downloading  18.84MB
+ 164de8f14b64 Downloading  4.981MB
+ 85954acfa484 Downloading  19.96MB
+ 85954acfa484 Downloading  21.07MB
+ 164de8f14b64 Downloading  5.538MB
+ 85954acfa484 Downloading  22.15MB
+ 85954acfa484 Downloading  23.27MB
+ 8711a47cb968 Verifying Checksum
+ 8711a47cb968 Download complete
+ 164de8f14b64 Downloading  6.095MB
+ 85954acfa484 Downloading  24.38MB
+ 85954acfa484 Downloading  24.94MB
+ 164de8f14b64 Downloading  6.652MB
+ 85954acfa484 Downloading  27.16MB
+ 164de8f14b64 Downloading  7.209MB
+ 85954acfa484 Downloading  28.84MB
+ 164de8f14b64 Downloading  7.766MB
+ 85954acfa484 Downloading  31.06MB
+ 164de8f14b64 Downloading  8.323MB
+ 85954acfa484 Downloading  33.26MB
+ 164de8f14b64 Downloading   8.88MB
+ 85954acfa484 Downloading  35.45MB
+ 164de8f14b64 Downloading  9.437MB
+ 85954acfa484 Downloading   38.8MB
+ 85954acfa484 Downloading  40.47MB
+ 164de8f14b64 Downloading  9.994MB
+ 85954acfa484 Downloading  44.89MB
+ 164de8f14b64 Downloading  11.11MB
+ 85954acfa484 Downloading  47.64MB
+ 38a802b6ddaf Downloading  548.9kB
+ 85954acfa484 Downloading  50.95MB
+ 164de8f14b64 Downloading  12.22MB
+ 38a802b6ddaf Downloading  2.687MB
+ 85954acfa484 Downloading  53.71MB
+ 164de8f14b64 Downloading  12.78MB
+ 38a802b6ddaf Downloading  3.215MB
+ 85954acfa484 Downloading  55.37MB
+ 85954acfa484 Downloading  56.96MB
+ 164de8f14b64 Downloading  14.45MB
+ 85954acfa484 Downloading  58.03MB
+ 38a802b6ddaf Downloading   4.85MB
+ 164de8f14b64 Downloading  15.56MB
+ 85954acfa484 Downloading  59.64MB
+ 38a802b6ddaf Downloading  7.537MB
+ 164de8f14b64 Downloading  16.65MB
+ 85954acfa484 Downloading  61.79MB
+ 38a802b6ddaf Downloading  9.691MB
+ 164de8f14b64 Downloading  18.32MB
+ 85954acfa484 Downloading  63.41MB
+ 38a802b6ddaf Downloading  11.34MB
+ 164de8f14b64 Downloading  19.99MB
+ 85954acfa484 Downloading  65.57MB
+ 38a802b6ddaf Downloading  12.98MB
+ 85954acfa484 Downloading  66.67MB
+ 164de8f14b64 Downloading  21.66MB
+ 38a802b6ddaf Downloading  14.57MB
+ 164de8f14b64 Downloading  23.86MB
+ 85954acfa484 Downloading  68.26MB
+ 38a802b6ddaf Downloading  15.11MB
+ 38a802b6ddaf Verifying Checksum
+ 38a802b6ddaf Download complete
+ 38a802b6ddaf Extracting  557.1kB
+ 164de8f14b64 Downloading  25.53MB
+ 85954acfa484 Downloading  69.86MB
+ 38a802b6ddaf Extracting   15.5MB
+ 38a802b6ddaf Pull complete
+ 85954acfa484 Downloading  70.94MB
+ 164de8f14b64 Downloading  27.75MB
+ 164de8f14b64 Downloading  29.43MB
+ 85954acfa484 Downloading  72.58MB
+ 164de8f14b64 Downloading   31.1MB
+ 85954acfa484 Downloading  76.36MB
+ 164de8f14b64 Downloading  32.74MB
+ 85954acfa484 Downloading  77.46MB
+ 164de8f14b64 Downloading  33.85MB
+ 85954acfa484 Downloading  79.66MB
+ 164de8f14b64 Downloading  36.08MB
+ 85954acfa484 Downloading  81.85MB
+ 164de8f14b64 Downloading  37.75MB
+ 85954acfa484 Downloading  84.54MB
+ 164de8f14b64 Downloading  39.98MB
+ 85954acfa484 Downloading  87.25MB
+ d414688c427a Verifying Checksum
+ d414688c427a Download complete
+ d414688c427a Extracting     583B
+ 164de8f14b64 Downloading  42.17MB
+ d414688c427a Pull complete
+ 85954acfa484 Downloading  89.98MB
+ 164de8f14b64 Downloading  44.37MB
+ 85954acfa484 Downloading  92.73MB
+ 164de8f14b64 Downloading  46.59MB
+ blackbox Pulled
+ 85954acfa484 Downloading   94.9MB
+ 164de8f14b64 Downloading  48.79MB
+ 85954acfa484 Downloading  97.09MB
+ 164de8f14b64 Downloading  51.54MB
+ 164de8f14b64 Downloading  53.77MB
+ 85954acfa484 Downloading   99.3MB
+ 164de8f14b64 Downloading  58.79MB
+ 85954acfa484 Downloading  103.2MB
+ 164de8f14b64 Downloading  61.54MB
+ 85954acfa484 Downloading  105.9MB
+ 164de8f14b64 Downloading  63.73MB
+ 85954acfa484 Downloading  107.6MB
+ 85954acfa484 Verifying Checksum
+ 85954acfa484 Download complete
+ 85954acfa484 Extracting  557.1kB
+ 164de8f14b64 Downloading  67.63MB
+ 85954acfa484 Extracting   11.7MB
+ 164de8f14b64 Downloading  70.98MB
+ 85954acfa484 Extracting  18.38MB
+ 85954acfa484 Extracting  34.54MB
+ 164de8f14b64 Downloading  71.53MB
+ 85954acfa484 Extracting  47.91MB
+ 164de8f14b64 Downloading  72.09MB
+ 164de8f14b64 Verifying Checksum
+ 164de8f14b64 Download complete
+ 85954acfa484 Extracting  60.72MB
+ 85954acfa484 Extracting  72.97MB
+ 85954acfa484 Extracting  82.44MB
+ 85954acfa484 Extracting  98.04MB
+ 85954acfa484 Extracting    107MB
+ 85954acfa484 Extracting  109.8MB
+ 85954acfa484 Pull complete
+ 164de8f14b64 Extracting  557.1kB
+ 164de8f14b64 Extracting  1.671MB
+ 545c14a5a415 Downloading  557.1kB
+ 164de8f14b64 Extracting  2.785MB
+ 6fcbfeb5877c Downloading  557.1kB
+ 545c14a5a415 Downloading  1.671MB
+ 164de8f14b64 Extracting  4.456MB
+ 6fcbfeb5877c Downloading  2.785MB
+ 545c14a5a415 Downloading  4.456MB
+ 164de8f14b64 Extracting  5.571MB
+ 6fcbfeb5877c Downloading  7.799MB
+ 545c14a5a415 Downloading  5.571MB
+ 164de8f14b64 Extracting  8.913MB
+ a9c7f41169bf Verifying Checksum
+ a9c7f41169bf Download complete
+ 6fcbfeb5877c Downloading  11.14MB
+ 164de8f14b64 Extracting   11.7MB
+ 545c14a5a415 Downloading  10.03MB
+ 6fcbfeb5877c Downloading  16.71MB
+ 545c14a5a415 Verifying Checksum
+ 545c14a5a415 Download complete
+ 545c14a5a415 Extracting  557.1kB
+ 6fcbfeb5877c Verifying Checksum
+ 6fcbfeb5877c Download complete
+ 164de8f14b64 Extracting  16.15MB
+ 545c14a5a415 Extracting  3.899MB
+ 4f4fb700ef54 Download complete
+ 5759234535c5 Verifying Checksum
+ 5759234535c5 Download complete
+ 400fe5c6b87b Verifying Checksum
+ 400fe5c6b87b Download complete
+ 400fe5c6b87b Verifying Checksum
+ 400fe5c6b87b Download complete
+ 400fe5c6b87b Extracting  84.69kB
+ 400fe5c6b87b Extracting  84.69kB
+ 400fe5c6b87b Pull complete
+ 400fe5c6b87b Pull complete
+ 164de8f14b64 Extracting  16.71MB
+ 545c14a5a415 Extracting  4.456MB
+ 545c14a5a415 Extracting  14.66MB
+ 545c14a5a415 Pull complete
+ 6fcbfeb5877c Extracting  557.1kB
+ 164de8f14b64 Extracting  18.94MB
+ 6fcbfeb5877c Extracting  19.08MB
+ 6fcbfeb5877c Pull complete
+ a9c7f41169bf Extracting     357B
+ a9c7f41169bf Pull complete
+ 5759234535c5 Extracting     403B
+ 164de8f14b64 Extracting   27.3MB
+ 5759234535c5 Pull complete
+ 4f4fb700ef54 Extracting [==================================================>]      32B/32B
+ 4f4fb700ef54 Extracting [==================================================>]      32B/32B
+ 4f4fb700ef54 Pull complete
+ alertmanager Pulled
+ 164de8f14b64 Extracting  35.65MB
+ 2e4cf50eeb92 Verifying Checksum
+ 2e4cf50eeb92 Download complete
+ 2e4cf50eeb92 Verifying Checksum
+ 2e4cf50eeb92 Download complete
+ 2e4cf50eeb92 Extracting  12.58kB
+ 2e4cf50eeb92 Extracting  12.58kB
+ 2e4cf50eeb92 Pull complete
+ 2e4cf50eeb92 Pull complete
+ 164de8f14b64 Extracting  46.24MB
+ 164de8f14b64 Extracting  54.59MB
+ 164de8f14b64 Extracting   59.6MB
+ 164de8f14b64 Extracting  60.72MB
+ 164de8f14b64 Extracting  69.63MB
+ 164de8f14b64 Extracting  70.19MB
+ 164de8f14b64 Extracting   75.5MB
+ 164de8f14b64 Pull complete
+ be3398fa2dbf Extracting  11.92kB
+ be3398fa2dbf Pull complete
+ 8711a47cb968 Extracting  1.325kB
+ 8711a47cb968 Pull complete
+ grafana Pulled
+ e1089d61b200 Verifying Checksum
+ e1089d61b200 Download complete
+ e1089d61b200 Verifying Checksum
+ e1089d61b200 Download complete
+ d557676654e5 Verifying Checksum
+ d557676654e5 Download complete
+ d557676654e5 Verifying Checksum
+ d557676654e5 Download complete
+ 4e9f20d26c87 Verifying Checksum
+ 4e9f20d26c87 Download complete
+ 4e9f20d26c87 Verifying Checksum
+ 4e9f20d26c87 Download complete
+ 4e9f20d26c87 Extracting  458.3kB
+ 4e9f20d26c87 Extracting  458.3kB
+ 4e9f20d26c87 Pull complete
+ 4e9f20d26c87 Pull complete
+ e1089d61b200 Extracting  28.39kB
+ e1089d61b200 Extracting  28.39kB
+ e1089d61b200 Pull complete
+ e1089d61b200 Pull complete
+ d82bc7a76a83 Download complete
+ d82bc7a76a83 Verifying Checksum
+ d82bc7a76a83 Download complete
+ 0f8b424aa0b9 Verifying Checksum
+ 0f8b424aa0b9 Download complete
+ 0f8b424aa0b9 Verifying Checksum
+ 0f8b424aa0b9 Download complete
+ 0f8b424aa0b9 Extracting      75B
+ 0f8b424aa0b9 Extracting      75B
+ 0f8b424aa0b9 Pull complete
+ 0f8b424aa0b9 Pull complete
+ d557676654e5 Extracting     193B
+ d557676654e5 Extracting     193B
+ d557676654e5 Pull complete
+ d557676654e5 Pull complete
+ d82bc7a76a83 Extracting     130B
+ d82bc7a76a83 Extracting     130B
+ d82bc7a76a83 Pull complete
+ d82bc7a76a83 Pull complete
+ d858cbc252ad Verifying Checksum
+ d858cbc252ad Download complete
+ d858cbc252ad Verifying Checksum
+ d858cbc252ad Download complete
+ d858cbc252ad Extracting     173B
+ d858cbc252ad Extracting     173B
+ d858cbc252ad Pull complete
+ d858cbc252ad Pull complete
+ 1069fc2daed1 Verifying Checksum
+ 1069fc2daed1 Verifying Checksum
+ 1069fc2daed1 Download complete
+ 1069fc2daed1 Download complete
+ 1069fc2daed1 Extracting      97B
+ 1069fc2daed1 Extracting      97B
+ b40161cd83fc Download complete
+ b40161cd83fc Verifying Checksum
+ b40161cd83fc Download complete
+ 3f4e2c586348 Verifying Checksum
+ 3f4e2c586348 Download complete
+ 3f4e2c586348 Verifying Checksum
+ 1069fc2daed1 Pull complete
+ 1069fc2daed1 Pull complete
+ b40161cd83fc Extracting     382B
+ b40161cd83fc Extracting     382B
+ b40161cd83fc Pull complete
+ b40161cd83fc Pull complete
+ 3f4e2c586348 Extracting     326B
+ 3f4e2c586348 Extracting     326B
+ 3f4e2c586348 Pull complete
+ 3f4e2c586348 Pull complete
+ 5391af8231d5 Downloading  553.9kB
+ 5391af8231d5 Downloading  553.9kB
+ 5391af8231d5 Verifying Checksum
+ 5391af8231d5 Download complete
+ 5391af8231d5 Verifying Checksum
+ 5391af8231d5 Download complete
+ 48b526ded0d5 Verifying Checksum
+ 48b526ded0d5 Download complete
+ fd83a3426d7c Verifying Checksum
+ fd83a3426d7c Download complete
+ 946f55b0b525 Verifying Checksum
+ 946f55b0b525 Download complete
+ eb8f5749650b Download complete
+ eb8f5749650b Download complete
+ eb8f5749650b Extracting  130.9kB
+ eb8f5749650b Extracting  130.9kB
+ eb8f5749650b Pull complete
+ eb8f5749650b Pull complete
+ 5391af8231d5 Extracting  557.1kB
+ 5391af8231d5 Extracting  557.1kB
+ 5391af8231d5 Extracting  758.9kB
+ 5391af8231d5 Extracting  758.9kB
+ 5391af8231d5 Pull complete
+ 5391af8231d5 Pull complete
+ 48b526ded0d5 Extracting     217B
+ 48b526ded0d5 Pull complete
+ fd83a3426d7c Extracting     385B
+ fd83a3426d7c Pull complete
+ 946f55b0b525 Extracting     117B
+ 946f55b0b525 Pull complete
+ c66ae67a6eb7 Verifying Checksum
+ c66ae67a6eb7 Download complete
+ c66ae67a6eb7 Extracting     124B
+ c66ae67a6eb7 Pull complete
+ e62c82fa8efb Downloading  557.1kB
+ e62c82fa8efb Downloading  3.899MB
+ e62c82fa8efb Downloading  6.685MB
+ e62c82fa8efb Downloading  9.437MB
+ 9bcd400eed98 Verifying Checksum
+ 9bcd400eed98 Download complete
+ e62c82fa8efb Downloading  12.75MB
+ e62c82fa8efb Downloading   15.5MB
+ e62c82fa8efb Downloading  18.28MB
+ e62c82fa8efb Downloading  21.07MB
+ e62c82fa8efb Downloading  24.41MB
+ e62c82fa8efb Downloading   27.2MB
+ b505999dcc3b Downloading  557.1kB
+ e62c82fa8efb Downloading  29.43MB
+ b505999dcc3b Downloading  4.456MB
+ e62c82fa8efb Downloading  32.21MB
+ e62c82fa8efb Verifying Checksum
+ e62c82fa8efb Download complete
+ b505999dcc3b Downloading  7.242MB
+ e62c82fa8efb Extracting  557.1kB
+ b505999dcc3b Downloading  9.994MB
+ e62c82fa8efb Extracting  13.93MB
+ b505999dcc3b Downloading  12.75MB
+ e62c82fa8efb Extracting  25.62MB
+ b505999dcc3b Downloading  16.65MB
+ e62c82fa8efb Extracting  33.01MB
+ e62c82fa8efb Pull complete
+ 9bcd400eed98 Extracting  122.7kB
+ 9bcd400eed98 Pull complete
+ tempo Pulled
+ b505999dcc3b Downloading  19.43MB
+ b505999dcc3b Downloading  21.66MB
+ b73fd178e2f0 Verifying Checksum
+ b73fd178e2f0 Download complete
+ b505999dcc3b Downloading  24.41MB
+ b505999dcc3b Downloading  27.16MB
+ b505999dcc3b Downloading  29.95MB
+ b505999dcc3b Downloading  32.74MB
+ b505999dcc3b Downloading  35.52MB
+ b505999dcc3b Verifying Checksum
+ b505999dcc3b Download complete
+ b505999dcc3b Extracting  557.1kB
+ b505999dcc3b Extracting  13.37MB
+ b505999dcc3b Extracting  26.18MB
+ b505999dcc3b Extracting  37.76MB
+ b505999dcc3b Pull complete
+ b73fd178e2f0 Extracting     787B
+ b73fd178e2f0 Pull complete
+ 6805e14ef2f4 Verifying Checksum
+ 6805e14ef2f4 Download complete
+ b71466b94f26 Downloading  557.1kB
+ b71466b94f26 Downloading  2.785MB
+ b71466b94f26 Downloading  7.766MB
+ b71466b94f26 Downloading  11.65MB
+ b71466b94f26 Downloading  15.53MB
+ b71466b94f26 Downloading  19.96MB
+ b71466b94f26 Downloading  23.86MB
+ b71466b94f26 Downloading  27.16MB
+ b71466b94f26 Download complete
+ b9fb14f41167 Downloading  557.1kB
+ b71466b94f26 Extracting  557.1kB
+ b9fb14f41167 Verifying Checksum
+ b9fb14f41167 Download complete
+ b71466b94f26 Extracting  8.913MB
+ b71466b94f26 Extracting  21.17MB
+ b71466b94f26 Extracting  25.62MB
+ b71466b94f26 Extracting  29.52MB
+ b71466b94f26 Extracting  29.72MB
+ b71466b94f26 Pull complete
+ b9fb14f41167 Extracting  557.1kB
+ b9fb14f41167 Extracting   1.54MB
+ b9fb14f41167 Pull complete
+ c5f1c4cca061 Verifying Checksum
+ c5f1c4cca061 Download complete
+ 7a77df0115f5 Downloading  557.1kB
+ 7a77df0115f5 Downloading  2.785MB
+ 7a77df0115f5 Downloading  7.209MB
+ 7a77df0115f5 Downloading  11.08MB
+ 7a77df0115f5 Downloading  14.91MB
+ 7a77df0115f5 Downloading  18.81MB
+ 7a77df0115f5 Downloading   23.2MB
+ 7a77df0115f5 Downloading   27.1MB
+ 7a77df0115f5 Downloading  30.93MB
+ 7a77df0115f5 Downloading  35.36MB
+ 7a77df0115f5 Downloading   38.7MB
+ 7a77df0115f5 Downloading   42.6MB
+ 95f4d4b3924d Verifying Checksum
+ 95f4d4b3924d Download complete
+ 7a77df0115f5 Downloading  46.47MB
+ 7a77df0115f5 Downloading  48.69MB
+ 7a77df0115f5 Downloading  52.56MB
+ 7a77df0115f5 Downloading  57.54MB
+ 7a77df0115f5 Downloading  60.88MB
+ 7a77df0115f5 Downloading  64.78MB
+ 7a77df0115f5 Downloading   69.2MB
+ 7a77df0115f5 Downloading  72.52MB
+ 7a77df0115f5 Downloading   75.3MB
+ 7a77df0115f5 Downloading  79.72MB
+ 7a77df0115f5 Downloading  83.07MB
+ 7a77df0115f5 Downloading  86.97MB
+ 7a77df0115f5 Downloading  90.31MB
+ 7a77df0115f5 Downloading  94.18MB
+ 7a77df0115f5 Downloading  99.12MB
+ 7a77df0115f5 Downloading  103.5MB
+ 7a77df0115f5 Downloading  107.4MB
+ 7a77df0115f5 Verifying Checksum
+ 7a77df0115f5 Download complete
+ 7a77df0115f5 Extracting  557.1kB
+ 7a77df0115f5 Extracting  12.26MB
+ 7a77df0115f5 Extracting  25.07MB
+ 7a77df0115f5 Extracting  36.77MB
+ 7a77df0115f5 Extracting  49.02MB
+ 7a77df0115f5 Extracting  61.28MB
+ 7a77df0115f5 Extracting  66.29MB
+ 7a77df0115f5 Extracting  82.44MB
+ 7a77df0115f5 Extracting  93.03MB
+ 7a77df0115f5 Extracting    112MB
+ 7a77df0115f5 Pull complete
+ c5f1c4cca061 Extracting     560B
+ c5f1c4cca061 Pull complete
+ 95f4d4b3924d Extracting  3.509kB
+ 95f4d4b3924d Pull complete
+ alloy Pulled
+ 8509bbf299f4 Verifying Checksum
+ 8509bbf299f4 Download complete
+ 8509bbf299f4 Extracting     381B
+ 8509bbf299f4 Pull complete
+ 6805e14ef2f4 Extracting     889B
+ 6805e14ef2f4 Pull complete
+ loki Pulled
+ Volume "workspace_loki-data"  Creating
+ Volume "workspace_loki-data"  Created
+ Volume "workspace_alloy-data"  Creating
+ Volume "workspace_alloy-data"  Created
+ Volume "workspace_otel-queue"  Creating
+ Volume "workspace_otel-queue"  Created
+ Volume "workspace_tempo-data"  Creating
+ Volume "workspace_tempo-data"  Created
+ Volume "workspace_grafana-data"  Creating
+ Volume "workspace_grafana-data"  Created
+ Volume "workspace_alertmanager-data"  Creating
+ Volume "workspace_alertmanager-data"  Created
+ Container workspace-loki-1  Creating
+ Container workspace-otel-collector-1  Creating
+ Container workspace-tempo-1  Creating
+ Container workspace-prometheus-1  Creating
+ Container workspace-alertmanager-1  Creating
+ Container workspace-alloy-1  Creating
+ Container workspace-grafana-1  Creating
+ Container workspace-blackbox-1  Creating
+ Container revguard-api  Running
+ Container workspace-loki-1  Created
+ Container workspace-blackbox-1  Created
+ Container workspace-grafana-1  Created
+ Container workspace-alloy-1  Created
+ Container workspace-prometheus-1  Created
+ Container workspace-tempo-1  Created
+ Container workspace-otel-collector-1  Created
+ Container workspace-alertmanager-1  Created
+ Container workspace-prometheus-1  Starting
+ Container workspace-otel-collector-1  Starting
+ Container workspace-alertmanager-1  Starting
+ Container workspace-loki-1  Starting
+ Container workspace-tempo-1  Starting
+ Container workspace-alloy-1  Starting
+ Container workspace-blackbox-1  Starting
+ Container workspace-grafana-1  Starting
+ Container workspace-blackbox-1  Started
+ Container workspace-otel-collector-1  Started
+ Container workspace-prometheus-1  Started
+ Container workspace-alloy-1  Started
+ Container workspace-grafana-1  Started
+ Container workspace-tempo-1  Started
+ Container workspace-alertmanager-1  Started
+ Container workspace-loki-1  Started
+Grafana selected-dashboard sharing enabled; no admin credential exposed
+
+==> 执行部署验收
+
+部署完成：
+  WebUI  http://127.0.0.1:19000/demo/
+  Health http://127.0.0.1:19000/api/v1/health
+  模式    local
+  案件    8
+  配置    /workspace/.env（权限 0600，请勿提交）

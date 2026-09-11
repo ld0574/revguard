@@ -1,0 +1,8 @@
+/usr/local/bin/python scripts/gen_skill_docs.py --check
+verified /workspace/docs/skills.md (16 skills)
+/usr/local/bin/python scripts/export_openapi.py --check
+verified /workspace/docs/openapi.json
+/usr/local/bin/python scripts/validate_evaluation_snapshot.py
+verified /workspace/docs/evaluation-summary.json: 105/105, UTC, median benchmark
+/usr/local/bin/python scripts/validate_synthetic_dataset.py \
+	--check docs/synthetic-data-validation.json

@@ -7,6 +7,29 @@ export function isVerifiedClosure(snapshot) {
     );
 }
 
+export function caseOutcome(snapshot) {
+  const status = snapshot?.case?.status;
+  if (status === "ROLLED_BACK") {
+    return safetyRailState(snapshot).passed
+      ? { tone: "success", note: "冲销后独立复核通过" }
+      : { tone: "warning", note: "待核实回滚证据" };
+  }
+  if (isVerifiedClosure(snapshot)) return { tone: "success", note: "写后独立验证通过" };
+  if (status === "CLOSED") {
+    const wrote = (snapshot?.executions || []).some(
+      (item) => item.action_type !== "DRAFT" && item.status !== "DRAFT",
+    );
+    return wrote
+      ? { tone: "warning", note: "待核实写后验证证据" }
+      : { tone: "neutral", note: "已关闭，无账务写入" };
+  }
+  if (status === "REJECTED") return { tone: "neutral", note: "审批驳回" };
+  if (["FAILED", "ROLLBACK_REQUIRED", "RECOVERY_REQUIRED"].includes(status)) {
+    return { tone: "danger", note: status === "RECOVERY_REQUIRED" ? "资金结果需要核对" : "需要处理异常" };
+  }
+  return { tone: status === "CREATED" || !status ? "neutral" : "warning", note: "流程尚未结束" };
+}
+
 export function safetyRailState(snapshot) {
   const status = snapshot?.case?.status;
   const original = snapshot?.case?.claim?.actual_amount;

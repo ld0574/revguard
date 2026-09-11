@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  caseOutcome,
   externalValidationLabel,
   formatBeijingDateTime,
   formatTaskDuration,
@@ -17,6 +18,21 @@ const completed = {
   verification: { verification_status: "PASSED" },
   executions: [{ action_type: "ADJUSTMENT", status: "POSTED", amount: "5400" }],
 };
+
+test("outcome colors require evidence and separate rejection from a verified write", () => {
+  assert.equal(caseOutcome(completed).tone, "success");
+  assert.equal(caseOutcome({ ...completed, verification: {} }).tone, "warning");
+  assert.equal(caseOutcome({ ...completed, executions: [{ status: "DRAFT" }] }).tone, "neutral");
+  for (const status of ["CREATED", "REJECTED"]) {
+    assert.equal(caseOutcome({ case: { status } }).tone, "neutral");
+  }
+  for (const status of ["FAILED", "ROLLBACK_REQUIRED", "RECOVERY_REQUIRED"]) {
+    assert.equal(caseOutcome({ case: { status } }).tone, "danger");
+  }
+  const rolled = { case: { status: "ROLLED_BACK" } };
+  assert.equal(caseOutcome(rolled).tone, "warning");
+  assert.equal(caseOutcome({ ...rolled, audit_events: [{ event: "ROLLBACK_VERIFIED", detail: { verification_status: "PASSED" } }] }).tone, "success");
+});
 
 test("completed verified writes do not keep waiting for rollback", () => {
   assert.equal(isVerifiedClosure(completed), true);
