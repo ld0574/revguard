@@ -143,7 +143,7 @@ class TestToolContract(unittest.TestCase):
         self.assertFalse(resp["success"])
         self.assertEqual(resp["error"]["type"], "AUTH_FAILED")
 
-    def test_idempotency_conflict(self):
+    def test_idempotency_replays_committed_result(self):
         draft, token = self._approved_draft()
         params = {"action_id": draft["action_id"], "approval_token": token}
         first = self.gw.call("commission.submit_adjustment", params, case_id="CASE-T",
@@ -153,8 +153,8 @@ class TestToolContract(unittest.TestCase):
         second = self.gw.call("commission.submit_adjustment", params, case_id="CASE-T",
                               actor="revguard-executor", scope=["commission:write"],
                               idempotency_key="k2")
-        self.assertFalse(second["success"])
-        self.assertEqual(second["error"]["type"], "IDEMPOTENCY_CONFLICT")
+        self.assertTrue(second["success"])
+        self.assertEqual(first["data"], second["data"])
 
     def test_reversal_creates_negative_entry(self):
         draft, token = self._approved_draft()

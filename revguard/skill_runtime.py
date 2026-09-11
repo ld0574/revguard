@@ -136,6 +136,7 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
                 approval_token=_required(payload, "approval_token"),
                 policy_version=_required(payload, "policy_version"),
                 idempotency_key=_required(payload, "idempotency_key"),
+                items=payload.get("items"),
             )
         elif name == "LedgerReverseSkill":
             result = skills.ledger_reverse(
@@ -143,6 +144,7 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
                 ledger_id=_required(payload, "ledger_id"),
                 rollback_token=_required(payload, "rollback_token"),
                 idempotency_key=_required(payload, "idempotency_key"),
+                items=payload.get("items"),
             )
         elif name == "PostActionVerifySkill":
             result = skills.post_action_verify(

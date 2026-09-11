@@ -29,6 +29,7 @@ from .models import (
     new_id,
     utc_now,
 )
+from .money_journal import MONEY_TOOLS
 from .policy_matcher import resolve_tier_at_date, select_policy_version
 from .risk import classify_risk
 from .security import redact_secrets
@@ -39,7 +40,21 @@ from .trace import Tracer
 # 工具调用辅助：超时/重试/留痕（设计文档 13.3）
 # ---------------------------------------------------------------------------
 
-def call_tool(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
+def call_tool(gateway, tracer, tool_name: str, parameters: dict, **kwargs) -> dict:
+    try:
+        return _call_tool_attempts(gateway, tracer, tool_name, parameters, **kwargs)
+    except Exception as exc:
+        definite = isinstance(exc, ToolError) and exc.error_type in {
+            "AUTH_FAILED", "NOT_FOUND", "INVALID_PARAMS", "DATA_CONFLICT", "IDEMPOTENCY_CONFLICT",
+        }
+        if tool_name not in MONEY_TOOLS or definite:
+            raise
+        if hasattr(gateway, "journal"):
+            gateway.journal.freeze_case(kwargs.get("case_id", ""))
+        raise ToolError("RESULT_UNKNOWN", "资金结果未知；停止写入，等待原操作对账") from exc
+
+
+def _call_tool_attempts(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
               parameters: dict, *, case_id: str, actor: str,
               scope: list[str] | None = None, idempotency_key: str | None = None,
               max_retries: int = 3, retry_backoff: float = 0.05,
@@ -50,7 +65,7 @@ def call_tool(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
         attempt += 1
         span_ctx = (tracer.span("TOOL", tool_name, actor=actor,
                                 inputs={"parameters": redact_secrets(parameters),
-                                        "attempt": attempt},
+                                        "attempt": attempt, "operation_id": idempotency_key},
                                 parent_span_id=parent_span_id)
                     if tracer else _null_span())
         with span_ctx as span:
@@ -64,6 +79,8 @@ def call_tool(gateway: ToolGateway, tracer: Tracer | None, tool_name: str,
         if resp["success"]:
             return resp
         error = resp["error"] or {}
+        if tool_name in MONEY_TOOLS and error.get("retryable"):
+            raise ToolError("RESULT_UNKNOWN", "资金操作结果未知，须按原操作ID对账")
         if error.get("retryable") and attempt < max_retries:
             time.sleep(retry_backoff * attempt)  # 简单退避
             continue
@@ -380,12 +397,13 @@ def adjustment_draft(gateway: ToolGateway, tracer: Tracer | None, *, case_id: st
 
 def ledger_reverse(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
                    ledger_id: str, rollback_token: str,
-                   idempotency_key: str) -> dict:
+                   idempotency_key: str, items: list[dict] | None = None) -> dict:
     """LedgerReverseSkill：用一次性回滚令牌新增反向台账，不物理删除原记录。"""
     resp = call_tool(gateway, tracer, "commission.reverse_adjustment", {
         "case_id": case_id,
         "ledger_id": ledger_id,
         "rollback_token": rollback_token,
+        **({"items": items} if items else {}),
     }, case_id=case_id, actor="revguard-executor", scope=["commission:reverse"],
         idempotency_key=idempotency_key)
     return resp["data"]
@@ -393,11 +411,12 @@ def ledger_reverse(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
 
 def ledger_adjust(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
                   action_id: str, approval_token: str, policy_version: str,
-                  idempotency_key: str) -> dict:
+                  idempotency_key: str, items: list[dict] | None = None) -> dict:
     """LedgerAdjustSkill：提交调整写入台账（强制审批凭证 + 幂等键）。"""
     resp = call_tool(gateway, tracer, "commission.submit_adjustment", {
         "action_id": action_id, "case_id": case_id,
         "approval_token": approval_token, "policy_version": policy_version,
+        **({"items": items} if items else {}),
     }, case_id=case_id, actor="revguard-executor", scope=["commission:write"],
         idempotency_key=idempotency_key)
     return resp["data"]
@@ -405,11 +424,23 @@ def ledger_adjust(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
 
 def post_action_verify(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
                        order_id: str, expected_components: list[dict]) -> dict:
+    first = _verify_ledger_read(gateway, tracer, case_id=case_id, order_id=order_id,
+                                expected_components=expected_components)
+    if first["verification_status"] == "PASSED":
+        return first
+    confirmed = _verify_ledger_read(gateway, tracer, case_id=case_id, order_id=order_id,
+                                    expected_components=expected_components)
+    confirmed["evidence_refs"] = first["evidence_refs"] + confirmed["evidence_refs"]
+    return confirmed
+
+
+def _verify_ledger_read(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
+                       order_id: str, expected_components: list[dict]) -> dict:
     """PostActionVerifySkill：独立重新查询台账验证执行结果（ADR-002）。
 
     不复用 Executor 的任何返回值，全部以最新独立查询为准。
     """
-    resp = call_tool(gateway, tracer, "finance.get_commission_ledger", {"order_id": order_id},
+    resp = call_tool(gateway, tracer, "finance.get_commission_ledger", {"order_id": order_id, "operation_scope": True},
                      case_id=case_id, actor="revguard-verifier", scope=["ledger:read"])
     entries = [e for e in resp["data"]["entries"] if e.get("status") == "POSTED"]
     per_component: dict[str, Decimal] = {}
@@ -447,7 +478,7 @@ def post_action_verify(gateway: ToolGateway, tracer: Tracer | None, *, case_id: 
 def post_rollback_verify(gateway: ToolGateway, tracer: Tracer | None, *, case_id: str,
                          order_id: str, expected_snapshot: list[dict]) -> dict:
     """PostRollbackVerifySkill：独立查询并确认冲销后恢复到执行前台账净额。"""
-    resp = call_tool(gateway, tracer, "finance.get_commission_ledger", {"order_id": order_id},
+    resp = call_tool(gateway, tracer, "finance.get_commission_ledger", {"order_id": order_id, "operation_scope": True},
                      case_id=case_id, actor="revguard-verifier", scope=["ledger:read"])
 
     def _totals(entries: list[dict]) -> dict[str, Decimal]:

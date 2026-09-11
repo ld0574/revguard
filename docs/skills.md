@@ -1080,8 +1080,8 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
 ### LedgerAdjustSkill
 
 - 必填输入：`action_id`, `approval_token`, `policy_version`, `idempotency_key`
-- 可选输入：-
-- 输出：`action_id`, `status`, `ledger_entry`, `before_snapshot`, `after_snapshot`, `rollback_token`
+- 可选输入：`items`
+- 输出：`action_id`, `status`, `ledger_entry`, `before_snapshot`, `after_snapshot`, `rollback_token`, `executions`, `operation_id`
 - 调用：`POST /api/v1/skills/LedgerAdjustSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：提交调整写入台账（签名审批凭证+幂等）
@@ -1108,6 +1108,13 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
       "idempotency_key": {
         "type": "string",
         "minLength": 1
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
       }
     },
     "required": [
@@ -1152,6 +1159,17 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
       "rollback_token": {
         "type": "string",
         "minLength": 1
+      },
+      "executions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "operation_id": {
+        "type": "string",
+        "minLength": 1
       }
     },
     "required": [
@@ -1172,8 +1190,8 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
 ### LedgerReverseSkill
 
 - 必填输入：`ledger_id`, `rollback_token`, `idempotency_key`
-- 可选输入：-
-- 输出：`reversal_entry`, `reversed_entry`
+- 可选输入：`items`
+- 输出：`reversal_entry`, `reversed_entry`, `executions`, `reversals`, `operation_id`
 - 调用：`POST /api/v1/skills/LedgerReverseSkill/invoke`
 - 允许身份：`revguard-executor`
 - 说明：验证失败后以一次性能力令牌反向冲销
@@ -1196,6 +1214,13 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
       "idempotency_key": {
         "type": "string",
         "minLength": 1
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
       }
     },
     "required": [
@@ -1215,6 +1240,24 @@ LLM 理解与确定性计算分离、失败返回明确错误类型、高风险 
       "reversed_entry": {
         "type": "object",
         "additionalProperties": true
+      },
+      "executions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "reversals": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "operation_id": {
+        "type": "string",
+        "minLength": 1
       }
     },
     "required": [

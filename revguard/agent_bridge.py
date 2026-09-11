@@ -162,7 +162,9 @@ def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
         )
     except Exception as exc:
         failed_status = (
-            TaskStatus.FAILED_RETRYABLE.value
+            TaskStatus.RESULT_UNKNOWN.value
+            if isinstance(exc, ToolError) and exc.error_type == "RESULT_UNKNOWN"
+            else TaskStatus.FAILED_RETRYABLE.value
             if isinstance(exc, ToolError) and exc.retryable
             else TaskStatus.FAILED_FINAL.value
         )

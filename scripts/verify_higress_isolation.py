@@ -7,7 +7,7 @@ script only prints server names, HTTP statuses and tool names/counts.
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # nosec B404
 import time
 from pathlib import Path
 
@@ -65,7 +65,8 @@ def main() -> None:
     for worker in manifest:
         own = f"mcp-{worker}"
         for attempt in range(5):
-            result = subprocess.run(
+            # Fixed Docker command and repository role manifest; no shell expansion.
+            result = subprocess.run(  # nosec B603, B607
                 ["docker", "exec", "-i", f"agentteams-worker-{worker}",
                  "python", "-", own, json.dumps(list(expected))],
                 input=WORKER_PROBE, text=True, capture_output=True, timeout=90,

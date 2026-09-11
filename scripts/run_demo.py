@@ -66,8 +66,8 @@ def main() -> int:
         spec = next((s for s in specs.values() if s["input"]["case_id"] == case["case_id"]), {})
         gateway = ToolGateway(
             FIXTURES, finance_fail_times=1,
-            verification_tamper_amount=(spec.get("gateway_overrides") or {}).get(
-                "verification_tamper_amount", "0"
+            posting_tamper_amount=(spec.get("gateway_overrides") or {}).get(
+                "posting_tamper_amount", "0"
             ),
         )
         orchestrator = Orchestrator(

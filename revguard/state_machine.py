@@ -49,7 +49,8 @@ ALLOWED_TRANSITIONS: dict[CaseStatus, frozenset[CaseStatus]] = {
     # A failed write flow may only reopen into the safety path.  The recovery
     # endpoint additionally proves that verification requested rollback and
     # that the failed stage was a reversal/post-rollback verification stage.
-    CaseStatus.FAILED: frozenset({CaseStatus.ROLLBACK_REQUIRED}),
+    CaseStatus.FAILED: frozenset({CaseStatus.ROLLBACK_REQUIRED, CaseStatus.RECOVERY_REQUIRED}),
+    CaseStatus.RECOVERY_REQUIRED: frozenset({CaseStatus.EXECUTING, CaseStatus.ROLLBACK_REQUIRED}),
 }
 
 _FAILURE_SOURCES = frozenset(
@@ -72,7 +73,10 @@ def transition_case(
     except (TypeError, ValueError) as exc:
         raise InvalidStateTransition(f"未知 Case 当前状态: {case.get('status')!r}") from exc
 
-    allowed = to in ALLOWED_TRANSITIONS[old] or (
+    recovery = to is CaseStatus.RECOVERY_REQUIRED and old in {
+        CaseStatus.EXECUTING, CaseStatus.VERIFYING, CaseStatus.ROLLBACK_REQUIRED,
+    }
+    allowed = recovery or to in ALLOWED_TRANSITIONS[old] or (
         to is CaseStatus.FAILED and old in _FAILURE_SOURCES
     )
     if not allowed:

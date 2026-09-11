@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT))
 # 必须在 import revguard.api 之前设置：api.py 在模块级读取环境变量
 _TMP = tempfile.mkdtemp(prefix="revguard_api_test_")
 os.environ["REVGUARD_DB_PATH"] = str(Path(_TMP) / "api_test.db")
+os.environ["REVGUARD_RELEASE_VERSION"] = "test-release"
 os.environ["REVGUARD_OUTPUT_DIR"] = str(Path(_TMP) / "outputs")
 os.environ["REVGUARD_REPORT_DIR"] = str(Path(_TMP) / "reports")
 os.environ["REVGUARD_APPROVAL_MODE"] = "wait"      # 服务端默认：挂起等待人工审批
@@ -663,7 +664,7 @@ class TestApiSmoke(unittest.TestCase):
         self.assertIn("revguard_cases_total", prometheus.text)
         evidence = self.client.get("/api/v1/ops/evidence", headers=self.viewer)
         self.assertEqual(evidence.status_code, 200)
-        self.assertEqual(evidence.json()["release"], "0.4.0")
+        self.assertEqual(evidence.json()["release"], "test-release")
         self.assertFalse(
             evidence.json()["business_value"]["production_claim_allowed"]
         )
@@ -774,8 +775,8 @@ class TestApiSmoke(unittest.TestCase):
 
     def test_15a_mcp_team_api_pauses_and_resumes_after_human_approval(self):
         case_id = "CASE-2026-0008"
-        api_module.gateway._verification_tamper_amount = Decimal("1")
-        api_module.gateway._verification_tamper_used = False
+        api_module.gateway._posting_tamper_amount = Decimal("1")
+        api_module.gateway._posting_tamper_used = False
         started = self.client.post(
             f"/api/v1/cases/{case_id}/team/run",
             headers={**self.operator, "X-Request-ID": "REQ-MCP-TEAM-API"},
@@ -796,7 +797,7 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(approved.status_code, 200, approved.text)
         self.assertEqual(approved.json()["case"]["status"], CaseStatus.ROLLED_BACK.value)
         tasks = store.list_agent_tasks(case_id)
-        self.assertEqual(len(tasks), 20)
+        self.assertEqual(len(tasks), 18)
         details = [
             json.loads(item["detail"])
             for item in store.list_audit(case_id)
@@ -859,6 +860,28 @@ class TestApiSmoke(unittest.TestCase):
             "idempotent-execution-replay",
         )
         spawn.assert_called_once_with(case_id, "EXECUTION")
+
+    def test_15bb_recovery_required_mcp_is_human_gated_and_restore_lock_is_enforced(self):
+        case_id = "CASE-MCP-RECOVERY-LOCK"
+        case = Case(case_id=case_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+                    status=CaseStatus.RECOVERY_REQUIRED.value).to_dict()
+        case.update({"execution_mode": "MCP_TEAM", "risk_decision": {"approval_required": False}})
+        store.save_case(case)
+        store.save_approval({"approval_id": "APR-RECOVERY-LOCK", "case_id": case_id, "status": "APPROVED"})
+        denied = self.client.post(f"/api/v1/cases/{case_id}/team/resume", headers=self.operator)
+        self.assertEqual(denied.status_code, 401)
+        with patch.dict(os.environ, {"REVGUARD_MONEY_RECOVERY_LOCK": "true"}), patch("revguard.api._spawn_team_background") as spawn:
+            blocked = self.client.post(f"/api/v1/cases/{case_id}/team/resume",
+                                       headers=self.human_headers(case_id, "RESUME"))
+            self.assertEqual(blocked.status_code, 409, blocked.text)
+            self.assertEqual(blocked.json()["detail"]["code"], "MONEY_RECOVERY_LOCKED")
+            spawn.assert_not_called()
+        self.assertEqual(store.get_case(case_id)["status"], CaseStatus.RECOVERY_REQUIRED.value)
+        with patch("revguard.api._spawn_team_background") as spawn:
+            recovered = self.client.post(f"/api/v1/cases/{case_id}/team/resume",
+                                         headers=self.human_headers(case_id, "RESUME"))
+            self.assertEqual(recovered.status_code, 202, recovered.text)
+            spawn.assert_called_once_with(case_id, "EXECUTION")
 
     def test_15c_failed_rollback_can_only_reopen_into_safety_path(self):
         case_id = "CASE-FAILED-ROLLBACK"

@@ -122,6 +122,8 @@ const TASK_STATUS_LABELS = {
   PENDING: "待处理",
   RUNNING: "执行中",
   SUCCEEDED: "已成功",
+  RESULT_UNKNOWN: "资金结果待核对",
+  RECOVERY_REQUIRED: "等待对账恢复",
   FAILED_RETRYABLE: "失败待重试",
   FAILED_FINAL: "最终失败",
   CANCELLED: "已取消",
@@ -496,7 +498,7 @@ function AgentMatrix({ snapshot }) {
         {visible.length ? visible.map((task, reverseIndex) => {
           const span = traceSpans.find((item) => item.inputs?.correlation?.agent_task_id === task.task_id || item.outputs?.agent_task_id === task.task_id || item.inputs?.task_id === task.task_id);
           const isRunFailureTask = run.status === "FAILED" && task.task_id === run.current_task_id;
-          const displayStatus = isRunFailureTask ? "FAILED_FINAL" : task.status;
+          const displayStatus = task.status === "RESULT_UNKNOWN" ? task.status : isRunFailureTask ? "FAILED_FINAL" : task.status;
           const displayOutput = task.result || task.error || (isRunFailureTask ? {
             status: "未完成",
             reason: run.error?.message || "AgentTeams 执行者未返回阶段结果",
@@ -793,7 +795,8 @@ export function App() {
   const teamStale = !terminalCase && isStaleTeamRun(teamRun);
   const teamRunning = !terminalCase && ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
   const teamFailure = snapshot?.case?.team_run?.status === "FAILED" ? snapshot.case.team_run : null;
-  const rollbackRecoverable = Boolean(
+  const recoveryRequired = snapshot?.case?.status === "RECOVERY_REQUIRED";
+  const rollbackRecoverable = recoveryRequired || Boolean(
     teamFailure
     && snapshot?.case?.status === "FAILED"
     && ["LedgerReverseSkill", "PostRollbackVerifySkill"].includes(teamFailure.current_stage)
@@ -858,7 +861,7 @@ export function App() {
     try {
       if (action === "RESUME") {
         await api(`/api/v1/cases/${caseId}/team/resume`, token, { method: "POST" });
-        setNotice("人工身份与恢复动作已绑定，未完成链路正在幂等续跑");
+        setNotice("人工身份已验证，已按原操作对账并恢复未完成阶段");
       } else {
         await api(`/api/v1/cases/${caseId}/approval`, token, { method: "POST", body: JSON.stringify({ decision: action, comment }) });
         setNotice(action === "APPROVED" ? "人工审批已记录，执行与独立验证正在后台运行" : "人工驳回已记录，执行权限未签发");
@@ -885,8 +888,9 @@ export function App() {
   return (
     <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
-      {!error && teamFailure && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "继续安全回滚" : "定位任务"}</button></div>}
-      {!error && teamStale && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；续跑会重新授权并用幂等键跳过已完成写入。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "继续执行"}</button></div>}
+      {!error && recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>资金结果需要核对</strong><small>相关写入已暂停。先核对原操作是否提交，再恢复未完成阶段。</small></div><button onClick={onResume} disabled={busy}>核对并恢复</button></div>}
+      {!error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
+      {!error && teamStale && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；恢复会先查询原资金操作，确认结果后再继续。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "核对并恢复"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
       <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} />
         <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>

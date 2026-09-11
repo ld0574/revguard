@@ -11,7 +11,7 @@ set -euo pipefail
 
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
-MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-MiniMax-M3}}"
+MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-sol}}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
 AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
@@ -50,11 +50,20 @@ docker exec "$CONTROLLER" mkdir -p /tmp/agentteams/workers
 docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 
 echo "==> 2/6 创建/更新 1 Orchestrator + 9 Worker（model=$MODEL）"
+worker_image_args=()
+if [ "$MODEL" = "gpt-5.6-sol" ]; then
+  # The base image drops per-model kwargs when it re-bridges on startup.
+  sol_image="${AGENTTEAMS_SOL_WORKER_IMAGE:-revguard-agentteams-worker:sol-20260912}"
+  if ! docker image inspect "$sol_image" >/dev/null 2>&1; then
+    bash "$REVGUARD_HOME/scripts/build_agentteams_sol_images.sh"
+  fi
+  worker_image_args=(--image "$sol_image")
+fi
 for w in $WORKERS; do
   docker exec "$CONTROLLER" agt apply worker \
     --name "revguard-$w" \
     --soul-file "/tmp/agentteams/workers/revguard-$w.md" \
-    --model "$MODEL" | tail -1
+    --model "$MODEL" "${worker_image_args[@]}" | tail -1
 done
 
 echo "==> 3/6 组建 Team（leader=revguard-orchestrator）"
@@ -158,6 +167,22 @@ if target not in known:
     )
     with urllib.request.urlopen(req, timeout=10):
         pass
+if target == "gpt-5.6-sol":
+    # CoPaw uses Chat Completions function tools; Sol requires reasoning none.
+    model_config = next((
+        item.get("generate_kwargs") or {}
+        for item in [*(provider.get("models") or []), *(provider.get("extra_models") or [])]
+        if item.get("id") == target
+    ), {})
+    req = urllib.request.Request(
+        base + "/api/models/agentteams-gateway/models/" + target + "/config",
+        data=json.dumps({
+            "generate_kwargs": {**model_config, "reasoning_effort": "none"},
+        }).encode(),
+        method="PUT", headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=10):
+        pass
 payload = json.dumps({
     "provider_id": "agentteams-gateway", "model": target, "scope": "global",
 }).encode()
@@ -199,11 +224,14 @@ base = os.environ["AGENTTEAMS_AI_GATEWAY_URL"].rstrip("/")
 if not base.endswith("/v1"):
     base += "/v1"
 token = os.environ.get("AGENTTEAMS_WORKER_GATEWAY_KEY") or os.environ["AGENTTEAMS_AUTH_TOKEN"]
-payload = json.dumps({
+body = {
     "model": os.environ["REVGUARD_TARGET_MODEL"],
     "messages": [{"role": "user", "content": "reply OK"}],
     "max_tokens": 4,
-}).encode()
+}
+if body["model"] == "gpt-5.6-sol":
+    body["reasoning_effort"] = "none"
+payload = json.dumps(body).encode()
 req = urllib.request.Request(
     base + "/chat/completions", data=payload, method="POST",
     headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},

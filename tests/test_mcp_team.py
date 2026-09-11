@@ -26,7 +26,7 @@ class TestMcpTeamRunner(unittest.IsolatedAsyncioTestCase):
             finance_fail_times=1,
             signing_key="mcp-team-test-signing-key-at-least-32-bytes",
             state_path=tmp / "gateway.json",
-            verification_tamper_amount="1",
+            posting_tamper_amount="1",
         )
         self.runner = McpTeamRunner(
             self.store, self.gateway,
@@ -114,7 +114,7 @@ class TestMcpTeamRunner(unittest.IsolatedAsyncioTestCase):
             final_state["rollback"]["verification"]["verification_status"], "PASSED"
         )
         all_tasks = self.store.list_agent_tasks(self.case["case_id"])
-        self.assertEqual(len(all_tasks), 20)
+        self.assertEqual(len(all_tasks), 18)
         self.assertEqual({item["status"] for item in all_tasks}, {"SUCCEEDED"})
         serialized_inputs = json.dumps(
             [item["input"] for item in all_tasks], ensure_ascii=False,

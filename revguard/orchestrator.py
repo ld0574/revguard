@@ -20,7 +20,6 @@ from . import skills
 from .mocks import ToolGateway
 from .models import CaseStatus, utc_now
 from .report import render_audit_report
-from .security import secret_fingerprint
 from .state_machine import transition_case
 from .store import Store
 from .trace import Tracer
@@ -39,6 +38,7 @@ class Orchestrator:
                  simulated_approver: str = "finance.lead"):
         self.store = store
         self.gateway = gateway
+        gateway.attach_store(store)
         self.output_dir = Path(output_dir)
         self.report_dir = Path(report_dir)
         # approval_mode: auto=演示环境由"模拟审批人"完成人工节点；wait=挂起等待 API 审批
@@ -374,6 +374,7 @@ class Orchestrator:
 
         self._transition(case, CaseStatus.EXECUTING, "开始受控执行")
         executions: list[dict] = []
+        pending_items = []
         with tracer.span("AGENT", "revguard-executor", actor="revguard-executor"):
             for diff in state["root_cause_report"]["diffs"]:
                 delta = Decimal(diff["delta"])
@@ -427,32 +428,19 @@ class Orchestrator:
                         delta=delta, currency=state["calculation_result"]["currency"],
                         reason=diff.get("explanation", "佣金差异调整"))
                     span["outputs"] = draft
-                with tracer.span("SKILL", "LedgerAdjustSkill",
-                                 actor="revguard-executor") as span:
+                pending_items.append({"action_id": draft["action_id"], "idempotency_key": idem_key})
+            if pending_items:
+                with tracer.span("SKILL", "LedgerAdjustSkill", actor="revguard-executor") as span:
                     submitted = skills.ledger_adjust(
                         self.gateway, tracer, case_id=case["case_id"],
-                        action_id=draft["action_id"],
+                        action_id=pending_items[0]["action_id"], items=pending_items,
                         approval_token=approval.get("approval_token", ""),
                         policy_version=state["policy_decision"]["policy_version"],
-                        idempotency_key=idem_key)
-                    span["outputs"] = {"status": submitted["status"],
-                                       "rollback_token_ref": secret_fingerprint(
-                                           submitted.get("rollback_token", ""))}
-                execution = {
-                    "action_id": draft["action_id"], "case_id": case["case_id"],
-                    "action_type": "LEDGER_ADJUST", "status": submitted["status"],
-                    "amount": str(delta), "currency": state["calculation_result"]["currency"],
-                    "component": diff["component"], "idempotency_key": idem_key,
-                    "before_snapshot": submitted["before_snapshot"],
-                    "after_snapshot": submitted["after_snapshot"],
-                    "rollback_token": submitted.get("rollback_token"),
-                    "ledger_entry": submitted.get("ledger_entry"),
-                }
-                self.store.save_execution(execution)
-                executions.append(execution)
+                        idempotency_key=f"{case['case_id']}:settlement:{state['calculation_result']['calculation_hash']}")
+                    span["outputs"] = {"status": submitted["status"], "operation_id": submitted["operation_id"]}
+                executions.extend(submitted["executions"])
                 self.store.audit(case["case_id"], "revguard-executor", "EXECUTED",
-                                 {"action_id": draft["action_id"], "component": diff["component"],
-                                  "amount": str(delta), "idempotency_key": idem_key})
+                                 {"operation_id": submitted["operation_id"], "components": len(pending_items)})
         state["executions"] = executions
 
         if risk.execution_constraints.get("write") == "draft_only":
@@ -498,31 +486,21 @@ class Orchestrator:
             self._transition(case, CaseStatus.FAILED, "验证失败但没有可回滚执行记录")
             return
         expected_snapshot = executions[0].get("before_snapshot", [])
-        reversals = []
+        items = [{"ledger_id": e["ledger_entry"]["ledger_id"],
+                  "rollback_token": e["rollback_token"],
+                  "idempotency_key": f"{case['case_id']}:{e['component']}:rollback"}
+                 for e in reversed(executions)]
         with tracer.span("AGENT", "revguard-executor-rollback", actor="revguard-executor"):
-            for execution in reversed(executions):
-                ledger_id = execution["ledger_entry"]["ledger_id"]
-                rollback_key = f"{case['case_id']}:{execution['component']}:rollback"
-                with tracer.span("SKILL", "LedgerReverseSkill",
-                                 actor="revguard-executor") as span:
-                    reversed_result = skills.ledger_reverse(
-                        self.gateway, tracer, case_id=case["case_id"],
-                        ledger_id=ledger_id,
-                        rollback_token=execution["rollback_token"],
-                        idempotency_key=rollback_key,
-                    )
-                    span["outputs"] = {
-                        "ledger_id": reversed_result["reversal_entry"]["ledger_id"],
-                        "reversal_of": ledger_id,
-                    }
-                execution["status"] = "ROLLED_BACK"
-                execution["reversal"] = reversed_result["reversal_entry"]
-                self.store.save_execution(execution)
-                reversals.append(reversed_result["reversal_entry"])
-                self.store.audit(case["case_id"], "revguard-executor", "ROLLED_BACK",
-                                 {"action_id": execution["action_id"],
-                                  "ledger_id": ledger_id,
-                                  "reversal_id": reversed_result["reversal_entry"]["ledger_id"]})
+            with tracer.span("SKILL", "LedgerReverseSkill", actor="revguard-executor") as span:
+                reversed_result = skills.ledger_reverse(
+                    self.gateway, tracer, case_id=case["case_id"], items=items,
+                    ledger_id=items[0]["ledger_id"], rollback_token=items[0]["rollback_token"],
+                    idempotency_key=f"{case['case_id']}:compensation")
+                span["outputs"] = {"operation_id": reversed_result["operation_id"]}
+        reversals = reversed_result["reversals"]
+        state["executions"] = self.store.list_executions(case["case_id"])
+        self.store.audit(case["case_id"], "revguard-executor", "ROLLED_BACK",
+                         {"operation_id": reversed_result["operation_id"], "entries": len(reversals)})
 
         with tracer.span("AGENT", "revguard-verifier-rollback", actor="revguard-verifier"):
             with tracer.span("SKILL", "PostRollbackVerifySkill",

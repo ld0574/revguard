@@ -117,13 +117,14 @@ def _invoke_higress_mcp(
     request_id: str,
     task_id: str,
     config_path: Path,
+    traceparent: str = "",
 ) -> dict:
     arguments = {
         "caseId": case_id,
         "input": skill_input,
         "messageId": message_id,
         "requestId": request_id,
-        "taskId": task_id,
+        "taskId": task_id, "traceparent": traceparent,
     }
     completed = subprocess.run(
         [
@@ -158,6 +159,7 @@ def main() -> int:
     message.add_argument("--message-id-hex")
     parser.add_argument("--request-id")
     parser.add_argument("--task-id")
+    parser.add_argument("--traceparent", default="")
     args = parser.parse_args()
 
     try:
@@ -208,7 +210,7 @@ def main() -> int:
                 message_id=message_id,
                 request_id=request_id,
                 task_id=args.task_id,
-                config_path=mcp_config,
+                config_path=mcp_config, traceparent=args.traceparent,
             )
         except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
             result = {
@@ -246,7 +248,7 @@ def main() -> int:
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "X-AgentTeams-Message-ID": message_id,
-        "X-Request-ID": request_id,
+        "X-Request-ID": request_id, "traceparent": args.traceparent,
     }
     if args.task_id:
         headers["X-RevGuard-Task-ID"] = args.task_id

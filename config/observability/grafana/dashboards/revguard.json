@@ -1,0 +1,182 @@
+{
+  "uid": "revguard-operations",
+  "title": "RevGuard 运行与资金恢复",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "API与指标采集状态",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"revguard\"}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "未采集"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "title": "业务数据库就绪探针",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{job=\"readiness\"}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "未采集"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "待对账资金操作",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "revguard_money_unresolved_operations"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "未采集"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "冻结资金通道",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "revguard_money_frozen_channels"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "未采集"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "案件状态",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "revguard_cases_by_status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "未采集"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "title": "任务状态",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "revguard_agent_tasks_by_status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "未采集"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "查找调用链与日志",
+      "url": "/explore",
+      "type": "link"
+    }
+  ]
+}

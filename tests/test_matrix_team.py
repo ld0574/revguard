@@ -261,7 +261,7 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.gateway = ToolGateway(
             ROOT / "data" / "fixtures", finance_fail_times=1,
             signing_key="matrix-team-test-signing-key-at-least-32-bytes",
-            state_path=tmp / "gateway.json", verification_tamper_amount="1",
+            state_path=tmp / "gateway.json", posting_tamper_amount="1",
         )
         self.settings = MatrixSettings(
             homeserver_url="http://matrix.test", room_id="!revguard:test",
@@ -345,13 +345,13 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(final["status"], CaseStatus.ROLLED_BACK.value)
         self.assertEqual(final["team_run"]["status"], "COMPLETED")
         all_tasks = self.store.list_agent_tasks(self.case["case_id"])
-        self.assertEqual(len(all_tasks), 20)
+        self.assertEqual(len(all_tasks), 18)
         self.assertEqual({task["status"] for task in all_tasks}, {"SUCCEEDED"})
         agent_spans = [
             span for span in self.store.list_spans(self.case["case_id"])
             if span["kind"] == "AGENT" and span["name"].startswith("AgentTeams.")
         ]
-        self.assertEqual(len(agent_spans), 21)
+        self.assertEqual(len(agent_spans), 19)
         self.assertTrue(all(span["duration_ms"] >= 0 for span in agent_spans))
         self.assertIn(
             "AgentTeams.OrchestratorHandshake",

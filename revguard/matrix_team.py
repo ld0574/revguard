@@ -18,6 +18,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from urllib import error, parse, request
 
+from . import telemetry as otel
 from .agent_bridge import create_agent_task
 from .mcp_team import McpTeamRunner
 from .models import TaskStatus, new_id, utc_now
@@ -97,6 +98,8 @@ class MatrixSettings:
         missing = []
         if not self.homeserver_url:
             missing.append("REVGUARD_MATRIX_HOMESERVER_URL")
+        elif not self.homeserver_url.startswith(("http://", "https://")):
+            raise MatrixTransportError("Matrix homeserver must use HTTP(S)")
         if not self.room_id:
             missing.append("REVGUARD_MATRIX_ROOM_ID")
         if not self.access_token and not (self.username and self.password):
@@ -205,6 +208,7 @@ class MatrixClient:
         authenticated: bool = True,
         timeout: float = 20.0,
     ) -> dict:
+        self.settings.validate()
         if authenticated:
             await self.authenticate()
         url = f"{self.settings.homeserver_url}{path}"
@@ -219,7 +223,8 @@ class MatrixClient:
         def perform() -> dict:
             req = request.Request(url, data=data, method=method, headers=headers)
             try:
-                with request.urlopen(req, timeout=timeout) as response:
+                # validated HTTP(S) deployment endpoint
+                with request.urlopen(req, timeout=timeout) as response:  # nosec B310
                     return json.load(response)
             except error.HTTPError as exc:
                 try:
@@ -275,11 +280,14 @@ class MatrixTeamRunner(McpTeamRunner):
             url = template.format(actor=actor)
         except (KeyError, ValueError):
             return None
+        if not url.startswith(("http://", "https://")):
+            return None
 
         def perform() -> dict | None:
             try:
                 req = request.Request(url, headers={"Accept": "application/json"})
-                with request.urlopen(req, timeout=2.0) as response:
+                # HTTP(S) scheme checked above
+                with request.urlopen(req, timeout=2.0) as response:  # nosec B310
                     payload = json.load(response)
             except (OSError, ValueError, error.HTTPError):
                 return None
@@ -333,7 +341,8 @@ class MatrixTeamRunner(McpTeamRunner):
         task["telemetry"] = telemetry
         if usage:
             task["token_usage"] = usage
-            task["token_usage_source"] = "agentteams_worker_counter_delta"
+            # metric provenance, not a credential
+            task["token_usage_source"] = "agentteams_worker_counter_delta"  # nosec B105
         self.store.save_agent_task(task)
         return usage
 
@@ -500,7 +509,8 @@ class MatrixTeamRunner(McpTeamRunner):
                 orchestrator = {
                     **orchestrator,
                     "token_usage": token_usage,
-                    "token_usage_source": "agentteams_worker_counter_delta",
+                    # metric provenance
+                    "token_usage_source": "agentteams_worker_counter_delta",  # nosec B105
                 }
                 self._update_run(case, orchestrator=orchestrator)
             Tracer(self.store, case["case_id"]).record_completed_span(
@@ -530,6 +540,7 @@ class MatrixTeamRunner(McpTeamRunner):
         orchestrator = self._mxid("revguard-orchestrator")
         input_summary = {
             "run_id": self.run_id,
+            "traceparent": otel.carrier().get("traceparent"),
             "case_id": case["case_id"],
             "goal": "execute state-bound RevGuard StageTasks through assigned Workers",
             "authority": "state-machine",
@@ -588,6 +599,14 @@ class MatrixTeamRunner(McpTeamRunner):
                          })
 
     async def _invoke(self, case: dict, skill_name: str, skill_input: dict, *,
+                      message_id: str | None = None) -> dict:
+        with otel.operation("Agent." + skill_name, attributes={
+            "revguard.case.id": case["case_id"], "revguard.skill.name": skill_name,
+            "revguard.transport": self.transport,
+        }):
+            return await self._invoke_stage(case, skill_name, skill_input, message_id=message_id)
+
+    async def _invoke_stage(self, case: dict, skill_name: str, skill_input: dict, *,
                       message_id: str | None = None) -> dict:
         actors = SKILL_ACTORS.get(skill_name, frozenset())
         actor = next(iter(actors)) if len(actors) == 1 else ""
@@ -686,6 +705,7 @@ class MatrixTeamRunner(McpTeamRunner):
             # exact event id before sending the correlation header.
             "--message-id-hex", dispatch_event_id.encode("utf-8").hex(),
             "--request-id", request_id,
+            "--traceparent", otel.carrier().get("traceparent", ""),
         ])
         trigger_body = (
             f"{worker_mxid}\n"

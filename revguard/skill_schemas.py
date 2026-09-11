@@ -166,20 +166,22 @@ SKILL_SCHEMAS: dict[str, dict[str, dict]] = {
     "LedgerAdjustSkill": {
         "input": _obj({
             "action_id": STRING, "approval_token": STRING, "policy_version": STRING,
-            "idempotency_key": STRING,
+            "idempotency_key": STRING, "items": ARRAY_OBJECT,
         }, ["action_id", "approval_token", "policy_version", "idempotency_key"]),
         "output": _obj({
             "action_id": STRING, "status": {"type": "string", "enum": ["SUBMITTED"]},
             "ledger_entry": OBJECT, "before_snapshot": ARRAY_OBJECT,
             "after_snapshot": ARRAY_OBJECT, "rollback_token": STRING,
+            "executions": ARRAY_OBJECT, "operation_id": STRING,
         }, ["action_id", "status", "ledger_entry", "before_snapshot", "after_snapshot",
             "rollback_token"]),
     },
     "LedgerReverseSkill": {
         "input": _obj({"ledger_id": STRING, "rollback_token": STRING,
-                       "idempotency_key": STRING},
+                       "idempotency_key": STRING, "items": ARRAY_OBJECT},
                       ["ledger_id", "rollback_token", "idempotency_key"]),
-        "output": _obj({"reversal_entry": OBJECT, "reversed_entry": OBJECT},
+        "output": _obj({"reversal_entry": OBJECT, "reversed_entry": OBJECT,
+                        "executions": ARRAY_OBJECT, "reversals": ARRAY_OBJECT, "operation_id": STRING},
                        ["reversal_entry", "reversed_entry"]),
     },
     "PostActionVerifySkill": {
