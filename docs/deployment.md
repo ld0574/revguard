@@ -6,15 +6,15 @@
 
 ```bash
 # 最小可复现闭环，不要求已安装 AgentTeams
-bash scripts/deploy_demo.sh --local --reset
+bash scripts/deploy_demo.sh --local
 
 # 决赛环境；要求宿主机已有 AgentTeams v1.2.0；保留现有案件
 bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
 ```
 
-`--full` 会依次完成私密后端 Principal、PolarDB 启动与 Schema、RevGuard API、AgentTeams 角色和 Team、
+`--full` 会依次完成私密后端 Principal、PolarDB 启动与核心/资金恢复 Schema、RevGuard API、AgentTeams 角色和 Team、
 skills-only Adapter 的 MinIO 持久化、9 个独立 Higress MCP Server 与精确 consumer 授权、Matrix 登录与独立房间自动发现、8 个 Golden Case
-播种以及最终健康验收。重复运行默认保留案件；只有显式传入 `--reset` 才重置合成库。
+播种、可观测组件、Grafana 只读嵌入以及最终健康验收。重复运行默认保留案件；只有显式传入 `--reset` 才重置合成库。原演示环境不要使用 reset，故障实验使用独立 Docker 项目。
 脚本不会打印 Matrix 或数据库凭证，生成的 `.env` 权限为 `0600`。
 
 2026-09-12 已将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
@@ -26,8 +26,8 @@ Worker 继续使用各自的内部网关凭证。CoPaw 的 Chat Completions 工�
 会停在人审，不能使用旧静态 approver key。完整录制方式与账号配置见
 [`hitl-mcp-recording.md`](hitl-mcp-recording.md)。
 
-为避免容器重建丢失进程内的后台协程，未传 `--reset` 时如果检测到
-`QUEUED / STARTING / RUNNING` 案件，脚本会拒绝重建 API。意外重启后，WebUI
+为避免容器重建丢失进程内的后台协程，如果检测到
+`QUEUED / STARTING / RUNNING` 案件，或无法读取现有运行状态，脚本会拒绝重建 API。`--reset` 不能绕过该检查。意外重启后，WebUI
 在运行 10 分钟无更新时明确标记“执行已中断”，并由审批人点击“继续执行”。
 资金结果未知时先冻结通道，续跑必须先对账确认原操作结果，再签发后续能力令牌；
 不能把数据库恢复或请求超时当作可直接重试的依据。协议见
@@ -54,7 +54,7 @@ Higress 与 RevGuard 同一 Docker 网络时使用 `http://revguard-api.internal
 TLS Gateway 暴露，并配置限流、访问日志与网络白名单。SOUL 使用
 `{{REVGUARD_API_BASE_URL}}`，`agentteams_setup.sh` 在部署时渲染，不再硬编码 IP。
 
-## 2. 本地 Docker（SQLite Demo）
+## 2. 202 Docker（SQLite Demo）
 
 ```bash
 cd revguard
@@ -88,17 +88,13 @@ REVGUARD_RESET_ON_START=true docker compose up -d --build
 `POST /api/v1/cases/{case_id}/reprepare`，只清理该案件的证据、任务、Trace、审批与模拟写入，保留原审批审计链，
 再从对应 Golden Case 恢复为 `CREATED`；该端点仅在 `REVGUARD_ENABLE_RECORDING_UI=true` 且由 operator 调用时开放。
 
-正式故障演练可在干净状态下让 Verifier 的首次读取产生可控偏差：
+只在隔离容器中设置故障变量。当前版本会重查一次短暂的 Verifier 读取偏差，不会因此冲销正确账务；`REVGUARD_VERIFICATION_TAMPER_AMOUNT=1` 的正确结果应为正常闭环。若要验证真实错记后的补偿，使用独立测试项目和资金恢复测试：
 
 ```bash
-REVGUARD_RESET_ON_START=true \
-REVGUARD_VERIFICATION_TAMPER_AMOUNT=1 \
-docker compose up -d --build
+bash scripts/verify_docker.sh
 ```
 
-该偏差只作用于 Verifier 的一次查询结果，不会修改真实台账；预期链路为“审批后写入 →
-独立验证失败 → 自动反向冲销 → 回滚后验证通过”。取证完成后把两个变量恢复为 `false`
-和 `0`，已有 Trace 与报告仍保留。
+其中的 `test_money_recovery` 与 PostgreSQL 同合同测试使用 `REVGUARD_POSTING_TAMPER_AMOUNT` 对应的受控写入偏差，验证“写入 → 独立验证失败 → 批次反向冲销 → 回滚后核验”。生产及正常演示的两个 tamper 值均保持 `0`。证据中的旧录制任务计数保持历史标记，不能直接当作当前新运行的任务数。
 
 ## 3. PolarDB 正式存储
 
@@ -123,7 +119,8 @@ docker compose \
   -f docker-compose.polardb.yml \
   up -d polardb-pg
 
-# 创建 revguard 数据库后，以独立 migration principal 执行 001_core.sql，最后再启动 API。
+# 创建 revguard 数据库后，用 scripts/migrate_polardb.py 完整执行
+# 001_core.sql 和 003_money_recovery.sql；不可只执行旧核心迁移。
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.agentteams.yml \
@@ -216,8 +213,8 @@ Executor、Verifier、Knowledge 九个 Worker 的独立 Principal；Executor 仅
 ## 6. 验收命令
 
 ```bash
-make verify-ci
-make demo
+# 在 202 宿主机执行；内部构建、测试和数据库均为独立容器。
+bash scripts/verify_docker.sh
 
 curl http://127.0.0.1:19000/api/v1/health
 curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
@@ -226,8 +223,9 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 需要逐项核验：
 
-- [ ] `make verify-ci`：固定 Ruff、自动测试、覆盖率 ≥90%、105/105 场景、9/9 安全探针、生成物无漂移；
-- [ ] `make security`：锁定依赖无已知漏洞，Bandit 无未解释问题；CI 另跑 Trivy 文件系统与镜像扫描；
+- [ ] Docker 验证入口：Ruff、自动测试、覆盖率 ≥90%、105/105 场景、生成物无漂移；
+- [ ] PostgreSQL 的迁移、资金恢复与原有集成测试实际执行，不能以 skipped 代替通过；
+- [ ] 锁定 Python 依赖审计、Bandit、前端测试和生产依赖审计通过；
 - [ ] 容器状态 healthy，重启后案件与幂等状态一致；
 - [ ] 无认证为 401，错误角色为 403，自报 actor/scope 为 422；
 - [ ] L2 在 `WAITING_FOR_APPROVAL` 挂起；

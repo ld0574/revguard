@@ -8,13 +8,13 @@
 - 录制证据：`GET /api/v1/ops/evidence` 聚合运行指标、确定性评测、价值数据分类和外部验收状态，WebUI “工程证据”页签直接读取。
 - Probe：`/api/v1/health/live` 仅证明进程存活；`/api/v1/health/ready` 会读写 Store，配置只读端点时也会检查 read pool。
 
-告警规则源文件为 `config/alerts.yaml`。审计破链和回滚积压是 critical，不能靠重试消除告警。
+运行中的 Prometheus 规则为 `config/observability/alerts.yaml`；`config/alerts.yaml` 仅为早期项目说明。Grafana、日志与 Trace 的访问及验收见 [可观测组件](observability.md)。审计破链和资金恢复积压不能靠重试消除告警。
 
 ## 版本与灰度
 
-镜像与 `/health` 同时暴露 `REVGUARD_RELEASE_VERSION`，当前为 `0.4.0`。发布策略以 `config/release-policy.yaml` 为准：
+镜像与 `/api/v1/health` 同时暴露 `REVGUARD_RELEASE_VERSION`；以该端点和当前部署验收记录核对实际版本。发布策略以 `config/release-policy.yaml` 为准，以下灰度比例是面向未来真实流量的方案，不代表演示环境已经接入企业生产流量：
 
-1. 0% 真实流量：完成 `verify-ci`、临时 PostgreSQL 集成测试和 Golden 回放；
+1. 0% 真实流量：在 202 执行 `bash scripts/verify_docker.sh`，完成主套件、临时 PostgreSQL 的迁移/资金恢复测试、Golden 回放、前端及依赖安全检查；
 2. 5% canary，最少 30 分钟；
 3. 25% limited，最少 120 分钟；
 4. 100% general。

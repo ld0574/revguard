@@ -2,13 +2,14 @@
 # RevGuard 可复现部署总入口。
 #
 # 在 202 Docker 环境运行最小闭环：bash scripts/deploy_demo.sh
-# 复赛完整环境：bash scripts/deploy_demo.sh --full --reset
+# 决赛完整环境（保留案件）：bash scripts/deploy_demo.sh --full
 set -Eeuo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ENV_FILE="$ROOT_DIR/.env"
 PROFILE="local"
 RESET="false"
+OBSERVABILITY="false"
 MODEL="${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-sol}"
 
 usage() {
@@ -17,21 +18,23 @@ usage() {
 
 选项：
   --local          SQLite + 本地 MCP + WebUI（默认，只需要 Docker）
-  --full           PolarDB-PG + AgentTeams Matrix + 10 个角色 + WebUI
+  --full           PolarDB-PG + AgentTeams Matrix + WebUI + 可观测组件
+  --observability  在最小拓扑中也部署 Grafana、Prometheus、日志与 Trace 后端
   --reset          清空合成演示状态并重新播种 8 个 Golden Case
   --model NAME     AgentTeams Worker 模型（默认 gpt-5.6-sol）
   -h, --help       显示帮助
 
 示例：
   bash scripts/deploy_demo.sh
-  bash scripts/deploy_demo.sh --full --reset --model gpt-5.6-sol
+  bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
 EOF
 }
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --local) PROFILE="local" ;;
-    --full) PROFILE="full" ;;
+    --full) PROFILE="full"; OBSERVABILITY="true" ;;
+    --observability) OBSERVABILITY="true" ;;
     --reset) RESET="true" ;;
     --model)
       [ "$#" -ge 2 ] || { echo "--model 缺少参数" >&2; exit 2; }
@@ -127,41 +130,59 @@ wait_api() {
 }
 
 guard_no_active_runs() {
-  [ "$RESET" = "true" ] && return 0
   if ! docker inspect -f '{{.State.Running}}' revguard-api 2>/dev/null | grep -q true; then
     return 0
   fi
-  active_runs=$(docker exec revguard-api python -c '
+  if ! active_runs=$(docker exec revguard-api python -c '
 from revguard.api import store
 active = {"QUEUED", "STARTING", "RUNNING"}
 print(",".join(
     case["case_id"] for case in store.list_cases()
     if (case.get("team_run") or {}).get("status") in active
 ))
-' 2>/dev/null || true)
+' 2>/dev/null); then
+    fail "无法核实当前案件运行状态，停止部署；请先恢复数据库并确认运行已结束"
+  fi
   [ -z "$active_runs" ] || fail \
-    "检测到活动 AgentTeams 运行: $active_runs；请等待结束或在录制库上显式使用 --reset"
+    "检测到活动 AgentTeams 运行: $active_runs；请等待结束，不能以 reset 绕过在途资金操作"
 }
 
+guard_no_active_runs
+
+release_version=$(docker run --rm --user root -v "$ROOT_DIR:/workspace:ro" \
+  --entrypoint python python:3.11-slim -c \
+  'import tomllib; print(tomllib.load(open("/workspace/pyproject.toml", "rb"))["project"]["version"])')
+env_set REVGUARD_RELEASE_VERSION "$release_version"
 env_set_if_missing REVGUARD_APPROVAL_SIGNING_KEY "$(openssl rand -hex 32)"
 env_set REVGUARD_ALLOW_INSECURE_DEMO_KEYS true
 env_set REVGUARD_ENABLE_LEGACY_TOOL_API false
 env_set REVGUARD_ENABLE_RECORDING_UI true
 env_set REVGUARD_RESET_ON_START false
-env_set_if_missing REVGUARD_VERIFICATION_TAMPER_AMOUNT 1
+env_set_if_missing REVGUARD_VERIFICATION_TAMPER_AMOUNT 0
+env_set_if_missing REVGUARD_POSTING_TAMPER_AMOUNT 0
 env_set_if_missing REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS 600
 
-guard_no_active_runs
+compose=(docker compose -f docker-compose.yml)
+if [ "$PROFILE" = "full" ]; then
+  compose+=(-f docker-compose.agentteams.yml -f docker-compose.polardb.yml)
+  docker run --rm --user root -v "$ROOT_DIR:/workspace" -w /workspace \
+    --entrypoint python python:3.11-slim scripts/configure_demo_principals.py --env /workspace/.env
+fi
+if [ "$OBSERVABILITY" = "true" ]; then
+  docker run --rm --user root -v "$ROOT_DIR:/workspace" -w /workspace \
+    --entrypoint python python:3.11-slim scripts/prepare_observability.py
+  compose+=(-f docker-compose.observability.yml)
+fi
 
 if [ "$PROFILE" = "local" ]; then
   log "部署本地可复现环境（SQLite + MCP Team）"
   env_set REVGUARD_TEAM_TRANSPORT mcp
   if [ "$RESET" = "true" ]; then
-    REVGUARD_RESET_ON_START=true docker compose up -d --build revguard-api
+    REVGUARD_RESET_ON_START=true "${compose[@]}" up -d --build revguard-api
     wait_api || fail "API 未就绪"
-    docker compose up -d --force-recreate --no-deps revguard-api
+    "${compose[@]}" up -d --force-recreate --no-deps revguard-api
   else
-    docker compose up -d --build revguard-api
+    "${compose[@]}" up -d --build revguard-api
   fi
 else
   log "核验 AgentTeams 与宿主机资源"
@@ -175,21 +196,16 @@ else
   env_set REVGUARD_ALLOW_DATABASE_RESET true
   env_set REVGUARD_TEAM_TRANSPORT matrix
 
-  log "配置私密后端 Principal（不向职能 Worker 下发）"
-  python3 scripts/configure_demo_principals.py --env "$ENV_FILE"
-
-  compose_full="docker compose -f docker-compose.yml -f docker-compose.agentteams.yml -f docker-compose.polardb.yml"
   log "启动 PolarDB-PG 并应用核心 Schema"
-  $compose_full up -d polardb-pg
+  "${compose[@]}" up -d polardb-pg
   wait_container_healthy revguard-polardb 90 || fail "PolarDB 未通过健康检查"
   docker exec revguard-polardb sh -lc \
     'PGPASSWORD="$POLARDB_PASSWORD" psql -v ON_ERROR_STOP=1 -U "$POLARDB_USER" -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='"'"'revguard'"'"'" | grep -q 1 || PGPASSWORD="$POLARDB_PASSWORD" createdb -U "$POLARDB_USER" revguard'
-  docker exec -i revguard-polardb sh -lc \
-    'PGPASSWORD="$POLARDB_PASSWORD" psql -v ON_ERROR_STOP=1 -U "$POLARDB_USER" -d revguard' \
-    < migrations/polardb/001_core.sql
-
-  log "构建 RevGuard API 并接入 AgentTeams 网络"
-  $compose_full up -d --build revguard-api
+  log "构建镜像并以短时容器完整迁移核心与资金恢复 Schema"
+  "${compose[@]}" build revguard-api
+  "${compose[@]}" run --rm -T --no-deps --entrypoint python revguard-api -c \
+    'import os; os.environ["REVGUARD_MIGRATION_DATABASE_URL"] = os.environ["REVGUARD_DATABASE_URL"]; from scripts.migrate_polardb import main; main()'
+  "${compose[@]}" up -d --no-build revguard-api
   wait_api || fail "RevGuard API 未就绪"
 
   log "创建/更新 AgentTeams 角色、Team、Adapter 与 Matrix 房间"
@@ -199,17 +215,30 @@ else
   bash scripts/agentteams_setup.sh
 
   log "重新加载自动发现的 Matrix 配置"
-  $compose_full up -d --force-recreate --no-deps revguard-api
+  "${compose[@]}" up -d --force-recreate --no-deps revguard-api
+fi
+
+if [ "$OBSERVABILITY" = "true" ]; then
+  log "校验并启动可观测组件和只读 Grafana 共享看板"
+  "${compose[@]}" run --rm --no-deps --entrypoint promtool prometheus check config /etc/prometheus/prometheus.yaml
+  "${compose[@]}" up -d --no-build
+  "${compose[@]}" run --rm -T --no-deps --user root \
+    -v "$PWD/.runtime/observability:/run/observability" \
+    --entrypoint python revguard-api scripts/prepare_grafana_embed.py
 fi
 
 wait_api || fail "RevGuard API 未在时限内就绪"
 
 case_count=$(curl -fsS http://127.0.0.1:19000/api/v1/health | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cases", 0))')
-if [ "$RESET" = "true" ] || [ "$case_count" = "0" ]; then
-  log "播种 8 个合成 Golden Case"
+if [ "$RESET" = "true" ]; then
+  log "按显式 reset 请求重置并播种 8 个合成 Golden Case"
   curl -fsS -X POST \
     -H 'Authorization: Bearer rg-demo-operator-key' \
     http://127.0.0.1:19000/api/v1/demo/reset >/dev/null
+elif [ "$case_count" = "0" ]; then
+  log "补充首次部署的 Golden Case（不清空已有账务或审计）"
+  docker exec revguard-api python -c \
+    'from revguard.api import store; from scripts.seed_demo import seed_store; seed_store(store, quiet=True)'
 fi
 
 log "执行部署验收"

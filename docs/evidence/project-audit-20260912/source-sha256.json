@@ -1,0 +1,20 @@
+{
+  "Dockerfile": "2f9b5cffa6f62f2d52c80f9c9ce35f9bf991751e74bf4e720dcfab2bacc48258",
+  "Dockerfile.verify": "d43714fe529f730c6e12eb6ea29fcaf4c53851f124cf915341d66e184f56d87e",
+  "Makefile": "37e4d18a06dc6214bb63cee26c6d85e82ce4d8c78c3546d4e600491dc8cb03e9",
+  "docker-compose.yml": "a92a42eab32d66a8be395360f74585da5ea6b1b63e51f0725db899dd9973dae7",
+  "docker-compose.verify.yml": "b9d80be8acefa6a31cd5c7806c6e67f45113dfc783765c7024584e939db9c305",
+  "requirements.txt": "1536e29e1a2aea1d17e0009620dafb11cc3e193f76b7e3137a88e74943ced82d",
+  "pyproject.toml": "62fbe181a36c3006434d7179352d484bc625e9f1fd4685fb22bf686c181636e8",
+  "revguard/schema.py": "c0e758fd7cac1badb86d05b8754d1036d03acc88c3a47e98abfe32c1282625b8",
+  "revguard/postgres_store.py": "7e014d098f881cceb6c587d88a203e23316d45406f199ac8b147720f5479a9cc",
+  "revguard/api.py": "64dbb35d7fde2f3075349efbbeb6f2e4e306887ff3b9c54c2b3bb6426846810b",
+  "scripts/migrate_polardb.py": "6516ccfa62231d5bd5f90f9b0007d05023fa9b445ac15d457c09cfe3e50f1a0d",
+  "scripts/deploy_demo.sh": "68d9b6291d59f9ca2c9574add3f4b55331f5a1cb28ed255f1bdef712ca444d46",
+  "scripts/deploy_observability.sh": "82a67400b11c6e5ceea4eba90681baf427826a278df335f7a7916f62780c383b",
+  "scripts/verify_docker.sh": "63c03a877cbd297d3a7c560e0718a4d6685deae8909fd937907c3e87404ac67e",
+  "tests/test_migrations_postgres.py": "57dab456518b60d1f557c33023b3aa77917fecdde2f8529a922acf81fee6246e",
+  "tests/test_deploy_guards.py": "2428183b20faccebdc8a1fbaa4e31c62d2e5c6f4bcab8a72e925c60fedd39ccf",
+  "demo-ui/package.json": "166b2be76570b0e082226800c7fc886b18adcc848340a41355c9253844e4fa2a",
+  "demo-ui/package-lock.json": "e74bd6bd9284f10fa4e49d008ac78391ac4f5377af0400aea7f41b69c373b45f"
+}
