@@ -22,9 +22,10 @@ from pathlib import Path
 from threading import RLock
 from typing import ClassVar
 
-from .models import new_id, utc_now
+from .models import CaseStatus, new_id, utc_now
 from .money_journal import MONEY_TOOLS, MoneyJournal, RecoveryRequired, request_hash
 from .security import CapabilityTokenSigner, SecurityError, authorize_tool
+from .state_machine import StaleCaseTransition, locked_case, persist_case_transition
 
 
 class ToolError(Exception):
@@ -305,6 +306,78 @@ class ToolGateway:
         state["idempotency"] = {k: v for k, v in state.get("idempotency", {}).items()
                                  if not k.startswith(f"{case_id}:") and v not in actions}
         return state
+
+    def decide_case_approval(self, case: dict, parameters: dict, *, actor: str,
+                             assertion_ref: str) -> dict:
+        """Commit a verified human decision and its workflow handoff atomically.
+
+        HTTP authenticates and binds the human proof before entering here.
+        This transaction owns only our approval adapter/database; it is not a
+        distributed commit with an external enterprise approval system.
+        """
+        authorize_tool(actor, ["approval:decide"], "workflow.decide_approval")
+        if parameters.get("decision") not in {"APPROVED", "REJECTED"}:
+            raise ToolError("INVALID_PARAMS", "无效的审批决定")
+        case_id = case["case_id"]
+        before = None
+        with self._lock:
+            try:
+                with self.journal.transaction() as tx:
+                    current = locked_case(tx, case_id)
+                    if current != case or case.get("status") != "WAITING_FOR_APPROVAL":
+                        raise StaleCaseTransition("审批案件已变化，请刷新后操作")
+                    before = tx.state()
+                    self._apply_state(copy.deepcopy(before))
+                    approval = self._approvals.get(parameters.get("approval_id"), {})
+                    if approval.get("case_id") != case_id:
+                        raise ToolError("AUTH_FAILED", "审批单与案件不匹配")
+                    self._in_transaction = True
+                    try:
+                        decided = self._tool_workflow_decide_approval(parameters, actor=actor)
+                    finally:
+                        self._in_transaction = False
+                    decided["human_assertion_id_ref"] = assertion_ref
+                    self._approvals[decided["approval_id"]] = copy.deepcopy(decided)
+                    self._receipts.append({
+                        "tool_receipt": new_id("RCPT"), "tool_name": "workflow.decide_approval",
+                        "case_id": case_id, "actor": actor, "called_at": utc_now(),
+                        "required_scope": "approval:decide", "success": True,
+                    })
+                    tx.save_state(self._state_snapshot())
+                    store = self.journal.store
+                    store._save_approval_with_conn(tx.conn, decided)
+                    tx.audit(case_id, "APPROVAL_DECIDED", {
+                        "decision": decided["status"], "identity_verified": True,
+                        "human_subject": parameters.get("human_subject"),
+                        "human_display_name": parameters.get("human_display_name"),
+                        "human_auth_time": parameters.get("human_auth_time"),
+                        "human_auth_method": parameters.get("human_auth_method"),
+                        "assertion_id_ref": assertion_ref,
+                    }, actor=actor)
+                    approved = decided["status"] == "APPROVED"
+                    pending = copy.deepcopy(case)
+                    if approved and case.get("execution_mode") in {"MCP_TEAM", "AGENTTEAMS_MATRIX"}:
+                        now = utc_now()
+                        pending["team_run"] = {
+                            **(case.get("team_run") or {}), "status": "QUEUED", "phase": "EXECUTION",
+                            "current_stage": None, "total_tasks": 20, "queued_at": now,
+                            "updated_at": now, "error": None,
+                        }
+                    if not approved:
+                        store._cancel_open_agent_tasks_with_conn(
+                            tx.conn, case_id, actor=actor, reason="人工审批驳回，禁止继续执行",
+                        )
+                    updated = persist_case_transition(
+                        store, tx, pending, CaseStatus.READY_TO_EXECUTE if approved else CaseStatus.REJECTED,
+                        "人工审批通过" if approved else "人工审批驳回", actor=actor,
+                    )
+            except BaseException:
+                if before is not None:
+                    self._apply_state(before)
+                raise
+            case.clear()
+            case.update(updated)
+            return decided
 
     def reprepare_case(self, fresh_case: dict, *, expected_case: dict, actor: str) -> None:
         """One database commit for the recording generation, gateway and audit.
