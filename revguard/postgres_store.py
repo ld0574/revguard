@@ -12,7 +12,9 @@ from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
 
 from .models import utc_now
+from .money_journal import MoneyJournal
 from .store import Store
+from .workflow_persistence import versioned_case_write
 
 
 def _json(value: object) -> str:
@@ -125,7 +127,7 @@ class PostgresStore:
                            (json.dumps(gateway_state),))
                 tx.ledger(gateway_state)
             for case, source in seed_cases:
-                self._save_case_with_conn(conn, case)
+                self._save_case_with_conn(conn, {**case, "_case_revision": 0})
                 self._audit_with_conn(conn, case["case_id"], "seed", "CASE_CREATED", {"source": source})
                 if reset_audit:
                     from .money_journal import MoneyTransaction
@@ -154,11 +156,14 @@ class PostgresStore:
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
-        with self._conn() as conn:
-            self._save_case_with_conn(conn, case_dict)
+        with MoneyJournal(self).transaction() as tx:
+            updated = self._save_case_with_conn(tx.conn, case_dict)
+        case_dict.clear()
+        case_dict.update(updated)
 
     @staticmethod
-    def _save_case_with_conn(conn, case_dict: dict) -> None:
+    def _save_case_with_conn(conn, case_dict: dict, *, recording_replace: bool = False) -> dict:
+        case_dict = versioned_case_write(conn, case_dict, postgres=True, recording_replace=recording_replace)
         claim = case_dict.get("claim") or {}
         created_at = case_dict.get("created_at") or utc_now()
         updated_at = case_dict.get("updated_at") or utc_now()
@@ -177,6 +182,7 @@ class PostgresStore:
                  _money(claim.get("expected_amount")), claim.get("currency"),
                  created_at, updated_at),
             )
+        return case_dict
 
     def get_case(self, case_id: str) -> dict | None:
         # Transactional application reads stay on the primary.
@@ -331,21 +337,22 @@ class PostgresStore:
 
     # ------------------------------------------------------------- agent tasks
     def save_agent_task(self, task: dict) -> None:
+        """Insert a new immutable task identity; updates use guarded operations."""
         created_at = task.get("created_at") or utc_now()
         updated_at = task.get("updated_at") or created_at
         with self._conn() as conn:
-            conn.execute(
+            inserted = conn.execute(
                 """INSERT INTO agent_tasks
                    (task_id, case_id, skill_name, assigned_actor, status, attempt,
                     data, created_at, updated_at)
                    VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
-                   ON CONFLICT (task_id) DO UPDATE SET
-                     status=EXCLUDED.status, attempt=EXCLUDED.attempt,
-                     data=EXCLUDED.data, updated_at=EXCLUDED.updated_at""",
+                   ON CONFLICT (task_id) DO NOTHING""",
                 (task["task_id"], task["case_id"], task["skill_name"],
                  task["assigned_actor"], task["status"], int(task.get("attempt", 0)),
                  _json(task), created_at, updated_at),
             )
+            if inserted.rowcount != 1:
+                raise ValueError("任务已存在，不允许覆盖原任务身份或回执")
 
     def get_agent_task(self, task_id: str) -> dict | None:
         with self._conn() as conn:
@@ -364,7 +371,8 @@ class PostgresStore:
 
     def transition_agent_task(self, task_id: str, *, expected: set[str],
                               status: str, updates: dict | None = None) -> dict:
-        with self._conn() as conn, conn.transaction():
+        with MoneyJournal(self).transaction() as tx:
+            conn = tx.conn
             row = conn.execute(
                 "SELECT data FROM agent_tasks WHERE task_id=%s FOR UPDATE", (task_id,)
             ).fetchone()
@@ -389,12 +397,14 @@ class PostgresStore:
         return task
 
     def complete_agent_task(self, task_id: str, *, status: str,
+                            expected_attempt: int | None = None,
                             result: dict | None = None,
                             skill_receipt: str | None = None,
                             error: dict | None = None) -> tuple[dict, dict]:
         if status not in {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL", "RESULT_UNKNOWN"}:
             raise ValueError(f"非法 StageResult 状态: {status}")
-        with self._conn() as conn, conn.transaction():
+        with MoneyJournal(self).transaction() as tx:
+            conn = tx.conn
             row = conn.execute(
                 "SELECT data FROM agent_tasks WHERE task_id=%s FOR UPDATE", (task_id,)
             ).fetchone()
@@ -405,6 +415,8 @@ class PostgresStore:
                 raise ValueError(
                     f"Agent task {task_id} 状态 {task['status']} 不允许完成"
                 )
+            if expected_attempt is not None and int(task.get("attempt", 0)) != expected_attempt:
+                raise ValueError("StageTask 执行代次已变化，拒绝旧回执")
             now = utc_now()
             task.update({"status": status, "result": result,
                          "skill_receipt": skill_receipt, "error": error,
@@ -428,6 +440,9 @@ class PostgresStore:
                 (stage_result["result_id"], task_id, task["case_id"], attempt,
                  status, _json(stage_result), now),
             )
+            from .money_journal import MoneyTransaction
+            from .workflow_persistence import audit_task_completion
+            audit_task_completion(MoneyTransaction(conn, postgres=True), task)
         return task, stage_result
 
     def list_agent_task_results(self, task_id: str) -> list[dict]:
@@ -441,7 +456,8 @@ class PostgresStore:
     def replace_agent_task(self, old_task_id: str, replacement: dict, *,
                            actor: str, reason: str) -> tuple[dict, dict]:
         allowed = {"FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}
-        with self._conn() as conn, conn.transaction():
+        with MoneyJournal(self).transaction() as tx:
+            conn = tx.conn
             row = conn.execute(
                 "SELECT data FROM agent_tasks WHERE task_id=%s FOR UPDATE",
                 (old_task_id,),
@@ -482,7 +498,8 @@ class PostgresStore:
 
     def cancel_open_agent_tasks(self, case_id: str, *, actor: str,
                                 reason: str) -> list[str]:
-        with self._conn() as conn, conn.transaction():
+        with MoneyJournal(self).transaction() as tx:
+            conn = tx.conn
             return self._cancel_open_agent_tasks_with_conn(conn, case_id, actor=actor, reason=reason)
 
     def _cancel_open_agent_tasks_with_conn(self, conn, case_id: str, *, actor: str, reason: str) -> list[str]:

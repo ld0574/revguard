@@ -51,7 +51,7 @@ def case_version(case: dict) -> str:
     the very StageTask whose progress it describes.  Status, evidence-derived
     fields, amounts and every other case field remain version-bound.
     """
-    versioned_case = {key: value for key, value in case.items() if key != "team_run"}
+    versioned_case = {key: value for key, value in case.items() if key not in {"team_run", "_case_revision"}}
     canonical = json.dumps(versioned_case, ensure_ascii=False, sort_keys=True,
                            separators=(",", ":"), default=str).encode("utf-8")
     return "sha256:" + hashlib.sha256(canonical).hexdigest()
@@ -159,17 +159,11 @@ def _execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
         # adapter; that is a nested hop, not a reason to relabel the StageTask.
         transport_key = "skill_transport" if task.get("transport") else "transport"
         persisted_correlation[transport_key] = incoming_transport
-    running = store.transition_agent_task(
-        task_id,
-        expected={TaskStatus.PENDING.value, TaskStatus.FAILED_RETRYABLE.value},
-        status=TaskStatus.RUNNING.value,
-        updates=persisted_correlation,
+    from .workflow_persistence import claim_agent_task
+    running = claim_agent_task(
+        store, task_id, case_id=case_id, skill_name=skill_name,
+        actor=actor, skill_input=skill_input, updates=persisted_correlation,
     )
-    store.audit(case_id, actor, "AGENT_TASK_STARTED", {
-        "task_id": task_id,
-        "skill": skill_name,
-        **persisted_correlation,
-    })
     try:
         result = invoke_skill(
             skill_name, execution_input or skill_input, actor=actor, case_id=case_id,
@@ -185,24 +179,13 @@ def _execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
         )
         store.complete_agent_task(
             running["task_id"], status=failed_status,
+            expected_attempt=running["attempt"],
             error={"type": type(exc).__name__, "message": str(exc)},
         )
-        store.audit(case_id, actor, "AGENT_TASK_FAILED", {
-            "task_id": task_id,
-            "skill": skill_name,
-            "status": failed_status,
-            "error_type": type(exc).__name__,
-            **persisted_correlation,
-        })
         raise
     store.complete_agent_task(
         running["task_id"], status=TaskStatus.SUCCEEDED.value,
+        expected_attempt=running["attempt"],
         result=result["data"], skill_receipt=result["skill_receipt"],
     )
-    store.audit(case_id, actor, "AGENT_TASK_SUCCEEDED", {
-        "task_id": task_id,
-        "skill": skill_name,
-        "skill_receipt": result["skill_receipt"],
-        **persisted_correlation,
-    })
     return result

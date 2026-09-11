@@ -1,0 +1,31 @@
+{"timestamp": "2026-09-11T19:53:55.180965Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-11T19:53:55.257951Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/app/demo-ui/dist/client"}
+test_case_change_between_validation_and_claim_prevents_skill_execution (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_case_change_between_validation_and_claim_prevents_skill_execution) ... ok
+test_claim_audit_failure_never_starts_skill_or_leaves_running_task (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_claim_audit_failure_never_starts_skill_or_leaves_running_task) ... ok
+test_competing_case_writers_preserve_exactly_one_revision (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_competing_case_writers_preserve_exactly_one_revision) ... ok
+test_http_snapshot_conflict_returns_refreshable_409 (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_http_snapshot_conflict_returns_refreshable_409) ... {"timestamp": "2026-09-11T19:53:55.910075Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-630FC00F", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/run", "status_code": 409, "duration_ms": 9, "trace_id": "a414fc908850fbccab00f20ae7f02bba", "span_id": "fd70f1d4554952d7"}
+ok
+test_late_usage_metadata_cannot_erase_a_concurrent_worker_result (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_late_usage_metadata_cannot_erase_a_concurrent_worker_result) ... ok
+test_metadata_patch_preserves_result_and_rejects_execution_fields (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_metadata_patch_preserves_result_and_rejects_execution_fields) ... ok
+test_old_attempt_cannot_complete_a_new_running_attempt (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_old_attempt_cannot_complete_a_new_running_attempt) ... ok
+test_result_audit_failure_rolls_back_result_and_allows_same_attempt_completion (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_result_audit_failure_rolls_back_result_and_allows_same_attempt_completion) ... ok
+test_stale_matrix_progress_cannot_reopen_advanced_case (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_stale_matrix_progress_cannot_reopen_advanced_case) ... ok
+test_stale_ordinary_case_write_cannot_erase_new_business_fields (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_stale_ordinary_case_write_cannot_erase_new_business_fields) ... ok
+test_unknown_task_result_stops_matrix_nudges_immediately (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_unknown_task_result_stops_matrix_nudges_immediately) ... ok
+test_case_change_between_validation_and_claim_prevents_skill_execution (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_case_change_between_validation_and_claim_prevents_skill_execution) ... ok
+test_claim_audit_failure_never_starts_skill_or_leaves_running_task (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_claim_audit_failure_never_starts_skill_or_leaves_running_task) ... ok
+test_competing_case_writers_preserve_exactly_one_revision (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_competing_case_writers_preserve_exactly_one_revision) ... ok
+test_http_snapshot_conflict_returns_refreshable_409 (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_http_snapshot_conflict_returns_refreshable_409) ... {"timestamp": "2026-09-11T19:53:57.012863Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-B7AD7B06", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/run", "status_code": 409, "duration_ms": 12, "trace_id": "1c746279c1fbb306663fcc56d5d00702", "span_id": "061662c51ad75463"}
+ok
+test_late_usage_metadata_cannot_erase_a_concurrent_worker_result (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_late_usage_metadata_cannot_erase_a_concurrent_worker_result) ... ok
+test_metadata_patch_preserves_result_and_rejects_execution_fields (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_metadata_patch_preserves_result_and_rejects_execution_fields) ... ok
+test_old_attempt_cannot_complete_a_new_running_attempt (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_old_attempt_cannot_complete_a_new_running_attempt) ... ok
+test_result_audit_failure_rolls_back_result_and_allows_same_attempt_completion (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_result_audit_failure_rolls_back_result_and_allows_same_attempt_completion) ... ok
+test_stale_matrix_progress_cannot_reopen_advanced_case (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_stale_matrix_progress_cannot_reopen_advanced_case) ... ok
+test_stale_ordinary_case_write_cannot_erase_new_business_fields (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_stale_ordinary_case_write_cannot_erase_new_business_fields) ... ok
+test_unknown_task_result_stops_matrix_nudges_immediately (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_unknown_task_result_stops_matrix_nudges_immediately) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 2.564s
+
+OK
