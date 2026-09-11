@@ -38,6 +38,12 @@ from .models import Case, CaseStatus, new_id, utc_now
 from .money_journal import RecoveryRequired
 from .observability import HTTP_METRICS, configure_structured_logging, prometheus_text
 from .orchestrator import Orchestrator
+from .runtime_barrier import (
+    CURRENT_LEASE,
+    RuntimeBarrierMiddleware,
+    RuntimeBusy,
+    assert_recording_quiescent,
+)
 from .security import (
     TOOL_REQUIRED_SCOPES,
     ApiPrincipal,
@@ -48,7 +54,7 @@ from .security import (
     redact_secrets,
     secret_fingerprint,
 )
-from .skill_runtime import SKILL_ACTORS, SkillInvocationError, invoke_skill
+from .skill_runtime import SKILL_ACTORS, SkillInvocationError, validate_skill_request
 from .skills import list_skills
 from .state_machine import transition_case
 from .store import create_store
@@ -75,7 +81,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.2")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.3")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -172,6 +178,7 @@ def _new_gateway() -> ToolGateway:
 
 gateway = _new_gateway()
 grafana_embed = GrafanaEmbed()
+app.add_middleware(RuntimeBarrierMiddleware, store_getter=lambda: store)
 
 
 @app.middleware("http")
@@ -328,10 +335,11 @@ def _has_live_team_task(case_id: str) -> bool:
 
 
 async def _run_team_background(case_id: str, phase: str) -> None:
-    case = store.get_case(case_id)
-    if not case:
-        return
+    case = None
     try:
+        case = store.get_case(case_id)
+        if not case:
+            return
         runner = _team_runner_for_case(case)
         if phase == "INVESTIGATION":
             await runner.run_to_human_gate(case)
@@ -345,6 +353,8 @@ async def _run_team_background(case_id: str, phase: str) -> None:
         }})
         try:
             latest = store.get_case(case_id) or case
+            if not latest:
+                return
             recovering_money = latest.get("status") in {
                 CaseStatus.EXECUTING.value, CaseStatus.VERIFYING.value,
                 CaseStatus.ROLLBACK_REQUIRED.value,
@@ -372,10 +382,21 @@ async def _run_team_background(case_id: str, phase: str) -> None:
 def _spawn_team_background(case_id: str, phase: str) -> None:
     if _has_live_team_task(case_id):
         raise RuntimeError(f"案件 {case_id} 已有本机 AgentTeams 运行")
-    task = asyncio.create_task(_run_team_background(case_id, phase))
+    parent_lease = CURRENT_LEASE.get()
+    if parent_lease is None:
+        raise RuntimeError("后台任务必须由受运行保护的请求启动")
+    lease = parent_lease.fork()
+    coroutine = _run_team_background(case_id, phase)
+    try:
+        task = asyncio.create_task(coroutine)
+    except BaseException:
+        coroutine.close()
+        lease.close()
+        raise
     BACKGROUND_TEAM_TASKS[case_id] = task
 
     def discard(completed: asyncio.Task) -> None:
+        lease.close()
         if BACKGROUND_TEAM_TASKS.get(case_id) is completed:
             BACKGROUND_TEAM_TASKS.pop(case_id, None)
 
@@ -576,15 +597,19 @@ def reset_recording_demo(
     This endpoint is absent by default and can only be enabled explicitly with
     ``REVGUARD_ENABLE_RECORDING_UI=true``.
     """
+    global gateway
     if not ENABLE_RECORDING_UI:
         raise HTTPException(404, "录制模式未启用")
+    try:
+        assert_recording_quiescent(store, gateway.journal)
+    except (RuntimeBusy, RecoveryRequired) as exc:
+        raise HTTPException(409, str(exc)) from exc
     from scripts.seed_demo import seed_store
 
-    global gateway
     state_path = Path(GATEWAY_STATE_PATH)
+    seeded_cases = seed_store(store, reset=True, quiet=True)
     if state_path.exists() and state_path.is_file():
         state_path.unlink()
-    seeded_cases = seed_store(store, reset=True, quiet=True)
     gateway = _new_gateway()
     for seeded_case in seeded_cases:
         store.audit(seeded_case["case_id"], principal.actor, "DEMO_RESET", {
@@ -635,6 +660,10 @@ def reprepare_recording_case(
         )
     if _has_live_team_task(case_id):
         raise HTTPException(409, "案件仍有本机 AgentTeams 任务运行，暂不能重新准备")
+    try:
+        assert_recording_quiescent(store, gateway.journal, case_id=case_id)
+    except (RuntimeBusy, RecoveryRequired) as exc:
+        raise HTTPException(409, str(exc)) from exc
 
     from scripts.seed_demo import load_golden_case
 
@@ -840,10 +869,6 @@ async def resume_interrupted_team_run(
     store.audit(case_id, human.actor, "HUMAN_RECOVERY_AUTHORIZED", {
         "human_subject": human.sub, "operation_count": len(operations),
     })
-    if recovering_execution and case.get("status") != CaseStatus.EXECUTING.value:
-        if case.get("status") != CaseStatus.RECOVERY_REQUIRED.value:
-            transition_case(store, case, CaseStatus.RECOVERY_REQUIRED, "写后核验中断，先核对原操作")
-        transition_case(store, case, CaseStatus.EXECUTING, "原操作已在主库完成对账")
     risk = case.get("risk_decision") or {}
     if recovering_execution and risk.get("approval_required"):
         renewed = gateway.call(
@@ -914,6 +939,13 @@ async def resume_interrupted_team_run(
                 "审批人确认原操作对账后恢复补偿", actor=human.actor,
             )
 
+    # Keep the recoverable state when capability renewal or persistence fails.
+    # Changing to EXECUTING earlier would make an immediate corrected retry
+    # fail the active/stale gate despite no background execution being queued.
+    if recovering_execution and case.get("status") != CaseStatus.EXECUTING.value:
+        if case.get("status") != CaseStatus.RECOVERY_REQUIRED.value:
+            transition_case(store, case, CaseStatus.RECOVERY_REQUIRED, "写后核验中断，先核对原操作")
+        transition_case(store, case, CaseStatus.EXECUTING, "原操作已在主库完成对账")
     recovered_at = utc_now()
     case["team_run"] = {
         **run,
@@ -1288,8 +1320,9 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
                             traceparent: str | None = Header(
                                 default=None, alias="traceparent"
                             ),
-                            agent_task_id: str | None = Header(
-                                default=None, alias="X-RevGuard-Task-ID"
+                            agent_task_id: str = Header(
+                                alias="X-RevGuard-Task-ID", min_length=1, max_length=256,
+                                description="Required server-dispatched StageTask ID",
                             ),
                             gateway_transport: str | None = Header(
                                 default=None, alias="X-RevGuard-Transport"
@@ -1305,38 +1338,30 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
     }
     if any(value is not None and len(value) > 256 for value in correlation.values()):
         raise HTTPException(400, "关联请求头长度不能超过 256")
-    if agent_task_id:
+    try:
+        validate_skill_request(skill_name, payload.input, actor=principal.actor)
         active_task = store.get_agent_task(agent_task_id)
         if not active_task:
             raise HTTPException(404, f"Agent task 不存在: {agent_task_id}")
         if active_task["assigned_actor"] != principal.actor:
             raise HTTPException(403, "Agent task 不属于当前 Worker")
-    try:
-        if agent_task_id:
-            execution_input, injected = hydrate_server_secrets(
-                skill_name, payload.input, case_id=payload.case_id, store=store,
-            )
-            result = execute_agent_task(
-                task_id=agent_task_id, case_id=payload.case_id,
-                skill_name=skill_name, skill_input=payload.input,
-                actor=principal.actor, gateway=gateway, store=store,
-                correlation=correlation,
-                execution_input=execution_input,
-            )
-            if injected:
-                store.audit(payload.case_id, principal.actor,
-                            "SERVER_CAPABILITY_INJECTED", {
-                                "task_id": agent_task_id,
-                                "skill": skill_name,
-                                "injected": injected,
-                                "request_id": correlation["request_id"],
-                            })
-        else:
-            result = invoke_skill(
-                skill_name, payload.input, actor=principal.actor,
-                case_id=payload.case_id, gateway=gateway, store=store,
-                correlation=correlation,
-            )
+        execution_input, injected = hydrate_server_secrets(
+            skill_name, payload.input, case_id=payload.case_id, store=store,
+        )
+        result = execute_agent_task(
+            task_id=agent_task_id, case_id=payload.case_id,
+            skill_name=skill_name, skill_input=payload.input,
+            actor=principal.actor, gateway=gateway, store=store,
+            correlation=correlation, execution_input=execution_input,
+        )
+        if injected:
+            store.audit(payload.case_id, principal.actor,
+                        "SERVER_CAPABILITY_INJECTED", {
+                            "task_id": agent_task_id,
+                            "skill": skill_name,
+                            "injected": injected,
+                            "request_id": correlation["request_id"],
+                        })
         response.headers["X-Request-ID"] = correlation["request_id"]
         response.headers["X-Skill-Receipt"] = result["skill_receipt"]
         return result

@@ -368,11 +368,24 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(invalid.status_code, 400)
 
     def test_10_versioned_skill_invoke_contract(self):
+        case = Case(case_id="CASE-SKILL-API", case_type="COMMISSION_UNDERPAYMENT",
+                    source="TEST").to_dict()
+        store.save_case(case)
+        skill_input = {"raw_case": {"partner_id": "AGT-10001", "order_id": "EZ202608001"}}
+        task = api_module.create_agent_task(case, "CaseNormalizeSkill", skill_input)
+        store.save_agent_task(task)
+        unbound = self.client.post("/api/v1/skills/CaseNormalizeSkill/invoke", json={
+            "case_id": case["case_id"], "input": skill_input,
+        }, headers=self.intake)
+        self.assertEqual(unbound.status_code, 422, unbound.text)
+        self.assertEqual(store.get_agent_task(task["task_id"])["status"], "PENDING")
+        self.assertEqual(store.list_audit(case["case_id"]), [])
         response = self.client.post("/api/v1/skills/CaseNormalizeSkill/invoke", json={
             "case_id": "CASE-SKILL-API",
-            "input": {"raw_case": {"partner_id": "AGT-10001", "order_id": "EZ202608001"}},
+            "input": skill_input,
         }, headers={**self.intake, "X-Request-ID": "REQ-SKILL-API",
-                    "X-AgentTeams-Message-ID": "MATRIX-SKILL-API"})
+                    "X-AgentTeams-Message-ID": "MATRIX-SKILL-API",
+                    "X-RevGuard-Task-ID": task["task_id"]})
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
         self.assertTrue(body["success"])
@@ -390,13 +403,13 @@ class TestApiSmoke(unittest.TestCase):
 
         invalid = self.client.post("/api/v1/skills/CaseNormalizeSkill/invoke", json={
             "case_id": "CASE-SKILL-API", "input": {"unexpected": True},
-        }, headers=self.intake)
+        }, headers={**self.intake, "X-RevGuard-Task-ID": task["task_id"]})
         self.assertEqual(invalid.status_code, 422)
         self.assertIn("raw_case", invalid.text)
 
         forbidden = self.client.post("/api/v1/skills/LedgerAdjustSkill/invoke", json={
             "case_id": "CASE-SKILL-API", "input": {},
-        }, headers=self.evidence)
+        }, headers={**self.evidence, "X-RevGuard-Task-ID": task["task_id"]})
         self.assertEqual(forbidden.status_code, 403)
 
     def test_11_waiting_for_evidence_can_resume(self):
@@ -881,6 +894,28 @@ class TestApiSmoke(unittest.TestCase):
             recovered = self.client.post(f"/api/v1/cases/{case_id}/team/resume",
                                          headers=self.human_headers(case_id, "RESUME"))
             self.assertEqual(recovered.status_code, 202, recovered.text)
+            spawn.assert_called_once_with(case_id, "EXECUTION")
+
+    def test_15bc_failed_capability_renewal_preserves_immediate_recovery(self):
+        case_id = "CASE-RENEWAL-FAILURE"
+        case = Case(case_id=case_id, case_type="COMMISSION_UNDERPAYMENT", source="TEST",
+                    status=CaseStatus.RECOVERY_REQUIRED.value).to_dict()
+        case.update({"execution_mode": "MCP_TEAM", "risk_decision": {"approval_required": True}})
+        store.save_case(case)
+        approval = {"approval_id": "APR-RENEWAL-FAILURE", "case_id": case_id, "status": "APPROVED"}
+        store.save_approval(approval)
+        headers = self.human_headers(case_id, "RESUME")
+        with patch("revguard.api._spawn_team_background") as spawn:
+            with patch.object(api_module.gateway, "call", return_value={
+                "success": False, "error": {"message": "temporary renewal failure"},
+            }):
+                failed = self.client.post(f"/api/v1/cases/{case_id}/team/resume", headers=headers)
+            self.assertEqual(failed.status_code, 409, failed.text)
+            self.assertEqual(store.get_case(case_id), case)
+            spawn.assert_not_called()
+            with patch.object(api_module.gateway, "call", return_value={"success": True, "data": approval}):
+                resumed = self.client.post(f"/api/v1/cases/{case_id}/team/resume", headers=headers)
+            self.assertEqual(resumed.status_code, 202, resumed.text)
             spawn.assert_called_once_with(case_id, "EXECUTION")
 
     def test_15c_failed_rollback_can_only_reopen_into_safety_path(self):

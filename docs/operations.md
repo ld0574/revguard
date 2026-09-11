@@ -14,7 +14,7 @@
 
 镜像与 `/api/v1/health` 同时暴露 `REVGUARD_RELEASE_VERSION`；以该端点和当前部署验收记录核对实际版本。发布策略以 `config/release-policy.yaml` 为准，以下灰度比例是面向未来真实流量的方案，不代表演示环境已经接入企业生产流量：
 
-1. 0% 真实流量：在 202 执行 `bash scripts/verify_docker.sh`，完成主套件、临时 PostgreSQL 的迁移/资金恢复测试、Golden 回放、前端及依赖安全检查；
+1. 0% 真实流量：在 202 执行 `bash scripts/verify_docker.sh`，完成主套件、临时 PostgreSQL 的迁移/资金恢复/并发重置测试、Golden 回放、前端及依赖安全检查；
 2. 5% canary，最少 30 分钟；
 3. 25% limited，最少 120 分钟；
 4. 100% general。

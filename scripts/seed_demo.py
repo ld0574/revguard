@@ -52,11 +52,19 @@ def load_golden_case(case_id: str) -> dict | None:
 
 def seed_store(store, *, reset: bool = False, quiet: bool = False) -> list[dict]:
     """Seed any Store-compatible backend without taking ownership of its lifecycle."""
+    # Read and validate every fixture before touching the existing recording.
+    fixtures = [(fp, json.loads(fp.read_text(encoding="utf-8")))
+                for fp in sorted((ROOT / "data" / "golden_cases").glob("*.json"))]
+    if not fixtures:
+        raise ValueError("Golden fixtures are empty; refusing to seed or reset")
     if reset:
-        store.reset()
+        prepared = [(case_from_spec(spec), fp.name) for fp, spec in fixtures]
+        store.reset(seed_cases=prepared)
+        if not quiet:
+            print(f"  reset and seeded {len(prepared)} cases atomically")
+        return [case for case, _ in prepared]
     cases: list[dict] = []
-    for fp in sorted((ROOT / "data" / "golden_cases").glob("*.json")):
-        spec = json.loads(fp.read_text(encoding="utf-8"))
+    for fp, spec in fixtures:
         raw = spec["input"]
         existing = store.get_case(raw["case_id"])
         if existing and not reset:
@@ -89,10 +97,10 @@ if __name__ == "__main__":
     parser.add_argument("--gateway-state", default="",
                         help="--reset 时同步删除 ToolGateway 持久化状态文件")
     args = parser.parse_args()
+    print(f"Seeding demo cases into {args.db}")
+    seed(args.db, reset=args.reset)
     if args.reset and args.gateway_state:
         gateway_state = Path(args.gateway_state).resolve()
         if gateway_state.exists() and gateway_state.is_file():
             gateway_state.unlink()
-    print(f"Seeding demo cases into {args.db}")
-    seed(args.db, reset=args.reset)
     print("Done.")

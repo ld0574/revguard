@@ -46,10 +46,8 @@ def _required(payload: dict, name: str):
     return payload[name]
 
 
-def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
-                 gateway: ToolGateway, store: Store,
-                 correlation: dict | None = None) -> dict:
-    """按统一契约调用一个注册 Skill，并记录 Skill span 与调用回执。"""
+def validate_skill_request(name: str, payload: dict, *, actor: str) -> None:
+    """Check the public contract before claiming a task or hydrating secrets."""
     meta = skills.SKILL_REGISTRY.get(name)
     if not meta:
         raise SkillInvocationError(f"未知 Skill: {name}")
@@ -59,6 +57,14 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
         validate_json(payload, meta["input_schema"], path=f"{name}.input")
     except SchemaValidationError as exc:
         raise SkillInvocationError(str(exc)) from exc
+
+
+def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
+                 gateway: ToolGateway, store: Store,
+                 correlation: dict | None = None) -> dict:
+    """按统一契约调用一个注册 Skill，并记录 Skill span 与调用回执。"""
+    validate_skill_request(name, payload, actor=actor)
+    meta = skills.SKILL_REGISTRY[name]
     tracer = Tracer(store, case_id or "SKILL-NO-CASE")
     trace_inputs = {"input": redact_secrets(payload)}
     if correlation:

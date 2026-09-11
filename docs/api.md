@@ -202,7 +202,7 @@ ToolGateway、StageResult 事务和 Audit；底层 Tool 不会进入 MCP 清单�
 
 ### `POST /api/v1/skills/{skill_name}/invoke`
 
-需要 `worker`，并校验 Skill 与 actor 的绑定。例如 Intake 调用标准化：
+需要 `worker`，必须带 `X-RevGuard-Task-ID`，并校验案件快照、输入、Skill 与 actor 的绑定。缺少任务头返回 422，不执行 Skill。例如 Intake 对已派发的标准化任务提交：
 
 ```json
 {
@@ -228,8 +228,10 @@ ToolGateway、StageResult 事务和 Audit；底层 Tool 不会进入 MCP 清单�
 
 输入调用前、输出返回前均执行 JSON Schema 校验。每次调用写入 Skill span 与
 `SKILL_INVOKED` 审计事件；AgentTeams 调用可携带 `X-AgentTeams-Message-ID`、
-`X-Request-ID`、`traceparent` 和 `X-RevGuard-Task-ID`，响应头返回
+`X-Request-ID` 和 `traceparent`；`X-RevGuard-Task-ID` 是必填头，响应头返回
 `X-Request-ID` 与 `X-Skill-Receipt`。
+
+资金调用出现 `RESULT_UNKNOWN` 时，StageTask 与 StageResult 原子保存该状态，不能直接执行或重派这个任务；须由审批人先对账，再由恢复流程按原资金操作 ID 继续。
 
 ## 服务端 / 遗留 Tool Adapter
 

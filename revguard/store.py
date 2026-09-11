@@ -126,10 +126,10 @@ class Store:
         with self._lock:
             self.conn.close()
 
-    def reset(self) -> None:
+    def reset(self, *, seed_cases: list[tuple[dict, str]] = ()) -> None:
         """原子清空 Demo 运行状态，保留 Schema。"""
         with self._lock, self.conn:
-            self.conn.executescript("""
+            statements = """
                 DELETE FROM money_outbox;
                 DELETE FROM money_ledger;
                 DELETE FROM money_operations;
@@ -144,8 +144,21 @@ class Store:
                 DELETE FROM approvals;
                 DELETE FROM evidence;
                 DELETE FROM cases;
-            """)
+            """
+            for statement in statements.split(";"):
+                if statement.strip():
+                    self.conn.execute(statement)
             self.conn.execute("DELETE FROM sqlite_sequence WHERE name='audit_events'")
+            for case, source in seed_cases:
+                self.conn.execute(
+                    "INSERT INTO cases(case_id,data,status,updated_at) VALUES (?,?,?,?)",
+                    (case["case_id"], json.dumps(case, ensure_ascii=False),
+                     case["status"], case.get("updated_at") or utc_now()),
+                )
+                self.conn.execute(
+                    "INSERT INTO audit_events(case_id,actor,event,detail,created_at) VALUES (?,?,?,?,?)",
+                    (case["case_id"], "seed", "CASE_CREATED", json.dumps({"source": source}), utc_now()),
+                )
 
     def reset_case(self, case_id: str) -> None:
         """清理一个案件的可重跑产物，保留案件行和不可篡改审计链。"""
@@ -356,7 +369,7 @@ class Store:
                             skill_receipt: str | None = None,
                             error: dict | None = None) -> tuple[dict, dict]:
         """StageTask 状态与 StageResult 在同一个数据库事务中落库。"""
-        terminal_statuses = {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL"}
+        terminal_statuses = {"SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL", "RESULT_UNKNOWN"}
         if status not in terminal_statuses:
             raise ValueError(f"非法 StageResult 状态: {status}")
         with self._lock, self.conn:
