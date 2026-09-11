@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+rule_files: [/etc/prometheus/alerts.yaml]
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [alertmanager:9093]
+scrape_configs:
+  - job_name: revguard
+    metrics_path: /api/v1/ops/metrics/prometheus
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/metrics-token
+    static_configs:
+      - targets: [revguard-api:9000]
+  - job_name: readiness
+    metrics_path: /probe
+    params:
+      module: [http_ready]
+    static_configs:
+      - targets: [http://revguard-api:9000/api/v1/health/ready]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+  - job_name: otel-collector
+    static_configs:
+      - targets: [otel-collector:8888]
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]

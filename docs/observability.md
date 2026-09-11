@@ -1,35 +1,28 @@
-# RevGuard 可观测与 OpenTelemetry 语义映射
+# RevGuard 可观测组件与验收
 
-RevGuard 以每案 JSON Trace + Store Audit + Markdown 报告提供可回放证据。本地 Demo 使用 SQLite，正式 PostgreSQL/PolarDB 由数据库触发器强制 append-only 哈希链。Trace 导出在保留内部字段的同时增加一层向后兼容的 OpenTelemetry GenAI 属性投影。
+Higress承担MCP发现、鉴权和路由。观测后端使用OpenTelemetry SDK → Collector → Tempo、Prometheus → Alertmanager、Alloy → Loki，并由Grafana统一查询。财务审计单独随账务事务提交，不以可采样的Trace替代。
 
-## 映射
+## 关联和指标
 
-| 内部 span kind | `gen_ai.operation.name` | 其它标准属性 | 保留的项目属性 |
-|---|---|---|---|
-| `AGENT` | `invoke_agent` | `gen_ai.agent.name`、`gen_ai.workflow.name=revguard` | `revguard.case.id`、`revguard.span.kind` |
-| `SKILL` | `execute_tool` | `gen_ai.agent.name`、`gen_ai.tool.name`、`gen_ai.tool.type=function` | 同上 |
-| `TOOL` / `REMOTE_TOOL` | `execute_tool` | `gen_ai.agent.name`、`gen_ai.tool.name`、`gen_ai.tool.type=function` | 同上 |
-| 其它内部 kind | 不强行映射 | 有 actor 时只映射 `gen_ai.agent.name` | 同上 |
+- 标准OTel Trace使用W3C trace ID。case_id、run_id、task_id及资金operation_id作为关联属性；HTTP、MCP与Worker适配器传递traceparent，审批暂停后保留案件关联上下文。
+- 案件JSON回放中的兼容字段trace_id=case_id仍保留，它不是标准OTel trace ID。内部Trace映射保守的GenAI语义属性，不虚构模型、Token数量或推理参数。
+- HTTP请求时延使用路由模板、方法和状态类别作标签，案件编号不会进入Prometheus标签。另有未确认资金操作数、冻结通道数和审计链状态。
+- Blackbox独立探测readiness。业务库故障时，应用指标可能抓取失败，此时通过up、probe_success和缺失数据规则告警。readiness目标的up=1只代表探针采集器在线，须同时检查probe_success。
+- Collector启用容量有界的磁盘队列；应用使用有界异步导出。导出失败不阻断资金线程，业务库Trace保存失败不覆盖原始异常。必要资金审计失败仍必须回滚资金事务。
+- 只采集关联标识和安全属性，不向OTLP发送原始金额载荷、密码或能力令牌。Alloy只采集同一Compose项目的RevGuard API日志。
 
-顶层 `semantic_conventions` 明确记录参考版本、官方链接和 `development` 状态。项目不会为了字段齐全而虚构模型名、供应商、Token 数量或推理参数。
+## 在202部署
 
-## 关联与安全
+所有构建、测试和服务运行均在10.10.10.202的Docker中执行；本地只编辑、同步文件。Compose配置为docker-compose.observability.yml，Prometheus原生规则位于config/observability/alerts.yaml；旧config/alerts.yaml是项目说明格式，不作为Prometheus加载文件。
 
-- `trace_id` 等于 case ID；span 有稳定 sequence、父子关系、UTC 起止时间、状态和错误。
-- AgentTeams/MCP 调用把 transport、Matrix message ID、request ID、task ID、skill/tool receipt 写入 Trace 与 Audit，可跨证据包对账。
-- Bearer key 与 `RGC1` 能力令牌在任何嵌套字符串中都会被替换为不可授权指纹。
-- ERROR span 不被降级成 Evidence Gap；只有工具级 `ToolError` 才能转换为显式缺口。
+运行scripts/prepare_observability.py会保留现有身份，新增只读metrics凭证，并把凭证及Grafana密码保存到忽略版本控制的.runtime/observability/。Grafana默认只监听202的127.0.0.1:13001。不要在仓库、日志或答辩截图中展示密码。
 
-## 边界与路线
+部署入口scripts/deploy_observability.sh --full组合PolarDB、AgentTeams和观测配置；升级资金Schema前先备份并运行独立迁移。**不要带reset参数，也不要在原演示环境注入故障。** 告警当前只保留在本地Alertmanager，未配置邮件或即时消息通知。
 
-当前已增加 JSON 结构化访问日志、`/api/v1/ops/metrics` JSON 端点、
-`/api/v1/ops/metrics/prometheus` Prometheus text 端点、liveness/readiness 探针和
-`config/alerts.yaml` 告警规则。日志不记录请求体或凭证。
+## 已验证与限制
 
-这仍不表示生产观测后端、OTLP exporter、采样策略或跨进程传播已经验收。后续接入 OTLP 时，以本映射为 Adapter 输入，并新增 exporter 背压、采样与租户隔离设计。运维约定见 [`operations.md`](operations.md)。
+202隔离Docker验收已查到同一Case8的51个Agent/Skill/Tool span、Loki日志、Grafana健康状态及四个Prometheus采集目标。停止隔离数据库后RevGuardUnavailable触发，并到达Alertmanager；恢复后该告警解除。原始验收记录保存在docs/evidence/finals-acceptance-20260912/。
 
-录制排练的脱敏任务、Audit、Trace、报告与 SHA-256 清单位于
-[`evidence/demo-rehearsal/manifest.json`](evidence/demo-rehearsal/manifest.json)。其中自动化批准
-明确标记为 `simulated_human=true`；正式人审证据必须来自 WebUI 实际点击录屏。
+新Case8的51-span证据使用隔离MCP参考执行链。生产Worker适配器还通过真实Higress调用了不存在任务，收到预期拒绝，并在生产Tempo查到相同W3C trace ID，详见deployment-observability.json；这证明跨进程载体传递，不代表重新执行了Matrix完整业务链。原Matrix历史演示保留。当前数据库监控采用readiness和应用指标，尚未接入数据库专用exporter、复制延迟指标；没有进行真实主备切换或PITR。组件部署在同一台202服务器，数据库容器故障演练不代表整机故障时观测后端仍可用。
 
-参考：[OpenTelemetry GenAI attributes registry](https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/)（该语义约定仍标记为 Development）。
+资金恢复门禁与备份恢复要求见[ADR-0004](adr/0004-money-outcome-recovery.md)。

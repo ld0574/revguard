@@ -15,7 +15,7 @@ from pathlib import Path
 
 from mcp import Client
 
-from . import skills
+from . import skills, telemetry
 from .agent_bridge import create_agent_task
 from .mcp_server import SERVER_INJECTION_REF, build_scoped_server
 from .models import CaseStatus, RiskDecision, new_id, utc_now
@@ -40,10 +40,19 @@ class McpTeamRunner:
                  report_dir: str | Path):
         self.store = store
         self.gateway = gateway
+        gateway.attach_store(store)
         self.output_dir = Path(output_dir)
         self.report_dir = Path(report_dir)
 
     async def _invoke(self, case: dict, skill_name: str, skill_input: dict, *,
+                      message_id: str | None = None) -> dict:
+        with telemetry.operation("Agent." + skill_name, attributes={
+            "revguard.case.id": case["case_id"], "revguard.skill.name": skill_name,
+            "revguard.transport": self.transport,
+        }):
+            return await self._invoke_stage(case, skill_name, skill_input, message_id=message_id)
+
+    async def _invoke_stage(self, case: dict, skill_name: str, skill_input: dict, *,
                       message_id: str | None = None) -> dict:
         """Dispatch and execute exactly one state-bound Worker task over MCP."""
         task = create_agent_task(case, skill_name, skill_input)
@@ -76,6 +85,7 @@ class McpTeamRunner:
                 "input": skill_input,
                 "request_id": request_id,
                 "agentteams_message_id": message_id,
+                "traceparent": telemetry.carrier().get("traceparent"),
             })
         if result.is_error or not result.structured_content:
             message = result.content[0].text if result.content else "MCP stage failed"
@@ -88,6 +98,7 @@ class McpTeamRunner:
             raise McpStageError("MCP returned success without a persisted StageResult")
         return persisted["result"]
 
+    @telemetry.workflow
     async def run_to_human_gate(self, case: dict) -> dict:
         """Run dynamic Worker stages until a real human gate or a safe terminal state."""
         if case.get("status") not in {
@@ -349,6 +360,7 @@ class McpTeamRunner:
             self._export(case, state)
             raise
 
+    @telemetry.workflow
     async def execute_after_approval(self, case: dict, *,
                                      state: dict | None = None) -> dict:
         """Continue an approved MCP Team case through write, verify and rollback."""
@@ -391,6 +403,7 @@ class McpTeamRunner:
                 f"{self.display_name} Executor 通过服务端权限检查，开始受控执行",
             )
         executions = []
+        pending_items = []
         for diff in state["root_cause_report"]["diffs"]:
             delta = Decimal(diff["delta"])
             if delta == 0:
@@ -430,29 +443,17 @@ class McpTeamRunner:
                     "amount": str(delta), "transport": self.transport,
                 })
                 continue
+            pending_items.append({"action_id": draft["action_id"], "idempotency_key": idempotency_key})
+        if pending_items:
             submitted = await self._invoke(case, "LedgerAdjustSkill", {
-                "action_id": draft["action_id"],
+                "action_id": pending_items[0]["action_id"], "items": pending_items,
                 "approval_token": SERVER_INJECTION_REF,
                 "policy_version": state["policy_decision"]["policy_version"],
-                "idempotency_key": idempotency_key,
+                "idempotency_key": f"{case['case_id']}:settlement:{state['calculation_result']['calculation_hash']}",
             })
-            execution = {
-                "action_id": draft["action_id"], "case_id": case["case_id"],
-                "action_type": "LEDGER_ADJUST", "status": submitted["status"],
-                "amount": str(delta),
-                "currency": state["calculation_result"]["currency"],
-                "component": diff["component"],
-                "idempotency_key": idempotency_key,
-                "before_snapshot": submitted["before_snapshot"],
-                "after_snapshot": submitted["after_snapshot"],
-                "rollback_token": submitted.get("rollback_token"),
-                "ledger_entry": submitted.get("ledger_entry"),
-            }
-            self.store.save_execution(execution)
-            executions.append(execution)
+            executions.extend(submitted["executions"])
             self.store.audit(case["case_id"], "revguard-executor", "EXECUTED", {
-                "action_id": draft["action_id"], "component": diff["component"],
-                "amount": str(delta), "idempotency_key": idempotency_key,
+                "operation_id": submitted["operation_id"], "components": len(pending_items),
                 "transport": self.transport,
             })
         state["executions"] = executions
@@ -515,6 +516,7 @@ class McpTeamRunner:
         await self._archive(case, state)
         return self._export(case, state)
 
+    @telemetry.workflow
     async def resume_rollback(self, case: dict) -> dict:
         """Continue only the fail-safe rollback segment after an interruption."""
         if case.get("status") != CaseStatus.ROLLBACK_REQUIRED.value:
@@ -589,25 +591,19 @@ class McpTeamRunner:
             )
             return
         expected_snapshot = executions[0].get("before_snapshot", [])
-        reversals = []
-        for execution in reversed(executions):
-            reversed_result = await self._invoke(case, "LedgerReverseSkill", {
-                "ledger_id": execution["ledger_entry"]["ledger_id"],
-                "rollback_token": SERVER_INJECTION_REF,
-                "idempotency_key": (
-                    f"{case['case_id']}:{execution['component']}:rollback"
-                ),
-            })
-            execution["status"] = "ROLLED_BACK"
-            execution["reversal"] = reversed_result["reversal_entry"]
-            self.store.save_execution(execution)
-            reversals.append(reversed_result["reversal_entry"])
-            self.store.audit(case["case_id"], "revguard-executor", "ROLLED_BACK", {
-                "action_id": execution["action_id"],
-                "ledger_id": execution["ledger_entry"]["ledger_id"],
-                "reversal_id": reversed_result["reversal_entry"]["ledger_id"],
-                "transport": self.transport,
-            })
+        items = [{"ledger_id": e["ledger_entry"]["ledger_id"],
+                  "rollback_token": SERVER_INJECTION_REF,
+                  "idempotency_key": f"{case['case_id']}:{e['component']}:rollback"}
+                 for e in reversed(executions)]
+        reversed_result = await self._invoke(case, "LedgerReverseSkill", {
+            "ledger_id": items[0]["ledger_id"], "rollback_token": SERVER_INJECTION_REF,
+            "items": items, "idempotency_key": f"{case['case_id']}:compensation",
+        })
+        reversals = reversed_result["reversals"]
+        state["executions"] = self.store.list_executions(case["case_id"])
+        self.store.audit(case["case_id"], "revguard-executor", "ROLLED_BACK", {
+            "operation_id": reversed_result["operation_id"], "entries": len(reversals),
+        })
         rollback_verification = await self._invoke(
             case, "PostRollbackVerifySkill", {
                 "order_id": case["order_id"],

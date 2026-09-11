@@ -21,3 +21,6 @@ docs/reports/CASE-*.md
 
 # 系统文件
 .DS_Store
+
+.runtime/
+*.money.sqlite3*

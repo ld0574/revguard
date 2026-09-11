@@ -3,7 +3,7 @@
   "info": {
     "title": "RevGuard API",
     "description": "面向企业渠道佣金结算异常的多智能体治理平台",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/api/v1/cases/{case_id}/human-action/assertion": {
@@ -1409,6 +1409,59 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/money-operations": {
+      "get": {
+        "summary": "Money Operations",
+        "operationId": "money_operations_api_v1_cases__case_id__money_operations_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -3324,6 +3377,13 @@
           "idempotency_key": {
             "type": "string",
             "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
           }
         },
         "required": [
@@ -3368,6 +3428,17 @@
           "rollback_token": {
             "type": "string",
             "minLength": 1
+          },
+          "executions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -3384,7 +3455,8 @@
         "action_id",
         "approval_token",
         "policy_version",
-        "idempotency_key"
+        "idempotency_key",
+        "items"
       ],
       "outputs": [
         "action_id",
@@ -3392,7 +3464,9 @@
         "ledger_entry",
         "before_snapshot",
         "after_snapshot",
-        "rollback_token"
+        "rollback_token",
+        "executions",
+        "operation_id"
       ],
       "dependencies": [
         "commission.submit_adjustment"
@@ -3445,6 +3519,13 @@
           "idempotency_key": {
             "type": "string",
             "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
           }
         },
         "required": [
@@ -3464,6 +3545,24 @@
           "reversed_entry": {
             "type": "object",
             "additionalProperties": true
+          },
+          "executions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "reversals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -3475,11 +3574,15 @@
       "inputs": [
         "ledger_id",
         "rollback_token",
-        "idempotency_key"
+        "idempotency_key",
+        "items"
       ],
       "outputs": [
         "reversal_entry",
-        "reversed_entry"
+        "reversed_entry",
+        "executions",
+        "reversals",
+        "operation_id"
       ],
       "dependencies": [
         "commission.reverse_adjustment"

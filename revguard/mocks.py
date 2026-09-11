@@ -23,6 +23,7 @@ from threading import RLock
 from typing import ClassVar
 
 from .models import new_id, utc_now
+from .money_journal import MONEY_TOOLS, MoneyJournal, RecoveryRequired, request_hash
 from .security import CapabilityTokenSigner, SecurityError, authorize_tool
 
 
@@ -66,7 +67,8 @@ class ToolGateway:
     def __init__(self, fixtures_dir: str | Path, finance_fail_times: int = 0,
                  *, signing_key: str | None = None,
                  state_path: str | Path | None = None,
-                 verification_tamper_amount: str | Decimal = "0"):
+                 verification_tamper_amount: str | Decimal = "0",
+                 store=None, posting_tamper_amount: str | Decimal = "0"):
         self.fixtures = _load_fixtures(fixtures_dir)
         self._lock = RLock()
         self._state_path = Path(state_path) if state_path else None
@@ -88,55 +90,182 @@ class ToolGateway:
         self._finance_fail_left = finance_fail_times   # 故障注入计数
         self._verification_tamper_amount = Decimal(str(verification_tamper_amount))
         self._verification_tamper_used = False
+        self._posting_tamper_amount = Decimal(str(posting_tamper_amount))
+        self._posting_tamper_used = False
+        self._execution_results: dict[str, dict] = {}
+        self._recording_epochs: dict[str, int] = {}
+        self._in_transaction = False
         self._load_state()
+        self._owns_store = store is None
+        if store is None:
+            from .store import Store
+            store = Store(str(self._state_path) + ".money.sqlite3" if self._state_path else ":memory:")
+        self.journal = MoneyJournal(store)
+        if not self._execution_results and not self._owns_store:
+            for case in store.list_cases():
+                for execution in store.list_executions(case["case_id"]):
+                    if execution.get("idempotency_key"):
+                        self._execution_results[execution["idempotency_key"]] = execution
+        self.journal.initialize(self._state_snapshot())
+        with self.journal.transaction() as tx:
+            self._apply_state(tx.state())
 
     # ------------------------------------------------------------------ 入口
+    def attach_store(self, store) -> None:
+        """Bind fresh reference harnesses to the same transaction database."""
+        if self.journal.store is store:
+            return
+        if not self._owns_store:
+            raise RuntimeError("Gateway is already bound to another Store")
+        with self.journal.transaction() as tx:
+            if tx.execute("SELECT operation_id FROM money_operations LIMIT 1").fetchone():
+                raise RuntimeError("Cannot move a live money journal between databases")
+            state = tx.state()
+        self.journal.store.close()
+        self.journal = MoneyJournal(store)
+        self.journal.initialize(state)
+        self._owns_store = False
+
     def call(self, tool_name: str, parameters: dict, *, case_id: str = "",
              actor: str = "", scope: list[str] | None = None,
              idempotency_key: str | None = None) -> dict:
-        """统一工具调用契约（设计文档 13.1）。"""
-        handler = getattr(self, f"_tool_{tool_name.replace('.', '_')}", None)
-        receipt = {
-            "tool_receipt": new_id("RCPT"),
-            "tool_name": tool_name,
-            "case_id": case_id,
-            "actor": actor,
-            "called_at": utc_now(),
-        }
+        receipt = {"tool_receipt": new_id("RCPT"), "tool_name": tool_name,
+                   "case_id": case_id, "actor": actor, "called_at": utc_now()}
+        operation = None
         try:
-            if handler is None:
-                raise ToolError("NOT_FOUND", f"未知工具: {tool_name}")
             try:
-                required_scope = authorize_tool(actor, scope or [], tool_name)
+                receipt["required_scope"] = authorize_tool(actor, scope or [], tool_name)
             except SecurityError as exc:
                 raise ToolError("AUTH_FAILED", str(exc)) from exc
-            receipt["required_scope"] = required_scope
-            data = handler(parameters or {}, scope=scope or [], idempotency_key=idempotency_key,
-                           actor=actor, case_id=case_id)
-            receipt["success"] = True
+            handler = getattr(self, f"_tool_{tool_name.replace('.', '_')}", None)
+            if handler is None:
+                raise ToolError("NOT_FOUND", f"未知工具: {tool_name}")
             with self._lock:
-                self._receipts.append(receipt)
-                self._persist_state()
-            return {
-                "success": True,
-                "data": data,
-                "error": None,
-                "source_timestamp": utc_now(),
-                "tool_receipt": receipt["tool_receipt"],
+                with self.journal.transaction() as tx:
+                    self._apply_state(tx.state())
+                    epoch = self._recording_epochs.get(case_id, 0)
+                    if tool_name in MONEY_TOOLS and epoch and idempotency_key:
+                        idempotency_key = f"{idempotency_key}:recording-{epoch}"
+                    if tool_name in MONEY_TOOLS:
+                        if not idempotency_key:
+                            raise ToolError("INVALID_PARAMS", "资金操作必须携带幂等键")
+                        if tool_name == "commission.submit_adjustment":
+                            target = self._adjustments.get(parameters.get("action_id"), {})
+                        else:
+                            target = self._find_ledger(parameters.get("ledger_id")) or {}
+                        channel = "order:" + str(target.get("order_id") or case_id)
+                if tool_name in MONEY_TOOLS:
+                    operation = self.journal.prepare(
+                        idempotency_key, case_id, channel, tool_name,
+                        request_hash(tool_name, case_id, parameters),
+                    )
+                with self.journal.transaction() as tx:
+                    self._apply_state(tx.state())
+                    self._in_transaction = True
+                    try:
+                        if operation:
+                            current = tx.operation(idempotency_key)
+                            self.journal.check_recovery_lock()
+                            if current["generation"] != operation["generation"]:
+                                raise RecoveryRequired("旧执行者已被恢复操作隔离")
+                            if current["status"] == "COMMITTED":
+                                data = current["result"]
+                            elif current["status"] == "PREPARED":
+                                before_ids = {e["ledger_id"] for e in self._ledger}
+                                data = handler(parameters, scope=scope or [], idempotency_key=idempotency_key,
+                                               actor=actor, case_id=case_id)
+                                for entry in self._ledger:
+                                    if entry["ledger_id"] not in before_ids:
+                                        entry["operation_id"] = idempotency_key
+                                receipt["success"] = True
+                                self._receipts.append(receipt)
+                                tx.commit_result(current, data, self._state_snapshot())
+                            else:
+                                raise RecoveryRequired("资金操作需要重新核对")
+                        else:
+                            data = handler(parameters or {}, scope=scope or [], idempotency_key=idempotency_key,
+                                           actor=actor, case_id=case_id)
+                            receipt["success"] = True
+                            self._receipts.append(receipt)
+                            tx.save_state(self._state_snapshot())
+                    finally:
+                        self._in_transaction = False
+            return {"success": True, "data": data, "error": None,
+                    "source_timestamp": utc_now(), "tool_receipt": receipt["tool_receipt"]}
+        except (ToolError, SecurityError, RecoveryRequired, ValueError) as exc:
+            if operation and isinstance(exc, ToolError):
+                # A handler validation failure rolls back the entire batch.
+                with self.journal.transaction() as tx:
+                    tx.execute("UPDATE money_operations SET status='NOT_COMMITTED',generation=generation+1 "
+                               "WHERE operation_id=? AND status='PREPARED'", (idempotency_key,))
+            if isinstance(exc, ToolError):
+                error_type = exc.error_type
+            elif isinstance(exc, RecoveryRequired):
+                error_type = "RESULT_UNKNOWN"
+            else:
+                error_type = "DATA_CONFLICT"
+            return {"success": False, "data": None,
+                    "error": {"type": error_type, "message": str(exc),
+                              "retryable": error_type in ToolError.RETRYABLE and tool_name not in MONEY_TOOLS},
+                    "source_timestamp": utc_now(), "tool_receipt": receipt["tool_receipt"]}
+        except Exception:
+            if operation:
+                self.journal.mark_unknown(idempotency_key)
+            raise
+
+    def _tool_commission_submit_adjustment(self, p: dict, *, idempotency_key=None,
+                                           actor="", case_id="", **kw) -> dict:
+        items = p.get("items") or [{"action_id": p.get("action_id"), "idempotency_key": idempotency_key}]
+        if len({i.get("action_id") for i in items}) != len(items) or len({i.get("idempotency_key") for i in items}) != len(items):
+            raise ToolError("INVALID_PARAMS", "批次包含重复资金操作")
+        drafts = [self._adjustments.get(i.get("action_id"), {}) for i in items]
+        if len({(d.get("case_id"), d.get("order_id"), d.get("currency")) for d in drafts}) != 1:
+            raise ToolError("INVALID_PARAMS", "同一批次必须属于同案件、订单和币种")
+        if p.get("action_id") != items[0].get("action_id"):
+            raise ToolError("INVALID_PARAMS", "批次主操作与分项不匹配")
+        baseline = None
+        results, executions = [], []
+        for item in items:
+            result = self._submit_single({**p, "action_id": item["action_id"]},
+                                         idempotency_key=item["idempotency_key"], actor=actor, case_id=case_id, **kw)
+            draft = self._adjustments[item["action_id"]]
+            if baseline is None:
+                baseline = result["before_snapshot"]
+            execution = {
+                **result, "case_id": case_id, "action_type": "LEDGER_ADJUST",
+                "amount": draft["amount"], "currency": draft["currency"], "component": draft["component"],
+                "idempotency_key": item["idempotency_key"], "operation_id": idempotency_key,
+                "before_snapshot": copy.deepcopy(baseline),
             }
-        except ToolError as exc:
-            receipt["success"] = False
-            receipt["error_type"] = exc.error_type
-            with self._lock:
-                self._receipts.append(receipt)
-                self._persist_state()
-            return {
-                "success": False,
-                "data": None,
-                "error": {"type": exc.error_type, "message": exc.message, "retryable": exc.retryable},
-                "source_timestamp": utc_now(),
-                "tool_receipt": receipt["tool_receipt"],
-            }
+            self._execution_results[item["idempotency_key"]] = execution
+            executions.append(copy.deepcopy(execution))
+            results.append(result)
+        return {**results[0], "executions": executions, "operation_id": idempotency_key}
+
+    def _tool_commission_reverse_adjustment(self, p: dict, *, idempotency_key=None,
+                                            actor="", case_id="", **kw) -> dict:
+        items = p.get("items") or [{"ledger_id": p.get("ledger_id"),
+                                   "rollback_token": p.get("rollback_token"), "idempotency_key": idempotency_key}]
+        if len({i.get("ledger_id") for i in items}) != len(items):
+            raise ToolError("INVALID_PARAMS", "冲销批次包含重复分录")
+        targets = [self._find_ledger(i.get("ledger_id")) or {} for i in items]
+        if len({(e.get("source"), e.get("order_id"), e.get("currency")) for e in targets}) != 1:
+            raise ToolError("INVALID_PARAMS", "冲销批次必须属于同一资金通道")
+        if p.get("ledger_id") != items[0].get("ledger_id"):
+            raise ToolError("INVALID_PARAMS", "冲销主操作与分项不匹配")
+        results, executions = [], []
+        for item in items:
+            result = self._reverse_single(item, idempotency_key=item["idempotency_key"],
+                                          actor=actor, case_id=case_id, **kw)
+            execution = next((e for e in self._execution_results.values()
+                              if (e.get("ledger_entry") or {}).get("ledger_id") == item["ledger_id"]), None)
+            if execution:
+                execution.update({"status": "ROLLED_BACK", "reversal": result["reversal_entry"],
+                                  "compensation_operation_id": idempotency_key})
+                executions.append(copy.deepcopy(execution))
+            results.append(result)
+        return {**results[0], "executions": executions,
+                "reversals": [r["reversal_entry"] for r in results], "operation_id": idempotency_key}
 
     @property
     def receipts(self) -> list[dict]:
@@ -152,29 +281,33 @@ class ToolGateway:
         """Reset mutable mock-side effects for one recording case only."""
         source = f"REVGUARD:{case_id}"
         with self._lock:
-            action_ids = {
-                action_id for action_id, draft in self._adjustments.items()
-                if draft.get("case_id") == case_id
-            }
-            self._adjustments = {
-                action_id: draft
-                for action_id, draft in self._adjustments.items()
-                if draft.get("case_id") != case_id
-            }
-            self._ledger = [
-                entry for entry in self._ledger
-                if entry.get("source") != source
-            ]
-            self._idempotency = {
-                key: action_id
-                for key, action_id in self._idempotency.items()
-                if not key.startswith(f"{case_id}:")
-                and action_id not in action_ids
-            }
-            # Keep receipts and outbox entries as gateway-level history; they
-            # are not reused for authorization and remain useful when auditing
-            # the rejected attempt before the new run.
-            self._persist_state()
+            with self.journal.transaction() as tx:
+                self._apply_state(tx.state())
+                self._recording_epochs[case_id] = self._recording_epochs.get(case_id, 0) + 1
+                self._execution_results = {k: v for k, v in self._execution_results.items() if v.get("case_id") != case_id}
+                action_ids = {
+                    action_id for action_id, draft in self._adjustments.items()
+                    if draft.get("case_id") == case_id
+                }
+                self._adjustments = {
+                    action_id: draft
+                    for action_id, draft in self._adjustments.items()
+                    if draft.get("case_id") != case_id
+                }
+                self._ledger = [
+                    entry for entry in self._ledger
+                    if entry.get("source") != source
+                ]
+                self._idempotency = {
+                    key: action_id
+                    for key, action_id in self._idempotency.items()
+                    if not key.startswith(f"{case_id}:")
+                    and action_id not in action_ids
+                }
+                # Keep receipts and outbox entries as gateway-level history; they
+                # are not reused for authorization and remain useful when auditing
+                # the rejected attempt before the new run.
+                tx.save_state(self._state_snapshot())
 
     # ------------------------------------------------------------------- CRM
     def _tool_crm_get_order(self, p: dict, **_kw) -> dict:
@@ -257,12 +390,18 @@ class ToolGateway:
             raise ToolError("NOT_FOUND", f"发票不存在: {p}")
         return copy.deepcopy(invoice)
 
-    def _tool_finance_get_commission_ledger(self, p: dict, *, actor="", **_kw) -> dict:
+    def _tool_finance_get_commission_ledger(self, p: dict, *, actor="", case_id="", **_kw) -> dict:
         self._maybe_fail_finance()
         with self._lock:
             entries = copy.deepcopy([
                 e for e in self._ledger if e.get("order_id") == p.get("order_id")
             ])
+            if p.get("operation_scope") and actor == "revguard-verifier":
+                executions = [e for e in self._execution_results.values() if e.get("case_id") == case_id]
+                if executions:
+                    baseline = copy.deepcopy(executions[0].get("before_snapshot", []))
+                    own_ids = {(e.get("ledger_entry") or {}).get("ledger_id") for e in executions}
+                    entries = baseline + [e for e in entries if e["ledger_id"] in own_ids or e.get("reversal_of") in own_ids]
             if (actor == "revguard-verifier" and not self._verification_tamper_used
                     and self._verification_tamper_amount != 0 and entries):
                 # 仅篡改一次“查询结果”，不污染真实台账；用于验证失败→回滚闭环评测。
@@ -276,6 +415,11 @@ class ToolGateway:
 
     # -------------------------------------------------------------- 佣金执行
     def _tool_commission_create_adjustment_draft(self, p: dict, **kw) -> dict:
+        for existing in self._adjustments.values():
+            if all(str(existing.get(k)) == str(p.get(k)) for k in
+                   ("case_id", "order_id", "component", "amount", "currency")):
+                if existing["status"] == "DRAFT":
+                    return copy.deepcopy(existing)
         action_id = new_id("ACT")
         draft = {
             "action_id": action_id,
@@ -293,7 +437,7 @@ class ToolGateway:
             self._persist_state()
         return copy.deepcopy(draft)
 
-    def _tool_commission_submit_adjustment(self, p: dict, *, idempotency_key=None,
+    def _submit_single(self, p: dict, *, idempotency_key=None,
                                            actor="", case_id="", **_kw) -> dict:
         """提交调整单写入台账。强制幂等键 + 审批凭证校验。"""
         if not idempotency_key:
@@ -352,6 +496,9 @@ class ToolGateway:
                 "source": f"REVGUARD:{draft.get('case_id')}",
                 "posted_at": utc_now(),
             }
+            if self._posting_tamper_amount and not self._posting_tamper_used:
+                entry["amount"] = str(Decimal(entry["amount"]) + self._posting_tamper_amount)
+                self._posting_tamper_used = True
             self._ledger.append(entry)
             draft["status"] = "SUBMITTED"
             self._idempotency[idempotency_key] = draft["action_id"]
@@ -376,7 +523,7 @@ class ToolGateway:
                 "rollback_token": rollback_token,
             }
 
-    def _tool_commission_reverse_adjustment(self, p: dict, *, idempotency_key=None,
+    def _reverse_single(self, p: dict, *, idempotency_key=None,
                                             actor="", case_id="", **_kw) -> dict:
         """冲销：新增一笔反向台账（不物理删除，保证可审计）。"""
         if not idempotency_key:
@@ -401,6 +548,8 @@ class ToolGateway:
             target = self._find_ledger(p.get("ledger_id"))
             if not target:
                 raise ToolError("NOT_FOUND", f"台账记录不存在: {p.get('ledger_id')}")
+            if target.get("reversal_of"):
+                raise ToolError("DATA_CONFLICT", "禁止对冲销分录再次冲销")
             if target.get("reversed_by"):
                 raise ToolError("DATA_CONFLICT", "台账记录已经冲销")
             reversal = copy.deepcopy(target)
@@ -541,7 +690,8 @@ class ToolGateway:
                 (Decimal(amount) for amount in remaining_quota.values()),
                 Decimal("0"),
             )
-            token = ""
+            # no capability issued when the remaining quota is zero
+            token = ""  # nosec B105
             if remaining_amount > 0:
                 token = self._token_signer.issue("ledger_adjust", {
                     "approval_id": approval["approval_id"],
@@ -630,6 +780,12 @@ class ToolGateway:
             state = json.loads(self._state_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"无法加载 ToolGateway 状态 {self._state_path}: {exc}") from exc
+        self._apply_state(state)
+
+    def _apply_state(self, state: dict) -> None:
+        self._execution_results = state.get("execution_results", {})
+        self._recording_epochs = state.get("recording_epochs", {})
+        self._posting_tamper_used = bool(state.get("posting_tamper_used", False))
         self._ledger = state.get("ledger", self._ledger)
         self._adjustments = state.get("adjustments", {})
         self._approvals = state.get("approvals", {})
@@ -652,10 +808,16 @@ class ToolGateway:
         ))
 
     def _persist_state(self) -> None:
-        if not self._state_path:
+        if self._in_transaction or not hasattr(self, "journal"):
             return
-        self._state_path.parent.mkdir(parents=True, exist_ok=True)
-        state = {
+        with self.journal.transaction() as tx:
+            tx.save_state(self._state_snapshot())
+
+    def _state_snapshot(self) -> dict:
+        return {
+            "execution_results": self._execution_results,
+            "recording_epochs": self._recording_epochs,
+            "posting_tamper_used": self._posting_tamper_used,
             "ledger": self._ledger,
             "adjustments": self._adjustments,
             "approvals": self._approvals,
@@ -667,6 +829,3 @@ class ToolGateway:
             "used_rollback_tokens": sorted(self._used_rollback_tokens),
             "verification_tamper_used": self._verification_tamper_used,
         }
-        tmp = self._state_path.with_suffix(self._state_path.suffix + ".tmp")
-        tmp.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-        tmp.replace(self._state_path)

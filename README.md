@@ -110,11 +110,11 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 如果目标是直接打开可录制 WebUI，而不是搭建开发环境，使用部署总入口：
 
 ```bash
-# 任意安装 Docker Compose v2 的机器：SQLite + 本地 MCP Team
+# 202 Docker 环境中的最小拓扑：SQLite + 进程内 MCP Team
 bash scripts/deploy_demo.sh --local --reset
 
 # 已安装 AgentTeams v1.2.0 的宿主机：PolarDB + Matrix + 10 个 Agent 角色
-bash scripts/deploy_demo.sh --full --reset --model MiniMax-M3
+bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
 ```
 
 脚本会生成权限为 `0600` 的本地 `.env`，完成镜像构建、Schema、Golden Case、

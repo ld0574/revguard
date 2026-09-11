@@ -188,6 +188,17 @@ def hydrate_server_secrets(skill_name: str, skill_input: dict, *,
                 raise ValueError("执行记录没有可注入的回滚能力凭证")
             private_input["rollback_token"] = execution["rollback_token"]
             injected.append("rollback_token")
+    if skill_name == "LedgerReverseSkill" and private_input.get("items"):
+        executions = store.list_executions(case_id)
+        for item in private_input["items"]:
+            if item.get("rollback_token") != SERVER_INJECTION_REF:
+                raise ValueError("批量冲销凭证必须由服务端注入")
+            execution = next((e for e in executions
+                              if (e.get("ledger_entry") or {}).get("ledger_id") == item.get("ledger_id")), None)
+            if not execution or not execution.get("rollback_token"):
+                raise ValueError("批量冲销缺少可核对的执行凭证")
+            item["rollback_token"] = execution["rollback_token"]
+        injected.append("items.rollback_token")
     return private_input, injected
 
 

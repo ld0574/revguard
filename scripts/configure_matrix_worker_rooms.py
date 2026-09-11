@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Persist AgentTeams Matrix runtime settings without exposing credentials."""
+"""Persist Matrix settings; inspect Docker using argument arrays without a shell."""
 from __future__ import annotations
 
 import argparse
 import json
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
@@ -22,7 +22,8 @@ ACTORS = (
 
 
 def container_environment(container: str) -> dict[str, str]:
-    output = subprocess.check_output(
+    # Fixed Docker command, operator-supplied container, no shell expansion.
+    output = subprocess.check_output(  # nosec B603, B607
         [
             "docker",
             "inspect",
@@ -91,7 +92,8 @@ def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
         "REVGUARD_MATRIX_SERVER_NAME": required["AGENTTEAMS_MATRIX_DOMAIN"],
         "REVGUARD_MATRIX_USERNAME": required["AGENTTEAMS_ADMIN_USER"],
         "REVGUARD_MATRIX_PASSWORD": required["AGENTTEAMS_ADMIN_PASSWORD"],
-        "REVGUARD_MATRIX_ACCESS_TOKEN": "",
+        # clears cached credential so configured login is used
+        "REVGUARD_MATRIX_ACCESS_TOKEN": "",  # nosec B105
         "REVGUARD_HITL_MATRIX_HOMESERVER_URL": homeserver_url,
         "REVGUARD_HITL_MATRIX_USERS_JSON": json.dumps({
             matrix_subject: {

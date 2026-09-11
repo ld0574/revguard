@@ -27,6 +27,10 @@ tools:
     type: string
     required: true
     description: 服务端派发且绑定案件版本的 StageTask 编号
+  - name: traceparent
+    type: string
+    required: false
+    description: W3C Trace Context
   requestTemplate:
     url: "http://revguard-api.internal:9000/api/v1/skills/PolicyVersionMatchSkill/invoke"
     method: POST
@@ -46,5 +50,7 @@ tools:
       value: "{{.args.requestId}}"
     - key: X-RevGuard-Task-ID
       value: "{{.args.taskId}}"
+    - key: traceparent
+      value: "{{.args.traceparent}}"
     - key: X-RevGuard-Transport
       value: "higress-mcp"

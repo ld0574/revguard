@@ -15,7 +15,8 @@ def main() -> int:
     except ImportError as exc:
         raise SystemExit("缺少 psycopg 运行时依赖") from exc
     root = Path(__file__).resolve().parent.parent
-    schema = (root / "migrations/polardb/001_core.sql").read_text(encoding="utf-8")
+    schema = "\n".join((root / "migrations/polardb" / name).read_text(encoding="utf-8")
+                       for name in ("001_core.sql", "003_money_recovery.sql"))
     with psycopg.connect(dsn) as conn:
         conn.execute(schema)
         tables = conn.execute(

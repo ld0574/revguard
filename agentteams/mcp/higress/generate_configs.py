@@ -43,6 +43,10 @@ ARGUMENTS = """  args:
     type: string
     required: true
     description: 服务端派发且绑定案件版本的 StageTask 编号
+  - name: traceparent
+    type: string
+    required: false
+    description: W3C Trace Context
 """
 
 
@@ -81,6 +85,8 @@ def render_server(actor: str, skills: list[str]) -> str:
             '      value: "{{.args.requestId}}"\n',
             "    - key: X-RevGuard-Task-ID\n",
             '      value: "{{.args.taskId}}"\n',
+            "    - key: traceparent\n",
+            '      value: "{{.args.traceparent}}"\n',
             "    - key: X-RevGuard-Transport\n",
             '      value: "higress-mcp"\n\n',
         ])

@@ -48,8 +48,8 @@ def evaluate_golden_cases() -> tuple[int, list[str]]:
             store = Store(Path(tmp) / "case.db")
             gateway = ToolGateway(
                 FIXTURES, finance_fail_times=1, signing_key=SIGNING_KEY,
-                verification_tamper_amount=(spec.get("gateway_overrides") or {}).get(
-                    "verification_tamper_amount", "0"
+                posting_tamper_amount=(spec.get("gateway_overrides") or {}).get(
+                    "posting_tamper_amount", "0"
                 ),
             )
             case = Case(

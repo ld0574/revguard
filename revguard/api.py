@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
+from . import telemetry
 from .agent_bridge import create_agent_task, execute_agent_task
 from .demo_dashboard import build_dashboard_snapshot
 from .hitl import (
@@ -33,7 +34,8 @@ from .mcp_server import hydrate_server_secrets
 from .mcp_team import McpTeamRunner
 from .mocks import ToolGateway
 from .models import Case, CaseStatus, new_id, utc_now
-from .observability import configure_structured_logging, prometheus_text
+from .money_journal import RecoveryRequired
+from .observability import HTTP_METRICS, configure_structured_logging, prometheus_text
 from .orchestrator import Orchestrator
 from .security import (
     TOOL_REQUIRED_SCOPES,
@@ -72,7 +74,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.4.0")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.0")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -158,11 +160,12 @@ store = create_store(
 
 def _new_gateway() -> ToolGateway:
     return ToolGateway(
-        FIXTURES,
+        FIXTURES, store=store,
         finance_fail_times=FINANCE_FAIL_TIMES,
         signing_key=SIGNING_KEY,
         state_path=GATEWAY_STATE_PATH,
         verification_tamper_amount=VERIFICATION_TAMPER_AMOUNT,
+        posting_tamper_amount=os.getenv("REVGUARD_POSTING_TAMPER_AMOUNT", "0"),
     )
 
 
@@ -172,6 +175,24 @@ gateway = _new_gateway()
 @app.middleware("http")
 async def structured_access_log(request: Request, call_next):
     """Log correlation and latency only; never log bodies or credentials."""
+    with telemetry.operation("HTTP " + request.method, incoming=dict(request.headers)) as span:
+        started = time.monotonic()
+        status = 500
+        try:
+            response = await _access_log(request, call_next)
+            status = response.status_code
+            return response
+        finally:
+            route = getattr(request.scope.get("route"), "path", "unmatched")
+            method = request.method if request.method in {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"} else "OTHER"
+            HTTP_METRICS.observe(method, route, status, time.monotonic() - started)
+            span.set_attribute("http.route", route)
+            span.set_attribute("http.response.status_code", status)
+            if status >= 500:
+                span.set_status(telemetry.Status(telemetry.StatusCode.ERROR))
+
+
+async def _access_log(request, call_next):
     started = time.monotonic()
     request_id = request.headers.get("X-Request-ID") or new_id("REQ")
     try:
@@ -317,24 +338,33 @@ async def _run_team_background(case_id: str, phase: str) -> None:
         else:
             await runner.execute_after_approval(case)
     except Exception as exc:
-        latest = store.get_case(case_id) or case
-        if latest.get("status") not in {
-            CaseStatus.CLOSED.value, CaseStatus.ROLLED_BACK.value,
-            CaseStatus.FAILED.value,
-        }:
-            transition_case(
-                store, latest, CaseStatus.FAILED,
-                f"AgentTeams background failure: {type(exc).__name__}",
-            )
-        store.audit(case_id, "revguard-orchestrator", "TEAM_RUN_FAILED", {
-            "phase": phase,
-            "transport": "agentteams-matrix",
-            "error_type": type(exc).__name__,
-        })
         LOGGER.exception("team_run_failed", extra={"revguard_fields": {
-            "case_id": case_id, "phase": phase,
-            "error_type": type(exc).__name__,
+            "case_id": case_id, "phase": phase, "error_type": type(exc).__name__,
         }})
+        try:
+            latest = store.get_case(case_id) or case
+            recovering_money = latest.get("status") in {
+                CaseStatus.EXECUTING.value, CaseStatus.VERIFYING.value,
+                CaseStatus.ROLLBACK_REQUIRED.value,
+            }
+            if recovering_money:
+                gateway.journal.freeze_case(case_id)
+                transition_case(store, latest, CaseStatus.RECOVERY_REQUIRED,
+                                "执行中断，须由审批人触发原操作对账")
+                latest["recovery_phase"] = "ROLLBACK" if phase == "ROLLBACK" or (
+                    (store.get_verification(case_id) or {}).get("rollback_required") is True
+                ) else "EXECUTION"
+                store.save_case(latest)
+            elif latest.get("status") not in {CaseStatus.CLOSED.value, CaseStatus.ROLLED_BACK.value,
+                                              CaseStatus.FAILED.value, CaseStatus.RECOVERY_REQUIRED.value}:
+                transition_case(store, latest, CaseStatus.FAILED, "AgentTeams后台任务失败")
+            store.audit(case_id, "revguard-orchestrator", "TEAM_RUN_FAILED", {
+                "phase": phase, "error_type": type(exc).__name__,
+            })
+        except Exception:
+            LOGGER.exception("team_failure_persistence_unavailable", extra={"revguard_fields": {
+                "case_id": case_id, "phase": phase,
+            }})
 
 
 def _spawn_team_background(case_id: str, phase: str) -> None:
@@ -432,8 +462,8 @@ async def create_human_action_assertion(
     if payload.action in {"APPROVED", "REJECTED"}:
         if case.get("status") != CaseStatus.WAITING_FOR_APPROVAL.value:
             raise HTTPException(409, f"案件状态 {case.get('status')} 不在等待审批节点")
-    elif case.get("execution_mode") != "AGENTTEAMS_MATRIX":
-        raise HTTPException(409, "只能为 AgentTeams Matrix 运行签发恢复证明")
+    elif case.get("execution_mode") not in {"AGENTTEAMS_MATRIX", "MCP_TEAM"}:
+        raise HTTPException(409, "只能为团队运行签发恢复证明")
 
     with Tracer(store, case_id).span(
         "APPROVAL",
@@ -753,20 +783,22 @@ async def resume_interrupted_team_run(
     if not case:
         raise HTTPException(404, f"案件不存在: {case_id}")
     run = case.get("team_run") or {}
-    if case.get("execution_mode") != "AGENTTEAMS_MATRIX":
-        raise HTTPException(409, "只能恢复 AgentTeams Matrix 运行")
-    recovering_execution = (
-        case.get("status") == CaseStatus.EXECUTING.value
-        and run.get("status") in ACTIVE_TEAM_RUN_STATUSES
-    )
+    if case.get("execution_mode") not in {"AGENTTEAMS_MATRIX", "MCP_TEAM"}:
+        raise HTTPException(409, "只能恢复团队运行")
     verification = store.get_verification(case_id) or {}
+    recovery_state = case.get("status") == CaseStatus.RECOVERY_REQUIRED.value
     recovering_rollback = (
-        case.get("status") == CaseStatus.FAILED.value
-        and run.get("status") == "FAILED"
-        and run.get("current_stage") in {
-            "LedgerReverseSkill", "PostRollbackVerifySkill",
-        }
+        case.get("status") in {CaseStatus.FAILED.value, CaseStatus.RECOVERY_REQUIRED.value,
+                               CaseStatus.ROLLBACK_REQUIRED.value}
         and verification.get("rollback_required") is True
+        and (recovery_state or run.get("current_stage") in {"LedgerReverseSkill", "PostRollbackVerifySkill"}
+             or case.get("status") == CaseStatus.ROLLBACK_REQUIRED.value)
+    )
+    recovering_execution = not recovering_rollback and (
+        recovery_state or (
+            case.get("status") in {CaseStatus.EXECUTING.value, CaseStatus.VERIFYING.value}
+            and run.get("status") in ACTIVE_TEAM_RUN_STATUSES | {"FAILED"}
+        )
     )
     if not recovering_execution and not recovering_rollback:
         raise HTTPException(409, {
@@ -777,7 +809,7 @@ async def resume_interrupted_team_run(
             ),
         })
     age_seconds = _team_run_age_seconds(case)
-    if recovering_execution and (
+    if recovering_execution and not recovery_state and (
         age_seconds is None or age_seconds < TEAM_RUN_STALE_AFTER_SECONDS
     ):
         raise HTTPException(409, {
@@ -799,6 +831,17 @@ async def resume_interrupted_team_run(
         action="RESUME",
     )
     human = proof.identity
+    try:
+        operations = gateway.journal.reconcile(case_id)
+    except RecoveryRequired as exc:
+        raise HTTPException(409, {"code": "MONEY_RECOVERY_LOCKED", "message": str(exc)}) from exc
+    store.audit(case_id, human.actor, "HUMAN_RECOVERY_AUTHORIZED", {
+        "human_subject": human.sub, "operation_count": len(operations),
+    })
+    if recovering_execution and case.get("status") != CaseStatus.EXECUTING.value:
+        if case.get("status") != CaseStatus.RECOVERY_REQUIRED.value:
+            transition_case(store, case, CaseStatus.RECOVERY_REQUIRED, "写后核验中断，先核对原操作")
+        transition_case(store, case, CaseStatus.EXECUTING, "原操作已在主库完成对账")
     risk = case.get("risk_decision") or {}
     if recovering_execution and risk.get("approval_required"):
         renewed = gateway.call(
@@ -863,11 +906,11 @@ async def resume_interrupted_team_run(
             "human_subject": human.sub,
             "previous_run_id": run.get("run_id"),
         })
-        transition_case(
-            store, case, CaseStatus.ROLLBACK_REQUIRED,
-            "审批人确认恢复未完成的安全回滚",
-            actor=human.actor,
-        )
+        if case.get("status") != CaseStatus.ROLLBACK_REQUIRED.value:
+            transition_case(
+                store, case, CaseStatus.ROLLBACK_REQUIRED,
+                "审批人确认原操作对账后恢复补偿", actor=human.actor,
+            )
 
     recovered_at = utc_now()
     case["team_run"] = {
@@ -1331,6 +1374,14 @@ def readiness():
                                   "error_type": type(exc).__name__}) from exc
 
 
+@app.get("/api/v1/cases/{case_id}/money-operations")
+def money_operations(case_id: str, _principal: ApiPrincipal = Depends(require_roles("viewer"))):
+    with gateway.journal.transaction() as tx:
+        rows = tx.execute("SELECT operation_id FROM money_operations WHERE case_id=? ORDER BY created_at",
+                          (case_id,)).fetchall()
+        return {"operations": [redact_secrets(tx.operation(r["operation_id"])) for r in rows]}
+
+
 @app.get("/api/v1/ops/metrics")
 def operational_metrics(
     _principal: ApiPrincipal = Depends(require_roles("viewer")),
@@ -1342,7 +1393,7 @@ def operational_metrics(
 def prometheus_metrics(
     _principal: ApiPrincipal = Depends(require_roles("viewer")),
 ):
-    return prometheus_text(store.operational_metrics())
+    return prometheus_text({**store.operational_metrics(), **gateway.journal.metrics()}) + HTTP_METRICS.render()
 
 
 @app.get("/api/v1/ops/evidence")

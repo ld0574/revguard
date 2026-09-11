@@ -5,14 +5,20 @@
 """
 from __future__ import annotations
 
+import logging
 import time
 from contextlib import contextmanager
 from datetime import datetime
 from threading import Lock, local
 
+from . import telemetry
 from .models import new_id, utc_now
+from .observability import configure_structured_logging
 from .security import redact_secrets
 from .store import Store
+
+LOGGER = logging.getLogger("revguard.trace")
+configure_structured_logging(LOGGER)
 
 OTEL_SEMANTIC_CONVENTIONS = {
     "name": "OpenTelemetry GenAI semantic conventions",
@@ -59,7 +65,11 @@ class Tracer:
         self.case_id = case_id
         self._local = local()
         self._sequence_lock = Lock()
-        self._next_sequence = store.max_span_sequence(case_id) + 1
+        try:
+            self._next_sequence = store.max_span_sequence(case_id) + 1
+        except Exception:
+            self._next_sequence = 1
+            LOGGER.exception("trace_store_unavailable", extra={"revguard_fields": {"case_id": case_id}})
 
     def _allocate_sequence(self) -> int:
         with self._sequence_lock:
@@ -96,6 +106,15 @@ class Tracer:
             "outputs": None,
             "error": None,
         }
+        correlation = (inputs or {}).get("correlation") or {}
+        otel_span, otel_token = telemetry.start(name, attributes={
+            "revguard.case.id": self.case_id, "revguard.span.kind": kind,
+            "gen_ai.agent.name": actor,
+            **({"revguard.operation.id": str(inputs["operation_id"])}
+               if (inputs or {}).get("operation_id") else {}),
+            **{f"revguard.{key}": str(correlation[key]) for key in
+               ("request_id", "agent_task_id", "agentteams_message_id") if correlation.get(key)},
+        }, incoming=correlation)
         self._stack.append(record["span_id"])
         start = time.monotonic()
         try:
@@ -110,7 +129,8 @@ class Tracer:
             record["ended_at"] = utc_now()
             self._stack.pop()
             # Trace 是可导出的审计产物，只保存不可用于授权的指纹。
-            self.store.save_span(redact_secrets(record))
+            telemetry.finish(otel_span, otel_token, error=record.get("error"))
+            self._save(redact_secrets(record))
 
     def record_completed_span(
         self,
@@ -152,8 +172,18 @@ class Tracer:
             "error": error,
         }
         safe_record = redact_secrets(record)
-        self.store.save_span(safe_record)
+        self._save(safe_record)
         return safe_record
+
+    def _save(self, record):
+        try:
+            self.store.save_span(record)
+        except Exception:
+            # Required money audit is committed in MoneyTransaction. Sampleable
+            # telemetry must neither mask the original fault nor block recovery.
+            LOGGER.exception("trace_persistence_failed", extra={"revguard_fields": {
+                "case_id": self.case_id, "span_name": record["name"],
+            }})
 
     def export(self) -> dict:
         """导出该案件完整 Trace（平铺 span 列表 + 汇总）。"""

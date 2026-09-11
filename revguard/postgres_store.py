@@ -77,6 +77,9 @@ class PostgresStore:
         return (
             Path(__file__).resolve().parent.parent
             / "migrations" / "polardb" / "001_core.sql"
+        ).read_text(encoding="utf-8") + (
+            Path(__file__).resolve().parent.parent
+            / "migrations" / "polardb" / "003_money_recovery.sql"
         ).read_text(encoding="utf-8")
 
     def _validate_core_schema(self) -> None:
@@ -133,7 +136,8 @@ class PostgresStore:
                 "trace_spans", "agent_task_results", "agent_tasks",
                 "verifications", "executions", "approvals", "evidence",
             ):
-                conn.execute(f"DELETE FROM {table} WHERE case_id=%s", (case_id,))
+                # table is from the literal allowlist above
+                conn.execute(f"DELETE FROM {table} WHERE case_id=%s", (case_id,))  # nosec B608
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:

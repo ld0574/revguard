@@ -2,20 +2,25 @@
 
 ## 0. 推荐的一键入口
 
-伙伴复现不要分别手工执行本文后续命令，优先从仓库根目录运行：
+本项目统一在 10.10.10.202 的 Docker 环境执行构建、测试与服务。从服务器的 RevGuard 项目目录运行：
 
 ```bash
 # 最小可复现闭环，不要求已安装 AgentTeams
 bash scripts/deploy_demo.sh --local --reset
 
-# 与复赛录制机一致；要求宿主机已有 AgentTeams v1.2.0
-bash scripts/deploy_demo.sh --full --reset --model MiniMax-M3
+# 决赛环境；要求宿主机已有 AgentTeams v1.2.0；保留现有案件
+bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
 ```
 
 `--full` 会依次完成私密后端 Principal、PolarDB 启动与 Schema、RevGuard API、AgentTeams 角色和 Team、
 skills-only Adapter 的 MinIO 持久化、9 个独立 Higress MCP Server 与精确 consumer 授权、Matrix 登录与独立房间自动发现、8 个 Golden Case
 播种以及最终健康验收。重复运行默认保留案件；只有显式传入 `--reset` 才重置合成库。
 脚本不会打印 Matrix 或数据库凭证，生成的 `.env` 权限为 `0600`。
+
+2026-09-12 已将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
+`gpt-5.6-sol`。Higress 的 `revguard-sol` Provider 使用当前获授权的模型网关配置，
+Worker 继续使用各自的内部网关凭证。CoPaw 的 Chat Completions 工具调用对该模型明确设置
+`reasoning_effort=none`。迁移记录见 [`agentteams-sol-migration-20260912.md`](agentteams-sol-migration-20260912.md)。
 
 新版 L2 审批必须通过白名单 Matrix 账号验证。`--local` 不包含身份源，未配置 Matrix 时
 会停在人审，不能使用旧静态 approver key。完整录制方式与账号配置见
@@ -24,7 +29,9 @@ skills-only Adapter 的 MinIO 持久化、9 个独立 Higress MCP Server 与精�
 为避免容器重建丢失进程内的后台协程，未传 `--reset` 时如果检测到
 `QUEUED / STARTING / RUNNING` 案件，脚本会拒绝重建 API。意外重启后，WebUI
 在运行 10 分钟无更新时明确标记“执行已中断”，并由审批人点击“继续执行”。
-续跑仅重新签发未消耗组件的 15 分钟能力令牌，已提交写入由持久化幂等键抑制。
+资金结果未知时先冻结通道，续跑必须先对账确认原操作结果，再签发后续能力令牌；
+不能把数据库恢复或请求超时当作可直接重试的依据。协议见
+[`adr/0004-money-outcome-recovery.md`](adr/0004-money-outcome-recovery.md)。
 
 ## 1. 推荐拓扑
 

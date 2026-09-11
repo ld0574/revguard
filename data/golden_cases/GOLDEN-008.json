@@ -2,7 +2,7 @@
   "case_id": "CASE-2026-0008",
   "title": "执行后验证故障：独立验证失败，自动反向冲销并确认恢复",
   "gateway_overrides": {
-    "verification_tamper_amount": "1"
+    "posting_tamper_amount": "1"
   },
   "input": {
     "case_id": "CASE-2026-0008",
@@ -10,7 +10,7 @@
     "source": "EVALUATION",
     "partner_id": "AGT-10001",
     "order_id": "EZ202608001",
-    "description": "故障注入评测：写入后 Verifier 首次查询出现 1 KES 偏差，系统必须冲销。",
+    "description": "故障注入评测：模拟账务写入发生1 KES偏差，独立核对确认后原子冲销本次调整。",
     "claim": {"actual_amount": 18000, "expected_amount": 32400, "currency": "KES"}
   },
   "expected": {

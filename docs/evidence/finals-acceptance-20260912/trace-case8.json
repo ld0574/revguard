@@ -1,0 +1,9 @@
+{
+  "case_id": "CASE-2026-0008",
+  "trace_id": "27413cb14ae9b30c69be6fc9c7b4d965",
+  "final_status": "ROLLED_BACK",
+  "tasks": 18,
+  "ledger_entries": 4,
+  "audit_chain_valid": true,
+  "scope": "Docker on 10.10.10.202; in-process MCP reference transport; isolated PostgreSQL synthetic posting fault"
+}

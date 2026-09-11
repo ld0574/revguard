@@ -3,6 +3,10 @@
 !.env.example
 .git
 .venv
+.runtime
+*.db
+*.sqlite3
+data/*.gateway.json
 __pycache__
 **/__pycache__
 *.pyc

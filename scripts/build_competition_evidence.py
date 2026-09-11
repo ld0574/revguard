@@ -62,7 +62,7 @@ async def build(output: Path) -> dict:
                 finance_fail_times=1,
                 signing_key="competition-evidence-signing-key-at-least-32-bytes",
                 state_path=temp / "gateway.json",
-                verification_tamper_amount="1",
+                posting_tamper_amount="1",
             )
             runner = McpTeamRunner(
                 store, gateway,

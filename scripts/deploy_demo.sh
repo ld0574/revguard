@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # RevGuard 可复现部署总入口。
 #
-# 本地最小闭环：bash scripts/deploy_demo.sh
+# 在 202 Docker 环境运行最小闭环：bash scripts/deploy_demo.sh
 # 复赛完整环境：bash scripts/deploy_demo.sh --full --reset
 set -Eeuo pipefail
 
@@ -9,7 +9,7 @@ ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ENV_FILE="$ROOT_DIR/.env"
 PROFILE="local"
 RESET="false"
-MODEL="${AGENTTEAMS_DEFAULT_MODEL:-MiniMax-M3}"
+MODEL="${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-sol}"
 
 usage() {
   cat <<'EOF'
@@ -19,12 +19,12 @@ usage() {
   --local          SQLite + 本地 MCP + WebUI（默认，只需要 Docker）
   --full           PolarDB-PG + AgentTeams Matrix + 10 个角色 + WebUI
   --reset          清空合成演示状态并重新播种 8 个 Golden Case
-  --model NAME     AgentTeams Worker 模型（默认 MiniMax-M3）
+  --model NAME     AgentTeams Worker 模型（默认 gpt-5.6-sol）
   -h, --help       显示帮助
 
 示例：
   bash scripts/deploy_demo.sh
-  bash scripts/deploy_demo.sh --full --reset --model MiniMax-M3
+  bash scripts/deploy_demo.sh --full --reset --model gpt-5.6-sol
 EOF
 }
 

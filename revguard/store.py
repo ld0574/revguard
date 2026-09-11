@@ -17,6 +17,7 @@ from pathlib import Path
 from threading import RLock
 
 from .models import utc_now
+from .money_journal import SCHEMA as MONEY_SCHEMA
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS cases (
@@ -110,9 +111,9 @@ class Store:
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
-        self.conn.execute("PRAGMA synchronous=NORMAL")
+        self.conn.execute("PRAGMA synchronous=FULL")
         self.conn.execute("PRAGMA busy_timeout=5000")
-        self.conn.executescript(_SCHEMA)
+        self.conn.executescript(_SCHEMA + MONEY_SCHEMA)
         columns = {r[1] for r in self.conn.execute("PRAGMA table_info(trace_spans)")}
         if "sequence" not in columns:
             self.conn.execute("ALTER TABLE trace_spans ADD COLUMN sequence INTEGER")
@@ -129,6 +130,11 @@ class Store:
         """原子清空 Demo 运行状态，保留 Schema。"""
         with self._lock, self.conn:
             self.conn.executescript("""
+                DELETE FROM money_outbox;
+                DELETE FROM money_ledger;
+                DELETE FROM money_operations;
+                DELETE FROM money_holds;
+                DELETE FROM money_gateway_state;
                 DELETE FROM trace_spans;
                 DELETE FROM audit_events;
                 DELETE FROM agent_task_results;
@@ -151,7 +157,8 @@ class Store:
                 "verifications", "executions", "approvals", "evidence",
             ):
                 self.conn.execute(
-                    f"DELETE FROM {table} WHERE case_id=?", (case_id,)
+                    # table is from the literal allowlist above
+                    f"DELETE FROM {table} WHERE case_id=?", (case_id,)  # nosec B608
                 )
 
     # ------------------------------------------------------------------ cases

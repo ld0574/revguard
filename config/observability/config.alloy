@@ -1,0 +1,22 @@
+discovery.docker "revguard" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name = "label"
+    values = ["com.docker.compose.project=" + sys.env("REVGUARD_COMPOSE_PROJECT")]
+  }
+  filter {
+    name = "label"
+    values = ["com.docker.compose.service=revguard-api"]
+  }
+}
+loki.source.docker "revguard" {
+  host = "unix:///var/run/docker.sock"
+  targets = discovery.docker.revguard.targets
+  labels = {service_name = "revguard-api"}
+  forward_to = [loki.write.local.receiver]
+}
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

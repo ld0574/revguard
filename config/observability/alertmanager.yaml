@@ -1,0 +1,10 @@
+route:
+  receiver: local-review
+  group_by: [alertname]
+  group_wait: 5s
+  group_interval: 1m
+  repeat_interval: 4h
+receivers:
+  # Alerts are visible in Alertmanager/Grafana. External mail/chat delivery is
+  # configured separately by the operator; this file never contacts a person.
+  - name: local-review

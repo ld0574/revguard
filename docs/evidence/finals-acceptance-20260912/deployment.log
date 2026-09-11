@@ -1,0 +1,74 @@
+revguard-api
+PolarDB core schema applied: cases + append-only audit_events ready
+Read-only metrics credential and Grafana password prepared in .runtime/observability
+revguard-finals-grafana-1
+ Container revguard-polardb Running 
+ Volume revguard_tempo-data Creating 
+ Volume revguard_otel-queue Creating 
+ Container revguard-blackbox-1 Creating 
+ Volume revguard_alertmanager-data Creating 
+ Container revguard-api Recreate 
+ Volume revguard_grafana-data Creating 
+ Volume revguard_grafana-data Creating 
+ Volume revguard_prometheus-data Creating 
+ Volume revguard_prometheus-data Creating 
+ Volume revguard_loki-data Creating 
+ Volume revguard_loki-data Creating 
+ Volume revguard_alertmanager-data Creating 
+ Volume revguard_tempo-data Creating 
+ Volume revguard_otel-queue Creating 
+ Volume revguard_alloy-data Creating 
+ Volume revguard_alloy-data Creating 
+ Volume revguard_grafana-data Created 
+ Volume revguard_grafana-data Created 
+ Container revguard-grafana-1 Creating 
+ Volume revguard_prometheus-data Created 
+ Volume revguard_prometheus-data Created 
+ Container revguard-prometheus-1 Creating 
+ Volume revguard_alertmanager-data Created 
+ Volume revguard_alertmanager-data Created 
+ Container revguard-alertmanager-1 Creating 
+ Volume revguard_otel-queue Created 
+ Volume revguard_otel-queue Created 
+ Container revguard-otel-collector-1 Creating 
+ Volume revguard_loki-data Created 
+ Volume revguard_loki-data Created 
+ Container revguard-loki-1 Creating 
+ Volume revguard_tempo-data Created 
+ Volume revguard_tempo-data Created 
+ Container revguard-tempo-1 Creating 
+ Volume revguard_alloy-data Created 
+ Volume revguard_alloy-data Created 
+ Container revguard-alloy-1 Creating 
+ Container revguard-blackbox-1 Created 
+ Container revguard-grafana-1 Created 
+ Container revguard-alertmanager-1 Created 
+ Container revguard-prometheus-1 Created 
+ Container revguard-otel-collector-1 Created 
+ Container revguard-loki-1 Created 
+ Container revguard-alloy-1 Created 
+ Container revguard-tempo-1 Created 
+ Container revguard-api Recreated 
+ Container revguard-prometheus-1 Starting 
+ Container revguard-loki-1 Starting 
+ Container revguard-alloy-1 Starting 
+ Container revguard-blackbox-1 Starting 
+ Container revguard-otel-collector-1 Starting 
+ Container revguard-alertmanager-1 Starting 
+ Container revguard-grafana-1 Starting 
+ Container revguard-tempo-1 Starting 
+ Container revguard-polardb Waiting 
+ Container revguard-prometheus-1 Started 
+ Container revguard-loki-1 Started 
+ Container revguard-alloy-1 Started 
+ Container revguard-polardb Healthy 
+ Container revguard-api Starting 
+ Container revguard-blackbox-1 Started 
+ Container revguard-otel-collector-1 Started 
+ Container revguard-alertmanager-1 Started 
+ Container revguard-grafana-1 Started 
+ Container revguard-tempo-1 Started 
+ Container revguard-api Started 
+curl: (56) Recv failure: Connection reset by peer
+Preserved all 8 case records, executions and ledger entries; audit chain valid
+DEPLOYMENT_PRESERVATION_VERIFIED
