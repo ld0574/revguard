@@ -22,6 +22,7 @@ from typing import Literal
 from . import telemetry
 from .agent_bridge import create_agent_task, execute_agent_task
 from .demo_dashboard import build_dashboard_snapshot
+from .grafana_embed import GrafanaEmbed
 from .hitl import (
     HumanActionProof,
     MatrixHumanIdentityProvider,
@@ -74,7 +75,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.0")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.1")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -170,6 +171,7 @@ def _new_gateway() -> ToolGateway:
 
 
 gateway = _new_gateway()
+grafana_embed = GrafanaEmbed()
 
 
 @app.middleware("http")
@@ -1432,6 +1434,18 @@ def engineering_evidence(
             "polardb_pitr_drill": "PENDING_CLOUD_INSTANCE",
         },
     }
+
+
+@app.get("/api/v1/ops/observability")
+async def observability_dashboard(
+    _principal: ApiPrincipal = Depends(require_roles("viewer")),
+):
+    return await grafana_embed.status()
+
+
+@app.api_route("/grafana/{path:path}", methods=["GET", "HEAD", "POST"], include_in_schema=False)
+async def grafana_dashboard_proxy(request: Request, path: str):
+    return await grafana_embed.proxy(request, path)
 
 
 if ENABLE_RECORDING_UI:

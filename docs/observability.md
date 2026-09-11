@@ -19,6 +19,18 @@ Higress承担MCP发现、鉴权和路由。观测后端使用OpenTelemetry SDK �
 
 部署入口scripts/deploy_observability.sh --full组合PolarDB、AgentTeams和观测配置；升级资金Schema前先备份并运行独立迁移。**不要带reset参数，也不要在原演示环境注入故障。** 告警当前只保留在本地Alertmanager，未配置邮件或即时消息通知。
 
+## demo-ui 内嵌 Grafana
+
+RevGuard 0.5.1 的「可观测大屏」入口为 `http://10.10.10.202:19000/demo/?view=observability`。这是全部案件的只读视图，支持手动刷新、全屏和独立打开。12 个面板展示 API 采集、数据库就绪、审计链、待对账操作、冻结通道、告警、请求速率、P95 延迟、恢复趋势、服务可用性、案件状态及 Agent 任务状态。指标来自实际 Prometheus 采集，业务案件仍为合成演示数据；未采集时显示缺失状态。
+
+页面通过同源 `/grafana/` iframe 访问唯一的 externally shared dashboard（UID `revguard-operations`）。Grafana 匿名 Viewer 登录保持关闭，管理员密码只供短时配置容器使用，不进入 API 服务或浏览器。代理仅允许该看板的公开 HTML、保存面板查询和静态资源；管理员、登录、通用数据源查询及写入接口均拒绝，浏览器的 Authorization/Cookie 不转发，Grafana Set-Cookie 不回传。共享链接本身可被持有者读取，因此该看板仅放置允许展示的演示运行指标。
+
+`docker-compose.observability.yml` 已配置子路径、允许同源嵌入和 token 文件挂载。`scripts/deploy_observability.sh --full` 会在 Docker 中准备凭证、部署组件，再运行 `scripts/prepare_grafana_embed.py` 为选定看板开启共享并保存标识到 `.runtime/observability/grafana-public-token`。该文件不是管理员密钥，但不纳入 Git。更换访问地址时设置 `REVGUARD_GRAFANA_ROOT_URL`，保留结尾 `/grafana/`；202 默认 Grafana 管理端口仍只绑定回环地址。
+
+看板每 15 秒刷新；页面每 30 秒检查连接，服务不可用时显示重连提示。Grafana 仅负责可视化，Higress 继续负责网关鉴权与路由。日志和 Trace 后端已接入，当前嵌入页集中展示运行指标与资金恢复状态，没有把日志检索或 Trace 浏览器开放到公共 iframe。
+
+本次浏览器、只读边界、隔离停机提示、部署前后数据一致性记录见 [Grafana 嵌入验收](evidence/grafana-embed-20260912/README.md)。
+
 ## 已验证与限制
 
 202隔离Docker验收已查到同一Case8的51个Agent/Skill/Tool span、Loki日志、Grafana健康状态及四个Prometheus采集目标。停止隔离数据库后RevGuardUnavailable触发，并到达Alertmanager；恢复后该告警解除。原始验收记录保存在docs/evidence/finals-acceptance-20260912/。

@@ -1,0 +1,14 @@
+{"active_runs": []}
+Release version set to 0.5.1; other settings retained
+ Container revguard-grafana-1 Recreate
+ Container revguard-api Recreate
+ Container revguard-grafana-1 Recreated
+ Container revguard-api Recreated
+ Container revguard-grafana-1 Starting
+ Container revguard-api Starting
+ Container revguard-grafana-1 Started
+ Container revguard-api Started
+ Container revguard-revguard-api-run-33d36fdccf75 Creating
+ Container revguard-revguard-api-run-33d36fdccf75 Created
+Grafana selected-dashboard sharing enabled; no admin credential exposed
+Eight original cases, executions, ledger and audit chain are unchanged

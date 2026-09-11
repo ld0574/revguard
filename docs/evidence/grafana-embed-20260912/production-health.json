@@ -1,0 +1,49 @@
+{
+  "verified_at": "2026-09-11T17:41:50.953802+00:00",
+  "environment": "10.10.10.202 Docker",
+  "health": {
+    "status": "ok",
+    "release": "0.5.1",
+    "cases": 8,
+    "ready": true,
+    "backend": "postgresql-polardb",
+    "read_replica": false
+  },
+  "grafana": {
+    "database": "ok",
+    "version": "12.1.1",
+    "commit": "df5de8219b41d1e639e003bf5f3a85913761d167"
+  },
+  "embedding": {
+    "enabled": true,
+    "available": true,
+    "embed_url": "/grafana/public-dashboards/<dashboard>?theme=dark&kiosk",
+    "refresh_seconds": 15,
+    "scope": "all_cases"
+  },
+  "blocked_paths": {
+    "api/admin/settings": 404,
+    "login": 404,
+    "api/datasources/proxy/1/query": 404,
+    "api/ds/query": 404
+  },
+  "prometheus_targets": [
+    {
+      "job": "otel-collector",
+      "health": "up"
+    },
+    {
+      "job": "prometheus",
+      "health": "up"
+    },
+    {
+      "job": "readiness",
+      "health": "up"
+    },
+    {
+      "job": "revguard",
+      "health": "up"
+    }
+  ],
+  "passed": true
+}

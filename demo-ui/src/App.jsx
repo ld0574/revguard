@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ObservabilityView } from "./ObservabilityView.jsx";
 import {
   externalValidationLabel,
   formatBeijingDateTime,
@@ -291,7 +292,7 @@ function stageValue(snapshot, id) {
   return values[id];
 }
 
-function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange }) {
+function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange, monitoring }) {
   const status = snapshot?.case?.status || "CONNECTING";
   const mcpTeam = snapshot?.case?.execution_mode === "MCP_TEAM";
   const matrixTeam = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
@@ -301,18 +302,18 @@ function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange }) {
       <div className="brand-group">
         <ShieldCheck className="brand-mark" weight="duotone" aria-hidden="true" />
         <span className="brand-name">RevGuard</span><span className="top-divider" />
-        <select className="case-select" value={caseId} onChange={(event) => onCaseChange(event.target.value)} disabled={busy} aria-label="选择演示案件">
+        {monitoring ? <span className="approval-label">全局运行总览</span> : <><select className="case-select" value={caseId} onChange={(event) => onCaseChange(event.target.value)} disabled={busy} aria-label="选择演示案件">
           {(cases.length ? cases : [{ case_id: caseId }]).map((item) => <option value={item.case_id} key={item.case_id}>{item.case_id} · {item.status || "CREATED"}</option>)}
         </select><span className="risk-pill">{risk}</span>{mcpTeam && <span className="mcp-pill">本地 MCP</span>}{matrixTeam && <span className="mcp-pill matrix-pill"><span />AgentTeams 已连接</span>}
-        <span className="approval-label">人工审批</span>
+        <span className="approval-label">人工审批</span></>}
       </div>
       <div className="disclosure">合成业务数据 · 真实运行链路</div>
       <div className="top-actions">
-        <span className="health-pill"><span className="health-dot" />安全优先模式：已激活</span>
+        {monitoring ? <span className="observability-mode">实时观测 · 只读展示</span> : <><span className="health-pill"><span className="health-dot" />安全优先模式：已激活</span>
         <button className="icon-button" onClick={onReset} disabled={busy} title="谨慎操作：重置全部演示案件，会影响其他案件">
           <ArrowClockwise className={busy ? "spin" : ""} weight="bold" /><span>重置全部</span>
         </button>
-        <span className={`status-mini status-${status.toLowerCase()}`}>{status}</span>
+        <span className={`status-mini status-${status.toLowerCase()}`}>{status}</span></>}
       </div>
     </header>
   );
@@ -787,7 +788,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [tab, setTab] = useState("decision");
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get("view") === "observability" ? "observability" : "decision");
   const [humanAction, setHumanAction] = useState(null);
   const [beijingNow, setBeijingNow] = useState(() => new Date());
   const teamRun = snapshot?.case?.team_run || {};
@@ -883,17 +884,18 @@ export function App() {
       anchor.href = url; anchor.download = `${caseId}-audit-report.md`; anchor.click(); URL.revokeObjectURL(url);
     } catch (err) { setError(err.message); }
   };
-  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["engineering", "工程证据", Gauge]], []);
+  const readObservability = useCallback(() => api("/api/v1/ops/observability", API_KEYS.viewer), []);
+  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["engineering", "工程证据", Gauge], ["observability", "可观测大屏", Gauge]], []);
 
   return (
-    <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} />
+    <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} monitoring={tab === "observability"} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
-      {!error && recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>资金结果需要核对</strong><small>相关写入已暂停。先核对原操作是否提交，再恢复未完成阶段。</small></div><button onClick={onResume} disabled={busy}>核对并恢复</button></div>}
-      {!error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
-      {!error && teamStale && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；恢复会先查询原资金操作，确认结果后再继续。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "核对并恢复"}</button></div>}
+      {tab !== "observability" && !error && recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>资金结果需要核对</strong><small>相关写入已暂停。先核对原操作是否提交，再恢复未完成阶段。</small></div><button onClick={onResume} disabled={busy}>核对并恢复</button></div>}
+      {tab !== "observability" && !error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{skillLabel(teamFailure.current_stage)}未完成</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable ? onResume : onLocateFailure} disabled={busy}>{rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
+      {tab !== "observability" && !error && teamStale && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；恢复会先查询原资金操作，确认结果后再继续。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "核对并恢复"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
-      <main><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} />
-        <div className="workspace"><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}</section><SafetyRail snapshot={snapshot} onExport={onExport} /></div>
+      <main>{tab !== "observability" && <><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /></>}
+        <div className={`workspace ${tab === "observability" ? "workspace-observability" : ""}`}><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}{tab === "observability" && <ObservabilityView readStatus={readObservability} />}</section>{tab !== "observability" && <SafetyRail snapshot={snapshot} onExport={onExport} />}</div>
       </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />{formatBeijingDateTime(beijingNow)}</span></footer>
       <HumanActionDialog intent={humanAction} caseId={caseId} busy={busy} onClose={() => setHumanAction(null)} onCommit={commitHumanAction} />
     </div>

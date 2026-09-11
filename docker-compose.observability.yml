@@ -4,6 +4,10 @@ services:
     environment:
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
       REVGUARD_POSTING_TAMPER_AMOUNT: ${REVGUARD_POSTING_TAMPER_AMOUNT:-0}
+      REVGUARD_GRAFANA_UPSTREAM: http://grafana:3000
+      REVGUARD_GRAFANA_PUBLIC_TOKEN_FILE: /run/secrets/grafana-public-token
+    volumes:
+      - ./.runtime/observability/grafana-public-token:/run/secrets/grafana-public-token:ro
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.132.0
@@ -83,6 +87,10 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana-password
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_SERVER_ROOT_URL: "${REVGUARD_GRAFANA_ROOT_URL:-http://10.10.10.202:19000/grafana/}"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
     ports:
       - "${REVGUARD_OBSERVABILITY_BIND:-127.0.0.1}:13001:3000"
     volumes:
