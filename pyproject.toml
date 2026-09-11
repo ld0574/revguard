@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "revguard-agent-infra"
-version = "0.4.0"
+version = "0.5.2"
 description = "Auditable multi-agent commission dispute resolution on AgentTeams"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,6 +16,7 @@ dependencies = [
   "psycopg[binary]==3.3.4",
   "psycopg-pool==3.3.1",
   "mcp==2.1.1",
+  "httpx2==2.12.0",
   "opentelemetry-sdk==1.44.0",
   "opentelemetry-exporter-otlp-proto-http==1.44.0",
 ]

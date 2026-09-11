@@ -1,0 +1,8 @@
+All checks passed!
+test_database_query_failure_cannot_be_treated_as_no_active_run (tests.test_deploy_guards.TestDeployGuards.test_database_query_failure_cannot_be_treated_as_no_active_run) ... ok
+test_reset_cannot_bypass_an_active_run (tests.test_deploy_guards.TestDeployGuards.test_reset_cannot_bypass_an_active_run) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.025s
+
+OK

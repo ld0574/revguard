@@ -1,9 +1,18 @@
 PYTHON ?= python3
+.DEFAULT_GOAL := verify-docker
 VENV ?= .venv
 VENV_PYTHON := $(VENV)/bin/python
 
-.PHONY: setup lint test coverage evaluate value-evaluate synthetic-validate evidence-bundle capacity postgres-integration openapi generated-check security \
+.PHONY: docker-only verify-docker setup lint test coverage evaluate value-evaluate synthetic-validate evidence-bundle capacity postgres-integration openapi generated-check security \
 	verify verify-ci verify-release competition-verify demo-reset demo run demo-ui-build demo-ui deploy-local deploy-full
+
+docker-only:
+	@test -f /.dockerenv || (echo "构建与测试只能在 202 Docker 执行；请在 202 运行 bash scripts/verify_docker.sh" >&2; exit 2)
+
+setup lint test coverage evaluate value-evaluate synthetic-validate evidence-bundle capacity postgres-integration openapi generated-check security demo-reset demo run demo-ui-build demo-ui: | docker-only
+
+verify-docker:
+	bash scripts/verify_docker.sh
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -16,7 +25,7 @@ lint:
 	$(VENV_PYTHON) -m ruff check revguard scripts tests
 
 coverage:
-	$(VENV_PYTHON) -m coverage run --source=revguard -m unittest discover -s tests
+	REVGUARD_TEST_POSTGRES_DSN= $(VENV_PYTHON) -m coverage run --source=revguard -m unittest discover -s tests
 	$(VENV_PYTHON) -m coverage report --omit=revguard/postgres_store.py --fail-under=90
 
 evaluate:
@@ -42,8 +51,8 @@ capacity:
 postgres-integration:
 	@test -n "$(REVGUARD_TEST_POSTGRES_DSN)" || \
 		(echo "set REVGUARD_TEST_POSTGRES_DSN to a disposable PostgreSQL database" >&2; exit 2)
-	REVGUARD_TEST_POSTGRES_DSN="$(REVGUARD_TEST_POSTGRES_DSN)" \
-		$(VENV_PYTHON) -m unittest tests.test_postgres_store_integration -v
+	@REVGUARD_TEST_POSTGRES_DSN="$(REVGUARD_TEST_POSTGRES_DSN)" \
+		$(VENV_PYTHON) -m unittest tests.test_postgres_store_integration tests.test_money_recovery_postgres tests.test_migrations_postgres -v
 
 openapi:
 	$(VENV_PYTHON) scripts/gen_skill_docs.py
@@ -64,7 +73,7 @@ verify: test evaluate
 
 verify-ci: lint coverage evaluate value-evaluate generated-check
 
-verify-release: verify-ci security
+verify-release: verify-ci postgres-integration security
 
 competition-verify: verify-release demo-ui-build evidence-bundle
 

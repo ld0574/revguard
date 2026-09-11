@@ -58,15 +58,15 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
   协同任务编排，9 个 Worker 独立 room 经 skills-only Adapter 调用各自的 Higress MCP Server；本地官方 MCP Client/Server
   保留为可复现 reference harness。底层 Tool 不暴露给模型，错 Worker、错 Skill、篡改输入、
   过期 task 和重放都会拒绝。
-- CASE-0008 实测 20 个成功 StageTask、9 个 Worker、16 种 Skill；L2 在 WebUI 真实暂停，
+- 复赛历史 CASE-0008 实测 20 个成功 StageTask、9 个 Worker、16 种 Skill；L2 在 WebUI 真实暂停，
   人工批准后从持久化状态续跑并完成 `FAILED → ROLLED_BACK → rollback PASSED`。
 - 7 路独立 I/O 真实并行取证；政策查询会在合同证据返回后按依赖继续执行。
 - L0 只读，L1 只创建不生效的草稿，L2 经过人工审批后写入，L3 只给出方案、禁止自动执行。
 - HMAC-SHA256 能力令牌把案件、币种、总额、逐组件额度、用途、有效期和唯一编号绑定在一起。
-- 执行后验证失败时，系统会创建反向台账，再由 Verifier 独立确认金额恢复到执行前状态。
+- 执行后核验确认本次分录有误时，系统创建对应的反向分录，再由 Verifier 核对本操作净影响。短暂读取偏差先重查；写结果未知则冻结通道，按原操作 ID 对账后恢复。
 - 8 个端到端 Golden Case；105 个确定性场景（8 Golden + 80 风险 + 8 政策 + 9 安全）；
   自动化测试覆盖内核、MCP、API、状态桥接、安全和持久层，核心路径行覆盖门禁为 90%。
-- 19 状态、24 条普通迁移的显式白名单；SQLite WAL + keyset 分页；支持干净重置、
+- 包含 `RECOVERY_REQUIRED` 的显式状态迁移白名单；SQLite WAL + keyset 分页；支持隔离演示重置、
   重复 seed 与容器重启。
 - 真实 Matrix → Orchestrator handshake → Worker StageTask → Skill 已用
   room/message/request/task/receipt/trace ID 与 Audit 对账；旧 Matrix → Evidence → Tool 链保留为历史证据。
@@ -74,13 +74,13 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
   Task 终态与每次 StageResult 同事务落库，支持失败重试、显式重派和 lineage。
 - 正式持久化可切换到 PostgreSQL/PolarDB：金额使用 `NUMERIC(18,2)`，审计事件由
   DB trigger 强制 append-only 哈希链，列表/Trace/Metrics 可分流到只读端点。
-- 可查询 JSON/Prometheus Metrics、JSON 访问日志、liveness/readiness、灰度/回滚策略、
-  告警规则、容量探针和 PolarDB PITR 证据捕获脚本。
+- 可查询 JSON/Prometheus Metrics、JSON 日志、liveness/readiness；202 已部署 OTel Collector、Tempo、Loki、Prometheus、Alertmanager 与 Grafana，demo-ui 可只读嵌入 12 面板大屏。PITR 仍为待真实环境验收的流程。
 - 10 个合成伙伴、11 笔订单和 8 个案件带来源边界、关联/时序/币种检查与源文件哈希；
   录制服务器已运行官方开源 PolarDB-PG 15 local_instance，所有材料明确区分“合成业务
   数据”“真实执行链路”“开源单机 PolarDB-PG 已验收”“云 PolarDB 高可用/PITR 待验收”。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
+当前资金恢复合同与观测证据见 [`docs/evidence/finals-acceptance-20260912/`](docs/evidence/finals-acceptance-20260912/)，新 Case8 隔离参考链为 18 个任务；Grafana 真实 iframe 及部署数据保留证据见 [`docs/evidence/grafana-embed-20260912/`](docs/evidence/grafana-embed-20260912/)。历史 Matrix 录像与新隔离验证分别标记，不混用任务计数。
 录制服务器的 20/20 AgentTeams/Matrix 脱敏验收结果见
 [`docs/agentteams-matrix-acceptance-2026-08-29.md`](docs/agentteams-matrix-acceptance-2026-08-29.md)。
 评委意见的逐条实施状态见 [`docs/reviewer-remediation.md`](docs/reviewer-remediation.md)；
@@ -105,13 +105,13 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 
 ## 一键复现
 
-需要 Python 3.11+。
+所有构建、测试与服务均在 10.10.10.202 Docker 中执行，本地只编辑和同步。
 
 如果目标是直接打开可录制 WebUI，而不是搭建开发环境，使用部署总入口：
 
 ```bash
 # 202 Docker 环境中的最小拓扑：SQLite + 进程内 MCP Team
-bash scripts/deploy_demo.sh --local --reset
+bash scripts/deploy_demo.sh --local
 
 # 已安装 AgentTeams v1.2.0 的宿主机：PolarDB + Matrix + 10 个 Agent 角色
 bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
@@ -125,18 +125,25 @@ L2 审批现在要求登录白名单中的 AgentTeams Matrix 账号，不能使�
 `--local` 不自带身份提供方，若未配置 Matrix，只能运行到人审暂停；完整自动化内核验证
 使用 `make verify-ci`。账号配置、录制边界见 [`docs/hitl-mcp-recording.md`](docs/hitl-mcp-recording.md)。
 
-开发与完整门禁使用以下命令：
+发布验证入口会建立独立 Compose 项目和一次性 PostgreSQL，不挂载原演示数据库，结束后清理测试容器：
+
+```bash
+# 在 202 的项目目录执行
+bash scripts/verify_docker.sh
+```
+
+其内部覆盖主套件、真实 PostgreSQL 迁移与资金恢复、覆盖率、105 场景评测、契约漂移、Python 安全检查、前端构建/测试及依赖审计。以下 Make 子命令仅供 **202 容器内部** 定向检查，宿主机直接调用会拒绝运行：
 
 ```bash
 cd revguard
 make setup
 make verify-ci    # Ruff + 自动化测试（PG 条件项除外）+ 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
-make competition-verify # 在 verify-ci 上增加依赖安全审计、WebUI 构建与脱敏证据包重放
+make verify-release REVGUARD_TEST_POSTGRES_DSN='...' # 必须提供一次性 PostgreSQL，不能跳过数据库门禁
 make value-evaluate # 运行五类业务价值指标口径（当前为明确标注的合成数据）
 make synthetic-validate # 校验合成数据血缘、引用、时序、币种和源文件哈希
 make evidence-bundle # 重放 MCP Team 并生成脱敏可审计证据包
 make capacity     # 本地合成容量回归，不冒充 PolarDB 生产 SLO
-make security     # pip-audit + Bandit；CI 另执行 Trivy 文件系统与镜像扫描
+make security     # pip-audit + Bandit；历史 Trivy 记录不替代当前镜像扫描
 make demo         # 干净重置并运行 8 个 Golden Case
 ```
 
@@ -153,7 +160,7 @@ make demo         # 干净重置并运行 8 个 Golden Case
 - `docs/runtime-acceptance-2026-08-31.md`：最新运行验收、CASE-0002 恢复结果与正式录制前提。
 - [`docs/ui-recording-audit-2026-08-31.md`](docs/ui-recording-audit-2026-08-31.md)：实际页面截图、脚本入口核对和未验收边界。
 
-核心编排与评测只使用 Python 标准库；FastAPI/Uvicorn 仅用于 API 层。
+金额计算采用标准库 Decimal；编排、MCP 与遥测使用锁定的运行时依赖，FastAPI/Uvicorn 用于 API 层。
 `requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
 90% 行覆盖率门禁覆盖默认可复现的内核与 SQLite/API 路径；
 `postgres_store.py` 需真实 PostgreSQL 事务/触发器，不纳入无 DB 的行覆盖率分母，改由
@@ -172,7 +179,7 @@ make run
 
 - `REVGUARD_APPROVAL_SIGNING_KEY`：至少 32 字节；
 - `REVGUARD_API_KEYS_JSON`：API key 到可信 actor、roles、scopes 的服务端映射；
-- `REVGUARD_GATEWAY_STATE_PATH`：Mock 台账、审批、幂等和回执的持久化文件。
+- `REVGUARD_GATEWAY_STATE_PATH`：旧版 Mock 状态导入来源；当前资金分录、操作结果、execution 投影、必要审计及本地 outbox 已在同库事务持久化。
 
 请求使用 `Authorization: Bearer <api-key>`。请求体不能自报 `actor` 或 `scope`。
 
@@ -185,7 +192,7 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 
 - `POST /api/v1/cases/{id}/run`：运行确定性回放闭环；
 - `POST /api/v1/cases/{id}/team/run`：通过 scoped MCP 运行多 Worker 状态流，L2 停在人审；
-- `POST /api/v1/cases/{id}/team/resume`：审批人为超时的 Matrix 执行重新授权，按持久化幂等键续跑；
+- `POST /api/v1/cases/{id}/team/resume`：审批人触发原操作对账与旧执行者隔离，确认结果后按原操作 ID 安全恢复；
 - `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
 - `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
 - `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
@@ -198,6 +205,7 @@ curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
 - `POST /api/v1/agent-tasks/{task_id}/reassign`：受权调度员重派失败任务；
 - `GET /api/v1/ops/metrics[ /prometheus]`：可查询运营与审计链指标。
 - `GET /api/v1/ops/evidence`：录制 WebUI 使用的工程门禁、价值口径与外部验收状态。
+- `GET /api/v1/ops/observability`：只读 Grafana 的实时可用状态与同源嵌入地址。
 
 完整示例见 [`docs/api.md`](docs/api.md)。
 正式 PolarDB 迁移、主/只读路由、pgvector 决策门槛和 PITR 验收见
@@ -266,8 +274,8 @@ Case Memory 与 Trace 三层承载。只在自然语言政策规模和离线 rec
 
 ## 开源状态
 
-本项目已作为公开仓库发布，采用 Apache-2.0 LICENSE。依赖/许可证边界、OpenAPI、6 条 ADR、
-安全工作流和发布材料均已纳入仓库。见 [`LICENSE`](LICENSE)、
+本项目已作为公开仓库发布，采用 Apache-2.0 LICENSE。依赖/许可证边界、OpenAPI、架构决策、
+Docker 验证入口和发布材料均已纳入仓库。见 [`LICENSE`](LICENSE)、
 [`docs/dependencies.md`](docs/dependencies.md) 与 [`docs/adr/`](docs/adr/README.md)。
 
 公开地址：<https://github.com/ld0574/revguard>。

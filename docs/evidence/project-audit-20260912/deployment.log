@@ -1,0 +1,7 @@
+{"active_runs": []}
+Release set to 0.5.2; other settings preserved
+ Container revguard-api Recreate
+ Container revguard-api Recreated
+ Container revguard-api Starting
+ Container revguard-api Started
+Original cases, executions, ledger and audit chain preserved

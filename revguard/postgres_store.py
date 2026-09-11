@@ -10,7 +10,6 @@ import json
 import os
 from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
 
 from .models import utc_now
 from .store import Store
@@ -74,28 +73,22 @@ class PostgresStore:
 
     @staticmethod
     def _core_schema() -> str:
-        return (
-            Path(__file__).resolve().parent.parent
-            / "migrations" / "polardb" / "001_core.sql"
-        ).read_text(encoding="utf-8") + (
-            Path(__file__).resolve().parent.parent
-            / "migrations" / "polardb" / "003_money_recovery.sql"
-        ).read_text(encoding="utf-8")
+        from .schema import core_schema
+        return core_schema()
 
     def _validate_core_schema(self) -> None:
+        from .schema import missing_tables
+
         try:
             with self._write_pool.connection() as conn:
-                row = conn.execute(
-                    "SELECT to_regclass('public.cases') AS cases_table, "
-                    "to_regclass('public.audit_events') AS audit_table"
-                ).fetchone()
+                absent = missing_tables(conn)
         except Exception:
             self.close()
             raise
-        if not row["cases_table"] or not row["audit_table"]:
+        if absent:
             self.close()
             raise RuntimeError(
-                "PolarDB Schema 未就绪；请先用独立迁移账号运行 "
+                "PolarDB Schema 未就绪，缺少 " + ", ".join(absent) + "；请先用独立迁移账号运行 "
                 "scripts/migrate_polardb.py。仅本地临时库可设 "
                 "REVGUARD_AUTO_MIGRATE=true。"
             )
