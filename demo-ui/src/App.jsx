@@ -362,7 +362,8 @@ function PrimaryAction({ snapshot, busy, onRun, onApprove, onInspect, onReprepar
     return <button className="primary-action reprepare-action" onClick={onReprepare} disabled={busy || running}><ArrowClockwise className={busy ? "spin" : ""} weight="bold" />{busy ? "正在重新准备…" : "重新准备当前案件"}</button>;
   }
   const rolledBack = status === "ROLLED_BACK";
-  return <button className="primary-action evidence-action" onClick={onInspect}><ClipboardText weight="bold" />{rolledBack ? "查看回滚证据" : "查看审计证据"}</button>;
+  const canReprepare = ["CLOSED", "ROLLED_BACK", "FAILED"].includes(status) && !(status === "FAILED" && snapshot?.verification?.rollback_required);
+  return <><button className="primary-action evidence-action" onClick={onInspect}><ClipboardText weight="bold" />{rolledBack ? "查看回滚证据" : "查看审计证据"}</button>{canReprepare && <button className="recording-again" onClick={onReprepare} disabled={busy || running}>重新准备当前案件</button>}</>;
 }
 
 function Pipeline({ snapshot, busy, onRun, onApprove, onInspect, onReprepare }) {

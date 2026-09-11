@@ -8,6 +8,8 @@ from __future__ import annotations
 import hashlib
 from decimal import Decimal
 
+from .artifacts import artifact_path
+
 CASE_TYPE_LABELS = {
     "COMMISSION_UNDERPAYMENT": "佣金少付",
     "COMMISSION_OVERPAYMENT": "佣金多付",
@@ -498,5 +500,6 @@ def render_audit_report(*, case: dict, state: dict, evidence: list[dict],
         add(f"| {ev['created_at']} | {ev['actor']} | {_event_label(ev['event'])} |")
     add("")
     add("---")
-    add(f"*报告由 RevGuard 自动生成；完整调用链文件见 `data/outputs/traces/{case['case_id']}.json`。*")
+    trace_ref = artifact_path("data/outputs/traces", case, ".json").as_posix()
+    add(f"*报告由 RevGuard 自动生成；完整调用链文件见 `{trace_ref}`。*")
     return "\n".join(lines)

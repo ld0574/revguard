@@ -82,11 +82,15 @@ REVGUARD_RESET_ON_START=true docker compose up -d --build
 
 - 默认模式：已有案件保持原状态，只补充不存在的 Golden Case；
 - `--reset`：先完整读取 Golden fixtures，再在同一数据库事务中清空运行数据并播种；播种失败回滚全部数据库变更；
-- `--gateway-state`：reset 时同步删除指定的 ToolGateway 状态文件。
+- `--gateway-state`：兼容旧参数；旧 JSON 文件保留为历史记录，重置后的数据库基线拥有优先级。
 
-录制中如果人工驳回了某个 Golden Case，不需要重置整套案件库。WebUI 的“重新准备当前案件”调用
+录制中某个 Golden Case 已驳回、闭环、回滚或安全失败后，不需要重置整套案件库。WebUI 的“重新准备当前案件”调用
 `POST /api/v1/cases/{case_id}/reprepare`，只清理该案件的证据、任务、Trace、审批与模拟写入，保留原审批审计链，
 再从对应 Golden Case 恢复为 `CREATED`；该端点仅在 `REVGUARD_ENABLE_RECORDING_UI=true` 且由 operator 调用时开放。
+
+单案重新准备把案件、运行投影、网关状态和审计提交到同一数据库事务；全量重置把 Golden Cases、网关基线与重置审计一起提交。数据库拒绝写入时不会留下半套现场。旧报告、Trace 导出和 Case Memory 文件保留；新一轮以 `recording_id` 写到各目录下的 `recordings/<recording_id>/`，API 只读取当前批次。没有该字段的历史案件继续使用原路径。文件以临时文件写完后原子替换，磁盘写入失败不会覆盖上一份完整产物。
+
+网关启动优先读取数据库中的持久化状态；只有尚未建立数据库状态时才导入旧 JSON，避免旧文件损坏阻止已迁移环境启动。重新准备返回 `REPREPARE_UNCONFIRMED` 时先刷新案件状态，确认数据库是否已经提交，再决定是否重试。
 
 API 全量重置和单案重新准备持有独占运行锁，与其他业务请求、HTTP/MCP Skill 和后台任务互斥；存在冲突返回 409。后台任务在请求返回后仍持有共享锁，取消时释放。主库中的活动运行、资金恢复状态、未决操作和冻结通道也会拒绝清理，不能靠进程重启绕过。锁不可用时请求返回 503，`/api/v1/health/live` 保持独立。
 

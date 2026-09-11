@@ -18,6 +18,7 @@ from threading import RLock
 
 from .models import utc_now
 from .money_journal import SCHEMA as MONEY_SCHEMA
+from .money_journal import MoneyTransaction
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS cases (
@@ -126,7 +127,8 @@ class Store:
         with self._lock:
             self.conn.close()
 
-    def reset(self, *, seed_cases: list[tuple[dict, str]] = ()) -> None:
+    def reset(self, *, seed_cases: tuple[tuple[dict, str], ...] | list[tuple[dict, str]] = (),
+              gateway_state: dict | None = None, reset_audit: tuple[str, dict] | None = None) -> None:
         """原子清空 Demo 运行状态，保留 Schema。"""
         with self._lock, self.conn:
             statements = """
@@ -149,6 +151,11 @@ class Store:
                 if statement.strip():
                     self.conn.execute(statement)
             self.conn.execute("DELETE FROM sqlite_sequence WHERE name='audit_events'")
+            if gateway_state is not None:
+                tx = MoneyTransaction(self.conn, postgres=False)
+                tx.execute("INSERT INTO money_gateway_state(singleton,data) VALUES(1,?)",
+                           (json.dumps(gateway_state),))
+                tx.ledger(gateway_state)
             for case, source in seed_cases:
                 self.conn.execute(
                     "INSERT INTO cases(case_id,data,status,updated_at) VALUES (?,?,?,?)",
@@ -159,25 +166,38 @@ class Store:
                     "INSERT INTO audit_events(case_id,actor,event,detail,created_at) VALUES (?,?,?,?,?)",
                     (case["case_id"], "seed", "CASE_CREATED", json.dumps({"source": source}), utc_now()),
                 )
+                if reset_audit:
+                    MoneyTransaction(self.conn, postgres=False).audit(
+                        case["case_id"], "DEMO_RESET",
+                        {**reset_audit[1], "recording_id": case.get("recording_id")}, actor=reset_audit[0],
+                    )
 
     def reset_case(self, case_id: str) -> None:
         """清理一个案件的可重跑产物，保留案件行和不可篡改审计链。"""
         with self._lock, self.conn:
-            # Results reference agent_tasks in the PostgreSQL schema, so keep
-            # the deletion order identical across both Store backends.
-            for table in (
-                "trace_spans", "agent_task_results", "agent_tasks",
-                "verifications", "executions", "approvals", "evidence",
-            ):
-                self.conn.execute(
-                    # table is from the literal allowlist above
-                    f"DELETE FROM {table} WHERE case_id=?", (case_id,)  # nosec B608
-                )
+            self._reset_case_with_conn(self.conn, case_id)
+
+    @staticmethod
+    def _reset_case_with_conn(conn, case_id: str) -> None:
+        # Results reference agent_tasks in the PostgreSQL schema, so keep
+        # the deletion order identical across both Store backends.
+        for table in (
+            "trace_spans", "agent_task_results", "agent_tasks",
+            "verifications", "executions", "approvals", "evidence",
+        ):
+            conn.execute(
+                # table is from the literal allowlist above
+                f"DELETE FROM {table} WHERE case_id=?", (case_id,)  # nosec B608
+            )
 
     # ------------------------------------------------------------------ cases
     def save_case(self, case_dict: dict) -> None:
         with self._lock, self.conn:
-            self.conn.execute(
+            self._save_case_with_conn(self.conn, case_dict)
+
+    @staticmethod
+    def _save_case_with_conn(conn, case_dict: dict) -> None:
+        conn.execute(
                 "INSERT OR REPLACE INTO cases(case_id, data, status, updated_at) VALUES (?,?,?,?)",
                 (case_dict["case_id"], json.dumps(case_dict, ensure_ascii=False),
                  case_dict["status"], utc_now()),

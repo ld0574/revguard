@@ -21,6 +21,7 @@ from typing import Literal
 
 from . import telemetry
 from .agent_bridge import create_agent_task, execute_agent_task
+from .artifacts import artifact_path
 from .demo_dashboard import build_dashboard_snapshot
 from .grafana_embed import GrafanaEmbed
 from .hitl import (
@@ -81,7 +82,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.3")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.4")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -597,7 +598,6 @@ def reset_recording_demo(
     This endpoint is absent by default and can only be enabled explicitly with
     ``REVGUARD_ENABLE_RECORDING_UI=true``.
     """
-    global gateway
     if not ENABLE_RECORDING_UI:
         raise HTTPException(404, "录制模式未启用")
     try:
@@ -606,16 +606,7 @@ def reset_recording_demo(
         raise HTTPException(409, str(exc)) from exc
     from scripts.seed_demo import seed_store
 
-    state_path = Path(GATEWAY_STATE_PATH)
-    seeded_cases = seed_store(store, reset=True, quiet=True)
-    if state_path.exists() and state_path.is_file():
-        state_path.unlink()
-    gateway = _new_gateway()
-    for seeded_case in seeded_cases:
-        store.audit(seeded_case["case_id"], principal.actor, "DEMO_RESET", {
-            "synthetic_business_data": True,
-            "verification_tamper_amount": VERIFICATION_TAMPER_AMOUNT,
-        })
+    seeded_cases = seed_store(store, reset=True, quiet=True, gateway=gateway, reset_actor=principal.actor)
     case_ids = [item["case_id"] for item in seeded_cases]
     default_case_id = (
         DEFAULT_DEMO_CASE_ID
@@ -672,31 +663,17 @@ def reprepare_recording_case(
         raise HTTPException(409, "只有 Golden Case 才支持录制模式的单案重新准备")
 
     previous_status = case.get("status")
-    previous_run = case.get("team_run") or {}
-    cancelled = store.cancel_open_agent_tasks(
-        case_id, actor=principal.actor, reason="单案重新准备，结束旧运行"
-    )
-    reset_gateway_case = getattr(gateway, "reset_case", None)
-    if reset_gateway_case:
-        reset_gateway_case(case_id)
-    store.reset_case(case_id)
-    for path in (
-        Path(OUTPUT_DIR) / "traces" / f"{case_id}.json",
-        Path(OUTPUT_DIR) / "case_memory" / f"{case_id}.json",
-        Path(REPORT_DIR) / f"{case_id}.md",
-    ):
-        try:
-            path.unlink()
-        except FileNotFoundError:
-            pass
-    store.save_case(fresh_case)
-    store.audit(case_id, principal.actor, "DEMO_CASE_REPREPARED", {
-        "previous_status": previous_status,
-        "previous_run_id": previous_run.get("run_id"),
-        "cancelled_task_ids": cancelled,
-        "synthetic_business_data": True,
-        "audit_history_preserved": True,
-    })
+    fresh_case["recording_id"] = new_id("REC")
+    try:
+        gateway.reprepare_case(fresh_case, expected_case=case, actor=principal.actor)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except Exception as exc:
+        LOGGER.exception("recording_reprepare_unconfirmed", extra={"revguard_fields": {
+            "case_id": case_id, "error_type": type(exc).__name__,
+        }})
+        raise HTTPException(503, {"code": "REPREPARE_UNCONFIRMED",
+                                  "message": "重新准备结果暂未确认，请刷新当前案件后重试"}) from exc
     snapshot = build_dashboard_snapshot(
         store, case_id, report_dir=REPORT_DIR,
     )
@@ -1226,7 +1203,10 @@ def get_trace(case_id: str, _principal: ApiPrincipal = Depends(require_roles("vi
 
 @app.get("/api/v1/cases/{case_id}/report")
 def get_report(case_id: str, _principal: ApiPrincipal = Depends(require_roles("viewer"))):
-    report_path = Path(REPORT_DIR) / f"{case_id}.md"
+    case = store.get_case(case_id)
+    if not case:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    report_path = artifact_path(REPORT_DIR, case, ".md")
     if not report_path.exists():
         raise HTTPException(404, "审计报告尚未生成")
     return {"case_id": case_id, "markdown": report_path.read_text(encoding="utf-8")}

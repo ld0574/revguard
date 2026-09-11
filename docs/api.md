@@ -171,6 +171,8 @@ ToolGateway、StageResult 事务和 Audit；底层 Tool 不会进入 MCP 清单�
 - `GET /api/v1/cases/{case_id}`
 - `GET /api/v1/cases/{case_id}/trace`
 - `GET /api/v1/cases/{case_id}/report`
+
+报告读取当前案件的 `recording_id`，不会把上一轮录制文件当作当前报告返回。`POST /api/v1/cases/{case_id}/reprepare` 为新的录制分配该标识；旧审计链与已导出的文件保留，案件/网关/运行投影在同一数据库事务内重建。活动运行或资金未完成对账返回 409；写入结果暂未确认返回 503 和 `REPREPARE_UNCONFIRMED`，界面应刷新当前案件后再决定是否重试。
 - `GET /api/v1/ops/metrics`
 - `GET /api/v1/ops/metrics/prometheus`
 - `GET /api/v1/ops/evidence`

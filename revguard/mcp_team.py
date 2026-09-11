@@ -17,6 +17,7 @@ from mcp import Client
 
 from . import skills, telemetry
 from .agent_bridge import create_agent_task
+from .artifacts import artifact_path, write_artifact
 from .mcp_server import SERVER_INJECTION_REF, build_scoped_server
 from .models import CaseStatus, RiskDecision, new_id, utc_now
 from .orchestrator import EVIDENCE_SCORE_THRESHOLD, Orchestrator
@@ -664,10 +665,8 @@ class McpTeamRunner:
             "verification": state.get("verification") or {},
         })
         memory_dir = self.output_dir / "case_memory"
-        memory_dir.mkdir(parents=True, exist_ok=True)
-        (memory_dir / f"{case['case_id']}.json").write_text(
-            json.dumps(dataset, ensure_ascii=False, indent=2), encoding="utf-8",
-        )
+        write_artifact(artifact_path(memory_dir, case, ".json"),
+                       json.dumps(dataset, ensure_ascii=False, indent=2))
         tracer = Tracer(self.store, case["case_id"])
         skills.call_tool(self.gateway, tracer, "mail.create_reply_draft", {
             "case_id": case["case_id"], "partner_id": case.get("partner_id"),

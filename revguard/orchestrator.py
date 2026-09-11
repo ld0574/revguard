@@ -17,6 +17,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from . import skills
+from .artifacts import artifact_path, write_artifact
 from .mocks import ToolGateway
 from .models import CaseStatus, utc_now
 from .report import render_audit_report
@@ -532,9 +533,8 @@ class Orchestrator:
                     dataset = skills.case_to_dataset(case, state, verification)
                     span["outputs"] = dataset
                 mem_dir = self.output_dir / "case_memory"
-                mem_dir.mkdir(parents=True, exist_ok=True)
-                (mem_dir / f"{case['case_id']}.json").write_text(
-                    json.dumps(dataset, ensure_ascii=False, indent=2), encoding="utf-8")
+                write_artifact(artifact_path(mem_dir, case, ".json"),
+                               json.dumps(dataset, ensure_ascii=False, indent=2))
                 # 生成代理商回复草稿（不直接发送，安全边界）
                 skills.call_tool(self.gateway, tracer, "mail.create_reply_draft", {
                     "case_id": case["case_id"],
@@ -562,11 +562,9 @@ class Orchestrator:
 
         # 无论成功与否都导出 Trace + 审计报告（失败案件更需要证据）
         trace_dir = self.output_dir / "traces"
-        trace_dir.mkdir(parents=True, exist_ok=True)
         trace_data = tracer.export()
-        (trace_dir / f"{case['case_id']}.json").write_text(
-            json.dumps(trace_data, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8")
+        write_artifact(artifact_path(trace_dir, case, ".json"),
+                       json.dumps(trace_data, ensure_ascii=False, indent=2, default=str))
 
         self.report_dir.mkdir(parents=True, exist_ok=True)
         report_md = render_audit_report(
@@ -576,7 +574,7 @@ class Orchestrator:
             trace_summary={"span_count": trace_data["span_count"],
                            "total_duration_ms": trace_data["total_duration_ms"],
                            "error_spans": trace_data["error_spans"]})
-        (self.report_dir / f"{case['case_id']}.md").write_text(report_md, encoding="utf-8")
+        write_artifact(artifact_path(self.report_dir, case, ".md"), report_md)
 
         state["final_status"] = case["status"]
         self.store.save_case(case)
