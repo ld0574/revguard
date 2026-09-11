@@ -26,6 +26,7 @@ from .models import CaseStatus, new_id, utc_now
 from .money_journal import MONEY_TOOLS, MoneyJournal, RecoveryRequired, request_hash
 from .security import CapabilityTokenSigner, SecurityError, authorize_tool
 from .state_machine import StaleCaseTransition, locked_case, persist_case_transition
+from .task_guard import assert_active_claim
 
 
 class ToolError(Exception):
@@ -150,6 +151,7 @@ class ToolGateway:
                 raise ToolError("NOT_FOUND", f"未知工具: {tool_name}")
             with self._lock:
                 with self.journal.transaction() as tx:
+                    assert_active_claim(tx, case_id)
                     self._apply_state(tx.state())
                     epoch = self._recording_epochs.get(case_id, 0)
                     if tool_name in MONEY_TOOLS and epoch and idempotency_key:
@@ -168,6 +170,7 @@ class ToolGateway:
                         request_hash(tool_name, case_id, parameters),
                     )
                 with self.journal.transaction() as tx:
+                    assert_active_claim(tx, case_id)
                     self._apply_state(tx.state())
                     self._in_transaction = True
                     try:

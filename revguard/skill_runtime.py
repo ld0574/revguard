@@ -59,6 +59,29 @@ def validate_skill_request(name: str, payload: dict, *, actor: str) -> None:
         raise SkillInvocationError(str(exc)) from exc
 
 
+def _verify_committed_recovery(store, case_id: str) -> None:
+    """Prove read-only recovery from the effect-owning primary, not Worker input."""
+    from .money_journal import MoneyJournal
+    from .state_machine import locked_case
+    from .task_guard import assert_active_claim
+
+    with MoneyJournal(store).transaction() as tx:
+        assert_active_claim(tx, case_id)
+        case = locked_case(tx, case_id) or {}
+        diffs = (case.get("root_cause_report") or {}).get("diffs", [])
+        required = [diff for diff in diffs if Decimal(str(diff["delta"])) != 0]
+        results = (tx.state() or {}).get("execution_results", {})
+        currency = (case.get("calculation_result") or {}).get("currency")
+        if case.get("status") != "EXECUTING" or not required:
+            raise ToolError("AUTH_FAILED", "当前案件不满足已提交只读核验条件")
+        for diff in required:
+            execution = results.get(f"{case_id}:{diff['component']}") or {}
+            if (execution.get("case_id") != case_id or execution.get("status") != "SUBMITTED"
+                    or execution.get("currency") != currency or not execution.get("ledger_entry")
+                    or Decimal(str(execution.get("amount", "0"))) != Decimal(str(diff["delta"]))):
+                raise ToolError("AUTH_FAILED", "仍有分项未确认提交，不能以只读核验代替写入授权")
+
+
 def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
                  gateway: ToolGateway, store: Store,
                  correlation: dict | None = None) -> dict:
@@ -118,6 +141,8 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
                 action_summary=_required(payload, "action_summary"),
             )
         elif name == "PermissionCheckSkill":
+            if payload.get("action_type") == "VERIFY_COMMITTED":
+                _verify_committed_recovery(store, case_id)
             skills.permission_check(
                 actor=actor, action_type=_required(payload, "action_type"),
                 risk=RiskDecision(**_required(payload, "risk")),

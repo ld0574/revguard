@@ -15,6 +15,7 @@ from .models import CaseStatus, TaskStatus, new_id, utc_now
 from .runtime_barrier import acquire_runtime_lease
 from .skill_runtime import SKILL_ACTORS, invoke_skill
 from .skills import SKILL_REGISTRY
+from .task_guard import claimed_task
 
 SKILL_CASE_STATUSES: dict[str, frozenset[str]] = {
     "CaseNormalizeSkill": frozenset({CaseStatus.CREATED.value,
@@ -49,7 +50,8 @@ def case_version(case: dict) -> str:
     ``team_run`` changes whenever WebUI polling reports the current Agent/Stage;
     it is operational metadata, not business state.  Hashing it would invalidate
     the very StageTask whose progress it describes.  Status, evidence-derived
-    fields, amounts and every other case field remain version-bound.
+    fields, amounts and recovery generations remain version-bound. The storage
+    revision changes for progress-only writes too, so it is also excluded.
     """
     versioned_case = {key: value for key, value in case.items() if key not in {"team_run", "_case_revision"}}
     canonical = json.dumps(versioned_case, ensure_ascii=False, sort_keys=True,
@@ -165,10 +167,11 @@ def _execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
         actor=actor, skill_input=skill_input, updates=persisted_correlation,
     )
     try:
-        result = invoke_skill(
-            skill_name, execution_input or skill_input, actor=actor, case_id=case_id,
-            gateway=gateway, store=store, correlation=correlation,
-        )
+        with claimed_task(running):
+            result = invoke_skill(
+                skill_name, execution_input or skill_input, actor=actor, case_id=case_id,
+                gateway=gateway, store=store, correlation=correlation,
+            )
     except Exception as exc:
         failed_status = (
             TaskStatus.RESULT_UNKNOWN.value

@@ -16,6 +16,7 @@ import hashlib
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextvars import copy_context
 from dataclasses import asdict
 from decimal import Decimal
 
@@ -203,7 +204,7 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
     max_workers = min(7, len(batch))
     with ThreadPoolExecutor(max_workers=max_workers,
                             thread_name_prefix="revguard-evidence") as pool:
-        future_to_type = {pool.submit(_collect_one, item): item[0] for item in batch}
+        future_to_type = {pool.submit(copy_context().run, _collect_one, item): item[0] for item in batch}
         for future in as_completed(future_to_type):
             ev_type = future_to_type[future]
             try:
@@ -367,6 +368,12 @@ def permission_check(*, actor: str, action_type: str, risk: RiskDecision,
         raise ToolError("AUTH_FAILED", f"{actor} 无权执行写操作")
     if risk.risk_level == "L3":
         raise ToolError("AUTH_FAILED", "L3 高风险案件禁止系统自动执行")
+    if action_type == "VERIFY_COMMITTED":
+        # The Skill runtime separately proves all effects on the primary.
+        # This grants verification of existing entries, never a new money write.
+        if risk.approval_required and (not approval or approval.get("status") != "APPROVED"):
+            raise ToolError("AUTH_FAILED", "缺少已批准决定，禁止继续核验")
+        return
     if (risk.execution_constraints.get("write") == "draft_only"
             and action_type != "DRAFT"):
         raise ToolError("AUTH_FAILED", "L1 仅允许创建不生效草稿，禁止写入台账")
@@ -587,7 +594,7 @@ SKILL_REGISTRY: dict[str, dict] = {m["name"]: m for m in [
     _meta("ApprovalRouteSkill", "1.0.0", "tool", "创建审批单并路由审批角色",
           ["workflow.create_approval"], ["workflow_unavailable"],
           {"write_permission": "approval"}, ["any_approval_needed_case"], approval_route),
-    _meta("PermissionCheckSkill", "1.0.0", "policy", "执行前权限与审批凭证校验",
+    _meta("PermissionCheckSkill", "1.1.0", "policy", "执行前权限与已提交恢复核验权限校验",
           [], ["auth_failed", "missing_token"], {"write_permission": False},
           ["any_write_action"], permission_check),
     _meta("IdempotencyGuardSkill", "1.0.0", "policy", "幂等键冲突检查",

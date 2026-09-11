@@ -140,7 +140,7 @@ SKILL_SCHEMAS: dict[str, dict[str, dict]] = {
     "PermissionCheckSkill": {
         "input": _obj({
             "action_type": {"type": "string", "enum": ["DRAFT", "LEDGER_ADJUST",
-                                                                  "LEDGER_REVERSE"]},
+                                                                  "LEDGER_REVERSE", "VERIFY_COMMITTED"]},
             "risk": RISK, "approval": {"type": ["object", "null"],
                                          "additionalProperties": True},
         }, ["action_type", "risk"]),

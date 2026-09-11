@@ -1,0 +1,45 @@
+{
+  "verified_at": "2026-09-11T20:42:29.831943+00:00",
+  "environment": "10.10.10.202 Docker",
+  "release": "0.5.7",
+  "whole_project_review_complete": false,
+  "tests": {
+    "unique_covered": 291,
+    "main_passed": 220,
+    "postgres_passed": 71,
+    "coverage_percent_displayed": 91,
+    "new_recovery_contracts": 24,
+    "related_recovery_contracts_passed": 41,
+    "frontend_changed": false,
+    "frontend_tests_reused_from": "0.5.5",
+    "deterministic_evaluation_passed": 105,
+    "deterministic_evaluation_total": 105
+  },
+  "security": {
+    "python_dependency_audit": "passed",
+    "bandit": "passed",
+    "image_fixable_high_critical": 0,
+    "scan_ignore_unfixed": true,
+    "production_image_matches_scan": true
+  },
+  "worker_claim_effect_fencing": true,
+  "atomic_human_recovery": true,
+  "recovery_permission_check": true,
+  "production_data_preserved": true,
+  "case_count": 8,
+  "ledger_count": 9,
+  "audit_chain": {
+    "enforced": true,
+    "valid": true,
+    "rows_checked": 261,
+    "broken_links": 0
+  },
+  "grafana_embed_available": true,
+  "prometheus_all_four_targets_up": true,
+  "limits": [
+    "Browser identity uses an isolated Matrix contract fixture; the real RevGuard API/MCP workflow ran inside Docker.",
+    "Successful identity authentication is separately audited even when the later recovery commit fails.",
+    "Owned-database transactions do not prove external ERP Saga or cloud HA/PITR.",
+    "Cold deployment, remaining UI states and competition materials remain on the full-review checklist."
+  ]
+}

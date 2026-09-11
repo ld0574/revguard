@@ -57,7 +57,7 @@ from .security import (
 )
 from .skill_runtime import SKILL_ACTORS, SkillInvocationError, validate_skill_request
 from .skills import list_skills
-from .state_machine import StaleCaseTransition, transition_case
+from .state_machine import StaleCaseTransition
 from .store import create_store
 from .trace import Tracer
 
@@ -82,7 +82,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.6")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.7")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -349,6 +349,8 @@ async def _run_team_background(case_id: str, phase: str) -> None:
         case = store.get_case(case_id)
         if not case:
             return
+        generation = case.get("_recovery_generation", 0)
+        recording_id = case.get("recording_id")
         runner = _team_runner_for_case(case)
         if phase == "INVESTIGATION":
             await runner.run_to_human_gate(case)
@@ -365,33 +367,12 @@ async def _run_team_background(case_id: str, phase: str) -> None:
             "case_id": case_id, "phase": phase, "error_type": type(exc).__name__,
         }})
         try:
-            latest = store.get_case(case_id) or case
-            if not latest:
-                return
-            recovering_money = latest.get("status") in {
-                CaseStatus.EXECUTING.value, CaseStatus.VERIFYING.value,
-                CaseStatus.ROLLBACK_REQUIRED.value,
-            }
-            if recovering_money:
-                gateway.journal.freeze_case(case_id)
-                transition_case(store, latest, CaseStatus.RECOVERY_REQUIRED,
-                                "执行中断，须由审批人触发原操作对账")
-                latest["recovery_phase"] = "ROLLBACK" if phase == "ROLLBACK" or (
-                    (store.get_verification(case_id) or {}).get("rollback_required") is True
-                ) else "EXECUTION"
-                store.save_case(latest)
-            elif latest.get("status") == CaseStatus.READY_TO_EXECUTE.value:
-                latest["team_run"] = {
-                    **(latest.get("team_run") or {}), "status": "FAILED",
-                    "updated_at": utc_now(), "error": {"message": "审批已保存，执行启动失败；请核对并恢复。"},
-                }
-                store.save_case(latest)
-            elif latest.get("status") not in {CaseStatus.CLOSED.value, CaseStatus.ROLLED_BACK.value,
-                                              CaseStatus.FAILED.value, CaseStatus.RECOVERY_REQUIRED.value}:
-                transition_case(store, latest, CaseStatus.FAILED, "AgentTeams后台任务失败")
-            store.audit(case_id, "revguard-orchestrator", "TEAM_RUN_FAILED", {
-                "phase": phase, "error_type": type(exc).__name__,
-            })
+            if case is not None:
+                from .recovery import record_background_failure
+                record_background_failure(
+                    gateway, case_id=case_id, phase=phase, generation=generation,
+                    recording_id=recording_id, error_type=type(exc).__name__,
+                )
         except Exception:
             LOGGER.exception("team_failure_persistence_unavailable", extra={"revguard_fields": {
                 "case_id": case_id, "phase": phase,
@@ -420,6 +401,25 @@ def _spawn_team_background(case_id: str, phase: str) -> None:
             BACKGROUND_TEAM_TASKS.pop(case_id, None)
 
     task.add_done_callback(discard)
+
+
+def _dispatch_team_or_report_failure(case: dict, phase: str) -> None:
+    try:
+        _spawn_team_background(case["case_id"], phase)
+    except Exception as exc:
+        try:
+            from .recovery import record_background_failure
+            record_background_failure(
+                gateway, case_id=case["case_id"], phase=phase,
+                generation=case.get("_recovery_generation", 0), recording_id=case.get("recording_id"),
+                error_type=type(exc).__name__,
+            )
+        except Exception:
+            LOGGER.exception("team_dispatch_failure_unconfirmed")
+        raise HTTPException(503, {
+            "code": "APPROVAL_EXECUTION_PENDING",
+            "message": "授权已保存，执行尚未启动；请刷新核对，待恢复或启动失败时可重新恢复。",
+        }) from exc
 
 
 # --------------------------------------------------------------------- 模型
@@ -862,116 +862,28 @@ async def resume_interrupted_team_run(
         action="RESUME",
     )
     human = proof.identity
+    from .recovery import RecoveryCapabilityError, resume_case_run
     try:
-        operations = gateway.journal.reconcile(case_id)
+        phase = resume_case_run(
+            gateway, case, approval=approval, verification=verification, rollback=recovering_rollback,
+            actor=human.actor, subject=human.sub, assertion_ref=secret_fingerprint(proof.assertion_id),
+            age_seconds=age_seconds or 0,
+        )
     except RecoveryRequired as exc:
         raise HTTPException(409, {"code": "MONEY_RECOVERY_LOCKED", "message": str(exc)}) from exc
-    store.audit(case_id, human.actor, "HUMAN_RECOVERY_AUTHORIZED", {
-        "human_subject": human.sub, "operation_count": len(operations),
-    })
-    risk = case.get("risk_decision") or {}
-    if recovering_execution and risk.get("approval_required"):
-        renewed = gateway.call(
-            "workflow.renew_approval_capability", {
-                "approval_id": approval.get("approval_id"),
-                "case_id": case_id,
-            },
-            case_id=case_id,
-            actor=human.actor,
-            scope=["approval:decide"],
-        )
-        if not renewed["success"]:
-            raise HTTPException(409, {
-                "code": "APPROVAL_CAPABILITY_RENEWAL_FAILED",
-                "message": renewed["error"]["message"],
-            })
-        approval = renewed["data"]
-        store.save_approval({
-            "approval_id": approval["approval_id"],
-            "case_id": case_id,
-            **approval,
-        })
-        store.audit(case_id, human.actor, "APPROVAL_CAPABILITY_RENEWED", {
-            "approval_id": approval["approval_id"],
-            "human_subject": human.sub,
-            "remaining_component_quota": approval.get(
-                "remaining_component_quota", {}
-            ),
-            "previous_run_id": run.get("run_id"),
-        })
-
-    phase = "EXECUTION"
-    strategy = "idempotent-execution-replay"
-    if recovering_rollback:
-        phase = "ROLLBACK"
-        strategy = "resume-unreversed-executions"
-        renewed_ledgers = []
-        for execution in store.list_executions(case_id):
-            ledger = execution.get("ledger_entry") or {}
-            if execution.get("status") != "SUBMITTED" or not ledger.get("ledger_id"):
-                continue
-            renewed = gateway.call(
-                "workflow.renew_rollback_capability", {
-                    "case_id": case_id,
-                    "ledger_id": ledger["ledger_id"],
-                    "action_id": execution.get("action_id"),
-                },
-                case_id=case_id,
-                actor=human.actor,
-                scope=["approval:decide"],
-            )
-            if not renewed["success"]:
-                raise HTTPException(409, {
-                    "code": "ROLLBACK_CAPABILITY_RENEWAL_FAILED",
-                    "message": renewed["error"]["message"],
-                })
-            execution["rollback_token"] = renewed["data"]["rollback_token"]
-            store.save_execution(execution)
-            renewed_ledgers.append(ledger["ledger_id"])
-        store.audit(case_id, human.actor, "ROLLBACK_CAPABILITY_RENEWED", {
-            "ledger_ids": renewed_ledgers,
-            "human_subject": human.sub,
-            "previous_run_id": run.get("run_id"),
-        })
-        if case.get("status") != CaseStatus.ROLLBACK_REQUIRED.value:
-            transition_case(
-                store, case, CaseStatus.ROLLBACK_REQUIRED,
-                "审批人确认原操作对账后恢复补偿", actor=human.actor,
-            )
-
-    # Keep the recoverable state when capability renewal or persistence fails.
-    # Changing to EXECUTING earlier would make an immediate corrected retry
-    # fail the active/stale gate despite no background execution being queued.
-    if recovering_execution and case.get("status") not in {CaseStatus.READY_TO_EXECUTE.value, CaseStatus.EXECUTING.value}:
-        if case.get("status") != CaseStatus.RECOVERY_REQUIRED.value:
-            transition_case(store, case, CaseStatus.RECOVERY_REQUIRED, "写后核验中断，先核对原操作")
-        transition_case(store, case, CaseStatus.EXECUTING, "原操作已在主库完成对账")
-    recovered_at = utc_now()
-    case["team_run"] = {
-        **run,
-        "status": "QUEUED",
-        "phase": phase,
-        "queued_at": recovered_at,
-        "updated_at": recovered_at,
-        "error": None,
-        "recovery": {
-            "reason": "api-process-interrupted",
-            "strategy": strategy,
-            "requested_by": human.actor,
-            "requested_subject": human.sub,
-            "requested_at": recovered_at,
-            "stale_for_seconds": int(age_seconds or 0),
-        },
-    }
-    store.save_case(case)
-    store.audit(case_id, human.actor, "TEAM_RUN_RESUME_REQUESTED", {
-        "run_id": run.get("run_id"),
-        "phase": phase,
-        "human_subject": human.sub,
-        "assertion_id_ref": secret_fingerprint(proof.assertion_id),
-        "stale_for_seconds": int(age_seconds or 0),
-    })
-    _spawn_team_background(case_id, phase)
+    except RecoveryCapabilityError as exc:
+        raise HTTPException(409, {"code": exc.code, "message": str(exc)}) from exc
+    except StaleCaseTransition:
+        raise
+    except Exception as exc:
+        LOGGER.exception("recovery_commit_unconfirmed", extra={"revguard_fields": {
+            "case_id": case_id, "error_type": type(exc).__name__,
+        }})
+        raise HTTPException(503, {
+            "code": "RECOVERY_UNCONFIRMED",
+            "message": "恢复提交结果未确认，请刷新核对；仍待恢复时可重新提交，已排队时请等待。",
+        }) from exc
+    _dispatch_team_or_report_failure(case, phase)
     response.status_code = 202
     return {
         "case": redact_secrets(store.get_case(case_id) or case),
@@ -1057,13 +969,7 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
                 "verification": None}
 
     if case.get("execution_mode") == "AGENTTEAMS_MATRIX":
-        try:
-            _spawn_team_background(case_id, "EXECUTION")
-        except Exception as exc:
-            raise HTTPException(503, {
-                "code": "APPROVAL_EXECUTION_PENDING",
-                "message": "审批已保存，执行尚未启动；请刷新查看并在运行过期后核对恢复。",
-            }) from exc
+        _dispatch_team_or_report_failure(case, "EXECUTION")
         response.status_code = 202
         return {"case": store.get_case(case_id), "approval": public_approval,
                 "verification": None}
