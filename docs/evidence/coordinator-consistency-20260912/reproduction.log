@@ -1,0 +1,31 @@
+{"timestamp": "2026-09-12T03:41:09.352256Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-12T03:41:15.281480Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/workspace/demo-ui/dist/client"}
+test_old_verifier_result_cannot_replace_completed_recovery (tests.test_coordinator_consistency.TestCoordinatorConsistency.test_old_verifier_result_cannot_replace_completed_recovery) ... Executing <Task pending name='Task-2' coro=<TestCoordinatorConsistency.test_old_verifier_result_cannot_replace_completed_recovery() running at /workspace/tests/test_coordinator_consistency.py:49> wait_for=<Future pending cb=[Task.task_wakeup()] created at /usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py:946> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.151 seconds
+{"timestamp": "2026-09-12T03:41:15.739069Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-9F4D4B65", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 16, "trace_id": "ebe78f02e9b0a8f4b8a5631597e22a3b", "span_id": "256fa0ac7cf018a7"}
+FAIL
+
+======================================================================
+FAIL: test_old_verifier_result_cannot_replace_completed_recovery (tests.test_coordinator_consistency.TestCoordinatorConsistency.test_old_verifier_result_cannot_replace_completed_recovery)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_coordinator_consistency.py", line 52, in test_old_verifier_result_cannot_replace_completed_recovery
+    self.assertEqual(self.store.get_verification(self.case_id), latest["verification"])
+AssertionError: {'ver[347 chars]RCPT-1A73F03A'], 'rollback_required': False, '[38 chars]64Z'} != {'ver[347 chars]RCPT-009312E7'], 'rollback_required': False, '[38 chars]13Z'}
+Diff is 890 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 1 test in 0.615s
+
+FAILED (failures=1)

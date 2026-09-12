@@ -234,16 +234,20 @@ class PostgresStore:
     # --------------------------------------------------------------- evidence
     def save_evidence(self, ev: dict) -> None:
         with self._conn() as conn:
-            conn.execute(
-                """INSERT INTO evidence
-                   (evidence_id, case_id, type, data, collected_at)
-                   VALUES (%s,%s,%s,%s::jsonb,%s)
-                   ON CONFLICT (evidence_id) DO UPDATE SET
-                     case_id=EXCLUDED.case_id, type=EXCLUDED.type,
-                     data=EXCLUDED.data, collected_at=EXCLUDED.collected_at""",
-                (ev["evidence_id"], ev["case_id"], ev["type"], _json(ev),
-                 ev.get("collected_at") or utc_now()),
-            )
+            self._save_evidence_with_conn(conn, ev)
+
+    @staticmethod
+    def _save_evidence_with_conn(conn, ev: dict) -> None:
+        conn.execute(
+            """INSERT INTO evidence
+               (evidence_id, case_id, type, data, collected_at)
+               VALUES (%s,%s,%s,%s::jsonb,%s)
+               ON CONFLICT (evidence_id) DO UPDATE SET
+                 case_id=EXCLUDED.case_id, type=EXCLUDED.type,
+                 data=EXCLUDED.data, collected_at=EXCLUDED.collected_at""",
+            (ev["evidence_id"], ev["case_id"], ev["type"], _json(ev),
+             ev.get("collected_at") or utc_now()),
+        )
 
     def list_evidence(self, case_id: str) -> list[dict]:
         with self._conn() as conn:
@@ -282,19 +286,23 @@ class PostgresStore:
     # -------------------------------------------------------------- execution
     def save_execution(self, exe: dict) -> None:
         with self._conn() as conn:
-            conn.execute(
-                """INSERT INTO executions
-                   (action_id, case_id, idempotency_key, amount, currency, data, created_at)
-                   VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s)
-                   ON CONFLICT (action_id) DO UPDATE SET
-                     case_id=EXCLUDED.case_id,
-                     idempotency_key=EXCLUDED.idempotency_key,
-                     amount=EXCLUDED.amount, currency=EXCLUDED.currency,
-                     data=EXCLUDED.data""",
-                (exe["action_id"], exe["case_id"], exe.get("idempotency_key"),
-                 _money(exe.get("amount")), exe.get("currency"), _json(exe),
-                 exe.get("created_at") or utc_now()),
-            )
+            self._save_execution_with_conn(conn, exe)
+
+    @staticmethod
+    def _save_execution_with_conn(conn, exe: dict) -> None:
+        conn.execute(
+            """INSERT INTO executions
+               (action_id, case_id, idempotency_key, amount, currency, data, created_at)
+               VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s)
+               ON CONFLICT (action_id) DO UPDATE SET
+                 case_id=EXCLUDED.case_id,
+                 idempotency_key=EXCLUDED.idempotency_key,
+                 amount=EXCLUDED.amount, currency=EXCLUDED.currency,
+                 data=EXCLUDED.data""",
+            (exe["action_id"], exe["case_id"], exe.get("idempotency_key"),
+             _money(exe.get("amount")), exe.get("currency"), _json(exe),
+             exe.get("created_at") or utc_now()),
+        )
 
     def get_execution_by_idempotency(self, key: str) -> dict | None:
         with self._conn() as conn:
@@ -314,19 +322,23 @@ class PostgresStore:
     # ----------------------------------------------------------- verification
     def save_verification(self, case_id: str, result: dict) -> None:
         with self._conn() as conn:
-            conn.execute(
-                """INSERT INTO verifications
-                   (case_id, expected_amount, actual_amount, variance, data, created_at)
-                   VALUES (%s,%s,%s,%s,%s::jsonb,%s)
-                   ON CONFLICT (case_id) DO UPDATE SET
-                     expected_amount=EXCLUDED.expected_amount,
-                     actual_amount=EXCLUDED.actual_amount,
-                     variance=EXCLUDED.variance, data=EXCLUDED.data,
-                     created_at=EXCLUDED.created_at""",
-                (case_id, _money(result.get("expected_amount")),
-                 _money(result.get("actual_amount")), _money(result.get("variance")),
-                 _json(result), result.get("checked_at") or utc_now()),
-            )
+            self._save_verification_with_conn(conn, case_id, result)
+
+    @staticmethod
+    def _save_verification_with_conn(conn, case_id: str, result: dict) -> None:
+        conn.execute(
+            """INSERT INTO verifications
+               (case_id, expected_amount, actual_amount, variance, data, created_at)
+               VALUES (%s,%s,%s,%s,%s::jsonb,%s)
+               ON CONFLICT (case_id) DO UPDATE SET
+                 expected_amount=EXCLUDED.expected_amount,
+                 actual_amount=EXCLUDED.actual_amount,
+                 variance=EXCLUDED.variance, data=EXCLUDED.data,
+                 created_at=EXCLUDED.created_at""",
+            (case_id, _money(result.get("expected_amount")),
+             _money(result.get("actual_amount")), _money(result.get("variance")),
+             _json(result), result.get("checked_at") or utc_now()),
+        )
 
     def get_verification(self, case_id: str) -> dict | None:
         with self._conn() as conn:

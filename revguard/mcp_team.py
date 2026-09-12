@@ -24,6 +24,7 @@ from .orchestrator import EVIDENCE_SCORE_THRESHOLD, Orchestrator
 from .security import redact_secrets
 from .state_machine import transition_case
 from .trace import Tracer
+from .workflow_persistence import commit_case_stage
 
 
 class McpStageError(RuntimeError):
@@ -173,30 +174,29 @@ class McpTeamRunner:
                 "partner": partner,
                 "order_id": case["order_id"],
             })
-            for evidence in package["evidence"]:
-                self.store.save_evidence(evidence)
             state["evidence"] = package["collected"]
             state["evidence_gaps"] = package["evidence_gaps"]
             case["evidence_score"] = package["evidence_score"]
-            self.store.audit(case["case_id"], "revguard-evidence", "EVIDENCE_COLLECTED", {
+            evidence_audit = ("revguard-evidence", "EVIDENCE_COLLECTED", {
                 "score": package["evidence_score"],
                 "gaps": package["evidence_gaps"],
                 "parallel": package["parallel"],
                 "transport": self.transport,
             })
-            self.store.save_case(case)
             if package["evidence_score"] < EVIDENCE_SCORE_THRESHOLD:
                 gap = (
                     f"证据完整度 {package['evidence_score']} 低于阈值 "
                     f"{EVIDENCE_SCORE_THRESHOLD}"
                 )
-                transition_case(
-                    self.store, case, CaseStatus.WAITING_FOR_EVIDENCE, gap,
+                commit_case_stage(
+                    self.store, case, evidence=package["evidence"], audit=evidence_audit,
+                    to=CaseStatus.WAITING_FOR_EVIDENCE, reason=gap,
                 )
                 return self._export(case, state)
-            transition_case(
-                self.store, case, CaseStatus.POLICY_MATCHING,
-                f"{self.display_name} Evidence Worker 完成跨系统证据包",
+            commit_case_stage(
+                self.store, case, evidence=package["evidence"], audit=evidence_audit,
+                to=CaseStatus.POLICY_MATCHING,
+                reason=f"{self.display_name} Evidence Worker 完成跨系统证据包",
             )
 
             collected = state["evidence"]
@@ -327,15 +327,12 @@ class McpTeamRunner:
                     "action_summary": self._action_summary(root_cause),
                 })
                 state["approval"] = approval
-                self.store.save_approval({
+                commit_case_stage(self.store, case, approval={
                     "approval_id": approval["approval_id"],
                     "case_id": case["case_id"],
                     **approval,
-                })
-                transition_case(
-                    self.store, case, CaseStatus.WAITING_FOR_APPROVAL,
-                    f"{self.display_name} 等待 {risk['approver_role']} "
-                    f"审批 {approval['approval_id']}",
+                }, to=CaseStatus.WAITING_FOR_APPROVAL,
+                    reason=f"{self.display_name} 等待 {risk['approver_role']} 审批 {approval['approval_id']}",
                 )
                 return self._export(case, state)
 
@@ -444,12 +441,12 @@ class McpTeamRunner:
                     "ledger_entry": None,
                 }
                 execution["rollback_token"] = None
-                self.store.save_execution(execution)
-                executions.append(execution)
-                self.store.audit(case["case_id"], "revguard-executor", "DRAFT_CREATED", {
+                commit_case_stage(self.store, case, execution=execution,
+                    audit=("revguard-executor", "DRAFT_CREATED", {
                     "action_id": draft["action_id"], "component": diff["component"],
                     "amount": str(delta), "transport": self.transport,
-                })
+                }))
+                executions.append(execution)
                 continue
             pending_items.append({"action_id": draft["action_id"], "idempotency_key": idempotency_key})
         if pending_items:
@@ -475,10 +472,9 @@ class McpTeamRunner:
                 "component_checks": [], "rollback_required": False,
                 "checked_at": utc_now(),
             }
-            self.store.save_verification(case["case_id"], state["verification"])
-            transition_case(
-                self.store, case, CaseStatus.RESOLVED,
-                "L1 仅创建不生效草稿，未写入资金台账",
+            commit_case_stage(
+                self.store, case, verification=state["verification"], to=CaseStatus.RESOLVED,
+                reason="L1 仅创建不生效草稿，未写入资金台账",
             )
             await self._archive(case, state)
             return self._export(case, state)
@@ -492,19 +488,18 @@ class McpTeamRunner:
             "expected_components": state["calculation_result"]["components"],
         })
         state["verification"] = verification
-        self.store.save_verification(case["case_id"], verification)
-        self.store.audit(case["case_id"], "revguard-verifier", "VERIFIED", {
+        verification_audit = ("revguard-verifier", "VERIFIED", {
             **verification, "transport": self.transport,
         })
         if verification["verification_status"] == "PASSED":
-            transition_case(
-                self.store, case, CaseStatus.RESOLVED,
-                f"{self.display_name} Verifier 独立查询验证通过",
+            commit_case_stage(
+                self.store, case, verification=verification, audit=verification_audit,
+                to=CaseStatus.RESOLVED, reason=f"{self.display_name} Verifier 独立查询验证通过",
             )
         else:
-            transition_case(
-                self.store, case, CaseStatus.ROLLBACK_REQUIRED,
-                f"{self.display_name} Verifier 发现 "
+            commit_case_stage(
+                self.store, case, verification=verification, audit=verification_audit,
+                to=CaseStatus.ROLLBACK_REQUIRED, reason=f"{self.display_name} Verifier 发现 "
                 f"variance={verification['variance']}，触发冲销",
             )
             await self._rollback(case, state)

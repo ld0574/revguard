@@ -3,7 +3,7 @@
   "info": {
     "title": "RevGuard API",
     "description": "面向企业渠道佣金结算异常的多智能体治理平台",
-    "version": "0.5.9"
+    "version": "0.5.10"
   },
   "paths": {
     "/api/v1/cases/{case_id}/human-action/assertion": {
