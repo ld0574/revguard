@@ -11,7 +11,7 @@ set -euo pipefail
 
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
-MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-sol}}"
+MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-luna}}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
 AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
@@ -51,13 +51,13 @@ docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 
 echo "==> 2/6 创建/更新 1 Orchestrator + 9 Worker（model=$MODEL）"
 worker_image_args=()
-if [ "$MODEL" = "gpt-5.6-sol" ]; then
+if [ "$MODEL" = "gpt-5.6-sol" ] || [ "$MODEL" = "gpt-5.6-luna" ]; then
   # The base image drops per-model kwargs when it re-bridges on startup.
-  sol_image="${AGENTTEAMS_SOL_WORKER_IMAGE:-revguard-agentteams-worker:sol-20260912}"
-  if ! docker image inspect "$sol_image" >/dev/null 2>&1; then
-    bash "$REVGUARD_HOME/scripts/build_agentteams_sol_images.sh"
+  runtime_image="${AGENTTEAMS_WORKER_IMAGE:-revguard-agentteams-worker:luna-20260912}"
+  if ! docker image inspect "$runtime_image" >/dev/null 2>&1; then
+    bash "$REVGUARD_HOME/scripts/build_agentteams_images.sh"
   fi
-  worker_image_args=(--image "$sol_image")
+  worker_image_args=(--image "$runtime_image")
 fi
 for w in $WORKERS; do
   docker exec "$CONTROLLER" agt apply worker \
@@ -167,8 +167,8 @@ if target not in known:
     )
     with urllib.request.urlopen(req, timeout=10):
         pass
-if target == "gpt-5.6-sol":
-    # CoPaw uses Chat Completions function tools; Sol requires reasoning none.
+if target in {"gpt-5.6-sol", "gpt-5.6-luna"}:
+    # CoPaw uses Chat Completions function tools; Sol/Luna use reasoning none.
     model_config = next((
         item.get("generate_kwargs") or {}
         for item in [*(provider.get("models") or []), *(provider.get("extra_models") or [])]
@@ -229,7 +229,7 @@ body = {
     "messages": [{"role": "user", "content": "reply OK"}],
     "max_tokens": 4,
 }
-if body["model"] == "gpt-5.6-sol":
+if body["model"] in {"gpt-5.6-sol", "gpt-5.6-luna"}:
     body["reasoning_effort"] = "none"
 payload = json.dumps(body).encode()
 req = urllib.request.Request(

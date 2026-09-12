@@ -1,5 +1,7 @@
 # AgentTeams 切换 GPT-5.6 Sol（2026-09-12）
 
+> 历史验收记录。当前配置已按成本要求切换到 [Luna 并关闭空闲模型心跳](agentteams-luna-migration-20260912.md)。
+
 已使用用户当前配置的模型网关和凭证，将管理端、Orchestrator 及 9 个职能 Worker 切换为 `gpt-5.6-sol`。所有调用、镜像构建、重建与验证均在 10.10.10.202 Docker 执行。
 
 ## 原因与范围

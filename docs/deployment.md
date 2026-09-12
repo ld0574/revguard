@@ -9,7 +9,7 @@
 bash scripts/deploy_demo.sh --local
 
 # 决赛环境；要求宿主机已有 AgentTeams v1.2.0；保留现有案件
-bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
+bash scripts/deploy_demo.sh --full --model gpt-5.6-luna
 ```
 
 `--full` 会依次完成私密后端 Principal、PolarDB 启动与核心/资金恢复 Schema、RevGuard API、AgentTeams 角色和 Team、
@@ -25,10 +25,15 @@ PolarDB 官方 local_instance 在初始化账号之前会临时启动 PostgreSQL
 
 新 API 启动时保持维护状态：业务写入返回 `503 / DEPLOYMENT_MAINTENANCE`，只读页面和存活检查仍可访问，readiness 返回 503。只有数据库、8 个案件、页面，以及完整拓扑下的 Team 和观测组件验收通过后，部署脚本才解除维护。中途失败或重启不会自动开放业务；修复日志中的问题后，使用原拓扑重新运行部署命令。不要手动删除 `.deployment-fence.json` 或运行锁文件。该机制保护单台 Docker 主机的合作式升级，不替代跨主机数据库 HA 隔离。
 
-2026-09-12 已将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
-`gpt-5.6-sol`。Higress 的 `revguard-sol` Provider 使用当前获授权的模型网关配置，
+2026-09-12 已按成本要求将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
+`gpt-5.6-luna`，关闭空闲模型心跳。Higress 的 `revguard-sol` Provider 使用当前获授权的模型网关配置，
 Worker 继续使用各自的内部网关凭证。CoPaw 的 Chat Completions 工具调用对该模型明确设置
-`reasoning_effort=none`。迁移记录见 [`agentteams-sol-migration-20260912.md`](agentteams-sol-migration-20260912.md)。
+`reasoning_effort=none`。Luna 与成本治理记录见 [`agentteams-luna-migration-20260912.md`](agentteams-luna-migration-20260912.md)；原 Sol 验收保留为历史记录。
+
+构建入口为 `scripts/build_agentteams_images.sh`，镜像为 `revguard-agentteams-worker:luna-20260912` 与
+`revguard-agentteams-manager:luna-20260912`。运行时补丁在每次启动时将模型心跳设为关闭，避免无人操作时发送整个工作区上下文；容器健康检查和 Prometheus 采集继续工作。Manager 保持接收人工请求，10 个 Worker 闲时维持 Sleeping。若要重新启用模型定时巡检，应先明确频率与预算，再调整这一启动策略。
+
+仅修改 Worker 资源的 image 字段，现存休眠容器可能仍使用旧镜像。升级时须先确认无活动业务、备份 Worker 工作区及 MinIO 配置，再替换旧容器，并核对 Docker 实际镜像 ID、运行时模型与 heartbeat；不要删除 Worker/Team 资源或演示数据库。
 
 新版 L2 审批必须通过白名单 Matrix 账号验证。`--local` 不包含身份源，未配置 Matrix 时
 会停在人审，不能使用旧静态 approver key。完整录制方式与账号配置见
