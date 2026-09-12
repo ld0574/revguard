@@ -24,6 +24,7 @@ from .report import render_audit_report
 from .state_machine import transition_case
 from .store import Store
 from .trace import Tracer
+from .workflow_persistence import commit_case_stage
 
 # 证据分低于该值即挂起补证（设计文档 3.3：不生成虚假确定性结论）
 EVIDENCE_SCORE_THRESHOLD = 0.6
@@ -143,14 +144,12 @@ class Orchestrator:
                                    "evidence_score": package["evidence_score"],
                                    "gaps": package["evidence_gaps"],
                                    "parallel": package["parallel"]}
-        for ev in package["evidence"]:
-            self.store.save_evidence(ev)
         state["evidence"] = package["collected"]
         state["evidence_gaps"] = package["evidence_gaps"]
         case["evidence_score"] = package["evidence_score"]
-        self.store.audit(case["case_id"], "revguard-evidence", "EVIDENCE_COLLECTED",
-                         {"score": package["evidence_score"], "gaps": package["evidence_gaps"]})
-        self.store.save_case(case)
+        commit_case_stage(self.store, case, evidence=package["evidence"],
+            audit=("revguard-evidence", "EVIDENCE_COLLECTED",
+                   {"score": package["evidence_score"], "gaps": package["evidence_gaps"]}))
 
         if package["evidence_score"] < EVIDENCE_SCORE_THRESHOLD:
             gap = f"证据完整度 {package['evidence_score']} 低于阈值 {EVIDENCE_SCORE_THRESHOLD}"
@@ -328,10 +327,9 @@ class Orchestrator:
                         action_summary=self._action_summary(state))
                     span["outputs"] = approval
                 state["approval"] = approval
-                self.store.save_approval({"approval_id": approval["approval_id"],
-                                          "case_id": case["case_id"], **approval})
-                self._transition(case, CaseStatus.WAITING_FOR_APPROVAL,
-                                 f"等待 {risk.approver_role} 审批 {approval['approval_id']}")
+                commit_case_stage(self.store, case, approval={"approval_id": approval["approval_id"],
+                    "case_id": case["case_id"], **approval}, to=CaseStatus.WAITING_FOR_APPROVAL,
+                    reason=f"等待 {risk.approver_role} 审批 {approval['approval_id']}")
             else:
                 self._transition(case, CaseStatus.READY_TO_EXECUTE, "L1 低风险，可自动建草稿")
 
@@ -351,14 +349,12 @@ class Orchestrator:
             decided = resp["data"]
             span["outputs"] = decided
         state["approval"] = decided
-        self.store.save_approval({"approval_id": decided["approval_id"],
-                                  "case_id": case["case_id"], **decided})
-        self.store.audit(case["case_id"], self.simulated_approver, "APPROVAL_DECIDED",
-                         {"decision": decided["status"], "simulated_human": True})
-        if decided["status"] == "APPROVED":
-            self._transition(case, CaseStatus.READY_TO_EXECUTE, "审批通过")
-        else:
-            self._transition(case, CaseStatus.REJECTED, "审批驳回")
+        commit_case_stage(self.store, case, approval={"approval_id": decided["approval_id"],
+            "case_id": case["case_id"], **decided},
+            audit=(self.simulated_approver, "APPROVAL_DECIDED",
+                   {"decision": decided["status"], "simulated_human": True}),
+            to=CaseStatus.READY_TO_EXECUTE if decided["status"] == "APPROVED" else CaseStatus.REJECTED,
+            reason="审批通过" if decided["status"] == "APPROVED" else "审批驳回")
 
     # ------------------------------------------------------ 8/9. 执行 + 验证
     def execute_and_verify(self, case: dict, state: dict | None = None,
@@ -411,11 +407,10 @@ class Orchestrator:
                         EXECUTION_ROLLBACK_FIELD: None,
                         "ledger_entry": None,
                     }
-                    self.store.save_execution(execution)
+                    commit_case_stage(self.store, case, execution=execution,
+                        audit=("revguard-executor", "DRAFT_CREATED", {"action_id": draft["action_id"],
+                               "component": diff["component"], "amount": str(delta)}))
                     executions.append(execution)
-                    self.store.audit(case["case_id"], "revguard-executor", "DRAFT_CREATED",
-                                     {"action_id": draft["action_id"],
-                                      "component": diff["component"], "amount": str(delta)})
                     continue
                 # 权限守门：Executor 身份 + 审批凭证（设计文档 14.3）
                 skills.permission_check(actor="revguard-executor",
@@ -453,9 +448,8 @@ class Orchestrator:
                 "component_checks": [], "rollback_required": False,
                 "checked_at": utc_now(),
             }
-            self.store.save_verification(case["case_id"], state["verification"])
-            self._transition(case, CaseStatus.RESOLVED,
-                             "L1 仅创建不生效草稿，未写入资金台账")
+            commit_case_stage(self.store, case, verification=state["verification"],
+                to=CaseStatus.RESOLVED, reason="L1 仅创建不生效草稿，未写入资金台账")
             return state
 
         self._transition(case, CaseStatus.VERIFYING, "开始独立验证")
@@ -468,13 +462,14 @@ class Orchestrator:
                     expected_components=state["calculation_result"]["components"])
                 span["outputs"] = verification
         state["verification"] = verification
-        self.store.save_verification(case["case_id"], verification)
-        self.store.audit(case["case_id"], "revguard-verifier", "VERIFIED", verification)
         if verification["verification_status"] == "PASSED":
-            self._transition(case, CaseStatus.RESOLVED, "执行结果验证通过")
+            commit_case_stage(self.store, case, verification=verification,
+                audit=("revguard-verifier", "VERIFIED", verification),
+                to=CaseStatus.RESOLVED, reason="执行结果验证通过")
         else:
-            self._transition(case, CaseStatus.ROLLBACK_REQUIRED,
-                             f"验证失败，variance={verification['variance']}")
+            commit_case_stage(self.store, case, verification=verification,
+                audit=("revguard-verifier", "VERIFIED", verification),
+                to=CaseStatus.ROLLBACK_REQUIRED, reason=f"验证失败，variance={verification['variance']}")
             self._rollback_executions(case, state, tracer)
         self.store.save_case(case)
         return state

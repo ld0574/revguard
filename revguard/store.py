@@ -269,10 +269,14 @@ class Store:
     # --------------------------------------------------------------- evidence
     def save_evidence(self, ev: dict) -> None:
         with self._lock, self.conn:
-            self.conn.execute(
-                "INSERT OR REPLACE INTO evidence(evidence_id, case_id, type, data) VALUES (?,?,?,?)",
-                (ev["evidence_id"], ev["case_id"], ev["type"], json.dumps(ev, ensure_ascii=False)),
-            )
+            self._save_evidence_with_conn(self.conn, ev)
+
+    @staticmethod
+    def _save_evidence_with_conn(conn, ev: dict) -> None:
+        conn.execute(
+            "INSERT OR REPLACE INTO evidence(evidence_id, case_id, type, data) VALUES (?,?,?,?)",
+            (ev["evidence_id"], ev["case_id"], ev["type"], json.dumps(ev, ensure_ascii=False)),
+        )
 
     def list_evidence(self, case_id: str) -> list[dict]:
         with self._lock:
@@ -303,11 +307,15 @@ class Store:
     # -------------------------------------------------------------- execution
     def save_execution(self, exe: dict) -> None:
         with self._lock, self.conn:
-            self.conn.execute(
-                "INSERT OR REPLACE INTO executions(action_id, case_id, idempotency_key, data) VALUES (?,?,?,?)",
-                (exe["action_id"], exe["case_id"], exe.get("idempotency_key"),
-                 json.dumps(exe, ensure_ascii=False)),
-            )
+            self._save_execution_with_conn(self.conn, exe)
+
+    @staticmethod
+    def _save_execution_with_conn(conn, exe: dict) -> None:
+        conn.execute(
+            "INSERT OR REPLACE INTO executions(action_id, case_id, idempotency_key, data) VALUES (?,?,?,?)",
+            (exe["action_id"], exe["case_id"], exe.get("idempotency_key"),
+             json.dumps(exe, ensure_ascii=False)),
+        )
 
     def get_execution_by_idempotency(self, key: str) -> dict | None:
         with self._lock:
@@ -326,10 +334,14 @@ class Store:
     # ----------------------------------------------------------- verification
     def save_verification(self, case_id: str, result: dict) -> None:
         with self._lock, self.conn:
-            self.conn.execute(
-                "INSERT OR REPLACE INTO verifications(case_id, data) VALUES (?,?)",
-                (case_id, json.dumps(result, ensure_ascii=False)),
-            )
+            self._save_verification_with_conn(self.conn, case_id, result)
+
+    @staticmethod
+    def _save_verification_with_conn(conn, case_id: str, result: dict) -> None:
+        conn.execute(
+            "INSERT OR REPLACE INTO verifications(case_id, data) VALUES (?,?)",
+            (case_id, json.dumps(result, ensure_ascii=False)),
+        )
 
     def get_verification(self, case_id: str) -> dict | None:
         with self._lock:

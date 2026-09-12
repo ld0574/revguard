@@ -4,9 +4,50 @@ from __future__ import annotations
 import copy
 import json
 
-from .models import utc_now
+from .models import CaseStatus, utc_now
 from .money_journal import MoneyJournal, MoneyTransaction
-from .state_machine import StaleCaseTransition, locked_case
+from .state_machine import StaleCaseTransition, locked_case, persist_case_transition
+
+
+def commit_case_stage(store, case: dict, *, evidence: list[dict] | tuple = (),
+                      approval: dict | None = None, execution: dict | None = None,
+                      verification: dict | None = None, to: CaseStatus | None = None,
+                      reason: str = "", audit: tuple[str, str, dict] | None = None) -> None:
+    """Commit coordinator projections, case progress and audit as one stage.
+
+    A Worker result may be durable yet obsolete by the time its coordinator
+    receives it. Validate the case snapshot before touching any projection,
+    and retain that database lock until every participant commits.
+    """
+    case_id = case["case_id"]
+    for item in [*evidence, *([approval] if approval is not None else []),
+                 *([execution] if execution is not None else [])]:
+        if item.get("case_id") != case_id:
+            raise ValueError("阶段投影必须属于当前案件")
+    with MoneyJournal(store).transaction() as tx:
+        current = locked_case(tx, case_id)
+        if current is None or any(current.get(key) != case.get(key) for key in (
+            "status", "recording_id", "_state_version",
+        )) or current.get("_case_revision", 0) != case.get("_case_revision", 0):
+            raise StaleCaseTransition("案件已变化，拒绝旧编排结果写入")
+        for item in evidence:
+            store._save_evidence_with_conn(tx.conn, item)
+        if approval is not None:
+            store._save_approval_with_conn(tx.conn, approval)
+        if execution is not None:
+            store._save_execution_with_conn(tx.conn, execution)
+        if verification is not None:
+            store._save_verification_with_conn(tx.conn, case_id, verification)
+        if audit is not None:
+            actor, event, detail = audit
+            tx.audit(case_id, event, detail, actor=actor)
+        if to is not None:
+            updated = persist_case_transition(store, tx, case, to, reason,
+                                               actor="revguard-orchestrator")
+        else:
+            updated = store._save_case_with_conn(tx.conn, case)
+    case.clear()
+    case.update(updated)
 
 
 def versioned_case_write(conn, case: dict, *, postgres: bool, recording_replace: bool = False) -> dict:
