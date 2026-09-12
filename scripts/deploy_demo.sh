@@ -17,7 +17,7 @@ usage() {
 用法：bash scripts/deploy_demo.sh [选项]
 
 选项：
-  --local          SQLite + 本地 MCP + WebUI（默认，只需要 Docker）
+  --local          SQLite + MCP 参考链路 + WebUI（默认，只需要 Docker）
   --full           PolarDB-PG + AgentTeams Matrix + WebUI + 可观测组件
   --observability  在最小拓扑中也部署 Grafana、Prometheus、日志与 Trace 后端
   --reset          清空合成演示状态并重新播种 8 个 Golden Case
@@ -60,13 +60,30 @@ on_error() {
 }
 trap 'on_error $LINENO' ERR
 
-for command in docker curl openssl python3; do
+for command in docker curl openssl python3 flock; do
   command -v "$command" >/dev/null 2>&1 || fail "缺少命令: $command"
 done
 docker compose version >/dev/null 2>&1 || fail "需要 Docker Compose v2（docker compose）"
 
 cd "$ROOT_DIR"
 umask 077
+# The supported CLI uses the host's local daemon. Do not unlink the lock inode.
+exec 9>/tmp/revguard-deployment.lock
+flock -n 9 || fail "另一个部署仍在进行；不允许并发修改配置或替换服务"
+deployment_owner=$(openssl rand -hex 16)
+project=$(docker compose -f docker-compose.yml config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])')
+python3 scripts/quiesce_api.py preflight --profile "$PROFILE" --project "$project"
+if [ "$PROFILE" = "full" ]; then
+  [ "$(docker inspect -f '{{.State.Running}}' agentteams-controller 2>/dev/null || true)" = "true" ] \
+    || fail "请先安装并启动 AgentTeams v1.2.0；本脚本不安装 Controller"
+  docker network inspect agentteams-net >/dev/null 2>&1 || fail "未找到 agentteams-net"
+  docker exec agentteams-controller agt get teams >/dev/null 2>&1 || fail "AgentTeams Controller 尚未就绪"
+  available_gb=$(docker info --format '{{json .MemTotal}}' | tr -d '"' | awk '{printf "%d", $1/1024/1024/1024}')
+  [ "$available_gb" -ge 6 ] || fail "完整环境至少需要 6 GiB Docker 内存，当前约 ${available_gb} GiB"
+fi
+# A routine update must not silently remove previously installed observability.
+previous_compose=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project.config_files"}}' revguard-api 2>/dev/null || true)
+case "$previous_compose" in *docker-compose.observability.yml*) OBSERVABILITY="true" ;; esac
 touch "$ENV_FILE"
 chmod 600 "$ENV_FILE"
 
@@ -123,31 +140,11 @@ wait_container_healthy() {
 
 wait_api() {
   for _ in $(seq 1 90); do
-    curl -fsS http://127.0.0.1:19000/api/v1/health >/dev/null 2>&1 && return 0
+    curl -fsS http://127.0.0.1:19000/api/v1/health/live >/dev/null 2>&1 && return 0
     sleep 2
   done
   return 1
 }
-
-guard_no_active_runs() {
-  if ! docker inspect -f '{{.State.Running}}' revguard-api 2>/dev/null | grep -q true; then
-    return 0
-  fi
-  if ! active_runs=$(docker exec revguard-api python -c '
-from revguard.api import store
-active = {"QUEUED", "STARTING", "RUNNING"}
-print(",".join(
-    case["case_id"] for case in store.list_cases()
-    if (case.get("team_run") or {}).get("status") in active
-))
-' 2>/dev/null); then
-    fail "无法核实当前案件运行状态，停止部署；请先恢复数据库并确认运行已结束"
-  fi
-  [ -z "$active_runs" ] || fail \
-    "检测到活动 AgentTeams 运行: $active_runs；请等待结束，不能以 reset 绕过在途资金操作"
-}
-
-guard_no_active_runs
 
 release_version=$(docker run --rm --user root -v "$ROOT_DIR:/workspace:ro" \
   --entrypoint python python:3.11-slim -c \
@@ -165,6 +162,10 @@ env_set_if_missing REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS 600
 compose=(docker compose -f docker-compose.yml)
 if [ "$PROFILE" = "full" ]; then
   compose+=(-f docker-compose.agentteams.yml -f docker-compose.polardb.yml)
+  env_set_if_missing REVGUARD_POLARDB_USER revguard_owner
+  env_set_if_missing REVGUARD_POLARDB_PASSWORD "$(openssl rand -hex 24)"
+  env_set REVGUARD_ALLOW_DATABASE_RESET true
+  env_set REVGUARD_TEAM_TRANSPORT matrix
   docker run --rm --user root -v "$ROOT_DIR:/workspace" -w /workspace \
     --entrypoint python python:3.11-slim scripts/configure_demo_principals.py --env /workspace/.env
 fi
@@ -175,39 +176,44 @@ if [ "$OBSERVABILITY" = "true" ]; then
 fi
 
 if [ "$PROFILE" = "local" ]; then
-  log "部署本地可复现环境（SQLite + MCP Team）"
   env_set REVGUARD_TEAM_TRANSPORT mcp
-  if [ "$RESET" = "true" ]; then
-    REVGUARD_RESET_ON_START=true "${compose[@]}" up -d --build revguard-api
-    wait_api || fail "API 未就绪"
-    "${compose[@]}" up -d --force-recreate --no-deps revguard-api
-  else
-    "${compose[@]}" up -d --build revguard-api
-  fi
+fi
+
+log "先构建，再确认静止并停止旧 API"
+"${compose[@]}" build revguard-api
+python3 scripts/quiesce_api.py stop --profile "$PROFILE" --project "$project" --owner "$deployment_owner"
+log "保存跨重启维护标记；失败后重跑部署，验收通过才开放业务"
+"${compose[@]}" run --rm -T --no-deps --entrypoint python revguard-api -c \
+  'from revguard.deployment import prepare_fence; import sys; prepare_fence(sys.argv[1])' "$deployment_owner"
+
+if [ "$PROFILE" = "local" ]; then
+  log "准备 SQLite + MCP 参考拓扑"
 else
-  log "核验 AgentTeams 与宿主机资源"
-  docker inspect agentteams-controller >/dev/null 2>&1 || fail "未找到 agentteams-controller；请先安装 AgentTeams v1.2.0"
-  docker network inspect agentteams-net >/dev/null 2>&1 || fail "未找到 agentteams-net"
-  available_gb=$(docker info --format '{{json .MemTotal}}' | tr -d '"' | awk '{printf "%d", $1/1024/1024/1024}')
-  [ "$available_gb" -ge 6 ] || fail "完整环境建议至少 6 GiB Docker 内存，当前约 ${available_gb} GiB"
-
-  env_set_if_missing REVGUARD_POLARDB_USER revguard_owner
-  env_set_if_missing REVGUARD_POLARDB_PASSWORD "$(openssl rand -hex 24)"
-  env_set REVGUARD_ALLOW_DATABASE_RESET true
-  env_set REVGUARD_TEAM_TRANSPORT matrix
-
   log "启动 PolarDB-PG 并应用核心 Schema"
   "${compose[@]}" up -d polardb-pg
   wait_container_healthy revguard-polardb 90 || fail "PolarDB 未通过健康检查"
   docker exec revguard-polardb sh -lc \
     'PGPASSWORD="$POLARDB_PASSWORD" psql -v ON_ERROR_STOP=1 -U "$POLARDB_USER" -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='"'"'revguard'"'"'" | grep -q 1 || PGPASSWORD="$POLARDB_PASSWORD" createdb -U "$POLARDB_USER" revguard'
   log "构建镜像并以短时容器完整迁移核心与资金恢复 Schema"
-  "${compose[@]}" build revguard-api
   "${compose[@]}" run --rm -T --no-deps --entrypoint python revguard-api -c \
     'import os; os.environ["REVGUARD_MIGRATION_DATABASE_URL"] = os.environ["REVGUARD_DATABASE_URL"]; from scripts.migrate_polardb import main; main()'
-  "${compose[@]}" up -d --no-build revguard-api
-  wait_api || fail "RevGuard API 未就绪"
+fi
 
+log "停机状态下检查持久化任务，并播种合成案件"
+"${compose[@]}" run --rm -T --no-deps --entrypoint python revguard-api -c '
+import sys
+from revguard.api import store,gateway
+from revguard.runtime_barrier import acquire_runtime_lease,assert_recording_quiescent
+from scripts.seed_demo import seed_store
+with acquire_runtime_lease(store,exclusive=True):
+    assert_recording_quiescent(store,gateway.journal)
+    seed_store(store,reset=sys.argv[1]=="true",quiet=True,gateway=gateway,
+               reset_actor="deployment-operator")
+' "$RESET"
+"${compose[@]}" up -d --no-build revguard-api
+wait_api || fail "RevGuard API 进程未就绪；维护标记保留"
+
+if [ "$PROFILE" = "full" ]; then
   log "创建/更新 AgentTeams 角色、Team、Adapter 与 Matrix 房间"
   REVGUARD_HOME="$ROOT_DIR" \
   REVGUARD_API_BASE_URL=http://revguard-api:9000 \
@@ -229,23 +235,11 @@ fi
 
 wait_api || fail "RevGuard API 未在时限内就绪"
 
-case_count=$(curl -fsS http://127.0.0.1:19000/api/v1/health | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cases", 0))')
-if [ "$RESET" = "true" ]; then
-  log "按显式 reset 请求重置并播种 8 个合成 Golden Case"
-  curl -fsS -X POST \
-    -H 'Authorization: Bearer rg-demo-operator-key' \
-    http://127.0.0.1:19000/api/v1/demo/reset >/dev/null
-elif [ "$case_count" = "0" ]; then
-  log "补充首次部署的 Golden Case（不清空已有账务或审计）"
-  docker exec revguard-api python -c \
-    'from revguard.api import store; from scripts.seed_demo import seed_store; seed_store(store, quiet=True)'
-fi
-
 log "执行部署验收"
 health=$(curl -fsS http://127.0.0.1:19000/api/v1/health)
-ready=$(python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("ready", False)).lower())' <<<"$health")
 cases=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("cases", 0))' <<<"$health")
-[ "$ready" = "true" ] || fail "API ready=false"
+docker exec revguard-api python -c 'from revguard.api import store; assert store.readiness()["ready"]' \
+  || fail "数据库未就绪；维护标记保留"
 [ "$cases" -ge 8 ] || fail "Golden Case 数量不足: $cases"
 curl -fsS http://127.0.0.1:19000/demo/ >/dev/null || fail "WebUI 不可访问"
 
@@ -259,6 +253,23 @@ if [ "$PROFILE" = "full" ]; then
     /root/.copaw-worker/revguard-executor/skills/revguard-api/scripts/revguard_call.py \
     || fail "Executor Adapter 未同步到最新版本"
 fi
+
+log "全部验收通过，最后解除维护封锁"
+docker exec revguard-api python -c '
+import sys,time
+from revguard.api import store,gateway
+from revguard.deployment import release_fence
+from revguard.runtime_barrier import acquire_runtime_lease,assert_recording_quiescent,RuntimeBusy
+for attempt in range(40):
+    try:
+        with acquire_runtime_lease(store,exclusive=True):
+            assert_recording_quiescent(store,gateway.journal)
+            release_fence(sys.argv[1])
+        break
+    except RuntimeBusy:
+        if attempt==39: raise
+        time.sleep(.2)
+' "$deployment_owner"
 
 echo
 echo "部署完成："

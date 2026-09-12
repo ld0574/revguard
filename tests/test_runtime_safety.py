@@ -49,6 +49,60 @@ class TestRuntimeSafety(unittest.IsolatedAsyncioTestCase):
     def client(self):
         return httpx.AsyncClient(transport=httpx.ASGITransport(app=api_module.app), base_url="http://isolated")
 
+    async def test_deployment_fence_blocks_mutations_but_keeps_read_access(self):
+        from revguard.deployment import prepare_fence, release_fence
+        target = Path(self.temp.name) / "deployment.json"
+        before = self.store.list_cases()
+        with patch("revguard.deployment.fence_path", return_value=target):
+            prepare_fence("testowner")
+            async with self.client() as client:
+                for path in ["/api/v1/demo/reset", f"/api/v1/cases/{self.case_id}/team/run",
+                             f"/api/v1/cases/{self.case_id}/human-action/assertion"]:
+                    response = await client.post(path, headers=self.operator)
+                    self.assertEqual(response.status_code, 503, response.text)
+                    self.assertEqual(response.json()["detail"]["code"], "DEPLOYMENT_MAINTENANCE")
+                self.assertEqual((await client.get("/api/v1/cases", headers=self.viewer)).status_code, 200)
+                self.assertEqual((await client.get("/api/v1/health/live")).status_code, 200)
+                self.assertFalse((await client.get("/api/v1/health")).json()["ready"])
+                self.assertEqual((await client.get("/api/v1/health/ready")).status_code, 503)
+                with self.assertRaises(ValueError):
+                    release_fence("anotherowner")
+                self.assertTrue(target.exists())
+                release_fence("testowner")
+                self.assertTrue((await client.get("/api/v1/health")).json()["ready"])
+        self.assertEqual(self.store.list_cases(), before)
+
+    def test_deployment_fence_blocks_direct_mcp_without_claiming_task(self):
+        from revguard.deployment import prepare_fence
+        case = self.store.get_case(self.case_id)
+        task = create_agent_task(case, "CaseNormalizeSkill", {"raw_case": case})
+        self.store.save_agent_task(task)
+        with patch("revguard.deployment.fence_path", return_value=Path(self.temp.name) / "deployment.json"):
+            prepare_fence("testowner")
+            with self.assertRaises(RuntimeBusy):
+                execute_agent_task(task_id=task["task_id"], case_id=self.case_id,
+                                   skill_name=task["skill_name"], skill_input=task["input"],
+                                   actor=task["assigned_actor"], store=self.store, gateway=self.gateway)
+        self.assertEqual(self.store.get_agent_task(task["task_id"])["status"], "PENDING")
+        self.assertEqual(self.store.list_agent_task_results(task["task_id"]), [])
+
+    async def test_unreadable_deployment_fence_does_not_reopen_writes(self):
+        with patch("revguard.deployment.fence_path", side_effect=PermissionError("secret-path")):
+            async with self.client() as client:
+                response = await client.post("/api/v1/demo/reset", headers=self.operator)
+                self.assertEqual(response.status_code, 503)
+                self.assertNotIn("secret-path", response.text)
+
+    def test_malformed_persistent_fence_is_not_silently_removed(self):
+        from revguard.deployment import deployment_pending, release_fence
+        target = Path(self.temp.name) / "deployment.json"
+        target.write_text("interrupted metadata")
+        with patch("revguard.deployment.fence_path", return_value=target):
+            self.assertTrue(deployment_pending())
+            with self.assertRaises(ValueError):
+                release_fence("testowner")
+            self.assertTrue(deployment_pending())
+
     async def test_reset_cannot_race_an_inflight_request(self):
         entered, release = threading.Event(), threading.Event()
 

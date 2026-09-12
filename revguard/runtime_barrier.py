@@ -119,6 +119,19 @@ class RuntimeBarrierMiddleware:
             return await response(scope, receive, send)
         token = CURRENT_LEASE.set(lease)
         try:
+            # Check under the lease: a request dispatched before deployment
+            # must also observe a fence installed before its lease was acquired.
+            from .deployment import deployment_pending
+            try:
+                maintenance = scope["method"] not in {"GET", "HEAD", "OPTIONS"} and deployment_pending()
+            except OSError:
+                maintenance = True
+            if maintenance:
+                response = JSONResponse(status_code=503, content={"detail": {
+                    "code": "DEPLOYMENT_MAINTENANCE",
+                    "message": "部署维护中，暂不接受业务操作，请稍后重试。",
+                }}, headers={"Cache-Control": "no-store", "Retry-After": "30"})
+                return await response(scope, receive, send)
             await self.app(scope, receive, send)
         finally:
             CURRENT_LEASE.reset(token)

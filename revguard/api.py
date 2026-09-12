@@ -82,7 +82,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.8")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.9")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -1281,8 +1281,12 @@ def invoke_registered_skill(skill_name: str, payload: SkillInvoke,
 @app.get("/api/v1/health")
 def health():
     ready = store.readiness()
+    from revguard.deployment import deployment_pending
+    maintenance = deployment_pending()
     return {"status": "ok", "release": RELEASE_VERSION,
-            "cases": store.count_cases(), **ready}
+            "cases": store.count_cases(), **ready,
+            "ready": ready.get("ready", False) and not maintenance,
+            "maintenance": maintenance}
 
 
 @app.get("/api/v1/health/live")
@@ -1293,7 +1297,12 @@ def liveness():
 @app.get("/api/v1/health/ready")
 def readiness():
     try:
+        from revguard.deployment import deployment_pending
+        if deployment_pending():
+            raise HTTPException(503, {"status": "maintenance", "ready": False})
         return {"status": "ready", **store.readiness()}
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(503, {"status": "not_ready",
                                   "error_type": type(exc).__name__}) from exc
