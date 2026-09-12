@@ -116,6 +116,10 @@ def execute_agent_task(*, task_id: str, case_id: str, skill_name: str,
     # Covers scoped MCP servers as well as the HTTP adapter, including a
     # Worker paused between snapshot validation and its first tool invocation.
     with acquire_runtime_lease(store):
+        from .deployment import deployment_pending
+        from .runtime_barrier import RuntimeBusy
+        if deployment_pending():
+            raise RuntimeBusy("部署维护中，暂不接受 StageTask 执行")
         return _execute_agent_task(
             task_id=task_id, case_id=case_id, skill_name=skill_name,
             skill_input=skill_input, actor=actor, gateway=gateway, store=store,

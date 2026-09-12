@@ -17,6 +17,14 @@ skills-only Adapter 的 MinIO 持久化、9 个独立 Higress MCP Server 与精�
 播种、可观测组件、Grafana 只读嵌入以及最终健康验收。重复运行默认保留案件；只有显式传入 `--reset` 才重置合成库。原演示环境不要使用 reset，故障实验使用独立 Docker 项目。
 脚本不会打印 Matrix 或数据库凭证，生成的 `.env` 权限为 `0600`。
 
+PolarDB 官方 local_instance 在初始化账号之前会临时启动 PostgreSQL，再停机重启。健康检查因此同时核对该镜像入口脚本已进入常驻阶段、业务账号能执行 SQL；不能只用 `pg_isready` 判断首次初始化完成。
+
+从 0.5.9 起，部署入口使用宿主机 `/tmp/revguard-deployment.lock` 防止并行部署，并在修改配置前核对现有 Compose 项目与数据库拓扑。`--reset` 不能绕过拓扑检查。原有观测覆盖层会自动保留。
+
+构建完成后，脚本在旧 API 内取得独占运行租约，核对主库中活动运行、未完成任务、待对账操作和冻结通道，持锁直到旧 API 停止。数据库查询失败时拒绝停机。维护标记保存在 API 的持久卷中，升级前的旧镜像也可以由部署助手写入该标记。迁移和播种都在旧 API 停止后执行；显式重置将案件、网关账务基线和重置审计一次提交。
+
+新 API 启动时保持维护状态：业务写入返回 `503 / DEPLOYMENT_MAINTENANCE`，只读页面和存活检查仍可访问，readiness 返回 503。只有数据库、8 个案件、页面，以及完整拓扑下的 Team 和观测组件验收通过后，部署脚本才解除维护。中途失败或重启不会自动开放业务；修复日志中的问题后，使用原拓扑重新运行部署命令。不要手动删除 `.deployment-fence.json` 或运行锁文件。该机制保护单台 Docker 主机的合作式升级，不替代跨主机数据库 HA 隔离。
+
 2026-09-12 已将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
 `gpt-5.6-sol`。Higress 的 `revguard-sol` Provider 使用当前获授权的模型网关配置，
 Worker 继续使用各自的内部网关凭证。CoPaw 的 Chat Completions 工具调用对该模型明确设置

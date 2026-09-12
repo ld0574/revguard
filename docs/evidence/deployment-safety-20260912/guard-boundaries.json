@@ -1,0 +1,8 @@
+{
+  "concurrent_deployment_rejected_before_config_edit": true,
+  "topology_change_even_with_reset_rejected_before_config_edit": true,
+  "active_shared_lease_refused_stop": true,
+  "durable_running_task_without_team_run_refused_stop": true,
+  "original_container_not_replaced": true,
+  "passed": true
+}
