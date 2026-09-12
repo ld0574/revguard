@@ -1,0 +1,3 @@
+[32mINFO[0m /opt/copaw-venv/lib/python3.11/site-packages/httpx/_client.py:1740 | 2026-09-12 14:38:53 | HTTP Request: POST http://agentteams-controller:8080/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO[0m /opt/copaw-venv/lib/python3.11/site-packages/httpx/_client.py:1740 | 2026-09-12 14:38:55 | HTTP Request: POST http://agentteams-controller:8080/v1/chat/completions "HTTP/1.1 200 OK"
+{"model": "gpt-5.6-luna", "provider": "agentteams-gateway", "reasoning_effort": "none", "streaming_tool_call": true, "tool_result_continuation": true, "answer": "MODEL_READY", "seconds": 5.86}

@@ -10,7 +10,7 @@ ENV_FILE="$ROOT_DIR/.env"
 PROFILE="local"
 RESET="false"
 OBSERVABILITY="false"
-MODEL="${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-sol}"
+MODEL="${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-luna}"
 
 usage() {
   cat <<'EOF'
@@ -21,12 +21,12 @@ usage() {
   --full           PolarDB-PG + AgentTeams Matrix + WebUI + 可观测组件
   --observability  在最小拓扑中也部署 Grafana、Prometheus、日志与 Trace 后端
   --reset          清空合成演示状态并重新播种 8 个 Golden Case
-  --model NAME     AgentTeams Worker 模型（默认 gpt-5.6-sol）
+  --model NAME     AgentTeams Worker 模型（默认 gpt-5.6-luna）
   -h, --help       显示帮助
 
 示例：
   bash scripts/deploy_demo.sh
-  bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
+  bash scripts/deploy_demo.sh --full --model gpt-5.6-luna
 EOF
 }
 

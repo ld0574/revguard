@@ -114,7 +114,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 bash scripts/deploy_demo.sh --local
 
 # 已安装 AgentTeams v1.2.0 的宿主机：PolarDB + Matrix + 10 个 Agent 角色
-bash scripts/deploy_demo.sh --full --model gpt-5.6-sol
+bash scripts/deploy_demo.sh --full --model gpt-5.6-luna
 ```
 
 脚本会生成权限为 `0600` 的本地 `.env`，完成镜像构建、Schema、Golden Case、

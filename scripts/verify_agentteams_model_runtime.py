@@ -22,8 +22,9 @@ async def main():
     # Fixed loopback HTTP endpoint with an allowlisted numeric port.
     with urllib.request.urlopen(url, timeout=10) as r:  # nosec B310
         active = json.load(r)["active_llm"]
-    if active["model"] != "gpt-5.6-sol":
-        raise RuntimeError("Active model is not Sol")
+    expected = os.environ.get("REVGUARD_EXPECTED_MODEL", "gpt-5.6-luna")
+    if active["model"] != expected:
+        raise RuntimeError("Active model does not match expected target")
     manager = ProviderManager.get_instance()
     provider = manager.get_provider(active["provider_id"])
     if provider is None:
