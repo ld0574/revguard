@@ -9,8 +9,8 @@
     "case_type": "COMMISSION_UNDERPAYMENT",
     "source": "EVALUATION",
     "partner_id": "AGT-10001",
-    "order_id": "EZ202608001",
-    "description": "故障注入评测：模拟账务写入发生1 KES偏差，独立核对确认后原子冲销本次调整。",
+    "order_id": "EZ202608008",
+    "description": "独立恢复案例：订单 EZ202608008 的受控账务写入发生 1 KES 偏差；独立核对后禁止盲目重试，按原操作创建关联冲销并再次验证净影响归零。",
     "claim": {"actual_amount": 18000, "expected_amount": 32400, "currency": "KES"}
   },
   "expected": {

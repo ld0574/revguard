@@ -9,6 +9,7 @@ state transition command.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import os
 import shlex
@@ -46,6 +47,8 @@ class MatrixSettings:
     orchestrator_timeout_seconds: float = 120.0
     require_orchestrator_ack: bool = True
     token_usage_url_template: str = ""
+    max_model_calls_per_stage: int = 2
+    max_completion_tokens: int = 512
 
     @classmethod
     def from_env(cls) -> MatrixSettings:
@@ -92,6 +95,12 @@ class MatrixSettings:
             token_usage_url_template=os.getenv(
                 "REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE", ""
             ),
+            max_model_calls_per_stage=int(os.getenv(
+                "REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE", "2"
+            )),
+            max_completion_tokens=int(os.getenv(
+                "REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS", "512"
+            )),
         )
 
     def validate(self) -> None:
@@ -108,6 +117,10 @@ class MatrixSettings:
             )
         if missing:
             raise MatrixTransportError("Matrix 配置缺失: " + ", ".join(missing))
+        if not 1 <= self.max_model_calls_per_stage <= 3:
+            raise MatrixTransportError("每阶段模型调用上限必须在 1 到 3 之间")
+        if not 64 <= self.max_completion_tokens <= 4096:
+            raise MatrixTransportError("单次模型输出 Token 上限必须在 64 到 4096 之间")
 
 
 class MatrixClient:
@@ -657,6 +670,20 @@ class MatrixTeamRunner(McpTeamRunner):
     ) -> dict:
         del message_id
         task = create_agent_task(case, skill_name, skill_input)
+        handoff = self._build_handoff(case, task, skill_input)
+        handoff_event_id = await self.client.send_text(
+            "REVGUARD_STAGE_HANDOFF\n" + json.dumps(
+                handoff, ensure_ascii=False, separators=(",", ":"), default=str,
+            ),
+            room_id=self.settings.room_id,
+        )
+        handoff["matrix_event_id"] = handoff_event_id
+        task["handoff"] = handoff
+        task["model_limits"] = {
+            "max_calls": self.settings.max_model_calls_per_stage,
+            "max_completion_tokens": self.settings.max_completion_tokens,
+            "stage_timeout_seconds": self.settings.stage_timeout_seconds,
+        }
         request_id = new_id("REQ-AGT")
         cursor = await self.client.cursor()
         actor = task["assigned_actor"]
@@ -672,6 +699,8 @@ class MatrixTeamRunner(McpTeamRunner):
             "skill_name": skill_name,
             "assigned_actor": actor,
             "request_id": request_id,
+            "handoff": handoff,
+            "model_limits": task["model_limits"],
             "input": skill_input,
         }
         dispatch_event_id = await self.client.send_text(
@@ -684,6 +713,7 @@ class MatrixTeamRunner(McpTeamRunner):
             "request_id": request_id,
             "agentteams_message_id": dispatch_event_id,
             "matrix_dispatch_event_id": dispatch_event_id,
+            "matrix_handoff_event_id": handoff_event_id,
             "matrix_room_id": worker_room_id,
             "transport": self.transport,
             "run_id": self.run_id,
@@ -719,6 +749,10 @@ class MatrixTeamRunner(McpTeamRunner):
             f"skill_name={skill_name}\n"
             f"request_id={request_id}\n"
             f"message_id={dispatch_event_id}\n"
+            "model_limits=" + json.dumps(task["model_limits"], separators=(",", ":")) + "\n"
+            "handoff=" + json.dumps(
+                handoff, ensure_ascii=False, separators=(",", ":"), default=str,
+            ) + "\n"
             "input=" + json.dumps(
                 skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
             ) + "\n"
@@ -742,6 +776,7 @@ class MatrixTeamRunner(McpTeamRunner):
                              "request_id": request_id,
                              "agentteams_message_id": dispatch_event_id,
                              "matrix_dispatch_event_id": dispatch_event_id,
+                             "matrix_handoff_event_id": handoff_event_id,
                              "matrix_trigger_event_id": trigger_event_id,
                              "matrix_room_id": worker_room_id,
                              "transport": self.transport,
@@ -759,7 +794,9 @@ class MatrixTeamRunner(McpTeamRunner):
 
         deadline = time.monotonic() + self.settings.stage_timeout_seconds
         started_waiting = time.monotonic()
-        pending_nudges = list(self.settings.retry_nudge_seconds)
+        pending_nudges = list(
+            self.settings.retry_nudge_seconds[: self.settings.max_model_calls_per_stage - 1]
+        )
         persisted = task
         while time.monotonic() < deadline:
             persisted = self.store.get_agent_task(task["task_id"]) or task
@@ -827,3 +864,60 @@ class MatrixTeamRunner(McpTeamRunner):
         succeeded += 1
         self._update_run(case, completed_tasks=succeeded)
         return persisted["result"]
+
+    def _build_handoff(self, case: dict, task: dict, skill_input: dict) -> dict:
+        """Create the compact, verifiable context passed between two Workers."""
+        completed = [
+            item for item in self.store.list_agent_tasks(case["case_id"])
+            if item.get("status") == TaskStatus.SUCCEEDED.value
+        ]
+        previous = completed[-1] if completed else None
+        previous_result = (previous or {}).get("result")
+        canonical_result = json.dumps(
+            previous_result, ensure_ascii=False, sort_keys=True,
+            separators=(",", ":"), default=str,
+        ).encode()
+        canonical_input = json.dumps(
+            redact_secrets(skill_input), ensure_ascii=False, sort_keys=True,
+            separators=(",", ":"), default=str,
+        ).encode()
+        summary: dict = {}
+        if isinstance(previous_result, dict):
+            safe_values = {
+                "policy_version", "total_commission", "currency", "risk_level",
+                "approval_required", "verification_status", "evidence_score",
+                "status", "eligible",
+            }
+            summary = {
+                key: redact_secrets(previous_result[key])
+                for key in sorted(safe_values.intersection(previous_result))
+            }
+            summary["result_keys"] = sorted(previous_result)
+            summary["collection_sizes"] = {
+                key: len(value) for key, value in previous_result.items()
+                if isinstance(value, (dict, list, tuple))
+            }
+        return {
+            "run_id": self.run_id,
+            "case_id": case["case_id"],
+            "recording_id": case.get("recording_id"),
+            "previous_stage_task_id": (previous or {}).get("task_id"),
+            "previous_skill": (previous or {}).get("skill_name"),
+            "previous_actor": (previous or {}).get("assigned_actor"),
+            "previous_result_summary": summary,
+            "previous_artifact_hash": "sha256:" + hashlib.sha256(canonical_result).hexdigest(),
+            "previous_skill_receipt": (previous or {}).get("skill_receipt"),
+            "previous_matrix_response_event_id": (previous or {}).get(
+                "matrix_response_event_id"
+            ),
+            "next_stage_task_id": task["task_id"],
+            "next_skill": task["skill_name"],
+            "next_actor": task["assigned_actor"],
+            "next_input_keys": sorted(skill_input),
+            "next_input_hash": "sha256:" + hashlib.sha256(canonical_input).hexdigest(),
+            "case_version": task["case_version"],
+            "traceparent": otel.carrier().get("traceparent"),
+            "failure_requirement": (
+                "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功"
+            ),
+        }

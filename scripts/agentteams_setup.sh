@@ -12,6 +12,7 @@ set -euo pipefail
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
 MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-luna}}"
+MAX_COMPLETION_TOKENS="${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-512}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
 AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
@@ -145,13 +146,19 @@ fi
 echo "==> 5/6 同步 CoPaw 运行时激活模型"
 for w in $WORKERS; do
   container="${WORKER_CONTAINER_PREFIX}revguard-$w"
-  docker exec -i -e REVGUARD_TARGET_MODEL="$MODEL" "$container" python3 - <<'PY'
+  docker exec -i \
+    -e REVGUARD_TARGET_MODEL="$MODEL" \
+    -e REVGUARD_MAX_COMPLETION_TOKENS="$MAX_COMPLETION_TOKENS" \
+    "$container" python3 - <<'PY'
 import json
 import os
 import urllib.request
 
 base = "http://127.0.0.1:8088"
 target = os.environ["REVGUARD_TARGET_MODEL"]
+max_completion_tokens = int(os.environ["REVGUARD_MAX_COMPLETION_TOKENS"])
+if not 64 <= max_completion_tokens <= 4096:
+    raise SystemExit("REVGUARD_MAX_COMPLETION_TOKENS must be between 64 and 4096")
 with urllib.request.urlopen(base + "/api/models", timeout=10) as response:
     providers = json.load(response)
 provider = next(item for item in providers if item.get("id") == "agentteams-gateway")
@@ -177,7 +184,11 @@ if target in {"gpt-5.6-sol", "gpt-5.6-luna"}:
     req = urllib.request.Request(
         base + "/api/models/agentteams-gateway/models/" + target + "/config",
         data=json.dumps({
-            "generate_kwargs": {**model_config, "reasoning_effort": "none"},
+            "generate_kwargs": {
+                **model_config,
+                "reasoning_effort": "none",
+                "max_completion_tokens": max_completion_tokens,
+            },
         }).encode(),
         method="PUT", headers={"Content-Type": "application/json"},
     )

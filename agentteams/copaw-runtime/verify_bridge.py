@@ -39,6 +39,7 @@ def verify(bridge):
                 models = {m["id"]: m for m in providers["custom_providers"]["test"]["models"]}
                 for model in ("gpt-5.6-luna", "gpt-5.6-sol"):
                     assert models[model]["generate_kwargs"]["reasoning_effort"] == "none"
+                    assert models[model]["generate_kwargs"]["max_completion_tokens"] == 512
                 assert "generate_kwargs" not in models["other-model"]
 
 paths = sorted(Path("/opt").glob("**/site-packages/copaw_worker/bridge.py"))

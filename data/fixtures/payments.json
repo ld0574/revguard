@@ -8,6 +8,14 @@
     "payment_date": "2026-07-28"
   },
   {
+    "payment_id": "PAY-98768",
+    "order_id": "EZ202608008",
+    "payment_amount": 180000,
+    "currency": "KES",
+    "payment_status": "SETTLED",
+    "payment_date": "2026-07-29"
+  },
+  {
     "payment_id": "PAY-98770",
     "order_id": "EZ202607002",
     "payment_amount": 100000,
