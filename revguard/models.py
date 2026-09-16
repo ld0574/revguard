@@ -104,6 +104,8 @@ class Evidence:
     payload: dict
     strength: str = "STRONG"  # STRONG / MEDIUM / WEAK（设计文档 16.3）
     tool_receipt: str | None = None
+    provenance_kind: str = "SYNTHETIC_DOMAIN"
+    source_metadata: dict = field(default_factory=dict)
     collected_at: str = field(default_factory=utc_now)
     content_hash: str = ""
 

@@ -163,14 +163,26 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
     gaps: list[str] = []
 
     def _record(ev_type: str, source_system: str, source_ref: str, payload: dict,
-                tool_receipt: str) -> Evidence:
+                response: dict) -> Evidence:
         canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True,
                                separators=(",", ":"), default=str).encode("utf-8")
+        metadata_keys = (
+            "provider", "external_document_type", "external_document_id",
+            "source_timestamp", "http_status", "latency_ms", "payload_hash",
+            "correlation_id", "record_url",
+        )
+        source_metadata = {
+            key: response.get(key) for key in metadata_keys
+            if response.get(key) is not None
+        }
         ev = Evidence(
             evidence_id=new_id("EV"), case_id=case_id, type=ev_type,
-            source_system=source_system, source_ref=source_ref,
+            source_system=response.get("provider") or source_system,
+            source_ref=response.get("external_document_id") or source_ref,
             collected_by="revguard-evidence", payload=payload,
-            strength="STRONG", tool_receipt=tool_receipt,
+            strength="STRONG", tool_receipt=response["tool_receipt"],
+            provenance_kind=response.get("provenance_kind") or "SYNTHETIC_DOMAIN",
+            source_metadata=source_metadata,
             content_hash="sha256:" + hashlib.sha256(canonical).hexdigest(),
         )
         evidence.append(ev)
@@ -220,7 +232,7 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
             continue
         source_system, ref, resp = result
         collected[ev_type] = resp["data"]
-        _record(ev_type, source_system, ref, resp["data"], resp["tool_receipt"])
+        _record(ev_type, source_system, ref, resp["data"], resp)
     parallel_duration_ms = int((time.monotonic() - started) * 1000)
 
     # 政策库查询依赖合同结果（政策 ID 来自合同）
@@ -230,7 +242,7 @@ def collect_evidence(gateway: ToolGateway, tracer: Tracer | None, *,
         resp = call_tool(gateway, tracer, "policy.search_versions", {"policy_id": policy_id},
                          case_id=case_id, actor="revguard-evidence", scope=["policy:read"])
         collected["POLICY_VERSIONS"] = resp["data"]
-        _record("POLICY_VERSIONS", "CONTRACT_MOCK", policy_id, resp["data"], resp["tool_receipt"])
+        _record("POLICY_VERSIONS", "CONTRACT_MOCK", policy_id, resp["data"], resp)
     else:
         gaps.append("POLICY_VERSIONS: 合同缺失，无法确定政策 ID")
 

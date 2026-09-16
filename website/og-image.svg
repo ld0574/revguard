@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081527"/><stop offset="1" stop-color="#0e2647"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="60" y="60" width="1080" height="510" rx="18" fill="none" stroke="#1d3c63" stroke-width="2"/>
+  <text x="100" y="200" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="72" font-weight="700" fill="#e8f1fa">Rev<tspan fill="#00d8c8">Guard</tspan></text>
+  <text x="100" y="270" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="30" fill="#9fb6cd">面向高风险资金业务的多 Agent 治理控制面</text>
+  <text x="100" y="350" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" fill="#ff9040">确定性金额内核 · 真人审批门禁 · 执行/验证分离 · 未知结果恢复</text>
+  <text x="100" y="470" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="20" fill="#3ddc97">真实 ERPNext · AgentTeams/Matrix · PostgreSQL · OTel/Grafana</text>
+  <text x="100" y="520" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#9fb6cd">GOAI 开源大赛 Agent Infra 赛道决赛项目 · v0.6.0 · Apache-2.0</text>
+</svg>
