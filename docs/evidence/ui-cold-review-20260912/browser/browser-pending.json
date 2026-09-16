@@ -1,0 +1,30 @@
+{
+  "phase": "pending",
+  "browser": "Chromium in 202 Docker",
+  "results": [
+    {
+      "case_id": "CASE-2026-0003",
+      "status": "CREATED",
+      "tone": "neutral",
+      "disclosure_visible_and_no_overflow": [
+        1600,
+        1180,
+        760,
+        390
+      ]
+    },
+    {
+      "case_id": "CASE-2026-0001",
+      "status": "WAITING_FOR_APPROVAL",
+      "tone": "warning",
+      "disclosure_visible_and_no_overflow": [
+        1600,
+        1180,
+        760,
+        390
+      ]
+    }
+  ],
+  "console_errors": [],
+  "passed": true
+}

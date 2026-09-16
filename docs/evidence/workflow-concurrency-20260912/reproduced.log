@@ -1,0 +1,97 @@
+{"timestamp": "2026-09-11T19:47:47.216910Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-11T19:47:47.296986Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/app/demo-ui/dist/client"}
+test_case_change_between_validation_and_claim_prevents_skill_execution (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_case_change_between_validation_and_claim_prevents_skill_execution) ... FAIL
+test_stale_matrix_progress_cannot_reopen_advanced_case (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_stale_matrix_progress_cannot_reopen_advanced_case) ... FAIL
+test_stale_ordinary_case_write_cannot_erase_new_business_fields (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_stale_ordinary_case_write_cannot_erase_new_business_fields) ... FAIL
+test_case_change_between_validation_and_claim_prevents_skill_execution (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_case_change_between_validation_and_claim_prevents_skill_execution) ... FAIL
+test_stale_matrix_progress_cannot_reopen_advanced_case (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_stale_matrix_progress_cannot_reopen_advanced_case) ... FAIL
+test_stale_ordinary_case_write_cannot_erase_new_business_fields (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_stale_ordinary_case_write_cannot_erase_new_business_fields) ... FAIL
+
+======================================================================
+FAIL: test_case_change_between_validation_and_claim_prevents_skill_execution (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_case_change_between_validation_and_claim_prevents_skill_execution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 117, in _callMaybeAsync
+    return self._asyncioTestContext.run(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_workflow_concurrency.py", line 58, in test_case_change_between_validation_and_claim_prevents_skill_execution
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_stale_matrix_progress_cannot_reopen_advanced_case (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_stale_matrix_progress_cannot_reopen_advanced_case)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 117, in _callMaybeAsync
+    return self._asyncioTestContext.run(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_workflow_concurrency.py", line 27, in test_stale_matrix_progress_cannot_reopen_advanced_case
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_stale_ordinary_case_write_cannot_erase_new_business_fields (tests.test_workflow_concurrency.TestWorkflowConcurrency.test_stale_ordinary_case_write_cannot_erase_new_business_fields)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 117, in _callMaybeAsync
+    return self._asyncioTestContext.run(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_workflow_concurrency.py", line 38, in test_stale_ordinary_case_write_cannot_erase_new_business_fields
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_case_change_between_validation_and_claim_prevents_skill_execution (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_case_change_between_validation_and_claim_prevents_skill_execution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 117, in _callMaybeAsync
+    return self._asyncioTestContext.run(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_workflow_concurrency.py", line 58, in test_case_change_between_validation_and_claim_prevents_skill_execution
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_stale_matrix_progress_cannot_reopen_advanced_case (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_stale_matrix_progress_cannot_reopen_advanced_case)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 117, in _callMaybeAsync
+    return self._asyncioTestContext.run(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_workflow_concurrency.py", line 27, in test_stale_matrix_progress_cannot_reopen_advanced_case
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_stale_ordinary_case_write_cannot_erase_new_business_fields (tests.test_workflow_concurrency_postgres.TestPostgresWorkflowConcurrency.test_stale_ordinary_case_write_cannot_erase_new_business_fields)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 117, in _callMaybeAsync
+    return self._asyncioTestContext.run(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_workflow_concurrency.py", line 38, in test_stale_ordinary_case_write_cannot_erase_new_business_fields
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.623s
+
+FAILED (failures=6)

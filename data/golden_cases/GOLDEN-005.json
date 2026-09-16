@@ -1,0 +1,22 @@
+{
+  "case_id": "CASE-2026-0005",
+  "title": "整单漏算：批处理完全漏掉一笔已回款订单（L2 审批补付）",
+  "input": {
+    "case_id": "CASE-2026-0005",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "TICKET",
+    "partner_id": "AGT-10003",
+    "order_id": "EZ202607101",
+    "description": "代理商对账时发现订单 EZ202607101（60,000 KES，7 月 20 日已回款）在 7 月佣金结算单中完全找不到，请核查。",
+    "claim": {"actual_amount": 0, "expected_amount": null, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "tier_at_order_date": "SILVER",
+    "total_commission": "6600.00",
+    "root_causes": ["MISSING_COMPONENT"],
+    "risk_level": "L2",
+    "final_status": "CLOSED",
+    "verification_status": "PASSED"
+  }
+}

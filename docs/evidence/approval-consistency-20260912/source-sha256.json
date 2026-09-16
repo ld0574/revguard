@@ -1,0 +1,17 @@
+{
+  "tests/test_approval_consistency.py": "bdd90bdbcbf9ab7b1d04215d7b3d2797a0f04746b366419f9097e30ce4beaaa0",
+  "tests/test_approval_consistency_postgres.py": "9f79a056492ff73c90ba3ea62d804addbff2b6a57c27770637f2b4e5292d1ab2",
+  "Dockerfile": "4e53a2cba7d188f39acb633fbb540340d84af64b6c0abe62e6b4627701a7d784",
+  "Makefile": "66c9e7e2a2d0109d14fe74a0959e81a65fa46b228f2b3b0c4396ed78f325e4b5",
+  "demo-ui/src/App.jsx": "d2347b11a3015c6709e13aed7bcff8b5170fbba071c795777a2675148138d949",
+  "docker-compose.yml": "9d9cb0b5b739ef05d14bf8e64463dcc87298b6e0f48dcc78db5bfa424a76e701",
+  "docs/final-project-review-20260912.md": "f0f81811e76f3ad895bf93909e31c9736fd24a5872d23d0497c3cb563ec48da4",
+  "docs/openapi.json": "0844bfc54bd726408ebbc00bfe25549c354fa4281d42b795a318835603c0740f",
+  "pyproject.toml": "d3503b4342745d28e939c3ff1a076636c4948f051ca3a6a1eb710a430703f704",
+  "revguard/api.py": "326b95304eab9d5158659772e4ecc1a391731d3adf05f09ae68123278baf7613",
+  "revguard/mcp_team.py": "f259430984624ecae44bd91e430771e6966b5fdfde1cb77bd1ea9938b9be3298",
+  "revguard/mocks.py": "7737fe0f435922a9a3787b16bf0c761c811bc865d8cd97b20667c6d08ae44560",
+  "revguard/postgres_store.py": "380d21bdbc486346c31f1e1219e58a55cf91894380eef8d98d7380434a8f66bc",
+  "revguard/state_machine.py": "8d0fea765ae2f1da3d334e10d206ccfc149c73477fa5c4f61d8d858bf3bbf9f7",
+  "revguard/store.py": "373c0a012ca9c6fd7e6af0b3faaa09eae49fb9e41c91b95d1a9592689164f26d"
+}

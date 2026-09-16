@@ -1,0 +1,175 @@
+{
+  "checked_at": "2026-09-12T14:50:27.299989+00:00",
+  "environment": "10.10.10.202 Docker",
+  "workers": [
+    {
+      "name": "revguard-calculation",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-executor",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-knowledge",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-orchestrator",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-verifier",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-evidence",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-intake",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "stopped"
+    },
+    {
+      "name": "revguard-policy",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-risk",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    },
+    {
+      "name": "revguard-rootcause",
+      "phase": "Sleeping",
+      "state": "Sleeping",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "containerState": "not_found"
+    }
+  ],
+  "managers": [
+    {
+      "name": "default",
+      "phase": "Running",
+      "model": "gpt-5.6-luna",
+      "runtime": "copaw",
+      "image": "revguard-agentteams-manager:luna-20260912"
+    }
+  ],
+  "runtime": [
+    {
+      "name": "agentteams-manager",
+      "exists": true,
+      "image": "revguard-agentteams-manager:luna-20260912",
+      "image_id": "sha256:c55b9df6e1daf0b2290ac6190987b383e99ba7eeb8796c222588238b3688e59f",
+      "running": true
+    },
+    {
+      "name": "agentteams-worker-revguard-calculation",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-executor",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-knowledge",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-orchestrator",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-verifier",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-evidence",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-intake",
+      "exists": true,
+      "image": "revguard-agentteams-worker:luna-20260912",
+      "image_id": "sha256:c60815f5dd21c2991cbac5e9b97f95723d2c94588a2a6f712ceaf6eb34c4df33",
+      "running": false
+    },
+    {
+      "name": "agentteams-worker-revguard-policy",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-risk",
+      "exists": false
+    },
+    {
+      "name": "agentteams-worker-revguard-rootcause",
+      "exists": false
+    }
+  ],
+  "manager_heartbeat": {
+    "enabled": false,
+    "every": "30m",
+    "target": "main",
+    "activeHours": null
+  },
+  "manager_cron_jobs": [],
+  "manager_total_calls": 188,
+  "api_health": {
+    "status": "ok",
+    "release": "0.5.10",
+    "cases": 8,
+    "ready": true,
+    "backend": "postgresql-polardb",
+    "read_replica": false,
+    "maintenance": false
+  },
+  "passed": true
+}

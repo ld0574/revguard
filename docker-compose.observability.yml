@@ -1,0 +1,110 @@
+# Optional observation backend; start with scripts/deploy_observability.sh.
+services:
+  revguard-api:
+    environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      REVGUARD_POSTING_TAMPER_AMOUNT: ${REVGUARD_POSTING_TAMPER_AMOUNT:-0}
+      REVGUARD_GRAFANA_UPSTREAM: http://grafana:3000
+      REVGUARD_GRAFANA_PUBLIC_TOKEN_FILE: /run/secrets/grafana-public-token
+    volumes:
+      - ./.runtime/observability/grafana-public-token:/run/secrets/grafana-public-token:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.132.0
+    user: "0:0"
+    command: ["--config=/etc/otel.yaml"]
+    volumes:
+      - ./config/observability/otel.yaml:/etc/otel.yaml:ro
+      - otel-queue:/var/lib/otel
+    restart: unless-stopped
+    mem_limit: 256m
+
+  tempo:
+    image: grafana/tempo:2.8.2
+    user: "0:0"
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./config/observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    restart: unless-stopped
+    mem_limit: 512m
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    user: "0:0"
+    command: ["--config.file=/etc/prometheus/prometheus.yaml", "--storage.tsdb.retention.time=7d"]
+    volumes:
+      - ./config/observability/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - ./config/observability/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+      - ./.runtime/observability/metrics-token:/run/secrets/metrics-token:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    mem_limit: 512m
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    command: ["--config.file=/etc/alertmanager/alertmanager.yaml"]
+    volumes:
+      - ./config/observability/alertmanager.yaml:/etc/alertmanager/alertmanager.yaml:ro
+      - alertmanager-data:/alertmanager
+    restart: unless-stopped
+    mem_limit: 128m
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.27.0
+    command: ["--config.file=/etc/blackbox.yaml"]
+    volumes:
+      - ./config/observability/blackbox.yaml:/etc/blackbox.yaml:ro
+    restart: unless-stopped
+    mem_limit: 64m
+
+  loki:
+    image: grafana/loki:3.5.4
+    user: "0:0"
+    command: ["-config.file=/etc/loki.yaml"]
+    volumes:
+      - ./config/observability/loki.yaml:/etc/loki.yaml:ro
+      - loki-data:/var/loki
+    restart: unless-stopped
+    mem_limit: 512m
+
+  alloy:
+    image: grafana/alloy:v1.10.2
+    environment:
+      REVGUARD_COMPOSE_PROJECT: "${COMPOSE_PROJECT_NAME:-revguard}"
+    user: "0:0"
+    command: ["run", "--storage.path=/var/lib/alloy", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./config/observability/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy
+    restart: unless-stopped
+    mem_limit: 256m
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    user: "0:0"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana-password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_SERVER_ROOT_URL: "${REVGUARD_GRAFANA_ROOT_URL:-http://10.10.10.202:19000/grafana/}"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "${REVGUARD_OBSERVABILITY_BIND:-127.0.0.1}:13001:3000"
+    volumes:
+      - ./config/observability/grafana:/etc/grafana/provisioning:ro
+      - ./.runtime/observability/grafana-password:/run/secrets/grafana-password:ro
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    mem_limit: 256m
+
+volumes:
+  otel-queue:
+  tempo-data:
+  prometheus-data:
+  alertmanager-data:
+  loki-data:
+  alloy-data:
+  grafana-data:

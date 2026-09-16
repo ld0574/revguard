@@ -1,0 +1,109 @@
+# RevGuard 0.6.0 研发/验收栈：独立端口、独立 PostgreSQL、独立卷与网络。
+# 与 19000 上的常驻演示栈完全隔离，互不影响历史案件与证据。
+# 用法：cp config/env 私有变量到 .env 后
+#   docker compose -f docker-compose.dev.yml -p revguard-dev up -d --build
+services:
+  revguard-dev-postgres:
+    image: postgres:16-alpine
+    container_name: revguard-dev-postgres
+    environment:
+      POSTGRES_USER: revguard
+      POSTGRES_PASSWORD: ${REVGUARD_DEV_DB_PASSWORD:-revguard-dev-only}
+      POSTGRES_DB: revguard
+    volumes:
+      - revguard-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U revguard -d revguard"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    restart: unless-stopped
+
+  revguard-api-dev:
+    build:
+      context: .
+      args:
+        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc1}
+    container_name: revguard-api-dev
+    ports:
+      - "19088:9000"
+    volumes:
+      - revguard-dev-outputs:/app/data/outputs
+      - revguard-dev-reports:/app/docs/reports
+      - revguard-dev-runtime:/app/runtime
+      - /root/revguard-0.6.0-dev/scripts:/app/scripts:ro
+      - /root/revguard-0.6.0-dev/revguard:/app/revguard:ro
+    environment:
+      REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc1}
+      REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_DEV_DB_PASSWORD:-revguard-dev-only}@revguard-dev-postgres:5432/revguard
+      REVGUARD_AUTO_MIGRATE: "true"
+      REVGUARD_ENTERPRISE_PROVIDER: ${REVGUARD_ENTERPRISE_PROVIDER:-mock}
+      REVGUARD_ERPNEXT_BASE_URL: ${REVGUARD_ERPNEXT_BASE_URL:-}
+      REVGUARD_ERPNEXT_API_KEY: ${REVGUARD_ERPNEXT_API_KEY:-}
+      REVGUARD_ERPNEXT_API_SECRET: ${REVGUARD_ERPNEXT_API_SECRET:-}
+      REVGUARD_ERPNEXT_SITE_NAME: ${REVGUARD_ERPNEXT_SITE_NAME:-}
+      REVGUARD_ERPNEXT_TIMEOUT_SECONDS: ${REVGUARD_ERPNEXT_TIMEOUT_SECONDS:-8}
+      REVGUARD_APPROVAL_MODE: ${REVGUARD_APPROVAL_MODE:-wait}
+      REVGUARD_FINANCE_FAIL_TIMES: ${REVGUARD_FINANCE_FAIL_TIMES:-1}
+      REVGUARD_VERIFICATION_TAMPER_AMOUNT: ${REVGUARD_VERIFICATION_TAMPER_AMOUNT:-0}
+      REVGUARD_APPROVAL_SIGNING_KEY: ${REVGUARD_APPROVAL_SIGNING_KEY:-}
+      REVGUARD_API_KEYS_JSON: ${REVGUARD_API_KEYS_JSON:-}
+      REVGUARD_ALLOW_INSECURE_DEMO_KEYS: ${REVGUARD_ALLOW_INSECURE_DEMO_KEYS:-true}
+      REVGUARD_ENABLE_LEGACY_TOOL_API: ${REVGUARD_ENABLE_LEGACY_TOOL_API:-false}
+      REVGUARD_ENABLE_RECORDING_UI: ${REVGUARD_ENABLE_RECORDING_UI:-true}
+      REVGUARD_MONEY_RECOVERY_LOCK: ${REVGUARD_MONEY_RECOVERY_LOCK:-false}
+      REVGUARD_ALLOW_DATABASE_RESET: ${REVGUARD_ALLOW_DATABASE_RESET:-false}
+      REVGUARD_RESET_ON_START: ${REVGUARD_RESET_ON_START:-false}
+      REVGUARD_READ_DATABASE_URL: ${REVGUARD_READ_DATABASE_URL:-}
+      REVGUARD_DB_POOL_MIN: ${REVGUARD_DB_POOL_MIN:-1}
+      REVGUARD_DB_POOL_MAX: ${REVGUARD_DB_POOL_MAX:-10}
+      REVGUARD_TEAM_TRANSPORT: ${REVGUARD_TEAM_TRANSPORT:-mcp}
+      REVGUARD_MATRIX_HOMESERVER_URL: ${REVGUARD_MATRIX_HOMESERVER_URL:-http://agentteams-controller:6167}
+      REVGUARD_MATRIX_ROOM_ID: ${REVGUARD_MATRIX_ROOM_ID:-}
+      REVGUARD_MATRIX_WORKER_ROOMS_JSON: '${REVGUARD_MATRIX_WORKER_ROOMS_JSON:-{}}'
+      REVGUARD_MATRIX_SERVER_NAME: ${REVGUARD_MATRIX_SERVER_NAME:-matrix-local.agentteams.io:8086}
+      REVGUARD_MATRIX_USERNAME: ${REVGUARD_MATRIX_USERNAME:-}
+      REVGUARD_MATRIX_PASSWORD: ${REVGUARD_MATRIX_PASSWORD:-}
+      REVGUARD_MATRIX_ACCESS_TOKEN: ${REVGUARD_MATRIX_ACCESS_TOKEN:-}
+      REVGUARD_HITL_MATRIX_HOMESERVER_URL: ${REVGUARD_HITL_MATRIX_HOMESERVER_URL:-http://agentteams-controller:6167}
+      REVGUARD_HITL_MATRIX_USERS_JSON: '${REVGUARD_HITL_MATRIX_USERS_JSON:-{}}'
+      REVGUARD_HITL_ASSERTION_TTL_SECONDS: ${REVGUARD_HITL_ASSERTION_TTL_SECONDS:-120}
+      REVGUARD_HITL_MAX_AUTH_AGE_SECONDS: ${REVGUARD_HITL_MAX_AUTH_AGE_SECONDS:-300}
+      REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS:-240}
+      REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS:-90}
+      REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS:-120}
+      REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK: ${REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK:-true}
+      REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE: ${REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE:-2}
+      REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS: ${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-512}
+      REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS: ${REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS:-600}
+    depends_on:
+      revguard-dev-postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - enterprise
+      - agentteams
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.0
+    restart: unless-stopped
+
+volumes:
+  revguard-dev-outputs:
+  revguard-dev-reports:
+  revguard-dev-runtime:
+  revguard-dev-db:
+
+networks:
+  enterprise:
+    external: true
+    name: revguard-enterprise
+  agentteams:
+    external: true
+    name: agentteams-net

@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "datasets": [
+    {
+      "dataset_id": "olist-brazilian-ecommerce",
+      "title": "Brazilian E-Commerce Public Dataset by Olist",
+      "source_url": "https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce",
+      "metadata_url": "https://www.kaggle.com/api/v1/datasets/view/olistbr/brazilian-ecommerce",
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/olistbr/brazilian-ecommerce",
+      "license": "CC BY-NC-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+      "classification": "PUBLIC_REAL",
+      "description": "Approximately 100,000 anonymized Brazilian marketplace orders from 2016 through 2018.",
+      "redistribution": "Raw and row-level derived data are excluded from the Apache-2.0 source release and remain governed by the dataset license."
+    },
+    {
+      "dataset_id": "uci-online-retail-ii",
+      "title": "Online Retail II",
+      "source_url": "https://archive.ics.uci.edu/dataset/502/online+retail+ii",
+      "doi": "10.24432/C5CG6D",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "classification": "PUBLIC_REAL",
+      "description": "Two years of anonymized UK non-store online retail transactions; retained as a second adapter model."
+    }
+  ]
+}

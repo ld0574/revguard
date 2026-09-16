@@ -1,0 +1,10 @@
+{
+  "scope": "local synthetic MCP harness; injected Store method failure, not a real PolarDB failover",
+  "failure": "OperationalError",
+  "ledger_reversal_exists": true,
+  "store_execution_status": "SUBMITTED",
+  "renewal_error_type": "DATA_CONFLICT",
+  "same_key_replay_error_type": "IDEMPOTENCY_CONFLICT",
+  "reversal_count": 1,
+  "write_timeout_attempts_without_status_query": 3
+}

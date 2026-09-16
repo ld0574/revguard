@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "case_id": "CASE-2026-0008",
+  "release": "0.4.0",
+  "business_data": "SYNTHETIC",
+  "workflow": "REAL_EXECUTABLE",
+  "transport": "MCP",
+  "orchestration": "STATE_DRIVEN",
+  "approval_evidence": {
+    "gate_pause": "CAPTURED_IN_01-human-gate.json",
+    "rehearsal_decision": "SCRIPTED_AND_EXPLICITLY_LABELLED",
+    "human_ui_click": "PENDING_RECORDING_CAPTURE"
+  },
+  "database_evidence": {
+    "local_postgresql": "see docs/polardb-local-verification-2026-08-27.json",
+    "cloud_polardb": "PENDING_DEPLOYMENT_CAPTURE"
+  },
+  "agentteams_room_evidence": "PENDING_EXTERNAL_CAPTURE",
+  "outcome": {
+    "gate_status": "WAITING_FOR_APPROVAL",
+    "final_status": "ROLLED_BACK",
+    "verification": "FAILED",
+    "rollback_verification": "PASSED",
+    "task_count": 20,
+    "succeeded_tasks": 20,
+    "worker_count": 9,
+    "skill_count": 16
+  },
+  "security": {
+    "credentials_redacted": true,
+    "raw_capability_token_pattern_absent": true
+  },
+  "artifact_sha256": {
+    "00-data-provenance.json": "100de3e9a638a92dc612bf79134ebf67b8c9481af1a8cc523cc8fa43d8dccf55",
+    "01-human-gate.json": "ebf715dd59e50afc48ee8a85ff98262810c457f30122dd05217d33d4ad1e466a",
+    "02-agent-tasks.json": "1fa4167cec6c0704ab74c7a166ee30b54bad33b24f58cf5b5de64d107f9bff9a",
+    "03-audit-events.json": "40320e0118897ce03fcde77b8336f095338681463ecb7e50208437542a32cf7a",
+    "04-trace-spans.json": "4da322d174ac5872270fff9343b9cb763c03f5078ca43b7f8c884450638f7d35",
+    "05-final-case.json": "44190b8b366ac8096a66a296ce08a89bc24b2ff7e4523018996d617448804ff3",
+    "06-audit-report.md": "5c82431c7ec96cbebe9a40d77425cfa5d2574ad405485c4f3754cca6c831f50b"
+  }
+}

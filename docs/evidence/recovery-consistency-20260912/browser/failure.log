@@ -1,0 +1,1 @@
+{"phase": "failure", "identity_provider": "isolated Matrix contract fixture", "workflow": "real RevGuard API and MCP reference execution", "error_visible": true, "case_preserved": true, "old_task_preserved": true, "no_money_effect": true, "console_errors": [], "passed": true}

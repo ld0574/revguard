@@ -1,0 +1,21 @@
+{
+  "case_id": "CASE-2026-0007",
+  "title": "L3 超额强制人工：差额 >50000 只出方案不执行",
+  "input": {
+    "case_id": "CASE-2026-0007",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "source": "EMAIL",
+    "partner_id": "AGT-10005",
+    "order_id": "EZ202607501",
+    "description": "大额订单 EZ202607501（400,000 KES，7 月 29 日已回款）佣金一直未到账，涉及金额较大，请核查并给出处理意见。",
+    "claim": {"actual_amount": 0, "expected_amount": null, "currency": "KES"}
+  },
+  "expected": {
+    "policy_version": "2026-Q3",
+    "total_commission": "72000.00",
+    "root_causes": ["MISSING_COMPONENT"],
+    "risk_level": "L3",
+    "final_status": "CLOSED",
+    "no_execution": true
+  }
+}

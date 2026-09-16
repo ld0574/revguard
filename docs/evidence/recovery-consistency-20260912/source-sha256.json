@@ -1,0 +1,22 @@
+{
+  "revguard/recovery.py": "b8e6694698c6cf0db0f99287489baba608ccf8ebb30a6f39f4ec09b4999372b3",
+  "revguard/task_guard.py": "f3f88a6179e74fbe40ae7de7897603d7b7b9266f18b9b080876a6fa2db26a861",
+  "tests/test_recovery_consistency.py": "392c5640378d3ec0aa38bcac20cce3011da54984032f0e10456c4d1ed0ca91db",
+  "tests/test_recovery_consistency_postgres.py": "57e209500209a6096fb8bf3ac7e08775331bf77c234cad0514adca1715c30d40",
+  "Dockerfile": "070a7b25bfdb133235ee84e85bdc21a01e04c15bfe3b55fc17adb33a5c8efd0c",
+  "Makefile": "de33630ddbb1b708a7db2a6cbc6a502a4f8bb9a31c5ad4f327cfb0e4c792962d",
+  "docker-compose.yml": "729d3b8695289526d40b6c75bec3405ee30790aeba6915e2eb926c56b00d22c1",
+  "docs/final-project-review-20260912.md": "f674d869205a501e8c07873a00a1c3aa4043e0086ef846b00f8db3c00593dc64",
+  "docs/openapi.json": "cf3467402e09dd2e87f16b3c2277e2a83a8e6a31231fb514f62d44a985d3957c",
+  "docs/skills.md": "73bcaf2c7d1bd5e152a123ffba24fe3b52355d2a5e7cc7edd83c110aeb7a7214",
+  "pyproject.toml": "e07592a4f9a67e12602a1e292ed52c6a03014a21b8314e4da2640d06dfe8a72e",
+  "revguard/agent_bridge.py": "9bfcb5a2cf43cb9170a2e2b9394a536f14d4396bfc81d774984d90782d7e2bb8",
+  "revguard/api.py": "bf5e8c52d78f42244a5276e8f4100bb66f78a26cce8ca8a22fca9775704b8b88",
+  "revguard/mcp_team.py": "e594644e2fcfef1007fc1d119a2e82c3f86fa7206e0172ee950a072d3d3fbecf",
+  "revguard/mocks.py": "249c3e19a5e18bd092c5e354843adfe1dd7473b7d760f9e822a543c0048ca5b5",
+  "revguard/money_journal.py": "0a204182e6e09a0e6384564651a8eb2a5bd6b499ad13a17b167c6e35e82b8b7f",
+  "revguard/skill_runtime.py": "5219b484551e418836ded24b0e07bc8c6ebf3f5bb852a459261b657a37a8f6d9",
+  "revguard/skill_schemas.py": "7cb886ffbb0fed9a2b867fd7bbe87a666183807382521d51a290f9b453578109",
+  "revguard/skills.py": "6a412dbb94c26ff4278e8215c4633c3adc5569b23c65fff00ff672d3d439a16e",
+  "tests/test_api.py": "a6b18414e85e7951c90bf4efc981b6ee95e98220a32b4f6d79e58e3350c6ffb1"
+}

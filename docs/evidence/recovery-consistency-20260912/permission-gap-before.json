@@ -1,0 +1,69 @@
+{
+  "case_status": "CLOSED",
+  "task_statuses": [
+    {
+      "skill": "CaseNormalizeSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "EntityResolveSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "EvidenceCollectSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "PolicyVersionMatchSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "CommissionCalculateSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "DifferenceExplainSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "RiskClassifySkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "ApprovalRouteSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "PermissionCheckSkill",
+      "status": "CANCELLED"
+    },
+    {
+      "skill": "IdempotencyGuardSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "AdjustmentDraftSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "IdempotencyGuardSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "AdjustmentDraftSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "LedgerAdjustSkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "PostActionVerifySkill",
+      "status": "SUCCEEDED"
+    },
+    {
+      "skill": "CaseToDatasetSkill",
+      "status": "SUCCEEDED"
+    }
+  ]
+}

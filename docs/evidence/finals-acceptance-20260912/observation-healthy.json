@@ -1,0 +1,85 @@
+{
+  "phase": "healthy",
+  "targets": [
+    {
+      "job": "otel-collector",
+      "health": "up",
+      "last_error": ""
+    },
+    {
+      "job": "prometheus",
+      "health": "up",
+      "last_error": ""
+    },
+    {
+      "job": "readiness",
+      "health": "up",
+      "last_error": ""
+    },
+    {
+      "job": "revguard",
+      "health": "up",
+      "last_error": ""
+    }
+  ],
+  "alerts": [],
+  "alertmanager": [],
+  "trace": {
+    "case_id": "CASE-2026-0008",
+    "trace_id": "27413cb14ae9b30c69be6fc9c7b4d965",
+    "final_status": "ROLLED_BACK",
+    "tasks": 18,
+    "ledger_entries": 4,
+    "audit_chain_valid": true,
+    "scope": "isolated PostgreSQL synthetic posting fault; local MCP transport",
+    "exported_spans": 51,
+    "names": [
+      "AdjustmentDraftSkill",
+      "Agent.AdjustmentDraftSkill",
+      "Agent.ApprovalRouteSkill",
+      "Agent.CaseNormalizeSkill",
+      "Agent.CaseToDatasetSkill",
+      "Agent.CommissionCalculateSkill",
+      "Agent.DifferenceExplainSkill",
+      "Agent.EntityResolveSkill",
+      "Agent.EvidenceCollectSkill",
+      "Agent.IdempotencyGuardSkill",
+      "Agent.LedgerAdjustSkill",
+      "Agent.LedgerReverseSkill",
+      "Agent.PermissionCheckSkill",
+      "Agent.PolicyVersionMatchSkill",
+      "Agent.PostActionVerifySkill",
+      "Agent.PostRollbackVerifySkill",
+      "Agent.RiskClassifySkill",
+      "ApprovalRouteSkill",
+      "CaseNormalizeSkill",
+      "CaseToDatasetSkill",
+      "CommissionCalculateSkill",
+      "DifferenceExplainSkill",
+      "EntityResolveSkill",
+      "EvidenceCollectSkill",
+      "IdempotencyGuardSkill",
+      "LedgerAdjustSkill",
+      "LedgerReverseSkill",
+      "PermissionCheckSkill",
+      "PolicyVersionMatchSkill",
+      "PostActionVerifySkill",
+      "PostRollbackVerifySkill",
+      "RiskClassifySkill",
+      "commission.create_adjustment_draft",
+      "commission.reverse_adjustment",
+      "commission.submit_adjustment",
+      "crm.get_partner",
+      "crm.list_orders_by_partner",
+      "execute_after_approval",
+      "finance.get_commission_ledger",
+      "mail.create_reply_draft",
+      "policy.search_versions",
+      "run_to_human_gate",
+      "ticket.update_case",
+      "workflow.create_approval"
+    ]
+  },
+  "log_stream_count": 1,
+  "grafana": "ok"
+}

@@ -1,0 +1,10 @@
+All checks passed!
+test_admin_other_dashboard_and_arbitrary_query_are_denied (tests.test_grafana_embed.GrafanaEmbedTests.test_admin_other_dashboard_and_arbitrary_query_are_denied) ... ok
+test_disabled_or_unreachable_is_not_reported_as_healthy (tests.test_grafana_embed.GrafanaEmbedTests.test_disabled_or_unreachable_is_not_reported_as_healthy) ... ok
+test_only_public_query_body_is_forwarded_without_browser_credentials (tests.test_grafana_embed.GrafanaEmbedTests.test_only_public_query_body_is_forwarded_without_browser_credentials) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.039s
+
+OK
+generated /src/docs/openapi.json

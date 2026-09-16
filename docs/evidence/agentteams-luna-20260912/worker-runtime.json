@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-09-12T14:48:10.180762+00:00",
+  "active": {
+    "provider_id": "agentteams-gateway",
+    "model": "gpt-5.6-luna"
+  },
+  "heartbeat": {
+    "enabled": false,
+    "every": "10m",
+    "target": "main",
+    "activeHours": null
+  },
+  "model_kwargs": {
+    "reasoning_effort": "none"
+  },
+  "usage": {
+    "total_calls": 183,
+    "total_prompt_tokens": 13098371,
+    "total_completion_tokens": 66996,
+    "by_model": {
+      "agentteams-gateway:MiniMax-M3": {
+        "prompt_tokens": 12682957,
+        "completion_tokens": 66308,
+        "call_count": 180,
+        "provider_id": "agentteams-gateway",
+        "model": "MiniMax-M3"
+      },
+      "agentteams-gateway:gpt-5.6-sol": {
+        "prompt_tokens": 415414,
+        "completion_tokens": 688,
+        "call_count": 3,
+        "provider_id": "agentteams-gateway",
+        "model": "gpt-5.6-sol"
+      }
+    }
+  },
+  "passed": true
+}

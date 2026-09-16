@@ -1,0 +1,89 @@
+
+> demo-ui@0.0.0 test:ui
+> node --test tests/pipeline-state.test.mjs
+
+TAP version 13
+# Subtest: completed verified writes do not keep waiting for rollback
+ok 1 - completed verified writes do not keep waiting for rollback
+  ---
+  duration_ms: 1.175813
+  ...
+# Subtest: rollback, pending, draft-only and rejected writes are not normal closures
+ok 2 - rollback, pending, draft-only and rejected writes are not normal closures
+  ---
+  duration_ms: 0.197712
+  ...
+# Subtest: safety rail distinguishes measured balances from original baselines
+ok 3 - safety rail distinguishes measured balances from original baselines
+  ---
+  duration_ms: 0.389814
+  ...
+# Subtest: security regression never defaults to a fabricated pass
+ok 4 - security regression never defaults to a fabricated pass
+  ---
+  duration_ms: 0.169922
+  ...
+# Subtest: external validation labels separate configuration from live verification
+ok 5 - external validation labels separate configuration from live verification
+  ---
+  duration_ms: 0.785739
+  ...
+# Subtest: task telemetry uses Agent Trace duration and never invents token usage
+ok 6 - task telemetry uses Agent Trace duration and never invents token usage
+  ---
+  duration_ms: 14.509891
+  ...
+# Subtest: duration and token formatting preserve zero and reject missing data
+ok 7 - duration and token formatting preserve zero and reject missing data
+  ---
+  duration_ms: 0.195032
+  ...
+# Subtest: Beijing clock formats the configured timezone instead of a fixed date
+ok 8 - Beijing clock formats the configured timezone instead of a fixed date
+  ---
+  duration_ms: 4.918215
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 89.342983
+
+> demo-ui@0.0.0 test:sites
+> node --test tests/sites-worker.test.mjs
+
+TAP version 13
+# Subtest: serves existing static assets without a fallback
+ok 1 - serves existing static assets without a fallback
+  ---
+  duration_ms: 24.893427
+  ...
+# Subtest: falls back to index.html for an unknown app route
+ok 2 - falls back to index.html for an unknown app route
+  ---
+  duration_ms: 2.733341
+  ...
+# Subtest: does not turn missing API or write requests into the app shell
+ok 3 - does not turn missing API or write requests into the app shell
+  ---
+  duration_ms: 0.582067
+  ...
+# Subtest: emits the files required by Sites packaging
+ok 4 - emits the files required by Sites packaging
+  ---
+  duration_ms: 4.914105
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.068648
+found 0 vulnerabilities

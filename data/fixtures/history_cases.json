@@ -1,0 +1,47 @@
+[
+  {
+    "case_id": "HIST-2026-0042",
+    "case_type": "WRONG_POLICY_VERSION",
+    "partner_id": "AGT-10005",
+    "order_id": "EZ202604090",
+    "summary": "4月政策切换后批处理仍引用旧版本，销售佣金少算 6%",
+    "resolution": "按正确版本复算并补发差额",
+    "root_cause": "批处理任务未随政策发布同步更新版本引用"
+  },
+  {
+    "case_id": "HIST-2026-0057",
+    "case_type": "COLLECTION_MISSING",
+    "partner_id": "AGT-10007",
+    "order_id": "EZ202605120",
+    "summary": "回款已完成但回款佣金未生成",
+    "resolution": "补生成回款佣金台账",
+    "root_cause": "回款状态同步延迟导致批处理漏算"
+  },
+  {
+    "case_id": "HIST-2026-0063",
+    "case_type": "TIER_EFFECTIVE_DATE_CONFLICT",
+    "partner_id": "AGT-10008",
+    "order_id": "EZ202606330",
+    "summary": "等级升级当月的订单按新等级多算佣金",
+    "resolution": "按订单时点等级回溯并冲销差额",
+    "root_cause": "批处理使用当前等级而非订单时点等级"
+  },
+  {
+    "case_id": "HIST-2026-0071",
+    "case_type": "REFUND_NOT_REVERSED",
+    "partner_id": "AGT-10004",
+    "order_id": "EZ202606202",
+    "summary": "取消订单退款后佣金未冲销",
+    "resolution": "冲销对应佣金台账",
+    "root_cause": "退款事件未触发佣金冲销流程"
+  },
+  {
+    "case_id": "HIST-2026-0080",
+    "case_type": "EVIDENCE_INSUFFICIENT",
+    "partner_id": "AGT-10006",
+    "order_id": null,
+    "summary": "工单仅提供代理商名称，无法定位订单",
+    "resolution": "转人工补充订单号后重新受理",
+    "root_cause": "入口信息不完整"
+  }
+]

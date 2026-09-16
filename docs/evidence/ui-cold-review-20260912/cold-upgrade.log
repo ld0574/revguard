@@ -1,0 +1,129 @@
+Read-only metrics credential and Grafana password prepared in .runtime/observability
+
+==> 部署本地可复现环境（SQLite + MCP Team）
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+#0 building with "default" instance using docker driver
+
+#1 [revguard-api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.71kB done
+#1 DONE 0.0s
+
+#2 [revguard-api internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 0.0s
+
+#3 [revguard-api internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.0s
+
+#4 [revguard-api internal] load .dockerignore
+#4 transferring context: 217B done
+#4 DONE 0.0s
+
+#5 [revguard-api stage-1  1/15] FROM docker.io/library/python:3.11-slim
+#5 DONE 0.0s
+
+#6 [revguard-api demo-ui-build 1/6] FROM docker.io/library/node:20-alpine
+#6 DONE 0.0s
+
+#7 [revguard-api internal] load build context
+#7 transferring context: 186.63kB done
+#7 DONE 0.0s
+
+#8 [revguard-api stage-1  2/15] WORKDIR /app
+#8 CACHED
+
+#9 [revguard-api stage-1  3/15] COPY requirements.txt requirements.lock ./
+#9 CACHED
+
+#10 [revguard-api stage-1  4/15] RUN pip install --no-cache-dir -r requirements.lock &&     pip uninstall --yes setuptools
+#10 CACHED
+
+#11 [revguard-api demo-ui-build 5/6] COPY demo-ui/ ./
+#11 CACHED
+
+#12 [revguard-api demo-ui-build 3/6] COPY demo-ui/package.json demo-ui/package-lock.json ./
+#12 CACHED
+
+#13 [revguard-api demo-ui-build 2/6] WORKDIR /ui
+#13 CACHED
+
+#14 [revguard-api demo-ui-build 4/6] RUN npm ci
+#14 CACHED
+
+#15 [revguard-api demo-ui-build 6/6] RUN npm run build
+#15 CACHED
+
+#16 [revguard-api stage-1  5/15] COPY revguard/ ./revguard/
+#16 DONE 0.1s
+
+#17 [revguard-api stage-1  6/15] COPY scripts/ ./scripts/
+#17 DONE 0.0s
+
+#18 [revguard-api stage-1  7/15] COPY migrations/ ./migrations/
+#18 DONE 0.0s
+
+#19 [revguard-api stage-1  8/15] COPY config/demo_principals.json ./config/demo_principals.json
+#19 DONE 0.0s
+
+#20 [revguard-api stage-1  9/15] COPY data/fixtures/ ./data/fixtures/
+#20 DONE 0.0s
+
+#21 [revguard-api stage-1 10/15] COPY data/golden_cases/ ./data/golden_cases/
+#21 DONE 0.0s
+
+#22 [revguard-api stage-1 11/15] COPY docs/evaluation-summary.json      docs/value-evaluation-synthetic.json      docs/synthetic-data-validation.json      docs/polardb-local-verification-2026-08-27.json      docs/polardb-local-instance-acceptance-2026-08-29.json      ./docs/
+#22 DONE 0.1s
+
+#23 [revguard-api stage-1 12/15] COPY docs/evidence/demo-rehearsal/manifest.json ./docs/evidence/demo-rehearsal/manifest.json
+#23 DONE 0.0s
+
+#24 [revguard-api stage-1 13/15] COPY --from=demo-ui-build /ui/dist/client/ ./demo-ui/dist/client/
+#24 DONE 0.0s
+
+#25 [revguard-api stage-1 14/15] RUN getent group revguard >/dev/null || addgroup --system revguard;     id -u revguard >/dev/null 2>&1 || adduser --system --ingroup revguard revguard
+#25 DONE 0.3s
+
+#26 [revguard-api stage-1 15/15] RUN mkdir -p /app/data/outputs /app/docs/reports /app/runtime &&     chmod +x /app/scripts/start_api.sh &&     chown -R revguard:revguard /app
+#26 DONE 0.3s
+
+#27 [revguard-api] exporting to image
+#27 exporting layers 0.1s done
+#27 writing image sha256:55e888bffbb8ecd78bd541dac45e143acf8ffc5f9d0cf08196ddc5f623dc1470 done
+#27 naming to docker.io/library/workspace-revguard-api done
+#27 DONE 0.1s
+
+#28 [revguard-api] resolving provenance for metadata file
+#28 DONE 0.0s
+ revguard-api  Built
+ Container revguard-api  Recreate
+ Container revguard-api  Recreated
+ Container revguard-api  Starting
+ Container revguard-api  Started
+
+==> 校验并启动可观测组件和只读 Grafana 共享看板
+Checking /etc/prometheus/prometheus.yaml
+  SUCCESS: 1 rule files found
+ SUCCESS: /etc/prometheus/prometheus.yaml is valid prometheus config file syntax
+
+Checking /etc/prometheus/alerts.yaml
+  SUCCESS: 7 rules found
+
+ Container workspace-blackbox-1  Running
+ Container revguard-api  Running
+ Container workspace-otel-collector-1  Running
+ Container workspace-alloy-1  Running
+ Container workspace-loki-1  Running
+ Container workspace-alertmanager-1  Running
+ Container workspace-grafana-1  Running
+ Container workspace-prometheus-1  Running
+ Container workspace-tempo-1  Running
+Grafana selected-dashboard sharing enabled; no admin credential exposed
+
+==> 执行部署验收
+
+部署完成：
+  WebUI  http://127.0.0.1:19000/demo/
+  Health http://127.0.0.1:19000/api/v1/health
+  模式    local
+  案件    8
+  配置    /workspace/.env（权限 0600，请勿提交）

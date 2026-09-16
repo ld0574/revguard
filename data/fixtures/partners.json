@@ -1,0 +1,86 @@
+[
+  {
+    "partner_id": "AGT-10001",
+    "name": "Nairobi Solar Solutions Ltd",
+    "region": "KE-NAIROBI",
+    "tier_history": [
+      {"tier": "SILVER", "effective_from": "2025-01-01"},
+      {"tier": "GOLD", "effective_from": "2026-06-01"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10002",
+    "name": "Mombasa Green Energy Ltd",
+    "region": "KE-MOMBASA",
+    "tier_history": [
+      {"tier": "SILVER", "effective_from": "2025-06-01"},
+      {"tier": "GOLD", "effective_from": "2026-07-15"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10003",
+    "name": "Kisumu EcoPower Ltd",
+    "region": "KE-KISUMU",
+    "tier_history": [
+      {"tier": "BRONZE", "effective_from": "2025-03-01"},
+      {"tier": "SILVER", "effective_from": "2026-05-20"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10004",
+    "name": "Eldoret Home Energy Co",
+    "region": "KE-ELDORET",
+    "tier_history": [
+      {"tier": "SILVER", "effective_from": "2025-09-01"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10005",
+    "name": "Nakuru Solar Hub Ltd",
+    "region": "KE-NAKURU",
+    "tier_history": [
+      {"tier": "GOLD", "effective_from": "2025-11-01"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10006",
+    "name": "Thika Power Partners",
+    "region": "KE-THIKA",
+    "tier_history": [
+      {"tier": "BRONZE", "effective_from": "2026-02-01"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10007",
+    "name": "Nyeri Highland Energy",
+    "region": "KE-NYERI",
+    "tier_history": [
+      {"tier": "SILVER", "effective_from": "2025-07-01"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10008",
+    "name": "Machakos Solar Works",
+    "region": "KE-MACHAKOS",
+    "tier_history": [
+      {"tier": "BRONZE", "effective_from": "2025-10-01"},
+      {"tier": "SILVER", "effective_from": "2026-06-25"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10009",
+    "name": "Kakamega Green Grid",
+    "region": "KE-KAKAMEGA",
+    "tier_history": [
+      {"tier": "SILVER", "effective_from": "2025-12-01"}
+    ]
+  },
+  {
+    "partner_id": "AGT-10010",
+    "name": "Garissa Sun Collective",
+    "region": "KE-GARISSA",
+    "tier_history": [
+      {"tier": "BRONZE", "effective_from": "2026-01-10"}
+    ]
+  }
+]

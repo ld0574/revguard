@@ -1,0 +1,217 @@
+{"timestamp": "2026-09-11T20:14:36.423401Z", "level": "WARNING", "logger": "revguard.api", "message": "REVGUARD_ENABLE_LEGACY_TOOL_API=true：仅允许历史 Evidence Principal 复放只读工具"}
+{"timestamp": "2026-09-11T20:14:36.514601Z", "level": "WARNING", "logger": "revguard.api", "message": "录制 WebUI 尚未构建：/workspace/demo-ui/dist/client"}
+test_delayed_claimed_worker_cannot_post_after_human_resume (tests.test_recovery_consistency.TestRecoveryConsistency.test_delayed_claimed_worker_cannot_post_after_human_resume) ... Executing <Task pending name='Task-2' coro=<TestRecoveryConsistency.test_delayed_claimed_worker_cannot_post_after_human_resume() running at /workspace/tests/test_recovery_consistency.py:124> wait_for=<Future pending cb=[_chain_future.<locals>._call_check_cancel() at /usr/local/lib/python3.11/asyncio/futures.py:387, Task.task_wakeup()] created at /usr/local/lib/python3.11/asyncio/base_events.py:428> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.135 seconds
+{"timestamp": "2026-09-11T20:14:36.749434Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-0B30FCAE", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 20, "trace_id": "7a1975624f94f451221ab5017f656879", "span_id": "83403476d61aea3c"}
+FAIL
+test_failed_resume_keeps_hold_task_capability_and_case_together (tests.test_recovery_consistency.TestRecoveryConsistency.test_failed_resume_keeps_hold_task_capability_and_case_together) ... Executing <Task pending name='Task-7' coro=<TestRecoveryConsistency.test_failed_resume_keeps_hold_task_capability_and_case_together() running at /workspace/tests/test_recovery_consistency.py:71> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.188 seconds
+{"timestamp": "2026-09-11T20:14:37.034783Z", "level": "ERROR", "logger": "revguard.api", "message": "http_request_failed", "request_id": "REQ-6839D049", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "duration_ms": 12, "trace_id": "d1902cbbc3a6b3ed1859cbb87c889506", "span_id": "4c7f577d529dff97", "error_type": "IntegrityError"}
+FAIL
+test_old_background_error_cannot_freeze_a_new_recovery_generation (tests.test_recovery_consistency.TestRecoveryConsistency.test_old_background_error_cannot_freeze_a_new_recovery_generation) ... Executing <Task pending name='Task-12' coro=<TestRecoveryConsistency.test_old_background_error_cannot_freeze_a_new_recovery_generation() running at /workspace/tests/test_recovery_consistency.py:149> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.132 seconds
+{"timestamp": "2026-09-11T20:14:37.268422Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-18782A48", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 16, "trace_id": "02af7e8af3db11975fc5343bd51f6faa", "span_id": "4ca9124f56b05866"}
+{"timestamp": "2026-09-11T20:14:37.269945Z", "level": "ERROR", "logger": "revguard.api", "message": "team_run_failed", "case_id": "CASE-2026-0008", "phase": "EXECUTION", "error_type": "RuntimeError"}
+FAIL
+test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery (tests.test_recovery_consistency.TestRecoveryConsistency.test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery) ... Executing <Task pending name='Task-17' coro=<TestRecoveryConsistency.test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery() running at /workspace/tests/test_recovery_consistency.py:86> cb=[_run_until_complete_cb() at /usr/local/lib/python3.11/asyncio/base_events.py:181] created at /usr/local/lib/python3.11/asyncio/runners.py:100> took 0.131 seconds
+{"timestamp": "2026-09-11T20:14:37.498718Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-CEC00FDA", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 18, "trace_id": "2b0315ac8495621378796a007f7d5214", "span_id": "5fc7e967ad434fe1"}
+{"timestamp": "2026-09-11T20:14:37.502609Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-A2DECFFC", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 409, "duration_ms": 1, "trace_id": "b7dd2917e0ac74e0f7932f7ef0191d0e", "span_id": "30dbb24628272c4d"}
+FAIL
+test_delayed_claimed_worker_cannot_post_after_human_resume (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_delayed_claimed_worker_cannot_post_after_human_resume) ... {"timestamp": "2026-09-11T20:14:37.756796Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-FC86DA7D", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 18, "trace_id": "dd97bb3174caeb7da5c830419c7c2c67", "span_id": "2402725f85925e35"}
+FAIL
+test_failed_resume_keeps_hold_task_capability_and_case_together (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_failed_resume_keeps_hold_task_capability_and_case_together) ... {"timestamp": "2026-09-11T20:14:37.979006Z", "level": "ERROR", "logger": "revguard.api", "message": "http_request_failed", "request_id": "REQ-FFE8B255", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "duration_ms": 16, "trace_id": "4b6e86054946a7afa6d4612c700e750c", "span_id": "671367bfac8b9c8a", "error_type": "RaiseException"}
+FAIL
+test_old_background_error_cannot_freeze_a_new_recovery_generation (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_old_background_error_cannot_freeze_a_new_recovery_generation) ... {"timestamp": "2026-09-11T20:14:38.183487Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-547BED76", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 17, "trace_id": "2126b9a9effc33a119dd3257abc7f331", "span_id": "8763dfa689d6cdb3"}
+{"timestamp": "2026-09-11T20:14:38.185397Z", "level": "ERROR", "logger": "revguard.api", "message": "team_run_failed", "case_id": "CASE-2026-0008", "phase": "EXECUTION", "error_type": "RuntimeError"}
+FAIL
+test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery) ... {"timestamp": "2026-09-11T20:14:38.387599Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-F4CA908F", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 202, "duration_ms": 18, "trace_id": "def5085780fe1cb832a2a93c291c9019", "span_id": "09b6b4d82abc1760"}
+{"timestamp": "2026-09-11T20:14:38.398632Z", "level": "INFO", "logger": "revguard.api", "message": "http_request", "request_id": "REQ-D3581A95", "method": "POST", "path": "/api/v1/cases/CASE-2026-0008/team/resume", "status_code": 409, "duration_ms": 8, "trace_id": "da1ae7f1def710f1d1703ec669e58d29", "span_id": "4e5cdf23b3f6fe56"}
+FAIL
+
+======================================================================
+FAIL: test_delayed_claimed_worker_cannot_post_after_human_resume (tests.test_recovery_consistency.TestRecoveryConsistency.test_delayed_claimed_worker_cannot_post_after_human_resume)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 133, in test_delayed_claimed_worker_cannot_post_after_human_resume
+    self.assertEqual(self.gateway._ledger, state)
+AssertionError: Lists differ: [{'le[1309 chars]00Z'}, {'ledger_id': 'LED-44CCF123', 'order_id[264 chars]it'}] != [{'le[1309 chars]00Z'}]
+
+First list contains 1 additional elements.
+First extra element 5:
+{'ledger_id': 'LED-44CCF123', 'order_id': 'EZ202608001', 'component': 'SALES_COMMISSION', 'amount': '20', 'currency': 'KES', 'policy_version': 'POL-2026-01', 'status': 'POSTED', 'source': 'REVGUARD:CASE-2026-0008', 'posted_at': '2026-09-11T20:14:36.755228Z', 'operation_id': 'CASE-2026-0008:delayed-submit'}
+
+Diff is 1851 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_failed_resume_keeps_hold_task_capability_and_case_together (tests.test_recovery_consistency.TestRecoveryConsistency.test_failed_resume_keeps_hold_task_capability_and_case_together)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 74, in test_failed_resume_keeps_hold_task_capability_and_case_together
+    self.assertEqual(self.snapshot(), before)
+AssertionError: {'cas[7532 chars]zcsImlhdCI6MTc4OTE1NzY3NywiaXNzIjoicmV2Z3VhcmQ[11847 chars]: []} != {'cas[7532 chars]zcsImh1bWFuX2F1dGhfdGltZSI6bnVsbCwiaHVtYW5fc3V[10554 chars]Z'}]}
+Diff is 39938 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_old_background_error_cannot_freeze_a_new_recovery_generation (tests.test_recovery_consistency.TestRecoveryConsistency.test_old_background_error_cannot_freeze_a_new_recovery_generation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 150, in test_old_background_error_cannot_freeze_a_new_recovery_generation
+    self.assertEqual(self.store.get_case(case["case_id"])["status"], "EXECUTING")
+AssertionError: 'RECOVERY_REQUIRED' != 'EXECUTING'
+- RECOVERY_REQUIRED
++ EXECUTING
+
+
+======================================================================
+FAIL: test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery (tests.test_recovery_consistency.TestRecoveryConsistency.test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 91, in test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery
+    self.assertEqual(self.store.get_agent_task(task["task_id"])["status"], "CANCELLED")
+AssertionError: 'RUNNING' != 'CANCELLED'
+- RUNNING
++ CANCELLED
+
+
+======================================================================
+FAIL: test_delayed_claimed_worker_cannot_post_after_human_resume (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_delayed_claimed_worker_cannot_post_after_human_resume)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 133, in test_delayed_claimed_worker_cannot_post_after_human_resume
+    self.assertEqual(self.gateway._ledger, state)
+AssertionError: Lists differ: [{'le[1309 chars]00Z'}, {'ledger_id': 'LED-5207C7A6', 'order_id[264 chars]it'}] != [{'le[1309 chars]00Z'}]
+
+First list contains 1 additional elements.
+First extra element 5:
+{'ledger_id': 'LED-5207C7A6', 'order_id': 'EZ202608001', 'component': 'SALES_COMMISSION', 'amount': '20', 'currency': 'KES', 'policy_version': 'POL-2026-01', 'status': 'POSTED', 'source': 'REVGUARD:CASE-2026-0008', 'posted_at': '2026-09-11T20:14:37.761630Z', 'operation_id': 'CASE-2026-0008:delayed-submit'}
+
+Diff is 1851 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_failed_resume_keeps_hold_task_capability_and_case_together (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_failed_resume_keeps_hold_task_capability_and_case_together)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 74, in test_failed_resume_keeps_hold_task_capability_and_case_together
+    self.assertEqual(self.snapshot(), before)
+AssertionError: {'cas[7532 chars]zcsImlhdCI6MTc4OTE1NzY3NywiaXNzIjoicmV2Z3VhcmQ[16382 chars]: []} != {'cas[7532 chars]zcsImh1bWFuX2F1dGhfdGltZSI6bnVsbCwiaHVtYW5fc3V[14342 chars]Z'}]}
+Diff is 45096 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_old_background_error_cannot_freeze_a_new_recovery_generation (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_old_background_error_cannot_freeze_a_new_recovery_generation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 150, in test_old_background_error_cannot_freeze_a_new_recovery_generation
+    self.assertEqual(self.store.get_case(case["case_id"])["status"], "EXECUTING")
+AssertionError: 'RECOVERY_REQUIRED' != 'EXECUTING'
+- RECOVERY_REQUIRED
++ EXECUTING
+
+
+======================================================================
+FAIL: test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery (tests.test_recovery_consistency_postgres.TestPostgresRecoveryConsistency.test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 90, in _callTestMethod
+    if self._callMaybeAsync(method) is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/unittest/async_case.py", line 112, in _callMaybeAsync
+    return self._asyncioRunner.run(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/test_recovery_consistency.py", line 91, in test_resume_fences_old_running_tasks_and_rejects_duplicate_recovery
+    self.assertEqual(self.store.get_agent_task(task["task_id"])["status"], "CANCELLED")
+AssertionError: 'RUNNING' != 'CANCELLED'
+- RUNNING
++ CANCELLED
+
+
+----------------------------------------------------------------------
+Ran 8 tests in 1.895s
+
+FAILED (failures=8)

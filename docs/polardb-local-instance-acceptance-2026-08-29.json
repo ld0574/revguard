@@ -1,0 +1,86 @@
+{
+  "captured_on": "2026-08-29",
+  "environment": "recording_server",
+  "host": "10.10.10.202",
+  "data_classification": "SYNTHETIC",
+  "deployment": {
+    "image": "polardb/polardb_pg_local_instance:15",
+    "engine_version": "PostgreSQL 15.19 (PolarDB 15.19.5.0 build unknown) on x86_64-linux-gnu",
+    "database": "revguard",
+    "application_backend": "postgresql-polardb",
+    "persistence": "docker_named_volume",
+    "host_bindings": [
+      "127.0.0.1:15432->5432",
+      "127.0.0.1:15433->5433",
+      "127.0.0.1:15434->5434"
+    ],
+    "application_route": "private_docker_network:5432"
+  },
+  "schema_acceptance": {
+    "migration": "migrations/polardb/001_core.sql",
+    "numeric_18_2": "PASSED",
+    "stage_task_result_transaction": "PASSED",
+    "append_only_audit_triggers": 2,
+    "audit_chain": {
+      "verdict": "PASSED",
+      "checked_events": 205,
+      "broken_events": 0
+    }
+  },
+  "recording_case": {
+    "case_id": "CASE-2026-0008",
+    "run_id": "RUN-AGT-D3409E51",
+    "final_status": "ROLLED_BACK",
+    "agentteams_stage_tasks": 20,
+    "agentteams_matrix_responses": 20,
+    "worker_rooms": 9,
+    "trace_spans": {
+      "total": 63,
+      "agentteams_end_to_end": 21,
+      "in_process_skill_tool": 42,
+      "agent_duration_ms": {
+        "min": 1414,
+        "median": 9654,
+        "max": 23146
+      }
+    }
+  },
+  "dynamic_case_acceptance": {
+    "case_id": "CASE-2026-0007",
+    "run_id": "RUN-AGT-4387781F",
+    "final_status": "CLOSED",
+    "risk_level": "L3",
+    "calculated_commission": "72000.00",
+    "stage_tasks": 8,
+    "matrix_responses": 8,
+    "retry_nudges": 1,
+    "financial_executions": 0,
+    "trace_spans": {
+      "total": 30,
+      "agentteams_end_to_end": 9,
+      "agent_duration_ms": {
+        "min": 1598,
+        "median": 6183,
+        "max": 100965
+      }
+    },
+    "reason": "L3 exceeds automatic execution boundary; analysis plan only"
+  },
+  "claim_boundary": {
+    "verified": [
+      "official open-source PolarDB-PG local instance",
+      "RevGuard PostgreSQL/PolarDB Store",
+      "NUMERIC(18,2) amount projection",
+      "transactional StageTask/StageResult persistence",
+      "append-only audit chain",
+      "AgentTeams Matrix recording workflow"
+    ],
+    "not_verified": [
+      "cloud PolarDB high availability",
+      "read-only replica routing",
+      "automatic backup",
+      "point-in-time recovery",
+      "production business data"
+    ]
+  }
+}

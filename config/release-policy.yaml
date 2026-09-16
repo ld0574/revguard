@@ -1,0 +1,22 @@
+version: 1
+artifact: immutable-container-image
+versioning: semver
+stages:
+  - name: internal-replay
+    traffic_percent: 0
+    minimum_duration_minutes: 30
+    required_checks: [verify-ci, postgres-integration, golden-replay]
+  - name: canary
+    traffic_percent: 5
+    minimum_duration_minutes: 30
+  - name: limited
+    traffic_percent: 25
+    minimum_duration_minutes: 120
+  - name: general
+    traffic_percent: 100
+rollback_triggers:
+  - audit_chain_invalid
+  - wrong_write_or_duplicate_write
+  - rollback_required_backlog_over_5m
+  - trace_error_rate_over_1_percent
+database_rule: 所有 Schema 变更必须向前兼容；先扩展再迁移，应用回滚不依赖破坏性 DDL。
