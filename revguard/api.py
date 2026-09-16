@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Literal
 
 from . import telemetry
+from .adapters import ADAPTER_METRICS
 from .agent_bridge import create_agent_task, execute_agent_task
 from .artifacts import artifact_path
 from .demo_dashboard import build_dashboard_snapshot
@@ -1320,14 +1321,22 @@ def money_operations(case_id: str, _principal: ApiPrincipal = Depends(require_ro
 def operational_metrics(
     _principal: ApiPrincipal = Depends(require_roles("viewer")),
 ):
-    return store.operational_metrics()
+    return {
+        **store.operational_metrics(),
+        "enterprise_provider": gateway.providers.enterprise_provider,
+        "provider_calls": ADAPTER_METRICS.snapshot(),
+    }
 
 
 @app.get("/api/v1/ops/metrics/prometheus", response_class=PlainTextResponse)
 def prometheus_metrics(
     _principal: ApiPrincipal = Depends(require_roles("viewer")),
 ):
-    return prometheus_text({**store.operational_metrics(), **gateway.journal.metrics()}) + HTTP_METRICS.render()
+    return (
+        prometheus_text({**store.operational_metrics(), **gateway.journal.metrics()})
+        + HTTP_METRICS.render()
+        + ADAPTER_METRICS.prometheus_text()
+    )
 
 
 @app.get("/api/v1/ops/evidence")

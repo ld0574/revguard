@@ -316,6 +316,15 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(task["request_id"].startswith("REQ-AGT-") for task in tasks))
         self.assertTrue(all(task["agentteams_message_id"].startswith("$") for task in tasks))
         self.assertTrue(all(task["matrix_response_event_id"].startswith("$") for task in tasks))
+        self.assertTrue(all(task["matrix_handoff_event_id"].startswith("$") for task in tasks))
+        self.assertIsNone(tasks[0]["handoff"]["previous_stage_task_id"])
+        self.assertEqual(
+            tasks[1]["handoff"]["previous_stage_task_id"], tasks[0]["task_id"]
+        )
+        self.assertEqual(tasks[1]["handoff"]["previous_actor"], tasks[0]["assigned_actor"])
+        self.assertTrue(tasks[1]["handoff"]["previous_artifact_hash"].startswith("sha256:"))
+        self.assertTrue(tasks[1]["handoff"]["next_input_hash"].startswith("sha256:"))
+        self.assertEqual(tasks[1]["handoff"]["case_version"], tasks[1]["case_version"])
         self.assertEqual({task["transport"] for task in tasks}, {"agentteams-matrix"})
         self.assertEqual({task["skill_transport"] for task in tasks}, {"rest"})
         self.assertEqual(

@@ -11,7 +11,10 @@ old = '            {"id": m["id"], "name": m.get("name", m["id"])}'
 new = """            {
                 "id": m["id"],
                 "name": m.get("name", m["id"]),
-                **({"generate_kwargs": {"reasoning_effort": "none"}}
+                **({"generate_kwargs": {
+                    "reasoning_effort": "none",
+                    "max_completion_tokens": 512,
+                }}
                    if m["id"] in {"gpt-5.6-sol", "gpt-5.6-luna"} else {}),
             }"""
 paths = sorted(Path("/opt").glob("**/site-packages/copaw_worker/bridge.py"))

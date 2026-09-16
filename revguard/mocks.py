@@ -17,11 +17,18 @@ from __future__ import annotations
 import copy
 import json
 import os
+import time
 from decimal import Decimal
 from pathlib import Path
 from threading import RLock
 from typing import ClassVar
 
+from .adapters import (
+    ADAPTER_METRICS,
+    ENTERPRISE_QUERY_TOOLS,
+    EnterpriseAdapterError,
+    ProviderRegistry,
+)
 from .models import CaseStatus, new_id, utc_now
 from .money_journal import MONEY_TOOLS, MoneyJournal, RecoveryRequired, request_hash
 from .security import CapabilityTokenSigner, SecurityError, authorize_tool
@@ -70,8 +77,10 @@ class ToolGateway:
                  *, signing_key: str | None = None,
                  state_path: str | Path | None = None,
                  verification_tamper_amount: str | Decimal = "0",
-                 store=None, posting_tamper_amount: str | Decimal = "0"):
+                 store=None, posting_tamper_amount: str | Decimal = "0",
+                 provider_registry: ProviderRegistry | None = None):
         self.fixtures = _load_fixtures(fixtures_dir)
+        self.providers = provider_registry or ProviderRegistry.from_env()
         self._lock = RLock()
         self._state_path = Path(state_path) if state_path else None
         secret = signing_key or os.getenv(
@@ -138,16 +147,24 @@ class ToolGateway:
     def call(self, tool_name: str, parameters: dict, *, case_id: str = "",
              actor: str = "", scope: list[str] | None = None,
              idempotency_key: str | None = None) -> dict:
+        started = time.monotonic()
         receipt = {"tool_receipt": new_id("RCPT"), "tool_name": tool_name,
                    "case_id": case_id, "actor": actor, "called_at": utc_now()}
         operation = None
+        source_metadata: dict = {}
+        provider_hint = (
+            self.providers.enterprise_provider
+            if tool_name in ENTERPRISE_QUERY_TOOLS
+            else "revguard"
+        )
         try:
             try:
                 receipt["required_scope"] = authorize_tool(actor, scope or [], tool_name)
             except SecurityError as exc:
                 raise ToolError("AUTH_FAILED", str(exc)) from exc
+            use_adapter = self.providers.handles(tool_name)
             handler = getattr(self, f"_tool_{tool_name.replace('.', '_')}", None)
-            if handler is None:
+            if handler is None and not use_adapter:
                 raise ToolError("NOT_FOUND", f"未知工具: {tool_name}")
             with self._lock:
                 with self.journal.transaction() as tx:
@@ -188,37 +205,71 @@ class ToolGateway:
                                 for entry in self._ledger:
                                     if entry["ledger_id"] not in before_ids:
                                         entry["operation_id"] = idempotency_key
+                                source_metadata = self.providers.local_metadata(
+                                    tool_name, data, utc_now(), receipt["tool_receipt"]
+                                )
+                                receipt.update(source_metadata)
                                 receipt["success"] = True
                                 self._receipts.append(receipt)
                                 tx.commit_result(current, data, self._state_snapshot())
                             else:
                                 raise RecoveryRequired("资金操作需要重新核对")
                         else:
-                            data = handler(parameters or {}, scope=scope or [], idempotency_key=idempotency_key,
-                                           actor=actor, case_id=case_id)
+                            if use_adapter:
+                                adapter_result = self.providers.call(tool_name, parameters or {})
+                                data = adapter_result.data
+                                source_metadata = adapter_result.metadata()
+                            else:
+                                data = handler(parameters or {}, scope=scope or [], idempotency_key=idempotency_key,
+                                               actor=actor, case_id=case_id)
+                                timestamp = utc_now()
+                                source_metadata = self.providers.local_metadata(
+                                    tool_name, data, timestamp, receipt["tool_receipt"]
+                                )
+                            receipt.update(source_metadata)
                             receipt["success"] = True
                             self._receipts.append(receipt)
                             tx.save_state(self._state_snapshot())
                     finally:
                         self._in_transaction = False
+            if not source_metadata:
+                timestamp = utc_now()
+                source_metadata = self.providers.local_metadata(
+                    tool_name, data, timestamp, receipt["tool_receipt"]
+                )
+                receipt.update(source_metadata)
+            ADAPTER_METRICS.observe(
+                source_metadata.get("provider", provider_hint), tool_name, "success",
+                source_metadata.get("latency_ms", int((time.monotonic() - started) * 1000)),
+            )
             return {"success": True, "data": data, "error": None,
-                    "source_timestamp": utc_now(), "tool_receipt": receipt["tool_receipt"]}
-        except (ToolError, SecurityError, RecoveryRequired, ValueError) as exc:
+                    "tool_receipt": receipt["tool_receipt"], **source_metadata}
+        except (ToolError, EnterpriseAdapterError, SecurityError, RecoveryRequired, ValueError) as exc:
             if operation and isinstance(exc, ToolError):
                 # A handler validation failure rolls back the entire batch.
                 with self.journal.transaction() as tx:
                     tx.execute("UPDATE money_operations SET status='NOT_COMMITTED',generation=generation+1 "
                                "WHERE operation_id=? AND status='PREPARED'", (idempotency_key,))
-            if isinstance(exc, ToolError):
+            if isinstance(exc, (ToolError, EnterpriseAdapterError)):
                 error_type = exc.error_type
             elif isinstance(exc, RecoveryRequired):
                 error_type = "RESULT_UNKNOWN"
             else:
                 error_type = "DATA_CONFLICT"
+            elapsed_ms = int((time.monotonic() - started) * 1000)
+            ADAPTER_METRICS.observe(provider_hint, tool_name, error_type.lower(), elapsed_ms)
             return {"success": False, "data": None,
                     "error": {"type": error_type, "message": str(exc),
                               "retryable": error_type in ToolError.RETRYABLE and tool_name not in MONEY_TOOLS},
-                    "source_timestamp": utc_now(), "tool_receipt": receipt["tool_receipt"]}
+                    "source_timestamp": utc_now(), "tool_receipt": receipt["tool_receipt"],
+                    "provider": provider_hint,
+                    "external_document_type": None, "external_document_id": None,
+                    "http_status": None, "latency_ms": elapsed_ms,
+                    "payload_hash": None, "correlation_id": receipt["tool_receipt"],
+                    "record_url": None,
+                    "provenance_kind": (
+                        "LIVE_SYSTEM" if provider_hint == "erpnext" else "SYNTHETIC_DOMAIN"
+                    )}
         except Exception:
             if operation:
                 self.journal.mark_unknown(idempotency_key)

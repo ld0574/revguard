@@ -69,7 +69,9 @@ def seed_store(store, *, reset: bool = False, quiet: bool = False, gateway=None,
             gateway.reset_recording(prepared, actor=reset_actor)
         if not quiet:
             print(f"  reset and seeded {len(prepared)} cases atomically")
-        return [case for case, _ in prepared]
+        # reset 写入会为每个案件生成新的录制代次与状态版本，返回库内权威快照，
+        # 避免调用方拿着旧 dict 触发 StaleCaseTransition
+        return [store.get_case(case["case_id"]) or case for case, _ in prepared]
     cases: list[dict] = []
     for fp, spec in fixtures:
         raw = spec["input"]
