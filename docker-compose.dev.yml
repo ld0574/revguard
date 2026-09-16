@@ -52,6 +52,7 @@ services:
       REVGUARD_ENABLE_LEGACY_TOOL_API: ${REVGUARD_ENABLE_LEGACY_TOOL_API:-false}
       REVGUARD_ENABLE_RECORDING_UI: ${REVGUARD_ENABLE_RECORDING_UI:-true}
       REVGUARD_MONEY_RECOVERY_LOCK: ${REVGUARD_MONEY_RECOVERY_LOCK:-false}
+      REVGUARD_ALLOW_DATABASE_RESET: ${REVGUARD_ALLOW_DATABASE_RESET:-false}
       REVGUARD_RESET_ON_START: ${REVGUARD_RESET_ON_START:-false}
       REVGUARD_READ_DATABASE_URL: ${REVGUARD_READ_DATABASE_URL:-}
       REVGUARD_DB_POOL_MIN: ${REVGUARD_DB_POOL_MIN:-1}
@@ -78,6 +79,10 @@ services:
     depends_on:
       revguard-dev-postgres:
         condition: service_healthy
+    networks:
+      - default
+      - enterprise
+      - agentteams
     read_only: true
     tmpfs:
       - /tmp
@@ -94,3 +99,11 @@ volumes:
   revguard-dev-reports:
   revguard-dev-runtime:
   revguard-dev-db:
+
+networks:
+  enterprise:
+    external: true
+    name: revguard-enterprise
+  agentteams:
+    external: true
+    name: agentteams-net
