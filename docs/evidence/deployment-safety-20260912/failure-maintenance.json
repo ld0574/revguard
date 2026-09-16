@@ -1,8 +1,0 @@
-{
-  "failure_step": "promtool rejects invalid configuration",
-  "deployment_exit": 1,
-  "business_mutation_refused": true,
-  "database_ready_but_maintenance": true,
-  "restart_did_not_reopen_writes": true,
-  "passed": true
-}

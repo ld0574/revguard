@@ -1,8 +1,0 @@
-FROM python:3.11-slim
-WORKDIR /workspace
-RUN apt-get update && apt-get install -y --no-install-recommends make bash && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt requirements.lock requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements.lock -r requirements-dev.txt
-COPY . .
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-CMD ["make", "VENV=/usr/local", "verify-release"]

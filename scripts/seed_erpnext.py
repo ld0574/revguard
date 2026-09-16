@@ -26,8 +26,8 @@ import os
 
 import frappe
 
-FIXTURES = os.getenv("REVGUARD_SEED_FIXTURES", "/tmp/fixtures")
-OUTPUT = os.getenv("REVGUARD_SEED_OUTPUT", "/tmp/revguard_api_keys.json")
+FIXTURES = os.getenv("REVGUARD_SEED_FIXTURES", "/tmp/fixtures")  # nosec B108 - 容器内临时种数目录，可被环境变量覆盖
+OUTPUT = os.getenv("REVGUARD_SEED_OUTPUT", "/tmp/revguard_api_keys.json")  # nosec B108 - 同上，密钥产物 chmod 600
 COMPANY = "RevGuard Demo Ltd"
 API_USER = "revguard-api@revguard.local"
 ROLE = "RevGuard API"

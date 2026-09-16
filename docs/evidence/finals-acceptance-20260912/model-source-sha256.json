@@ -1,8 +1,0 @@
-{
-  "scripts/agentteams_setup.sh": "52bcef0e829b6b7d222bba4abe749a8165e71060a61a670022087ba146361d26",
-  "scripts/deploy_demo.sh": "505922e95dd7c9ecb1bfeed9cf3f48768b80dc9a729ca761244da53a8472cd30",
-  "scripts/build_agentteams_sol_images.sh": "b2fdb118de32350fbfcf96fe9e865a23cad3e949b90ab348cc46931b90db4e6e",
-  "scripts/verify_agentteams_model_runtime.py": "715901f29f38938af9505c1f2512d9185197e67bc568ea40084d4ddda4969e41",
-  "agentteams/copaw-sol/Dockerfile": "761c9fb28198160e772259110a8d1f39015645f0fa2e9fe423d445907b00eeb1",
-  "agentteams/copaw-sol/patch_bridge.py": "39f1bc008d8766d6515b03c0319b6f0160661330671994d73b9748e9a072eec6"
-}

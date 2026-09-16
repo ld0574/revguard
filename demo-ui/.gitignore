@@ -1,7 +1,0 @@
-node_modules/
-dist/
-.vite/
-*.log
-implementation-*.png
-comparison-*.png
-design-*.png

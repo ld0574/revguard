@@ -1,1 +1,0 @@
-{"environment": "10.10.10.202 Docker, isolated SQLite", "health": {"status": "ok", "release": "0.5.10", "cases": 8, "ready": true, "backend": "sqlite-demo", "read_replica": false, "maintenance": false}, "static_assets": 2, "passed": true}

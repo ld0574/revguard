@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/probe.py", line 55, in <module>
-    assert len(after['agent_tasks']) == 17
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

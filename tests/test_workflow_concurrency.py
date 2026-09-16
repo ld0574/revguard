@@ -232,4 +232,6 @@ class TestWorkflowConcurrency(unittest.IsolatedAsyncioTestCase):
         runner.settings = replace(runner.settings, stage_timeout_seconds=0.05, retry_nudge_seconds=(0,))
         with self.assertRaisesRegex(Exception, "RESULT_UNKNOWN"):
             await runner._invoke_transport(case, "CaseNormalizeSkill", {"raw_case": case})
-        self.assertEqual(client.send_text.await_count, 2)
+        # 派发链路发 3 条消息（交接 + 派发 + 触发）；任务在触发消息处即 RESULT_UNKNOWN，
+        # 因此不得出现第 4 条（重试 nudge）——nudge 必须立即停止。
+        self.assertEqual(client.send_text.await_count, 3)
