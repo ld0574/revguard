@@ -23,12 +23,12 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 
 | 案件 | 终态 | 订单 | 本次运行跨度 | 本次运行审计事件 | 页面步骤 |
 | --- | --- | --- | --- | --- | --- |
-| CASE-2026-0001 | CLOSED | EZ202608001 | 35 | 88（序号 353–440） | 10 |
-| CASE-2026-0008 | ROLLED_BACK | EZ202608008 | 40 | 99（序号 123–221） | 11 |
+| CASE-2026-0001 | CLOSED | EZ202608001 | 53 | 109（序号 585–693） | 10 |
+| CASE-2026-0008 | ROLLED_BACK | EZ202608008 | 60 | 120（序号 805–924） | 11 |
 
 导出脚本以本次运行 Trace 的最早跨度作为时间线下界，只保留该时刻之后的审计事件，避免把同一案件不同排练代次拼成一条时间线。每个数据包都带 `provenance.snapshot_sha256`（原始快照摘要）与 `audit.chain_ok`（哈希链连续性校验）。
 
-导出可复现：对同一运行重复导出，除 `generated_at` 外与已发布数据包逐字节一致（本次用 rc3 传输验证案件复跑校验）。
+导出可复现：对同一运行重复导出，除 `generated_at` 外与已发布数据包逐字节一致（2026-09-18 对两条 rc3 运行各复导一次，`case-2026-0001.json`、`case-2026-0008.json` 与 `index.json` 均为 True）。
 
 ## 验收结果
 
@@ -38,8 +38,8 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 | --- | --- | --- |
 | 首页入口 | 首页含 `replay.html` 入口，静态资源 200 | site-home.png |
 | 标签与索引一致 | 页面标签数 = `index.json` 案件数（2） | browser-result.json |
-| CASE-2026-0001 渲染 | 摘要 8 项、阶段 10 个、步骤 10 步、追踪 35 行 | replay-case-2026-0001.png |
-| CASE-2026-0008 渲染 | 摘要 8 项、阶段 11 个、步骤 11 步、追踪 40 行 | replay-case-2026-0008.png |
+| CASE-2026-0001 渲染 | 摘要 8 项、阶段 10 个、步骤 10 步、追踪 53 行 | replay-case-2026-0001.png |
+| CASE-2026-0008 渲染 | 摘要 8 项、阶段 11 个、步骤 11 步、追踪 60 行 | replay-case-2026-0008.png |
 | 播放交互 | 播放 9 秒推进到第 3 步，按钮为“暂停” | replay-playing.png |
 | 移动端 | 390×844 无横向溢出 | replay-mobile.png |
 | 资源完整性 | 无 4xx/5xx 请求、无浏览器 SEVERE 日志 | browser-result.json |
@@ -50,7 +50,9 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 
 ## 数据代次
 
-当前 `index.json` 发布的是 rc2 代次的两条完整运行记录（含真人审批、受限执行、独立复核与冲销恢复）。rc3 代次的决赛运行记录在录制栈上重新跑通后会替换 `index.json` 的条目，届时案件编号、Step 数与审计序号都会更新。旧的 rc2 截图归档在 [`archive-rc2/`](archive-rc2/) 下。
+当前 `index.json`（`release: 0.6.0-rc3`）发布的是 **2026-09-18 录制代次**的两条完整运行记录：两条都走真实 AgentTeams Matrix 出站（`CAPTURED_FROM_RUNTIME`），真人 Matrix 审批、受限执行、独立复核与冲销恢复俱全。事实快照见 [`finals-recording-20260918/`](../finals-recording-20260918/README.md)。
+
+`replay-case-82822305.png` 是更早一次 rc3 传输验证案件（只读运行、无资金写入）在同一套预览栈下的渲染结果。上一代次（rc2 传输）的截图归档在 [`archive-rc2/`](archive-rc2/) 下。
 
 ## 边界
 

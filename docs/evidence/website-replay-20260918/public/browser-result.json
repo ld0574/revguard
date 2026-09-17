@@ -15,11 +15,11 @@
     },
     "CASE-2026-0001 渲染": {
       "passed": true,
-      "detail": "facts=8 stages=10 steps=10 trace=35 release=0.6.0-rc2"
+      "detail": "facts=8 stages=10 steps=10 trace=53 release=0.6.0-rc3"
     },
     "CASE-2026-0008 渲染": {
       "passed": true,
-      "detail": "facts=8 stages=11 steps=11 trace=40 release=0.6.0-rc2"
+      "detail": "facts=8 stages=11 steps=11 trace=60 release=0.6.0-rc3"
     },
     "播放可推进": {
       "passed": true,
@@ -40,6 +40,6 @@
   },
   "failed_requests": [],
   "console": [],
-  "release": "0.6.0-rc2",
+  "release": "0.6.0-rc3",
   "passed": true
 }
