@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:411e8804-cc29-4b23-9f53-0f6b3dc9c1ab",
+  "serialNumber": "urn:uuid:93f2bbe1-1f4d-4669-a12d-966c3d24ce4c",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-17T13:31:51+00:00",
+    "timestamp": "2026-09-17T16:39:38+00:00",
     "tools": {
       "components": [
         {
@@ -20,17 +20,13 @@
       ]
     },
     "component": {
-      "bom-ref": "4f6c6433-c977-49ce-bd21-3eed3ca9d818",
+      "bom-ref": "fe256c8a-104f-4a26-a6a4-6676b6dacfd1",
       "type": "container",
       "name": "revguard-api:0.6.0-rc2",
       "properties": [
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:001bb0c819de0111f53361124f85a2764fd63232701464199dfb95ecf2d1eefc"
-        },
-        {
-          "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:0b799c7fc30ce02df0320fc65bb7ce777ff7d8dfd0f43c9824594594e51b8708"
+          "value": "sha256:07a7104d3d0e803fa783f5e516c9e4e732359d7cfbd5251aa18ce48ec9aeb577"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
@@ -38,7 +34,15 @@
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:19df545023495be088d6b4bff00195989e74813272e3f5b18b8039d01ffae29e"
+          "value": "sha256:1726d7862ad8c4b204df357c6dc6180007e4870aa35b94641a82301107bfa04a"
+        },
+        {
+          "name": "aquasecurity:trivy:DiffID",
+          "value": "sha256:1c7c0eb22833877ebba2e91a3130deaeade903b82f8881b94b523dec87d3aecb"
+        },
+        {
+          "name": "aquasecurity:trivy:DiffID",
+          "value": "sha256:22e3616d72ccc2d3388e93678d2d6d15127597b45b7586c75af661617b253980"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
@@ -50,27 +54,15 @@
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:670a2dceff90d5361ac9d492170e37d9a75b51da0fb96b1c5d9e42567747c34c"
-        },
-        {
-          "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:6cb8212322ba066bdb537e266d1518ad4b541d6772a56aec3a550df431f1625c"
-        },
-        {
-          "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:7503be292bcc2e284392d6a478f548bdb80b0451e8fa509f91e3426f7da7df5c"
-        },
-        {
-          "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:75ce536554d100543d387cda22bc9e81bb27b485fa8fcefc85ede98b53a142cd"
-        },
-        {
-          "name": "aquasecurity:trivy:DiffID",
           "value": "sha256:7895f75e926a456464bbd0f1285738ba25e7d70aad4aa94c32c1d274b3b9e85e"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:78c955f2b9b0660a04de6df907e5685aba617be714f7cea1e396c396b07d45e9"
+          "value": "sha256:7d9be531fda81e2e9d3bede02ab7fe32b3a7b3b9ba9199c7a3fa5e18982af2b7"
+        },
+        {
+          "name": "aquasecurity:trivy:DiffID",
+          "value": "sha256:93653df5ce005fe9aa52e6aa6c75f1f2a6c31195b556d61b6e30d9ed0c802616"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
@@ -78,7 +70,11 @@
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:a6841a1b61828f66f59177d46b90567cb70380986e30b26c2738ca85f2d25564"
+          "value": "sha256:98407213c96b4c29a10ddf1d654d653d4f909ef54680f073077028dad2f59bb8"
+        },
+        {
+          "name": "aquasecurity:trivy:DiffID",
+          "value": "sha256:ae48f4ba0358b89d755d4f3eb6dff0d5c8468fe43692325cde668825a919e98d"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
@@ -86,7 +82,7 @@
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:c1fdf203cc03aa3225a04c4dcdb8f3f0e34f99ad5ba61d07acca170a3c55ae64"
+          "value": "sha256:ca7eee47596544ab5d4f896f50f24d8b06cdb56c739e95030cb1abf9680b2178"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
@@ -98,11 +94,15 @@
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:f471d62e88e5110c0515772ddae13b25177f9b266e58d52d9a24d8b73476373a"
+          "value": "sha256:f1e66eebc109906f95294a40548b003ccb036d2f8eb1b11fdf303bdf19072994"
+        },
+        {
+          "name": "aquasecurity:trivy:DiffID",
+          "value": "sha256:ff28b6d2e481eebd11fc2be02e59c656cb1b1b4ad9dfa649583c0134b1afc04f"
         },
         {
           "name": "aquasecurity:trivy:ImageID",
-          "value": "sha256:90d47ec4c4abd338d3e110b148b598df387e5e1024f518a0dc73f6355aee015a"
+          "value": "sha256:b4b24d6d1d725e76bc6e1276b6478cd27e76efb67ec133500cb7cec49a4ec7e0"
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opencontainers.image.title",
@@ -126,14 +126,14 @@
         },
         {
           "name": "aquasecurity:trivy:Size",
-          "value": "279275008"
+          "value": "279281152"
         }
       ]
     }
   },
   "components": [
     {
-      "bom-ref": "787777a8-791a-434e-8b36-efba58470efa",
+      "bom-ref": "9a27d3b1-cbdc-44e4-ad7c-5eca1aaa3b5d",
       "type": "operating-system",
       "name": "debian",
       "version": "13.7",
@@ -8043,9 +8043,49 @@
   ],
   "dependencies": [
     {
-      "ref": "4f6c6433-c977-49ce-bd21-3eed3ca9d818",
+      "ref": "9a27d3b1-cbdc-44e4-ad7c-5eca1aaa3b5d",
       "dependsOn": [
-        "787777a8-791a-434e-8b36-efba58470efa",
+        "pkg:deb/debian/apt@3.0.3?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/bash@5.2.37-2%2Bb10?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/bsdutils@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7&epoch=1",
+        "pkg:deb/debian/ca-certificates@20250419?arch=all&distro=debian-13.7",
+        "pkg:deb/debian/coreutils@9.7-3?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/dash@0.5.12-12?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/diffutils@3.10-4?arch=amd64&distro=debian-13.7&epoch=1",
+        "pkg:deb/debian/dpkg@1.22.22?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/findutils@4.10.0-3?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/grep@3.11-4?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/gzip@1.13-1%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/hostname@3.25?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/init-system-helpers@1.69~deb13u1?arch=all&distro=debian-13.7",
+        "pkg:deb/debian/libc-bin@2.41-12%2Bdeb13u4?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libdb5.3t64@5.3.28%2Bdfsg2-9?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libffi8@3.4.8-2?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libgdbm6t64@1.24-2?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libmount1@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libncursesw6@6.5%2B20250216-2?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libpam-modules-bin@1.7.0-5?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libreadline8t64@8.2-6?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libsmartcols1@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/libuuid1@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/login@4.16.0-2%2Breally2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7&epoch=1",
+        "pkg:deb/debian/mawk@1.3.4.20250131-1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/mount@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/ncurses-base@6.5%2B20250216-2?arch=all&distro=debian-13.7",
+        "pkg:deb/debian/ncurses-bin@6.5%2B20250216-2?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/netbase@6.5?arch=all&distro=debian-13.7",
+        "pkg:deb/debian/perl-base@5.40.1-6%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/sed@4.9-2%2Bdeb13u1?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/sysvinit-utils@3.14-4?arch=amd64&distro=debian-13.7",
+        "pkg:deb/debian/tzdata@2026c-0%2Bdeb13u1?arch=all&distro=debian-13.7",
+        "pkg:deb/debian/util-linux@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7"
+      ]
+    },
+    {
+      "ref": "fe256c8a-104f-4a26-a6a4-6676b6dacfd1",
+      "dependsOn": [
+        "9a27d3b1-cbdc-44e4-ad7c-5eca1aaa3b5d",
         "pkg:pypi/annotated-doc@0.0.5",
         "pkg:pypi/annotated-types@0.8.0",
         "pkg:pypi/anyio@4.14.2",
@@ -8099,46 +8139,6 @@
         "pkg:pypi/watchfiles@1.2.0",
         "pkg:pypi/websockets@17.0.1",
         "pkg:pypi/wheel@0.46.3"
-      ]
-    },
-    {
-      "ref": "787777a8-791a-434e-8b36-efba58470efa",
-      "dependsOn": [
-        "pkg:deb/debian/apt@3.0.3?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/bash@5.2.37-2%2Bb10?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/bsdutils@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7&epoch=1",
-        "pkg:deb/debian/ca-certificates@20250419?arch=all&distro=debian-13.7",
-        "pkg:deb/debian/coreutils@9.7-3?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/dash@0.5.12-12?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/diffutils@3.10-4?arch=amd64&distro=debian-13.7&epoch=1",
-        "pkg:deb/debian/dpkg@1.22.22?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/findutils@4.10.0-3?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/grep@3.11-4?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/gzip@1.13-1%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/hostname@3.25?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/init-system-helpers@1.69~deb13u1?arch=all&distro=debian-13.7",
-        "pkg:deb/debian/libc-bin@2.41-12%2Bdeb13u4?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libdb5.3t64@5.3.28%2Bdfsg2-9?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libffi8@3.4.8-2?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libgdbm6t64@1.24-2?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libmount1@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libncursesw6@6.5%2B20250216-2?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libpam-modules-bin@1.7.0-5?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libreadline8t64@8.2-6?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libsmartcols1@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/libuuid1@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/login@4.16.0-2%2Breally2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7&epoch=1",
-        "pkg:deb/debian/mawk@1.3.4.20250131-1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/mount@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/ncurses-base@6.5%2B20250216-2?arch=all&distro=debian-13.7",
-        "pkg:deb/debian/ncurses-bin@6.5%2B20250216-2?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/netbase@6.5?arch=all&distro=debian-13.7",
-        "pkg:deb/debian/perl-base@5.40.1-6%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/sed@4.9-2%2Bdeb13u1?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/sysvinit-utils@3.14-4?arch=amd64&distro=debian-13.7",
-        "pkg:deb/debian/tzdata@2026c-0%2Bdeb13u1?arch=all&distro=debian-13.7",
-        "pkg:deb/debian/util-linux@2.41.5-0%2Bdeb13u1?arch=amd64&distro=debian-13.7"
       ]
     },
     {

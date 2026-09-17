@@ -1,0 +1,1 @@
+{"model": "glm-5.3-flash", "provider": "agentteams-gateway", "bounded_field": "max_tokens", "bounded_value": 2048, "reasoning_effort": "low", "streaming_tool_call": true, "tool_result_continuation": true, "answer": "MODEL_READY", "seconds": 8.36}

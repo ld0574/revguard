@@ -256,6 +256,16 @@ done
 }
 docker exec "$CONTROLLER" agt get teams
 
+echo "==> 5.5/6 应用并验证 Worker 生成预算（Controller 注册表对 glm-5.3-flash 回退到 512）"
+if [ "$MODEL" = "glm-5.3-flash" ]; then
+  python3 "$REVGUARD_HOME/scripts/apply_agentteams_model_budget.py" \
+    --model "$MODEL" \
+    --max-tokens "$MAX_COMPLETION_TOKENS" \
+    --reasoning-effort low
+else
+  echo "当前模型 $MODEL 不使用 glm 生成预算，跳过"
+fi
+
 docker exec -i -e REVGUARD_TARGET_MODEL="$MODEL" \
   "${WORKER_CONTAINER_PREFIX}revguard-intake" python3 - <<'PY'
 import json

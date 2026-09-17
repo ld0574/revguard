@@ -3,18 +3,18 @@
   "Trivy": {
     "Version": "0.69.3"
   },
-  "ReportID": "01a0af91-0301-7452-a10c-c252e1967dd4",
-  "CreatedAt": "2026-09-17T13:31:51.425284154Z",
-  "ArtifactID": "sha256:b1bb941cb384a15fd09ea7e270f104469b20f72474357e8f2cc040da098eb33a",
+  "ReportID": "01a0b03c-ed8e-7f31-b488-616e538b359f",
+  "CreatedAt": "2026-09-17T16:39:38.127124836Z",
+  "ArtifactID": "sha256:5958f955aa6630d429e849a52df4a76451b8b87ae53087ec3fc71b611627ebd3",
   "ArtifactName": "revguard-api:0.6.0-rc2",
   "ArtifactType": "container_image",
   "Metadata": {
-    "Size": 279275008,
+    "Size": 279281152,
     "OS": {
       "Family": "debian",
       "Name": "13.7"
     },
-    "ImageID": "sha256:90d47ec4c4abd338d3e110b148b598df387e5e1024f518a0dc73f6355aee015a",
+    "ImageID": "sha256:b4b24d6d1d725e76bc6e1276b6478cd27e76efb67ec133500cb7cec49a4ec7e0",
     "DiffIDs": [
       "sha256:411a86676185cb54d695a805b238194a64e9b77e0c723f3802fbb87d333ea0b3",
       "sha256:4d43b7f98e4c38fd2d37f37f1bf9965d2c4018b01453d3b29d924653c3275f4b",
@@ -24,17 +24,17 @@
       "sha256:969d4a0f70647cb4ff49e0b7819eba8c8fd13adaad08707d3c366e68bc4480d7",
       "sha256:baec7c1f3de026ebfd5d1f7a3a41097ff38c6510a5d1f9203768532bd7dcc61c",
       "sha256:d43719b02f9ba762a68d52abe3bda623c704ffda7c478d8826953c74b7d0d2db",
-      "sha256:0b799c7fc30ce02df0320fc65bb7ce777ff7d8dfd0f43c9824594594e51b8708",
-      "sha256:19df545023495be088d6b4bff00195989e74813272e3f5b18b8039d01ffae29e",
-      "sha256:6cb8212322ba066bdb537e266d1518ad4b541d6772a56aec3a550df431f1625c",
-      "sha256:c1fdf203cc03aa3225a04c4dcdb8f3f0e34f99ad5ba61d07acca170a3c55ae64",
-      "sha256:75ce536554d100543d387cda22bc9e81bb27b485fa8fcefc85ede98b53a142cd",
-      "sha256:670a2dceff90d5361ac9d492170e37d9a75b51da0fb96b1c5d9e42567747c34c",
-      "sha256:f471d62e88e5110c0515772ddae13b25177f9b266e58d52d9a24d8b73476373a",
-      "sha256:7503be292bcc2e284392d6a478f548bdb80b0451e8fa509f91e3426f7da7df5c",
-      "sha256:78c955f2b9b0660a04de6df907e5685aba617be714f7cea1e396c396b07d45e9",
-      "sha256:a6841a1b61828f66f59177d46b90567cb70380986e30b26c2738ca85f2d25564",
-      "sha256:001bb0c819de0111f53361124f85a2764fd63232701464199dfb95ecf2d1eefc"
+      "sha256:07a7104d3d0e803fa783f5e516c9e4e732359d7cfbd5251aa18ce48ec9aeb577",
+      "sha256:f1e66eebc109906f95294a40548b003ccb036d2f8eb1b11fdf303bdf19072994",
+      "sha256:93653df5ce005fe9aa52e6aa6c75f1f2a6c31195b556d61b6e30d9ed0c802616",
+      "sha256:ff28b6d2e481eebd11fc2be02e59c656cb1b1b4ad9dfa649583c0134b1afc04f",
+      "sha256:98407213c96b4c29a10ddf1d654d653d4f909ef54680f073077028dad2f59bb8",
+      "sha256:7d9be531fda81e2e9d3bede02ab7fe32b3a7b3b9ba9199c7a3fa5e18982af2b7",
+      "sha256:ae48f4ba0358b89d755d4f3eb6dff0d5c8468fe43692325cde668825a919e98d",
+      "sha256:ca7eee47596544ab5d4f896f50f24d8b06cdb56c739e95030cb1abf9680b2178",
+      "sha256:1c7c0eb22833877ebba2e91a3130deaeade903b82f8881b94b523dec87d3aecb",
+      "sha256:22e3616d72ccc2d3388e93678d2d6d15127597b45b7586c75af661617b253980",
+      "sha256:1726d7862ad8c4b204df357c6dc6180007e4870aa35b94641a82301107bfa04a"
     ],
     "RepoTags": [
       "revguard-api:0.6.0-rc2"
@@ -42,7 +42,7 @@
     "Reference": "revguard-api:0.6.0-rc2",
     "ImageConfig": {
       "architecture": "amd64",
-      "created": "2026-09-17T21:31:02.872327676+08:00",
+      "created": "2026-09-18T00:38:12.036824765+08:00",
       "history": [
         {
           "created": "2026-08-24T00:00:00Z",
@@ -145,92 +145,92 @@
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:01Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY revguard/ ./revguard/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:01Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY scripts/ ./scripts/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:01Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY migrations/ ./migrations/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:01Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY config/demo_principals.json ./config/demo_principals.json # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:01Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY data/fixtures/ ./data/fixtures/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:01Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY data/golden_cases/ ./data/golden_cases/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY docs/evaluation-summary.json docs/value-evaluation-synthetic.json docs/synthetic-data-validation.json docs/public-data-experiment-summary.json docs/polardb-local-verification-2026-08-27.json docs/polardb-local-instance-acceptance-2026-08-29.json ./docs/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY docs/evidence/demo-rehearsal/manifest.json ./docs/evidence/demo-rehearsal/manifest.json # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:10Z",
           "created_by": "COPY /ui/dist/client/ ./demo-ui/dist/client/ # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:11Z",
           "created_by": "RUN |2 PIP_INDEX_URL=https://pypi.org/simple REVGUARD_VERSION=0.6.0-rc2 /bin/sh -c getent group revguard \u003e/dev/null || addgroup --system revguard;     id -u revguard \u003e/dev/null 2\u003e\u00261 || adduser --system --ingroup revguard revguard # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:11Z",
           "created_by": "ENV REVGUARD_DB_PATH=/app/runtime/revguard.db REVGUARD_FIXTURES_DIR=/app/data/fixtures REVGUARD_OUTPUT_DIR=/app/data/outputs REVGUARD_REPORT_DIR=/app/docs/reports REVGUARD_GATEWAY_STATE_PATH=/app/runtime/revguard.gateway.json REVGUARD_APPROVAL_MODE=wait REVGUARD_FINANCE_FAIL_TIMES=1 REVGUARD_RESET_ON_START=false REVGUARD_RELEASE_VERSION=0.6.0-rc2 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:12Z",
           "created_by": "RUN |2 PIP_INDEX_URL=https://pypi.org/simple REVGUARD_VERSION=0.6.0-rc2 /bin/sh -c mkdir -p /app/data/outputs /app/docs/reports /app/runtime \u0026\u0026     chmod +x /app/scripts/start_api.sh \u0026\u0026     chown -R revguard:revguard /app # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:12Z",
           "created_by": "VOLUME [/app/data/outputs /app/docs/reports /app/runtime]",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:12Z",
           "created_by": "USER revguard",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:12Z",
           "created_by": "EXPOSE [9000/tcp]",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:12Z",
           "created_by": "HEALTHCHECK {Test:[CMD-SHELL python -c \"import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1:9000/api/v1/health', timeout=2))['status']=='ok'\"] Interval:15s Timeout:3s StartPeriod:10s StartInterval:0s Retries:3}",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-09-17T13:31:02Z",
+          "created": "2026-09-17T16:38:12Z",
           "created_by": "CMD [\"/app/scripts/start_api.sh\"]",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
@@ -248,17 +248,17 @@
           "sha256:969d4a0f70647cb4ff49e0b7819eba8c8fd13adaad08707d3c366e68bc4480d7",
           "sha256:baec7c1f3de026ebfd5d1f7a3a41097ff38c6510a5d1f9203768532bd7dcc61c",
           "sha256:d43719b02f9ba762a68d52abe3bda623c704ffda7c478d8826953c74b7d0d2db",
-          "sha256:0b799c7fc30ce02df0320fc65bb7ce777ff7d8dfd0f43c9824594594e51b8708",
-          "sha256:19df545023495be088d6b4bff00195989e74813272e3f5b18b8039d01ffae29e",
-          "sha256:6cb8212322ba066bdb537e266d1518ad4b541d6772a56aec3a550df431f1625c",
-          "sha256:c1fdf203cc03aa3225a04c4dcdb8f3f0e34f99ad5ba61d07acca170a3c55ae64",
-          "sha256:75ce536554d100543d387cda22bc9e81bb27b485fa8fcefc85ede98b53a142cd",
-          "sha256:670a2dceff90d5361ac9d492170e37d9a75b51da0fb96b1c5d9e42567747c34c",
-          "sha256:f471d62e88e5110c0515772ddae13b25177f9b266e58d52d9a24d8b73476373a",
-          "sha256:7503be292bcc2e284392d6a478f548bdb80b0451e8fa509f91e3426f7da7df5c",
-          "sha256:78c955f2b9b0660a04de6df907e5685aba617be714f7cea1e396c396b07d45e9",
-          "sha256:a6841a1b61828f66f59177d46b90567cb70380986e30b26c2738ca85f2d25564",
-          "sha256:001bb0c819de0111f53361124f85a2764fd63232701464199dfb95ecf2d1eefc"
+          "sha256:07a7104d3d0e803fa783f5e516c9e4e732359d7cfbd5251aa18ce48ec9aeb577",
+          "sha256:f1e66eebc109906f95294a40548b003ccb036d2f8eb1b11fdf303bdf19072994",
+          "sha256:93653df5ce005fe9aa52e6aa6c75f1f2a6c31195b556d61b6e30d9ed0c802616",
+          "sha256:ff28b6d2e481eebd11fc2be02e59c656cb1b1b4ad9dfa649583c0134b1afc04f",
+          "sha256:98407213c96b4c29a10ddf1d654d653d4f909ef54680f073077028dad2f59bb8",
+          "sha256:7d9be531fda81e2e9d3bede02ab7fe32b3a7b3b9ba9199c7a3fa5e18982af2b7",
+          "sha256:ae48f4ba0358b89d755d4f3eb6dff0d5c8468fe43692325cde668825a919e98d",
+          "sha256:ca7eee47596544ab5d4f896f50f24d8b06cdb56c739e95030cb1abf9680b2178",
+          "sha256:1c7c0eb22833877ebba2e91a3130deaeade903b82f8881b94b523dec87d3aecb",
+          "sha256:22e3616d72ccc2d3388e93678d2d6d15127597b45b7586c75af661617b253980",
+          "sha256:1726d7862ad8c4b204df357c6dc6180007e4870aa35b94641a82301107bfa04a"
         ]
       },
       "config": {
@@ -344,48 +344,48 @@
         "DiffID": "sha256:d43719b02f9ba762a68d52abe3bda623c704ffda7c478d8826953c74b7d0d2db"
       },
       {
-        "Size": 577024,
-        "DiffID": "sha256:0b799c7fc30ce02df0320fc65bb7ce777ff7d8dfd0f43c9824594594e51b8708"
+        "Size": 579072,
+        "DiffID": "sha256:07a7104d3d0e803fa783f5e516c9e4e732359d7cfbd5251aa18ce48ec9aeb577"
       },
       {
-        "Size": 256512,
-        "DiffID": "sha256:19df545023495be088d6b4bff00195989e74813272e3f5b18b8039d01ffae29e"
+        "Size": 257536,
+        "DiffID": "sha256:f1e66eebc109906f95294a40548b003ccb036d2f8eb1b11fdf303bdf19072994"
       },
       {
         "Size": 12800,
-        "DiffID": "sha256:6cb8212322ba066bdb537e266d1518ad4b541d6772a56aec3a550df431f1625c"
+        "DiffID": "sha256:93653df5ce005fe9aa52e6aa6c75f1f2a6c31195b556d61b6e30d9ed0c802616"
       },
       {
         "Size": 4608,
-        "DiffID": "sha256:c1fdf203cc03aa3225a04c4dcdb8f3f0e34f99ad5ba61d07acca170a3c55ae64"
+        "DiffID": "sha256:ff28b6d2e481eebd11fc2be02e59c656cb1b1b4ad9dfa649583c0134b1afc04f"
       },
       {
         "Size": 29184,
-        "DiffID": "sha256:75ce536554d100543d387cda22bc9e81bb27b485fa8fcefc85ede98b53a142cd"
+        "DiffID": "sha256:98407213c96b4c29a10ddf1d654d653d4f909ef54680f073077028dad2f59bb8"
       },
       {
         "Size": 14848,
-        "DiffID": "sha256:670a2dceff90d5361ac9d492170e37d9a75b51da0fb96b1c5d9e42567747c34c"
+        "DiffID": "sha256:7d9be531fda81e2e9d3bede02ab7fe32b3a7b3b9ba9199c7a3fa5e18982af2b7"
       },
       {
         "Size": 17920,
-        "DiffID": "sha256:f471d62e88e5110c0515772ddae13b25177f9b266e58d52d9a24d8b73476373a"
+        "DiffID": "sha256:ae48f4ba0358b89d755d4f3eb6dff0d5c8468fe43692325cde668825a919e98d"
       },
       {
         "Size": 5632,
-        "DiffID": "sha256:7503be292bcc2e284392d6a478f548bdb80b0451e8fa509f91e3426f7da7df5c"
+        "DiffID": "sha256:ca7eee47596544ab5d4f896f50f24d8b06cdb56c739e95030cb1abf9680b2178"
       },
       {
         "Size": 609792,
-        "DiffID": "sha256:78c955f2b9b0660a04de6df907e5685aba617be714f7cea1e396c396b07d45e9"
+        "DiffID": "sha256:1c7c0eb22833877ebba2e91a3130deaeade903b82f8881b94b523dec87d3aecb"
       },
       {
         "Size": 12288,
-        "DiffID": "sha256:a6841a1b61828f66f59177d46b90567cb70380986e30b26c2738ca85f2d25564"
+        "DiffID": "sha256:22e3616d72ccc2d3388e93678d2d6d15127597b45b7586c75af661617b253980"
       },
       {
-        "Size": 1520128,
-        "DiffID": "sha256:001bb0c819de0111f53361124f85a2764fd63232701464199dfb95ecf2d1eefc"
+        "Size": 1523200,
+        "DiffID": "sha256:1726d7862ad8c4b204df357c6dc6180007e4870aa35b94641a82301107bfa04a"
       }
     ]
   },

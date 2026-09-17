@@ -92,3 +92,31 @@ Higress 的 REST-to-MCP Server 全部指向 `revguard-api.internal:9000`，Docke
 3. 或者保留内联输入但改为 base64 传递（`--input-b64`），彻底消除引号转义。
 
 在整改完成前，19088 彩排栈的双案记录使用 `REVGUARD_TEAM_TRANSPORT=mcp` 参考执行器产生（同一 StageTask / Skill 契约 / 真实 ERPNext / 真实 Matrix 真人审批 / 真实 PostgreSQL 资金写入与冲销），现场只展示已存档记录；Element 里的真实 AgentTeams 多 Agent 交接仍以 19000 常驻栈的运行与决赛视频为准。
+
+## 2026-09-18 复验：Controller 注册表覆盖与官方模型配置 API 纠正
+
+9 月 18 日凌晨复核发现，"先停 Worker → 改 MinIO → 再拉起"的顺序**仍不充分**：
+AgentTeams Controller 在 Worker 容器重建时会按内置模型注册表重新生成 provider
+默认值（`glm-5.3-flash` → `maxTokens: 512`、无 `reasoning_effort`），把离线写入的
+`{max_tokens: 2048, reasoning_effort: low}` 覆盖回 `{max_tokens: 512}`。实测：容器内
+文件与 MinIO 对象同时改为 2048+low 后重启 Worker，两者都会回到 512。
+
+最终方案（已实施并复验）：
+
+1. Controller 环境变量 `AGENTTEAMS_MODEL_MAX_TOKENS=2048`。202 上重建 Controller
+   容器时必须同时保留 `matrix-local.agentteams.io`、`aigw-local.agentteams.io`、
+   `fs-local.agentteams.io` 三个网络别名，否则 Worker 的 MCP/存储域名会解析失败
+   （本次重建曾漏掉，已补回并复验 MCP 隔离 9/9 + 72 项跨角色拒绝）。
+2. 新增 `scripts/apply_agentteams_model_budget.py`：Worker 运行后通过 CoPaw 官方模型
+   配置 API（`PUT /api/models/{provider}/models/{model}/config`）覆盖为
+   `{max_tokens: 2048, reasoning_effort: low}`，并逐个回读 `effective` 校验。
+3. `scripts/agentteams_setup.sh` 在 Team Ready 后自动执行该脚本，容器重建后由部署
+   流程自动纠正。
+4. prod 与 dev 的 `REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS` 统一为 2048。
+
+复验证据：`docs/evidence/agentteams-glm-budget-20260918/`（10/10 Worker 回读通过；
+orchestrator / intake / evidence / policy 四个 Worker 的真实流式工具调用 + 工具结果
+续接 + `MODEL_READY`；Team `revguard-team` 9/9 Ready；Controller 模型参数 2048）。
+
+残余风险：Controller 注册表本身仍是 512，Worker 容器每次重建后需要重跑
+`scripts/apply_agentteams_model_budget.py`（部署流程已自动执行）。
