@@ -4,7 +4,7 @@
 本仓库以 Apache-2.0 发布（见 `LICENSE`），但 Apache-2.0 只覆盖本团队原创代码，
 不覆盖下列第三方系统、镜像与数据。
 
-适用版本：`v0.6.0-rc2`。最后更新：2026-09-18。
+适用版本：`v0.6.0-rc3`。最后更新：2026-09-18。
 
 ---
 
@@ -79,8 +79,8 @@ Python 直接依赖、传递依赖、许可证与可替代性见
 
 发布制品包含：
 
-- `revguard-0.6.0-rc2.cdx.json` —— CycloneDX SBOM（含漏洞与密钥扫描器结果）
-- `image-scan-0.6.0-rc2.json` —— Trivy 镜像扫描（可修复 HIGH/CRITICAL 为 0）
+- `revguard-0.6.0-rc3.cdx.json` —— CycloneDX SBOM（含漏洞与密钥扫描器结果）
+- `image-scan-0.6.0-rc3.json` —— Trivy 镜像扫描（可修复 HIGH/CRITICAL 为 0）
 - `SHA256SUMS.txt` —— 发行资产校验和
 
 ---
