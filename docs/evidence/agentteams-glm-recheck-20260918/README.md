@@ -49,6 +49,17 @@ docker exec -i -e HOME=/root/.copaw-worker/revguard-intake \
 | `effective-*.json` | 10 个 Worker 的生效 `generate_kwargs` 回读 |
 | `runtime-probe-{orchestrator,evidence,executor,verifier}.json` | 真实流式工具调用 + 工具结果续接结果 |
 | `runtime-probe-*.err` | 探针标准错误（仅日志行，无凭据） |
+| `budget-recheck-20260918-223647Z.txt` | 封板前 10 Worker + Manager 生效预算回读输出 |
+
+## 决赛封板前再复核（2026-09-18T22:36:47Z UTC）
+
+决赛提交封板前用运维脚本 `scripts/apply_agentteams_model_budget.py --include-manager` 对
+**10 个 Worker + Manager** 重新回读生效参数，11/11 均为
+`{"max_tokens": 2048, "reasoning_effort": "low"}`，无一个被写回旧值或被跳过；
+同一时间段内 Manager 与 10 个 Worker 的容器日志在最近 45 分钟内没有任何
+`chat/completions` / `CoPawAgent.reply` 记录，即没有空闲轮询消耗模型额度。
+
+原始回读输出：[`budget-recheck-20260918-223647Z.txt`](budget-recheck-20260918-223647Z.txt)。
 
 ## 边界
 
