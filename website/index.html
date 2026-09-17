@@ -207,7 +207,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
   <div class="wrap">
     <h2><em>06 · 可验证成果</em>测试、评测、实验与恢复，全部可复现</h2>
     <div class="grid g3">
-      <div class="card"><div class="kpi">353<small> 项后端测试</small></div><p>Docker 隔离验证套件（含 PostgreSQL 集成、并发与恢复路径），82 项外部依赖用例按环境条件跳过。</p></div>
+      <div class="card"><div class="kpi">360<small> 项后端测试</small></div><p>Docker 隔离验证套件：277 项默认执行 + 83 项 PostgreSQL/Matrix 集成用例（带 DSN 全绿），覆盖率门禁 90%。</p></div>
       <div class="card"><div class="kpi">105<small> 项确定性评测</small></div><p>8 个合成 Golden Case 全量回放，金额与状态基线逐项比对，双案例 GOLDEN_MATCH。</p></div>
       <div class="card"><div class="kpi">10,000<small> 笔公开真实交易</small></div><p>Olist 实验确定性抽样（seed 202609），源档案 SHA-256 与规则哈希入清单，10 类异常 × 80 例。</p></div>
       <div class="card"><div class="kpi">PASSED<small> 恢复验证</small></div><p>数据库故障后按原操作 ID 恢复、旧 Worker 隔离、迟到回调拒绝、净影响归零。</p></div>
@@ -231,9 +231,20 @@ python3 scripts/run_case_e2e.py CASE-2026-0001   # 真实链路回放</pre>
       <tr><th>扩展点</th><th>说明</th><th>状态</th></tr>
       <tr><td>ERPNext Provider</td><td>Frappe REST 只读适配，契约测试覆盖鉴权 / 超时 / 分页 / 缺字段 / 不可用</td><td class="tag-live">已验收</td></tr>
       <tr><td>金蝶 / 用友 / SAP</td><td>统一配置 Schema、对象映射清单、契约测试入口与骨架</td><td class="tag-synth">NOT_VALIDATED</td></tr>
-      <tr><td>行业迁移</td><td>保险渠道佣金、供应商返利、平台服务费的治理骨架与七步迁移路径</td><td class="tag-pub">迁移示意</td></tr>
     </table>
-  </div>
+  <h3>六行业迁移矩阵</h3>
+<p class="lead">迁移分三层：<b>直接复用</b>领域无关的治理骨架、<b>替换 Adapter</b> 对接外部系统、<b>重写领域规则</b> 适配业务口径。下表为迁移示意，不等于“零成本支持”；现有业务运行证据属于渠道佣金合成案例。</p>
+<table>
+<tr><th>行业 / 场景</th><th>直接复用</th><th>替换 Adapter</th><th>重写领域规则</th></tr>
+<tr><td>渠道佣金争议（现有运行证据）</td><td>StageTask、审批、能力令牌、幂等、Trace/Audit、执行/验证分离</td><td>CRM、合同、政策、财务接口</td><td>佣金组件、政策时点、L0–L3 阈值</td></tr>
+<tr><td>保险理赔复核</td><td>＋证据缺口与人工升级</td><td>保单、理赔、查勘、支付接口</td><td>责任范围、免赔额、赔付公式、反欺诈阈值</td></tr>
+<tr><td>供应商对账</td><td>＋版本匹配与差异解释</td><td>采购、收货、发票、付款接口</td><td>三单匹配、税额/账期、容差规则</td></tr>
+<tr><td>电商售后退款</td><td>＋一次性写能力与回滚验证</td><td>订单、物流、支付、库存接口</td><td>退款资格、折损、运费与时效规则</td></tr>
+<tr><td>SaaS 计费申诉</td><td>＋确定性金额内核</td><td>订阅、用量、定价、账单接口</td><td>计量窗口、阶梯价格、Credit 规则</td></tr>
+<tr><td>员工费用报销</td><td>＋Principal/RBAC 与审批链</td><td>HR、差旅、发票、支付接口</td><td>费用标准、城市等级、票据与税务规则</td></tr>
+</table>
+<p>16 个 Skill 的迁移分层（直接复用 / 主要替换 Adapter / 必须重写领域规则）见 <a href="https://github.com/ld0574/revguard/blob/main/docs/industry-migration.md">docs/industry-migration.md</a>。</p>
+</div>
 </section>
 
 <section id="materials">
