@@ -1,0 +1,4 @@
+REVGUARD_DB_PATH=<redacted>
+REVGUARD_DATABASE_URL=<redacted>
+REVGUARD_DB_POOL_MIN=<redacted>
+REVGUARD_DB_POOL_MAX=<redacted>

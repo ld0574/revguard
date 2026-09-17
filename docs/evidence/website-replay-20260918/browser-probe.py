@@ -38,6 +38,21 @@ options.set_capability("goog:loggingPrefs", {"browser": "ALL", "performance": "A
 driver = webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=options)
 
 
+def head_with_retry(url, attempts=3, timeout=30, delay=5):
+    """GitHub Release 附件在跨境网络下偶发超时，重试后再判定失败。"""
+    last = "error:unknown"
+    for attempt in range(1, attempts + 1):
+        request = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "revguard-website-probe"})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return response.status, f"attempt-{attempt}"
+        except Exception as exc:  # noqa: BLE001 - 探针把下载失败转成检查结果
+            last = f"error:{type(exc).__name__}"
+            if attempt < attempts:
+                time.sleep(delay)
+    return last, f"attempts-{attempts}"
+
+
 def record(name, passed, detail=""):
     result["checks"][name] = {"passed": bool(passed), "detail": detail}
     return passed
@@ -66,13 +81,13 @@ try:
     record("材料入口含两个成片直链", len(material_links) == 2, f"links={material_links}")
     reachable = []
     for link in material_links:
-        request = urllib.request.Request(link, method="HEAD", headers={"User-Agent": "revguard-website-probe"})
-        try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                reachable.append([link.rsplit("/", 1)[-1], response.status])
-        except Exception as exc:  # noqa: BLE001 - 探针把下载失败转成检查结果
-            reachable.append([link.rsplit("/", 1)[-1], f"error:{type(exc).__name__}"])
-    record("成片直链可下载", all(status == 200 for _, status in reachable), f"reachable={reachable}")
+        status, note = head_with_retry(link)
+        reachable.append([link.rsplit("/", 1)[-1], status, note])
+    record(
+        "成片直链可下载",
+        all(item[1] == 200 for item in reachable),
+        f"reachable={reachable}",
+    )
 
     # 社交分享卡片：og:image 必须是绝对 PNG 直链，且真的能被爬虫抓到
     share = driver.execute_script(

@@ -44,11 +44,27 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 | CASE-2026-0008 渲染 | 摘要 8 项、阶段 11 个、步骤 11 步、追踪 60 行 | replay-case-2026-0008.png |
 | 播放交互 | 播放 9 秒推进到第 3 步，按钮为“暂停” | replay-playing.png |
 | 移动端 | 390×844 无横向溢出 | replay-mobile.png |
+| 分享卡片元数据 | 首页 `og:image` 为绝对 PNG 直链，`og:url`/`og:image:type`/`twitter:card` 齐全 | browser-result.json |
+| 分享卡片可抓取 | 卡片直链 HTTP 200、`image/png`、实际像素 1200×630、277,406 字节 | browser-result.json |
 | 资源完整性 | 无 4xx/5xx 请求、无浏览器 SEVERE 日志 | browser-result.json |
 
 `replay-case-82822305.png` 是 rc3 传输验证案件（只读运行，无资金写入）在同一套预览栈下的渲染结果，用于确认 rc3 数据包也能被页面正确加载。
 
-部署完成后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，**10 项全绿**（含新增的两个成片直链检查：直链存在且 HEAD 200），结果与截图保存在 [`public/`](public/)（[`public/browser-result.json`](public/browser-result.json)）。
+部署完成后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，**12 项全绿**：在原有 10 项之外新增“分享卡片元数据完整”与“分享卡片直链可抓取且为 1200×630 PNG”，结果与截图保存在 [`public/`](public/)（[`public/browser-result.json`](public/browser-result.json)）。两个成片直链的 HEAD 检查带 3 次重试：GitHub Release 附件在跨境网络下偶发超时，重试后仍非 200 才算失败，本轮两次探测均在第 1 次尝试返回 200。
+
+## 社交分享卡片
+
+`og:image` 原先是相对路径的 SVG。主流社交爬虫不解析相对地址，也普遍不支持 SVG，分享时只能显示空白卡片。
+现在两页（`index.html`、`replay.html`）统一指向绝对地址 `https://ld0574.github.io/revguard/og-image.png`，
+并补齐 `og:url`、`og:site_name`、`og:image:type/width/height` 与 `twitter:card=summary_large_image`。
+
+`website/og-image.png`（1200×630，277,406 字节）由 `website/og-image.svg` 在 202 的浏览器容器内渲染导出，
+不是手工拼图；渲染脚本与录制脚本同栈，站点仍是纯静态文件，GitHub Pages 只发布已提交内容。
+
+静态门禁 [`scripts/check_website_replay.py`](../../../scripts/check_website_replay.py) 断言两个页面：
+`og:image` 是绝对 PNG 地址、`og:url` 在同站点下、`twitter:card` 正确、PNG 文件存在且**从文件头读出的
+像素尺寸**必须为 1200×630；`tests/test_website_replay_index.py` 另加两条反例（退回相对 SVG、删除 PNG
+都必须让门禁失败），共 4 条用例。
 
 ## 数据代次
 

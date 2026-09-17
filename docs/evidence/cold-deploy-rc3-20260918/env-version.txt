@@ -1,0 +1,1 @@
+REVGUARD_RELEASE_VERSION=<redacted>

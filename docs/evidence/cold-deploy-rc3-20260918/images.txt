@@ -1,0 +1,10 @@
+grafana/alloy:v1.10.2
+grafana/grafana:12.1.1
+grafana/loki:3.5.4
+grafana/tempo:2.8.2
+otel/opentelemetry-collector-contrib:0.132.0
+prom/alertmanager:v0.28.1
+prom/blackbox-exporter:v0.27.0
+prom/prometheus:v3.5.0
+python:3.11-slim
+work-revguard-api:latest
