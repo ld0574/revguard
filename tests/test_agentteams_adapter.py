@@ -165,6 +165,55 @@ class TestAgentTeamsAdapter(unittest.TestCase):
         self.assertEqual(kwargs["message_id"], "$matrix-bound")
         self.assertEqual(kwargs["request_id"], "REQ-BOUND")
 
+    def test_from_task_without_backend_key_uses_scoped_mcp_binding(self):
+        """Business Workers hold no RevGuard key; the binding travels Higress."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "absent-key"
+            config = Path(tmp) / "config" / "mcporter.json"
+            config.parent.mkdir()
+            config.write_text("{}", encoding="utf-8")
+            bound = {
+                "task_id": "TASK-BOUND",
+                "case_id": "CASE-BOUND",
+                "skill_name": "EvidenceCollectSkill",
+                "input": {"order_id": "EZ202608001"},
+                "request_id": "REQ-BOUND",
+                "agentteams_message_id": "$matrix-bound",
+                "traceparent": "00-12345678901234567890123456789012-1234567890123456-01",
+            }
+            with patch.object(adapter, "_credential_path", return_value=missing), \
+                    patch.object(adapter, "_mcporter_config", return_value=config), \
+                    patch.object(adapter, "_mcporter_call", return_value={
+                        "content": [{"type": "text", "text": json.dumps(bound)}],
+                    }) as binding, \
+                    patch.object(adapter, "_api_json") as rest, \
+                    patch.object(adapter, "_invoke_higress_mcp", return_value={
+                        "success": True, "skill_receipt": "SKR-MCP-BOUND",
+                    }) as invoke:
+                code, result = self._run([
+                    "--task-id", "TASK-BOUND", "--from-task",
+                ], worker="revguard-evidence")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["skill_receipt"], "SKR-MCP-BOUND")
+        rest.assert_not_called()
+        self.assertEqual(binding.call_args.args[1], "BoundStageTask")
+        self.assertEqual(binding.call_args.args[2], {"taskId": "TASK-BOUND"})
+        self.assertEqual(invoke.call_args.kwargs["case_id"], "CASE-BOUND")
+        self.assertEqual(invoke.call_args.kwargs["skill_input"], bound["input"])
+
+    def test_from_task_without_key_or_mcp_config_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "absent-key"
+            with patch.object(adapter, "_credential_path", return_value=missing), \
+                    patch.object(adapter, "_mcporter_config", return_value=None), \
+                    patch.object(adapter, "_invoke_higress_mcp") as invoke:
+                code, result = self._run([
+                    "--task-id", "TASK-BOUND", "--from-task",
+                ], worker="revguard-evidence")
+        self.assertEqual(code, 3)
+        self.assertEqual(result["error"]["type"], "ADAPTER_CONFIG")
+        invoke.assert_not_called()
+
     def test_hex_message_id_restores_exact_matrix_correlation(self):
         matrix_event_id = "$event-with-random-SU"
         with tempfile.TemporaryDirectory() as tmp:

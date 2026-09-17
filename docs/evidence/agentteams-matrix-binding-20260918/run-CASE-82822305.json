@@ -1,0 +1,2930 @@
+{
+  "schema": "revguard.matrix-run-evidence/v1",
+  "case": {
+    "case_id": "CASE-82822305",
+    "status": "CLOSED",
+    "order_id": "EZ202608001",
+    "partner_id": "AGT-10001",
+    "case_type": "COMMISSION_UNDERPAYMENT",
+    "description": "Matrix transport verification run"
+  },
+  "team_run": {
+    "error": null,
+    "phase": "INVESTIGATION",
+    "run_id": "RUN-AGT-12C7C20A",
+    "status": "COMPLETED",
+    "room_id": "!NCserupQgE5k9AW8rP:matrix-local.agentteams.io:8086",
+    "queued_at": "2026-09-17T18:30:25.203303Z",
+    "started_at": "2026-09-17T18:30:25.205817Z",
+    "updated_at": "2026-09-17T18:39:13.385427Z",
+    "total_tasks": 8,
+    "orchestrator": {
+      "actor": "revguard-orchestrator",
+      "input": {
+        "goal": "execute state-bound RevGuard StageTasks through assigned Workers",
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "authority": "state-machine",
+        "traceparent": "00-51057d3b712947d730a22de165232169-4603f929a2e9bd98-03"
+      },
+      "output": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "decision": "RUN_ACCEPTED"
+      },
+      "status": "ACKNOWLEDGED",
+      "trigger_event_id": "$wftlb5w13lHfjlYD0k7zH9YLasEK-jkt1pwC0L_wxIs",
+      "dispatch_event_id": "$ZdqgBo795SLiU9d8S_FyB-ymVPsodDFGvJt6Uu0ZVu8",
+      "response_event_id": "$xPvChOBmwGGCb08O0BMHtQQgnbhmPVpGdoom-qDf2Hc"
+    },
+    "current_actor": "revguard-knowledge",
+    "current_stage": null,
+    "completed_tasks": 8,
+    "current_task_id": "TASK-4F98D06C"
+  },
+  "evidence": [
+    {
+      "type": "ORDER",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "currency": "KES",
+        "order_id": "EZ202608001",
+        "order_date": "2026-07-10",
+        "partner_id": "AGT-10001",
+        "product_id": "SHS-500",
+        "sales_owner": "j.mwangi",
+        "order_amount": 180000.0,
+        "order_status": "COMPLETED",
+        "completed_date": "2026-07-12",
+        "domain_data_kind": "SYNTHETIC_DOMAIN",
+        "erpnext_sales_partner": "Nairobi Solar Solutions Ltd",
+        "observed_commission_rate": 10.0,
+        "observed_commission_amount": 18000.0
+      },
+      "strength": "STRONG",
+      "source_ref": "SAL-ORD-2026-00001",
+      "evidence_id": "EV-46DBE419",
+      "collected_at": "2026-09-17T18:34:51.789623Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:1f1dc17384681e0d0746546df4782b133d568ae9a504b6b8f25022ffa7286f90",
+      "tool_receipt": "RCPT-70088A36",
+      "source_system": "erpnext",
+      "provenance_kind": "LIVE_SYSTEM",
+      "source_metadata": {
+        "provider": "erpnext",
+        "latency_ms": 17,
+        "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/sales-order/SAL-ORD-2026-00001",
+        "http_status": 200,
+        "payload_hash": "sha256:1f1dc17384681e0d0746546df4782b133d568ae9a504b6b8f25022ffa7286f90",
+        "correlation_id": "ERP-22186577E0B4468A",
+        "source_timestamp": "2026-09-16 22:54:58.009892",
+        "external_document_id": "SAL-ORD-2026-00001",
+        "external_document_type": "Sales Order"
+      }
+    },
+    {
+      "type": "TIER_HISTORY",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "partner_id": "AGT-10001",
+        "tier_history": [
+          {
+            "tier": "SILVER",
+            "effective_from": "2025-01-01"
+          },
+          {
+            "tier": "GOLD",
+            "effective_from": "2026-06-01"
+          }
+        ],
+        "domain_data_kind": "SYNTHETIC_DOMAIN"
+      },
+      "strength": "STRONG",
+      "source_ref": "AGT-10001-SILVER-00001,AGT-10001-GOLD-00002",
+      "evidence_id": "EV-3EB61AAF",
+      "collected_at": "2026-09-17T18:34:51.789656Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:8d721777642c8a0fc6a858db3b0f4d1dd8832cc51fba735dd91269259a0560fd",
+      "tool_receipt": "RCPT-E0BFEF6C",
+      "source_system": "erpnext",
+      "provenance_kind": "LIVE_SYSTEM",
+      "source_metadata": {
+        "provider": "erpnext",
+        "latency_ms": 9,
+        "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app",
+        "http_status": 200,
+        "payload_hash": "sha256:8d721777642c8a0fc6a858db3b0f4d1dd8832cc51fba735dd91269259a0560fd",
+        "correlation_id": "ERP-69193D7BB64C444B",
+        "source_timestamp": "2026-09-16 22:54:19.475734",
+        "external_document_id": "AGT-10001-SILVER-00001,AGT-10001-GOLD-00002",
+        "external_document_type": "Partner Tier History"
+      }
+    },
+    {
+      "type": "CONTRACT",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "terms": {
+          "time_basis": "order_date",
+          "clause_tier": "代理商等级以订单创建时点为准",
+          "clause_payment": "回款佣金以回款完成时间计算天数"
+        },
+        "policy_id": "KE-COMMISSION-2026",
+        "partner_id": "AGT-10001",
+        "contract_id": "CON-10001",
+        "signed_date": "2026-01-15",
+        "domain_data_kind": "SYNTHETIC_DOMAIN"
+      },
+      "strength": "STRONG",
+      "source_ref": "CON-2026-00001",
+      "evidence_id": "EV-640FC219",
+      "collected_at": "2026-09-17T18:34:51.789681Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:436e773743708f870faa9346840fbe7a5e2fd20b0ba10bb06d3dbab200189073",
+      "tool_receipt": "RCPT-499F9642",
+      "source_system": "erpnext",
+      "provenance_kind": "LIVE_SYSTEM",
+      "source_metadata": {
+        "provider": "erpnext",
+        "latency_ms": 7,
+        "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/contract/CON-2026-00001",
+        "http_status": 200,
+        "payload_hash": "sha256:436e773743708f870faa9346840fbe7a5e2fd20b0ba10bb06d3dbab200189073",
+        "correlation_id": "ERP-EBBAA9E080E84D74",
+        "source_timestamp": "2026-09-16 22:54:19.547682",
+        "external_document_id": "CON-2026-00001",
+        "external_document_type": "Contract"
+      }
+    },
+    {
+      "type": "PAYMENT_RECORD",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "currency": "KES",
+        "order_id": "EZ202608001",
+        "payment_id": "PAY-98765",
+        "payment_date": "2026-07-28",
+        "payment_amount": 180000.0,
+        "payment_status": "SETTLED",
+        "domain_data_kind": "SYNTHETIC_DOMAIN"
+      },
+      "strength": "STRONG",
+      "source_ref": "ACC-PAY-2026-00001",
+      "evidence_id": "EV-3509C580",
+      "collected_at": "2026-09-17T18:34:51.789699Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:86a58e5a5397d59fb8ebf0924d0c40e6063a4408b8472ffb9d3df38699568224",
+      "tool_receipt": "RCPT-DEA472B2",
+      "source_system": "erpnext",
+      "provenance_kind": "LIVE_SYSTEM",
+      "source_metadata": {
+        "provider": "erpnext",
+        "latency_ms": 12,
+        "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/payment-entry/ACC-PAY-2026-00001",
+        "http_status": 200,
+        "payload_hash": "sha256:86a58e5a5397d59fb8ebf0924d0c40e6063a4408b8472ffb9d3df38699568224",
+        "correlation_id": "ERP-CEF754B95CEB45F3",
+        "source_timestamp": "2026-09-16 22:55:00.022775",
+        "external_document_id": "ACC-PAY-2026-00001",
+        "external_document_type": "Payment Entry"
+      }
+    },
+    {
+      "type": "REFUND_RECORD",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "refunds": [],
+        "refund_amount": "0",
+        "domain_data_kind": "SYNTHETIC_DOMAIN"
+      },
+      "strength": "STRONG",
+      "source_ref": "EZ202608001",
+      "evidence_id": "EV-33899C9E",
+      "collected_at": "2026-09-17T18:34:51.789715Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:670dd9637a85833f06cf1c687076caa5557c4457130e83f02db3da670be30fc7",
+      "tool_receipt": "RCPT-EF22F598",
+      "source_system": "erpnext",
+      "provenance_kind": "LIVE_SYSTEM",
+      "source_metadata": {
+        "provider": "erpnext",
+        "latency_ms": 18,
+        "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app",
+        "http_status": 200,
+        "payload_hash": "sha256:670dd9637a85833f06cf1c687076caa5557c4457130e83f02db3da670be30fc7",
+        "correlation_id": "ERP-DF22D20849D049B4",
+        "source_timestamp": "2026-09-17T18:34:51.689765Z",
+        "external_document_id": "",
+        "external_document_type": "Sales Invoice"
+      }
+    },
+    {
+      "type": "INVOICE",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "currency": "KES",
+        "order_id": "EZ202608001",
+        "invoice_id": "INV-98765",
+        "invoice_date": "2026-09-16",
+        "invoice_amount": 180000.0,
+        "invoice_status": "Unpaid",
+        "domain_data_kind": "SYNTHETIC_DOMAIN"
+      },
+      "strength": "STRONG",
+      "source_ref": "ACC-SINV-2026-00001",
+      "evidence_id": "EV-74B8708B",
+      "collected_at": "2026-09-17T18:34:51.789731Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:9287cb2c8f3abd70c5f4558d615cc2215c73e73957588ed56a67d25d3d5a1887",
+      "tool_receipt": "RCPT-4FC1327B",
+      "source_system": "erpnext",
+      "provenance_kind": "LIVE_SYSTEM",
+      "source_metadata": {
+        "provider": "erpnext",
+        "latency_ms": 13,
+        "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/sales-invoice/ACC-SINV-2026-00001",
+        "http_status": 200,
+        "payload_hash": "sha256:9287cb2c8f3abd70c5f4558d615cc2215c73e73957588ed56a67d25d3d5a1887",
+        "correlation_id": "ERP-906E264C946A4697",
+        "source_timestamp": "2026-09-16 22:54:58.847867",
+        "external_document_id": "ACC-SINV-2026-00001",
+        "external_document_type": "Sales Invoice"
+      }
+    },
+    {
+      "type": "COMMISSION_LEDGER",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "entries": [
+          {
+            "amount": "18000.00",
+            "source": "BATCH-CALC-2026-07",
+            "status": "POSTED",
+            "comment": "7月佣金批处理（误用 2026-Q2 版本）",
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "ledger_id": "LED-50001",
+            "posted_at": "2026-08-01T02:00:00Z",
+            "policy_version": "2026-Q2"
+          },
+          {
+            "amount": "9000.00",
+            "source": "REVGUARD:CASE-2026-0001",
+            "status": "POSTED",
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "ledger_id": "LED-F0A0D1E2",
+            "posted_at": "2026-09-17T12:58:08.818303Z",
+            "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+            "policy_version": "2026-Q3"
+          },
+          {
+            "amount": "5400.00",
+            "source": "REVGUARD:CASE-2026-0001",
+            "status": "POSTED",
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "component": "COLLECTION_COMMISSION",
+            "ledger_id": "LED-2092EB52",
+            "posted_at": "2026-09-17T12:58:08.818431Z",
+            "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+            "policy_version": "2026-Q3"
+          }
+        ],
+        "posted_total": "32400.00"
+      },
+      "strength": "STRONG",
+      "source_ref": "EZ202608001",
+      "evidence_id": "EV-B1C8C385",
+      "collected_at": "2026-09-17T18:34:51.789763Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:0e3a3a6aef13c7bced522e0ea0d86ab30928d7133e9d7ab73aa4e8eac13cc9ea",
+      "tool_receipt": "RCPT-B3ADCBB9",
+      "source_system": "revguard-ledger",
+      "provenance_kind": "SYSTEM_GENERATED",
+      "source_metadata": {
+        "provider": "revguard-ledger",
+        "latency_ms": 0,
+        "payload_hash": "sha256:0e3a3a6aef13c7bced522e0ea0d86ab30928d7133e9d7ab73aa4e8eac13cc9ea",
+        "correlation_id": "RCPT-B3ADCBB9",
+        "source_timestamp": "2026-09-17T18:34:51.784184Z",
+        "external_document_id": "",
+        "external_document_type": "revguard-ledger"
+      }
+    },
+    {
+      "type": "POLICY_VERSIONS",
+      "case_id": "CASE-82822305",
+      "payload": {
+        "versions": [
+          {
+            "status": "ARCHIVED",
+            "clauses": [
+              {
+                "text": "GOLD 级代理商销售佣金按订单金额 8% 计算",
+                "clause_id": "Q1-C1"
+              },
+              {
+                "text": "SILVER 级代理商销售佣金按订单金额 5% 计算",
+                "clause_id": "Q1-C2"
+              }
+            ],
+            "version": "2026-Q1",
+            "rule_dsl": {
+              "rules": [
+                {
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.08",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.05",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.03",
+                  "component": "SALES_COMMISSION"
+                }
+              ],
+              "version": "2026-Q1",
+              "rounding": {
+                "mode": "HALF_UP",
+                "scale": 2
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "eligibility": {
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ],
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ]
+              }
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "effective_to": "2026-03-31",
+            "effective_from": "2026-01-01"
+          },
+          {
+            "status": "ARCHIVED",
+            "clauses": [
+              {
+                "text": "GOLD 级代理商销售佣金按订单金额 10% 计算",
+                "clause_id": "Q2-C1"
+              },
+              {
+                "text": "SILVER 级代理商销售佣金按订单金额 6% 计算",
+                "clause_id": "Q2-C2"
+              },
+              {
+                "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金",
+                "clause_id": "Q2-C3"
+              }
+            ],
+            "version": "2026-Q2",
+            "rule_dsl": {
+              "rules": [
+                {
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.10",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.06",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.04",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "payment_days_lte": 45
+                  },
+                  "formula": "payment_amount * 0.02",
+                  "component": "COLLECTION_COMMISSION"
+                }
+              ],
+              "version": "2026-Q2",
+              "rounding": {
+                "mode": "HALF_UP",
+                "scale": 2
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "eligibility": {
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ],
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ]
+              }
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "effective_to": "2026-06-30",
+            "effective_from": "2026-04-01"
+          },
+          {
+            "status": "ACTIVE",
+            "clauses": [
+              {
+                "text": "GOLD 级代理商销售佣金按订单金额 15% 计算",
+                "clause_id": "Q3-C1"
+              },
+              {
+                "text": "SILVER 级代理商销售佣金按订单金额 8% 计算",
+                "clause_id": "Q3-C2"
+              },
+              {
+                "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算",
+                "clause_id": "Q3-C3"
+              },
+              {
+                "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金",
+                "clause_id": "Q3-C4"
+              },
+              {
+                "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励",
+                "clause_id": "Q3-C5"
+              }
+            ],
+            "version": "2026-Q3",
+            "rule_dsl": {
+              "rules": [
+                {
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.15",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.08",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.05",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "payment_days_lte": 30
+                  },
+                  "formula": "payment_amount * 0.03",
+                  "component": "COLLECTION_COMMISSION"
+                },
+                {
+                  "when": {
+                    "monthly_completed_orders_gte": 20
+                  },
+                  "formula": "order_amount * 0.02",
+                  "component": "MONTHLY_INCENTIVE"
+                }
+              ],
+              "version": "2026-Q3",
+              "rounding": {
+                "mode": "HALF_UP",
+                "scale": 2
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "eligibility": {
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ],
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ]
+              }
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "effective_to": "2026-09-30",
+            "effective_from": "2026-07-01"
+          }
+        ]
+      },
+      "strength": "STRONG",
+      "source_ref": "KE-COMMISSION-2026",
+      "evidence_id": "EV-8D834072",
+      "collected_at": "2026-09-17T18:34:51.799535Z",
+      "collected_by": "revguard-evidence",
+      "content_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994",
+      "tool_receipt": "RCPT-F9F9223C",
+      "source_system": "revguard-policy",
+      "provenance_kind": "SYNTHETIC_DOMAIN",
+      "source_metadata": {
+        "provider": "revguard-policy",
+        "latency_ms": 0,
+        "payload_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994",
+        "correlation_id": "RCPT-F9F9223C",
+        "source_timestamp": "2026-09-17T18:34:51.795016Z",
+        "external_document_id": "",
+        "external_document_type": "revguard-policy"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "error": null,
+      "input": {
+        "raw_case": {
+          "claim": {
+            "currency": "KES",
+            "actual_amount": 18000,
+            "expected_amount": 27000
+          },
+          "source": "EMAIL",
+          "status": "CREATED",
+          "case_id": "CASE-82822305",
+          "entities": {
+            "order_id": "EZ202608001",
+            "partner_id": "AGT-10001",
+            "contract_id": null,
+            "partner_name": "Nairobi Solar Solutions Ltd"
+          },
+          "order_id": "EZ202608001",
+          "priority": "P1",
+          "team_run": {
+            "error": null,
+            "phase": "INVESTIGATION",
+            "run_id": "RUN-AGT-12C7C20A",
+            "status": "RUNNING",
+            "room_id": "!NCserupQgE5k9AW8rP:matrix-local.agentteams.io:8086",
+            "queued_at": "2026-09-17T18:30:25.203303Z",
+            "started_at": "2026-09-17T18:30:25.205817Z",
+            "updated_at": "2026-09-17T18:30:30.455564Z",
+            "total_tasks": 8,
+            "orchestrator": {
+              "actor": "revguard-orchestrator",
+              "input": {
+                "goal": "execute state-bound RevGuard StageTasks through assigned Workers",
+                "run_id": "RUN-AGT-12C7C20A",
+                "case_id": "CASE-82822305",
+                "authority": "state-machine",
+                "traceparent": "00-51057d3b712947d730a22de165232169-4603f929a2e9bd98-03"
+              },
+              "output": {
+                "run_id": "RUN-AGT-12C7C20A",
+                "decision": "RUN_ACCEPTED"
+              },
+              "status": "ACKNOWLEDGED",
+              "trigger_event_id": "$wftlb5w13lHfjlYD0k7zH9YLasEK-jkt1pwC0L_wxIs",
+              "dispatch_event_id": "$ZdqgBo795SLiU9d8S_FyB-ymVPsodDFGvJt6Uu0ZVu8",
+              "response_event_id": "$xPvChOBmwGGCb08O0BMHtQQgnbhmPVpGdoom-qDf2Hc"
+            },
+            "current_stage": "OrchestratorHandshake",
+            "completed_tasks": 0
+          },
+          "case_type": "COMMISSION_UNDERPAYMENT",
+          "created_at": "2026-09-17T18:30:25.189804Z",
+          "partner_id": "AGT-10001",
+          "risk_level": null,
+          "updated_at": "2026-09-17T18:30:25.189815Z",
+          "contract_id": null,
+          "description": "Matrix transport verification run",
+          "partner_name": "Nairobi Solar Solutions Ltd",
+          "_case_revision": 8,
+          "evidence_score": 0.0,
+          "execution_mode": "AGENTTEAMS_MATRIX",
+          "telemetry_context": {
+            "traceparent": "00-51057d3b712947d730a22de165232169-b2c99c57987a7085-03"
+          },
+          "workflow_provenance": {
+            "workflow": "real_executable",
+            "transport": "agentteams-matrix",
+            "business_data": "synthetic",
+            "orchestration": "state-driven",
+            "agentteams_room_evidence": "CAPTURED_FROM_RUNTIME"
+          }
+        }
+      },
+      "result": {
+        "claim": {
+          "currency": "KES",
+          "actual_amount": 18000,
+          "expected_amount": 27000
+        },
+        "entities": {
+          "order_id": "EZ202608001",
+          "partner_id": "AGT-10001",
+          "contract_id": null,
+          "partner_name": "Nairobi Solar Solutions Ltd"
+        },
+        "missing_fields": []
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-intake",
+        "next_skill": "CaseNormalizeSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-a72858ef885189c8-03",
+        "case_version": "sha256:7e9b13daa85054112ca9fae2f3c40edb0cdde842899aeb714e1fbc9cf86c113e",
+        "recording_id": null,
+        "previous_actor": null,
+        "previous_skill": null,
+        "matrix_event_id": "$1QRQSs1lsuyQSk7TdluFEMVwWiVuDEYWt5wVfDy2dfs",
+        "next_input_hash": "sha256:68a1449608c15fd14e4f4abcd21075b7f2849fc19bb734e24f213e728511b692",
+        "next_input_keys": [
+          "raw_case"
+        ],
+        "next_stage_task_id": "TASK-003B2D3D",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "previous_skill_receipt": null,
+        "previous_stage_task_id": null,
+        "previous_result_summary": {},
+        "previous_matrix_response_event_id": null
+      },
+      "task_id": "TASK-003B2D3D",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:30:30.460731Z",
+      "request_id": "REQ-AGT-9E146197",
+      "skill_name": "CaseNormalizeSkill",
+      "updated_at": "2026-09-17T18:31:30.582205Z",
+      "case_status": "CREATED",
+      "traceparent": "00-51057d3b712947d730a22de165232169-a72858ef885189c8-03",
+      "case_version": "sha256:7e9b13daa85054112ca9fae2f3c40edb0cdde842899aeb714e1fbc9cf86c113e",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-C84C6825",
+      "assigned_actor": "revguard-intake",
+      "matrix_room_id": "!txgu7rmzfQvuMNTPOD:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$TyZuo6rpd62vJCw8P5DLf1yzp2XXk63ewd7Z5sHyFxE",
+      "matrix_retry_event_ids": [
+        "$xr5quA6JunUmpoIziPsozcJRT7W9lxan-0Z21m_HRiY"
+      ],
+      "matrix_handoff_event_id": "$1QRQSs1lsuyQSk7TdluFEMVwWiVuDEYWt5wVfDy2dfs",
+      "matrix_trigger_event_id": "$sNVLIMc8sAQX-tQBheycrw6VyBtsNm7mYLu3wrfDz8c",
+      "matrix_dispatch_event_id": "$TyZuo6rpd62vJCw8P5DLf1yzp2XXk63ewd7Z5sHyFxE",
+      "matrix_response_event_id": "$5F4yCA-DgS-NHzykBWunv37MuPoPlzZDFnxj1vQCBwA"
+    },
+    {
+      "error": null,
+      "input": {
+        "entities": {
+          "order_id": "EZ202608001",
+          "partner_id": "AGT-10001",
+          "contract_id": null,
+          "partner_name": "Nairobi Solar Solutions Ltd"
+        }
+      },
+      "result": {
+        "partner": {
+          "name": "Nairobi Solar Solutions Ltd",
+          "region": "KE-NAIROBI",
+          "partner_id": "AGT-10001",
+          "commission_rate": 0.0,
+          "domain_data_kind": "SYNTHETIC_DOMAIN"
+        },
+        "resolved_by": "partner_id"
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-intake",
+        "next_skill": "EntityResolveSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-9fb0b5c3e491d9e2-03",
+        "case_version": "sha256:f0071ed0571d124f399fb6e20ce9a31572fc36ffc1a984972745291a1d59cc54",
+        "recording_id": null,
+        "previous_actor": "revguard-intake",
+        "previous_skill": "CaseNormalizeSkill",
+        "matrix_event_id": "$br4wy-S36laQy58cVphxp02KXglKI8QOWh5YgBnmUng",
+        "next_input_hash": "sha256:180e281dae69b0ff23cea33849eadb0c1d6367889403c1ba76da7d555b192bc3",
+        "next_input_keys": [
+          "entities"
+        ],
+        "next_stage_task_id": "TASK-31BC888D",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:d79ded14b9accb51f72b77f822d4bfc0ac34c0f2b23e41b72cff5e91de2865cc",
+        "previous_skill_receipt": "SKR-C84C6825",
+        "previous_stage_task_id": "TASK-003B2D3D",
+        "previous_result_summary": {
+          "result_keys": [
+            "claim",
+            "entities",
+            "missing_fields"
+          ],
+          "collection_sizes": {
+            "claim": 3,
+            "entities": 4,
+            "missing_fields": 0
+          }
+        },
+        "previous_matrix_response_event_id": "$5F4yCA-DgS-NHzykBWunv37MuPoPlzZDFnxj1vQCBwA"
+      },
+      "task_id": "TASK-31BC888D",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:31:30.588341Z",
+      "request_id": "REQ-AGT-6F2D7B20",
+      "skill_name": "EntityResolveSkill",
+      "updated_at": "2026-09-17T18:31:51.608353Z",
+      "case_status": "NORMALIZING",
+      "traceparent": "00-51057d3b712947d730a22de165232169-9fb0b5c3e491d9e2-03",
+      "case_version": "sha256:f0071ed0571d124f399fb6e20ce9a31572fc36ffc1a984972745291a1d59cc54",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-311A065B",
+      "assigned_actor": "revguard-intake",
+      "matrix_room_id": "!txgu7rmzfQvuMNTPOD:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$HtVht2PLZ4eB_zME-tLdD24MI4jw5IUr_ymoVsgRdnA",
+      "matrix_handoff_event_id": "$br4wy-S36laQy58cVphxp02KXglKI8QOWh5YgBnmUng",
+      "matrix_trigger_event_id": "$BQXBzoXynIx3GCoduUU7ccpE-UP3WZgdgZeX7R1yrcU",
+      "matrix_dispatch_event_id": "$HtVht2PLZ4eB_zME-tLdD24MI4jw5IUr_ymoVsgRdnA",
+      "matrix_response_event_id": "$ARXyenmDPvchrIVDeyZ_YwijHchEQjgZe_YolwftXdw"
+    },
+    {
+      "error": null,
+      "input": {
+        "partner": {
+          "name": "Nairobi Solar Solutions Ltd",
+          "region": "KE-NAIROBI",
+          "partner_id": "AGT-10001",
+          "commission_rate": 0.0,
+          "domain_data_kind": "SYNTHETIC_DOMAIN"
+        },
+        "order_id": "EZ202608001"
+      },
+      "result": {
+        "evidence": [
+          {
+            "type": "ORDER",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "currency": "KES",
+              "order_id": "EZ202608001",
+              "order_date": "2026-07-10",
+              "partner_id": "AGT-10001",
+              "product_id": "SHS-500",
+              "sales_owner": "j.mwangi",
+              "order_amount": 180000.0,
+              "order_status": "COMPLETED",
+              "completed_date": "2026-07-12",
+              "domain_data_kind": "SYNTHETIC_DOMAIN",
+              "erpnext_sales_partner": "Nairobi Solar Solutions Ltd",
+              "observed_commission_rate": 10.0,
+              "observed_commission_amount": 18000.0
+            },
+            "strength": "STRONG",
+            "source_ref": "SAL-ORD-2026-00001",
+            "evidence_id": "EV-46DBE419",
+            "collected_at": "2026-09-17T18:34:51.789623Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:1f1dc17384681e0d0746546df4782b133d568ae9a504b6b8f25022ffa7286f90",
+            "tool_receipt": "RCPT-70088A36",
+            "source_system": "erpnext",
+            "provenance_kind": "LIVE_SYSTEM",
+            "source_metadata": {
+              "provider": "erpnext",
+              "latency_ms": 17,
+              "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/sales-order/SAL-ORD-2026-00001",
+              "http_status": 200,
+              "payload_hash": "sha256:1f1dc17384681e0d0746546df4782b133d568ae9a504b6b8f25022ffa7286f90",
+              "correlation_id": "ERP-22186577E0B4468A",
+              "source_timestamp": "2026-09-16 22:54:58.009892",
+              "external_document_id": "SAL-ORD-2026-00001",
+              "external_document_type": "Sales Order"
+            }
+          },
+          {
+            "type": "TIER_HISTORY",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "partner_id": "AGT-10001",
+              "tier_history": [
+                {
+                  "tier": "SILVER",
+                  "effective_from": "2025-01-01"
+                },
+                {
+                  "tier": "GOLD",
+                  "effective_from": "2026-06-01"
+                }
+              ],
+              "domain_data_kind": "SYNTHETIC_DOMAIN"
+            },
+            "strength": "STRONG",
+            "source_ref": "AGT-10001-SILVER-00001,AGT-10001-GOLD-00002",
+            "evidence_id": "EV-3EB61AAF",
+            "collected_at": "2026-09-17T18:34:51.789656Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:8d721777642c8a0fc6a858db3b0f4d1dd8832cc51fba735dd91269259a0560fd",
+            "tool_receipt": "RCPT-E0BFEF6C",
+            "source_system": "erpnext",
+            "provenance_kind": "LIVE_SYSTEM",
+            "source_metadata": {
+              "provider": "erpnext",
+              "latency_ms": 9,
+              "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app",
+              "http_status": 200,
+              "payload_hash": "sha256:8d721777642c8a0fc6a858db3b0f4d1dd8832cc51fba735dd91269259a0560fd",
+              "correlation_id": "ERP-69193D7BB64C444B",
+              "source_timestamp": "2026-09-16 22:54:19.475734",
+              "external_document_id": "AGT-10001-SILVER-00001,AGT-10001-GOLD-00002",
+              "external_document_type": "Partner Tier History"
+            }
+          },
+          {
+            "type": "CONTRACT",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "terms": {
+                "time_basis": "order_date",
+                "clause_tier": "代理商等级以订单创建时点为准",
+                "clause_payment": "回款佣金以回款完成时间计算天数"
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "partner_id": "AGT-10001",
+              "contract_id": "CON-10001",
+              "signed_date": "2026-01-15",
+              "domain_data_kind": "SYNTHETIC_DOMAIN"
+            },
+            "strength": "STRONG",
+            "source_ref": "CON-2026-00001",
+            "evidence_id": "EV-640FC219",
+            "collected_at": "2026-09-17T18:34:51.789681Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:436e773743708f870faa9346840fbe7a5e2fd20b0ba10bb06d3dbab200189073",
+            "tool_receipt": "RCPT-499F9642",
+            "source_system": "erpnext",
+            "provenance_kind": "LIVE_SYSTEM",
+            "source_metadata": {
+              "provider": "erpnext",
+              "latency_ms": 7,
+              "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/contract/CON-2026-00001",
+              "http_status": 200,
+              "payload_hash": "sha256:436e773743708f870faa9346840fbe7a5e2fd20b0ba10bb06d3dbab200189073",
+              "correlation_id": "ERP-EBBAA9E080E84D74",
+              "source_timestamp": "2026-09-16 22:54:19.547682",
+              "external_document_id": "CON-2026-00001",
+              "external_document_type": "Contract"
+            }
+          },
+          {
+            "type": "PAYMENT_RECORD",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "currency": "KES",
+              "order_id": "EZ202608001",
+              "payment_id": "PAY-98765",
+              "payment_date": "2026-07-28",
+              "payment_amount": 180000.0,
+              "payment_status": "SETTLED",
+              "domain_data_kind": "SYNTHETIC_DOMAIN"
+            },
+            "strength": "STRONG",
+            "source_ref": "ACC-PAY-2026-00001",
+            "evidence_id": "EV-3509C580",
+            "collected_at": "2026-09-17T18:34:51.789699Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:86a58e5a5397d59fb8ebf0924d0c40e6063a4408b8472ffb9d3df38699568224",
+            "tool_receipt": "RCPT-DEA472B2",
+            "source_system": "erpnext",
+            "provenance_kind": "LIVE_SYSTEM",
+            "source_metadata": {
+              "provider": "erpnext",
+              "latency_ms": 12,
+              "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/payment-entry/ACC-PAY-2026-00001",
+              "http_status": 200,
+              "payload_hash": "sha256:86a58e5a5397d59fb8ebf0924d0c40e6063a4408b8472ffb9d3df38699568224",
+              "correlation_id": "ERP-CEF754B95CEB45F3",
+              "source_timestamp": "2026-09-16 22:55:00.022775",
+              "external_document_id": "ACC-PAY-2026-00001",
+              "external_document_type": "Payment Entry"
+            }
+          },
+          {
+            "type": "REFUND_RECORD",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "refunds": [],
+              "refund_amount": "0",
+              "domain_data_kind": "SYNTHETIC_DOMAIN"
+            },
+            "strength": "STRONG",
+            "source_ref": "EZ202608001",
+            "evidence_id": "EV-33899C9E",
+            "collected_at": "2026-09-17T18:34:51.789715Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:670dd9637a85833f06cf1c687076caa5557c4457130e83f02db3da670be30fc7",
+            "tool_receipt": "RCPT-EF22F598",
+            "source_system": "erpnext",
+            "provenance_kind": "LIVE_SYSTEM",
+            "source_metadata": {
+              "provider": "erpnext",
+              "latency_ms": 18,
+              "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app",
+              "http_status": 200,
+              "payload_hash": "sha256:670dd9637a85833f06cf1c687076caa5557c4457130e83f02db3da670be30fc7",
+              "correlation_id": "ERP-DF22D20849D049B4",
+              "source_timestamp": "2026-09-17T18:34:51.689765Z",
+              "external_document_id": "",
+              "external_document_type": "Sales Invoice"
+            }
+          },
+          {
+            "type": "INVOICE",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "currency": "KES",
+              "order_id": "EZ202608001",
+              "invoice_id": "INV-98765",
+              "invoice_date": "2026-09-16",
+              "invoice_amount": 180000.0,
+              "invoice_status": "Unpaid",
+              "domain_data_kind": "SYNTHETIC_DOMAIN"
+            },
+            "strength": "STRONG",
+            "source_ref": "ACC-SINV-2026-00001",
+            "evidence_id": "EV-74B8708B",
+            "collected_at": "2026-09-17T18:34:51.789731Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:9287cb2c8f3abd70c5f4558d615cc2215c73e73957588ed56a67d25d3d5a1887",
+            "tool_receipt": "RCPT-4FC1327B",
+            "source_system": "erpnext",
+            "provenance_kind": "LIVE_SYSTEM",
+            "source_metadata": {
+              "provider": "erpnext",
+              "latency_ms": 13,
+              "record_url": "http://revguard-erpnext-erpnext-frontend-1:8080/app/sales-invoice/ACC-SINV-2026-00001",
+              "http_status": 200,
+              "payload_hash": "sha256:9287cb2c8f3abd70c5f4558d615cc2215c73e73957588ed56a67d25d3d5a1887",
+              "correlation_id": "ERP-906E264C946A4697",
+              "source_timestamp": "2026-09-16 22:54:58.847867",
+              "external_document_id": "ACC-SINV-2026-00001",
+              "external_document_type": "Sales Invoice"
+            }
+          },
+          {
+            "type": "COMMISSION_LEDGER",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "entries": [
+                {
+                  "amount": "18000.00",
+                  "source": "BATCH-CALC-2026-07",
+                  "status": "POSTED",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）",
+                  "currency": "KES",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "ledger_id": "LED-50001",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "policy_version": "2026-Q2"
+                },
+                {
+                  "amount": "9000.00",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "status": "POSTED",
+                  "currency": "KES",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "ledger_id": "LED-F0A0D1E2",
+                  "posted_at": "2026-09-17T12:58:08.818303Z",
+                  "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+                  "policy_version": "2026-Q3"
+                },
+                {
+                  "amount": "5400.00",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "status": "POSTED",
+                  "currency": "KES",
+                  "order_id": "EZ202608001",
+                  "component": "COLLECTION_COMMISSION",
+                  "ledger_id": "LED-2092EB52",
+                  "posted_at": "2026-09-17T12:58:08.818431Z",
+                  "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+                  "policy_version": "2026-Q3"
+                }
+              ],
+              "posted_total": "32400.00"
+            },
+            "strength": "STRONG",
+            "source_ref": "EZ202608001",
+            "evidence_id": "EV-B1C8C385",
+            "collected_at": "2026-09-17T18:34:51.789763Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:0e3a3a6aef13c7bced522e0ea0d86ab30928d7133e9d7ab73aa4e8eac13cc9ea",
+            "tool_receipt": "RCPT-B3ADCBB9",
+            "source_system": "revguard-ledger",
+            "provenance_kind": "SYSTEM_GENERATED",
+            "source_metadata": {
+              "provider": "revguard-ledger",
+              "latency_ms": 0,
+              "payload_hash": "sha256:0e3a3a6aef13c7bced522e0ea0d86ab30928d7133e9d7ab73aa4e8eac13cc9ea",
+              "correlation_id": "RCPT-B3ADCBB9",
+              "source_timestamp": "2026-09-17T18:34:51.784184Z",
+              "external_document_id": "",
+              "external_document_type": "revguard-ledger"
+            }
+          },
+          {
+            "type": "POLICY_VERSIONS",
+            "case_id": "CASE-82822305",
+            "payload": {
+              "versions": [
+                {
+                  "status": "ARCHIVED",
+                  "clauses": [
+                    {
+                      "text": "GOLD 级代理商销售佣金按订单金额 8% 计算",
+                      "clause_id": "Q1-C1"
+                    },
+                    {
+                      "text": "SILVER 级代理商销售佣金按订单金额 5% 计算",
+                      "clause_id": "Q1-C2"
+                    }
+                  ],
+                  "version": "2026-Q1",
+                  "rule_dsl": {
+                    "rules": [
+                      {
+                        "when": {
+                          "agent_tier": "GOLD"
+                        },
+                        "formula": "order_amount * 0.08",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "agent_tier": "SILVER"
+                        },
+                        "formula": "order_amount * 0.05",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "agent_tier": "BRONZE"
+                        },
+                        "formula": "order_amount * 0.03",
+                        "component": "SALES_COMMISSION"
+                      }
+                    ],
+                    "version": "2026-Q1",
+                    "rounding": {
+                      "mode": "HALF_UP",
+                      "scale": 2
+                    },
+                    "policy_id": "KE-COMMISSION-2026",
+                    "eligibility": {
+                      "product_id": [
+                        "SHS-500",
+                        "SHS-1000"
+                      ],
+                      "order_status": [
+                        "COMPLETED"
+                      ],
+                      "payment_status": [
+                        "SETTLED"
+                      ]
+                    }
+                  },
+                  "policy_id": "KE-COMMISSION-2026",
+                  "effective_to": "2026-03-31",
+                  "effective_from": "2026-01-01"
+                },
+                {
+                  "status": "ARCHIVED",
+                  "clauses": [
+                    {
+                      "text": "GOLD 级代理商销售佣金按订单金额 10% 计算",
+                      "clause_id": "Q2-C1"
+                    },
+                    {
+                      "text": "SILVER 级代理商销售佣金按订单金额 6% 计算",
+                      "clause_id": "Q2-C2"
+                    },
+                    {
+                      "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金",
+                      "clause_id": "Q2-C3"
+                    }
+                  ],
+                  "version": "2026-Q2",
+                  "rule_dsl": {
+                    "rules": [
+                      {
+                        "when": {
+                          "agent_tier": "GOLD"
+                        },
+                        "formula": "order_amount * 0.10",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "agent_tier": "SILVER"
+                        },
+                        "formula": "order_amount * 0.06",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "agent_tier": "BRONZE"
+                        },
+                        "formula": "order_amount * 0.04",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "payment_days_lte": 45
+                        },
+                        "formula": "payment_amount * 0.02",
+                        "component": "COLLECTION_COMMISSION"
+                      }
+                    ],
+                    "version": "2026-Q2",
+                    "rounding": {
+                      "mode": "HALF_UP",
+                      "scale": 2
+                    },
+                    "policy_id": "KE-COMMISSION-2026",
+                    "eligibility": {
+                      "product_id": [
+                        "SHS-500",
+                        "SHS-1000"
+                      ],
+                      "order_status": [
+                        "COMPLETED"
+                      ],
+                      "payment_status": [
+                        "SETTLED"
+                      ]
+                    }
+                  },
+                  "policy_id": "KE-COMMISSION-2026",
+                  "effective_to": "2026-06-30",
+                  "effective_from": "2026-04-01"
+                },
+                {
+                  "status": "ACTIVE",
+                  "clauses": [
+                    {
+                      "text": "GOLD 级代理商销售佣金按订单金额 15% 计算",
+                      "clause_id": "Q3-C1"
+                    },
+                    {
+                      "text": "SILVER 级代理商销售佣金按订单金额 8% 计算",
+                      "clause_id": "Q3-C2"
+                    },
+                    {
+                      "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算",
+                      "clause_id": "Q3-C3"
+                    },
+                    {
+                      "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金",
+                      "clause_id": "Q3-C4"
+                    },
+                    {
+                      "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励",
+                      "clause_id": "Q3-C5"
+                    }
+                  ],
+                  "version": "2026-Q3",
+                  "rule_dsl": {
+                    "rules": [
+                      {
+                        "when": {
+                          "agent_tier": "GOLD"
+                        },
+                        "formula": "order_amount * 0.15",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "agent_tier": "SILVER"
+                        },
+                        "formula": "order_amount * 0.08",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "agent_tier": "BRONZE"
+                        },
+                        "formula": "order_amount * 0.05",
+                        "component": "SALES_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "payment_days_lte": 30
+                        },
+                        "formula": "payment_amount * 0.03",
+                        "component": "COLLECTION_COMMISSION"
+                      },
+                      {
+                        "when": {
+                          "monthly_completed_orders_gte": 20
+                        },
+                        "formula": "order_amount * 0.02",
+                        "component": "MONTHLY_INCENTIVE"
+                      }
+                    ],
+                    "version": "2026-Q3",
+                    "rounding": {
+                      "mode": "HALF_UP",
+                      "scale": 2
+                    },
+                    "policy_id": "KE-COMMISSION-2026",
+                    "eligibility": {
+                      "product_id": [
+                        "SHS-500",
+                        "SHS-1000"
+                      ],
+                      "order_status": [
+                        "COMPLETED"
+                      ],
+                      "payment_status": [
+                        "SETTLED"
+                      ]
+                    }
+                  },
+                  "policy_id": "KE-COMMISSION-2026",
+                  "effective_to": "2026-09-30",
+                  "effective_from": "2026-07-01"
+                }
+              ]
+            },
+            "strength": "STRONG",
+            "source_ref": "KE-COMMISSION-2026",
+            "evidence_id": "EV-8D834072",
+            "collected_at": "2026-09-17T18:34:51.799535Z",
+            "collected_by": "revguard-evidence",
+            "content_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994",
+            "tool_receipt": "RCPT-F9F9223C",
+            "source_system": "revguard-policy",
+            "provenance_kind": "SYNTHETIC_DOMAIN",
+            "source_metadata": {
+              "provider": "revguard-policy",
+              "latency_ms": 0,
+              "payload_hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994",
+              "correlation_id": "RCPT-F9F9223C",
+              "source_timestamp": "2026-09-17T18:34:51.795016Z",
+              "external_document_id": "",
+              "external_document_type": "revguard-policy"
+            }
+          }
+        ],
+        "parallel": {
+          "enabled": true,
+          "workers": 7,
+          "task_count": 7,
+          "duration_ms": 209
+        },
+        "collected": {
+          "ORDER": {
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "order_date": "2026-07-10",
+            "partner_id": "AGT-10001",
+            "product_id": "SHS-500",
+            "sales_owner": "j.mwangi",
+            "order_amount": 180000.0,
+            "order_status": "COMPLETED",
+            "completed_date": "2026-07-12",
+            "domain_data_kind": "SYNTHETIC_DOMAIN",
+            "erpnext_sales_partner": "Nairobi Solar Solutions Ltd",
+            "observed_commission_rate": 10.0,
+            "observed_commission_amount": 18000.0
+          },
+          "INVOICE": {
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "invoice_id": "INV-98765",
+            "invoice_date": "2026-09-16",
+            "invoice_amount": 180000.0,
+            "invoice_status": "Unpaid",
+            "domain_data_kind": "SYNTHETIC_DOMAIN"
+          },
+          "CONTRACT": {
+            "terms": {
+              "time_basis": "order_date",
+              "clause_tier": "代理商等级以订单创建时点为准",
+              "clause_payment": "回款佣金以回款完成时间计算天数"
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "partner_id": "AGT-10001",
+            "contract_id": "CON-10001",
+            "signed_date": "2026-01-15",
+            "domain_data_kind": "SYNTHETIC_DOMAIN"
+          },
+          "TIER_HISTORY": {
+            "partner_id": "AGT-10001",
+            "tier_history": [
+              {
+                "tier": "SILVER",
+                "effective_from": "2025-01-01"
+              },
+              {
+                "tier": "GOLD",
+                "effective_from": "2026-06-01"
+              }
+            ],
+            "domain_data_kind": "SYNTHETIC_DOMAIN"
+          },
+          "REFUND_RECORD": {
+            "refunds": [],
+            "refund_amount": "0",
+            "domain_data_kind": "SYNTHETIC_DOMAIN"
+          },
+          "PAYMENT_RECORD": {
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "payment_id": "PAY-98765",
+            "payment_date": "2026-07-28",
+            "payment_amount": 180000.0,
+            "payment_status": "SETTLED",
+            "domain_data_kind": "SYNTHETIC_DOMAIN"
+          },
+          "POLICY_VERSIONS": {
+            "versions": [
+              {
+                "status": "ARCHIVED",
+                "clauses": [
+                  {
+                    "text": "GOLD 级代理商销售佣金按订单金额 8% 计算",
+                    "clause_id": "Q1-C1"
+                  },
+                  {
+                    "text": "SILVER 级代理商销售佣金按订单金额 5% 计算",
+                    "clause_id": "Q1-C2"
+                  }
+                ],
+                "version": "2026-Q1",
+                "rule_dsl": {
+                  "rules": [
+                    {
+                      "when": {
+                        "agent_tier": "GOLD"
+                      },
+                      "formula": "order_amount * 0.08",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "agent_tier": "SILVER"
+                      },
+                      "formula": "order_amount * 0.05",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "agent_tier": "BRONZE"
+                      },
+                      "formula": "order_amount * 0.03",
+                      "component": "SALES_COMMISSION"
+                    }
+                  ],
+                  "version": "2026-Q1",
+                  "rounding": {
+                    "mode": "HALF_UP",
+                    "scale": 2
+                  },
+                  "policy_id": "KE-COMMISSION-2026",
+                  "eligibility": {
+                    "product_id": [
+                      "SHS-500",
+                      "SHS-1000"
+                    ],
+                    "order_status": [
+                      "COMPLETED"
+                    ],
+                    "payment_status": [
+                      "SETTLED"
+                    ]
+                  }
+                },
+                "policy_id": "KE-COMMISSION-2026",
+                "effective_to": "2026-03-31",
+                "effective_from": "2026-01-01"
+              },
+              {
+                "status": "ARCHIVED",
+                "clauses": [
+                  {
+                    "text": "GOLD 级代理商销售佣金按订单金额 10% 计算",
+                    "clause_id": "Q2-C1"
+                  },
+                  {
+                    "text": "SILVER 级代理商销售佣金按订单金额 6% 计算",
+                    "clause_id": "Q2-C2"
+                  },
+                  {
+                    "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金",
+                    "clause_id": "Q2-C3"
+                  }
+                ],
+                "version": "2026-Q2",
+                "rule_dsl": {
+                  "rules": [
+                    {
+                      "when": {
+                        "agent_tier": "GOLD"
+                      },
+                      "formula": "order_amount * 0.10",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "agent_tier": "SILVER"
+                      },
+                      "formula": "order_amount * 0.06",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "agent_tier": "BRONZE"
+                      },
+                      "formula": "order_amount * 0.04",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "payment_days_lte": 45
+                      },
+                      "formula": "payment_amount * 0.02",
+                      "component": "COLLECTION_COMMISSION"
+                    }
+                  ],
+                  "version": "2026-Q2",
+                  "rounding": {
+                    "mode": "HALF_UP",
+                    "scale": 2
+                  },
+                  "policy_id": "KE-COMMISSION-2026",
+                  "eligibility": {
+                    "product_id": [
+                      "SHS-500",
+                      "SHS-1000"
+                    ],
+                    "order_status": [
+                      "COMPLETED"
+                    ],
+                    "payment_status": [
+                      "SETTLED"
+                    ]
+                  }
+                },
+                "policy_id": "KE-COMMISSION-2026",
+                "effective_to": "2026-06-30",
+                "effective_from": "2026-04-01"
+              },
+              {
+                "status": "ACTIVE",
+                "clauses": [
+                  {
+                    "text": "GOLD 级代理商销售佣金按订单金额 15% 计算",
+                    "clause_id": "Q3-C1"
+                  },
+                  {
+                    "text": "SILVER 级代理商销售佣金按订单金额 8% 计算",
+                    "clause_id": "Q3-C2"
+                  },
+                  {
+                    "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算",
+                    "clause_id": "Q3-C3"
+                  },
+                  {
+                    "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金",
+                    "clause_id": "Q3-C4"
+                  },
+                  {
+                    "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励",
+                    "clause_id": "Q3-C5"
+                  }
+                ],
+                "version": "2026-Q3",
+                "rule_dsl": {
+                  "rules": [
+                    {
+                      "when": {
+                        "agent_tier": "GOLD"
+                      },
+                      "formula": "order_amount * 0.15",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "agent_tier": "SILVER"
+                      },
+                      "formula": "order_amount * 0.08",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "agent_tier": "BRONZE"
+                      },
+                      "formula": "order_amount * 0.05",
+                      "component": "SALES_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "payment_days_lte": 30
+                      },
+                      "formula": "payment_amount * 0.03",
+                      "component": "COLLECTION_COMMISSION"
+                    },
+                    {
+                      "when": {
+                        "monthly_completed_orders_gte": 20
+                      },
+                      "formula": "order_amount * 0.02",
+                      "component": "MONTHLY_INCENTIVE"
+                    }
+                  ],
+                  "version": "2026-Q3",
+                  "rounding": {
+                    "mode": "HALF_UP",
+                    "scale": 2
+                  },
+                  "policy_id": "KE-COMMISSION-2026",
+                  "eligibility": {
+                    "product_id": [
+                      "SHS-500",
+                      "SHS-1000"
+                    ],
+                    "order_status": [
+                      "COMPLETED"
+                    ],
+                    "payment_status": [
+                      "SETTLED"
+                    ]
+                  }
+                },
+                "policy_id": "KE-COMMISSION-2026",
+                "effective_to": "2026-09-30",
+                "effective_from": "2026-07-01"
+              }
+            ]
+          },
+          "COMMISSION_LEDGER": {
+            "entries": [
+              {
+                "amount": "18000.00",
+                "source": "BATCH-CALC-2026-07",
+                "status": "POSTED",
+                "comment": "7月佣金批处理（误用 2026-Q2 版本）",
+                "currency": "KES",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "ledger_id": "LED-50001",
+                "posted_at": "2026-08-01T02:00:00Z",
+                "policy_version": "2026-Q2"
+              },
+              {
+                "amount": "9000.00",
+                "source": "REVGUARD:CASE-2026-0001",
+                "status": "POSTED",
+                "currency": "KES",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "ledger_id": "LED-F0A0D1E2",
+                "posted_at": "2026-09-17T12:58:08.818303Z",
+                "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+                "policy_version": "2026-Q3"
+              },
+              {
+                "amount": "5400.00",
+                "source": "REVGUARD:CASE-2026-0001",
+                "status": "POSTED",
+                "currency": "KES",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "ledger_id": "LED-2092EB52",
+                "posted_at": "2026-09-17T12:58:08.818431Z",
+                "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+                "policy_version": "2026-Q3"
+              }
+            ],
+            "posted_total": "32400.00"
+          }
+        },
+        "evidence_gaps": [],
+        "evidence_score": 1.0
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-evidence",
+        "next_skill": "EvidenceCollectSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-991d19bc0342e93c-03",
+        "case_version": "sha256:b7e5a473dc5a6347f0628d169652bf48d30e3cf39ee8dc7026bad1d7f765767d",
+        "recording_id": null,
+        "previous_actor": "revguard-intake",
+        "previous_skill": "EntityResolveSkill",
+        "matrix_event_id": "$Z3ZcZiK3Pq-31_b_azIfhbIJFfLC5CgudPCjYNDD78E",
+        "next_input_hash": "sha256:b382ae0404405cb61e9cb75760495e518528b6f8fbed786901e7eeb1abd8535c",
+        "next_input_keys": [
+          "order_id",
+          "partner"
+        ],
+        "next_stage_task_id": "TASK-06AB2FE0",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:0c0e383d16224e44c5e3fe613034c57a2393845817f89427e18c29d3d46e1a5f",
+        "previous_skill_receipt": "SKR-311A065B",
+        "previous_stage_task_id": "TASK-31BC888D",
+        "previous_result_summary": {
+          "result_keys": [
+            "partner",
+            "resolved_by"
+          ],
+          "collection_sizes": {
+            "partner": 5
+          }
+        },
+        "previous_matrix_response_event_id": "$ARXyenmDPvchrIVDeyZ_YwijHchEQjgZe_YolwftXdw"
+      },
+      "task_id": "TASK-06AB2FE0",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:31:51.618695Z",
+      "request_id": "REQ-AGT-1AA4DEB4",
+      "skill_name": "EvidenceCollectSkill",
+      "updated_at": "2026-09-17T18:34:51.878560Z",
+      "case_status": "EVIDENCE_COLLECTING",
+      "traceparent": "",
+      "case_version": "sha256:b7e5a473dc5a6347f0628d169652bf48d30e3cf39ee8dc7026bad1d7f765767d",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-98F4CEBA",
+      "assigned_actor": "revguard-evidence",
+      "matrix_room_id": "!oa5UpxhVd61OTi5UD9:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$-GemepTUuhKztoCkKyl9DTddy9p87J28jzKrNBs9jBY",
+      "matrix_retry_event_ids": [
+        "$8fJh-bZOHjSI6Wx5bvXJwMPhyXHZoSmeH_7QhXMxW8I",
+        "$Bg_x0GTyI4-I4PRXxPQN1-klRwxNcdn2-lf2V5LJXN0"
+      ],
+      "matrix_handoff_event_id": "$Z3ZcZiK3Pq-31_b_azIfhbIJFfLC5CgudPCjYNDD78E",
+      "matrix_trigger_event_id": "$6pZ6-Rkc21CmTM4t7WYhoesX5hd82FLgHyI001H38EE",
+      "matrix_dispatch_event_id": "$-GemepTUuhKztoCkKyl9DTddy9p87J28jzKrNBs9jBY",
+      "matrix_response_event_id": "$Fi8E3wZgmzRT5jWGEP2eyWAeu4fDT7uXpV2kXgF2Z3E"
+    },
+    {
+      "error": null,
+      "input": {
+        "facts": {
+          "order_date": "2026-07-10",
+          "payment_date": "2026-07-28"
+        },
+        "versions": [
+          {
+            "status": "ARCHIVED",
+            "clauses": [
+              {
+                "text": "GOLD 级代理商销售佣金按订单金额 8% 计算",
+                "clause_id": "Q1-C1"
+              },
+              {
+                "text": "SILVER 级代理商销售佣金按订单金额 5% 计算",
+                "clause_id": "Q1-C2"
+              }
+            ],
+            "version": "2026-Q1",
+            "rule_dsl": {
+              "rules": [
+                {
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.08",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.05",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.03",
+                  "component": "SALES_COMMISSION"
+                }
+              ],
+              "version": "2026-Q1",
+              "rounding": {
+                "mode": "HALF_UP",
+                "scale": 2
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "eligibility": {
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ],
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ]
+              }
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "effective_to": "2026-03-31",
+            "effective_from": "2026-01-01"
+          },
+          {
+            "status": "ARCHIVED",
+            "clauses": [
+              {
+                "text": "GOLD 级代理商销售佣金按订单金额 10% 计算",
+                "clause_id": "Q2-C1"
+              },
+              {
+                "text": "SILVER 级代理商销售佣金按订单金额 6% 计算",
+                "clause_id": "Q2-C2"
+              },
+              {
+                "text": "订单完成后 45 天内回款的，按回款金额 2% 计回款佣金",
+                "clause_id": "Q2-C3"
+              }
+            ],
+            "version": "2026-Q2",
+            "rule_dsl": {
+              "rules": [
+                {
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.10",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.06",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.04",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "payment_days_lte": 45
+                  },
+                  "formula": "payment_amount * 0.02",
+                  "component": "COLLECTION_COMMISSION"
+                }
+              ],
+              "version": "2026-Q2",
+              "rounding": {
+                "mode": "HALF_UP",
+                "scale": 2
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "eligibility": {
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ],
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ]
+              }
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "effective_to": "2026-06-30",
+            "effective_from": "2026-04-01"
+          },
+          {
+            "status": "ACTIVE",
+            "clauses": [
+              {
+                "text": "GOLD 级代理商销售佣金按订单金额 15% 计算",
+                "clause_id": "Q3-C1"
+              },
+              {
+                "text": "SILVER 级代理商销售佣金按订单金额 8% 计算",
+                "clause_id": "Q3-C2"
+              },
+              {
+                "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算",
+                "clause_id": "Q3-C3"
+              },
+              {
+                "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金",
+                "clause_id": "Q3-C4"
+              },
+              {
+                "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励",
+                "clause_id": "Q3-C5"
+              }
+            ],
+            "version": "2026-Q3",
+            "rule_dsl": {
+              "rules": [
+                {
+                  "when": {
+                    "agent_tier": "GOLD"
+                  },
+                  "formula": "order_amount * 0.15",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "SILVER"
+                  },
+                  "formula": "order_amount * 0.08",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "agent_tier": "BRONZE"
+                  },
+                  "formula": "order_amount * 0.05",
+                  "component": "SALES_COMMISSION"
+                },
+                {
+                  "when": {
+                    "payment_days_lte": 30
+                  },
+                  "formula": "payment_amount * 0.03",
+                  "component": "COLLECTION_COMMISSION"
+                },
+                {
+                  "when": {
+                    "monthly_completed_orders_gte": 20
+                  },
+                  "formula": "order_amount * 0.02",
+                  "component": "MONTHLY_INCENTIVE"
+                }
+              ],
+              "version": "2026-Q3",
+              "rounding": {
+                "mode": "HALF_UP",
+                "scale": 2
+              },
+              "policy_id": "KE-COMMISSION-2026",
+              "eligibility": {
+                "product_id": [
+                  "SHS-500",
+                  "SHS-1000"
+                ],
+                "order_status": [
+                  "COMPLETED"
+                ],
+                "payment_status": [
+                  "SETTLED"
+                ]
+              }
+            },
+            "policy_id": "KE-COMMISSION-2026",
+            "effective_to": "2026-09-30",
+            "effective_from": "2026-07-01"
+          }
+        ],
+        "time_basis": "order_date"
+      },
+      "result": {
+        "policy_id": "KE-COMMISSION-2026",
+        "confidence": 1.0,
+        "time_basis": "order_date",
+        "cited_clauses": [
+          {
+            "text": "GOLD 级代理商销售佣金按订单金额 15% 计算",
+            "clause_id": "Q3-C1"
+          },
+          {
+            "text": "SILVER 级代理商销售佣金按订单金额 8% 计算",
+            "clause_id": "Q3-C2"
+          },
+          {
+            "text": "BRONZE 级代理商销售佣金按订单金额 5% 计算",
+            "clause_id": "Q3-C3"
+          },
+          {
+            "text": "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金",
+            "clause_id": "Q3-C4"
+          },
+          {
+            "text": "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励",
+            "clause_id": "Q3-C5"
+          }
+        ],
+        "decision_date": "2026-07-10",
+        "policy_version": "2026-Q3",
+        "excluded_versions": [
+          {
+            "reason": "有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-10",
+            "version": "2026-Q1"
+          },
+          {
+            "reason": "有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-10",
+            "version": "2026-Q2"
+          }
+        ],
+        "effective_rule_set": {
+          "rules": [
+            {
+              "when": {
+                "agent_tier": "GOLD"
+              },
+              "formula": "order_amount * 0.15",
+              "component": "SALES_COMMISSION"
+            },
+            {
+              "when": {
+                "agent_tier": "SILVER"
+              },
+              "formula": "order_amount * 0.08",
+              "component": "SALES_COMMISSION"
+            },
+            {
+              "when": {
+                "agent_tier": "BRONZE"
+              },
+              "formula": "order_amount * 0.05",
+              "component": "SALES_COMMISSION"
+            },
+            {
+              "when": {
+                "payment_days_lte": 30
+              },
+              "formula": "payment_amount * 0.03",
+              "component": "COLLECTION_COMMISSION"
+            },
+            {
+              "when": {
+                "monthly_completed_orders_gte": 20
+              },
+              "formula": "order_amount * 0.02",
+              "component": "MONTHLY_INCENTIVE"
+            }
+          ],
+          "version": "2026-Q3",
+          "rounding": {
+            "mode": "HALF_UP",
+            "scale": 2
+          },
+          "policy_id": "KE-COMMISSION-2026",
+          "eligibility": {
+            "product_id": [
+              "SHS-500",
+              "SHS-1000"
+            ],
+            "order_status": [
+              "COMPLETED"
+            ],
+            "payment_status": [
+              "SETTLED"
+            ]
+          }
+        },
+        "unresolved_conflicts": []
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-policy",
+        "next_skill": "PolicyVersionMatchSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-00de43913b2f350b-03",
+        "case_version": "sha256:adcf7f0f6a21f5bb975331ef12385de59a8c7a114b7840354536c022b66c47b3",
+        "recording_id": null,
+        "previous_actor": "revguard-evidence",
+        "previous_skill": "EvidenceCollectSkill",
+        "matrix_event_id": "$3DDbua5k2t-WfewmxDCJgV5ltjepCvysfTK1l1BRSeI",
+        "next_input_hash": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+        "next_input_keys": [
+          "facts",
+          "time_basis",
+          "versions"
+        ],
+        "next_stage_task_id": "TASK-AE3ABAE0",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:6c1d4dabac5a5e8c72f5cc1b664a3808d8669136fa5d3f28cd911dcd2c4b7ef7",
+        "previous_skill_receipt": "SKR-98F4CEBA",
+        "previous_stage_task_id": "TASK-06AB2FE0",
+        "previous_result_summary": {
+          "result_keys": [
+            "collected",
+            "evidence",
+            "evidence_gaps",
+            "evidence_score",
+            "parallel"
+          ],
+          "evidence_score": 1.0,
+          "collection_sizes": {
+            "evidence": 8,
+            "parallel": 4,
+            "collected": 8,
+            "evidence_gaps": 0
+          }
+        },
+        "previous_matrix_response_event_id": "$Fi8E3wZgmzRT5jWGEP2eyWAeu4fDT7uXpV2kXgF2Z3E"
+      },
+      "task_id": "TASK-AE3ABAE0",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:34:51.891401Z",
+      "request_id": "REQ-AGT-083A8A3B",
+      "skill_name": "PolicyVersionMatchSkill",
+      "updated_at": "2026-09-17T18:36:12.283691Z",
+      "case_status": "POLICY_MATCHING",
+      "traceparent": "",
+      "case_version": "sha256:adcf7f0f6a21f5bb975331ef12385de59a8c7a114b7840354536c022b66c47b3",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-843FAD25",
+      "assigned_actor": "revguard-policy",
+      "matrix_room_id": "!7pIir4oByUN5rVce0q:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$OQXsR5ZH7_Chh8Y0ghCNmifV6S7WMMsKFKuELGpvtIU",
+      "matrix_retry_event_ids": [
+        "$4tlum-j0ozpmEKWNGoWWqMiplS1mbNwRlrHpJ6Pjpzo"
+      ],
+      "matrix_handoff_event_id": "$3DDbua5k2t-WfewmxDCJgV5ltjepCvysfTK1l1BRSeI",
+      "matrix_trigger_event_id": "$2Xy85BpQWWKE8FFQbFwMIHID1DV1MFlI7nwltT8aPOE",
+      "matrix_dispatch_event_id": "$OQXsR5ZH7_Chh8Y0ghCNmifV6S7WMMsKFKuELGpvtIU",
+      "matrix_response_event_id": "$z0kA994fgTOjo2T2EfS8pakyf6JN5e8nay4ZzWyC6TQ"
+    },
+    {
+      "error": null,
+      "input": {
+        "facts": {
+          "agent_tier": "GOLD",
+          "order_date": "2026-07-10",
+          "product_id": "SHS-500",
+          "order_amount": "180000.0",
+          "order_status": "COMPLETED",
+          "payment_date": "2026-07-28",
+          "payment_days": "16",
+          "refund_amount": "0",
+          "payment_amount": "180000.0",
+          "payment_status": "SETTLED",
+          "monthly_completed_orders": "2"
+        },
+        "currency": "KES",
+        "rule_dsl": {
+          "rules": [
+            {
+              "when": {
+                "agent_tier": "GOLD"
+              },
+              "formula": "order_amount * 0.15",
+              "component": "SALES_COMMISSION"
+            },
+            {
+              "when": {
+                "agent_tier": "SILVER"
+              },
+              "formula": "order_amount * 0.08",
+              "component": "SALES_COMMISSION"
+            },
+            {
+              "when": {
+                "agent_tier": "BRONZE"
+              },
+              "formula": "order_amount * 0.05",
+              "component": "SALES_COMMISSION"
+            },
+            {
+              "when": {
+                "payment_days_lte": 30
+              },
+              "formula": "payment_amount * 0.03",
+              "component": "COLLECTION_COMMISSION"
+            },
+            {
+              "when": {
+                "monthly_completed_orders_gte": 20
+              },
+              "formula": "order_amount * 0.02",
+              "component": "MONTHLY_INCENTIVE"
+            }
+          ],
+          "version": "2026-Q3",
+          "rounding": {
+            "mode": "HALF_UP",
+            "scale": 2
+          },
+          "policy_id": "KE-COMMISSION-2026",
+          "eligibility": {
+            "product_id": [
+              "SHS-500",
+              "SHS-1000"
+            ],
+            "order_status": [
+              "COMPLETED"
+            ],
+            "payment_status": [
+              "SETTLED"
+            ]
+          }
+        }
+      },
+      "result": {
+        "currency": "KES",
+        "eligible": true,
+        "components": [
+          {
+            "type": "SALES_COMMISSION",
+            "amount": "27000.00",
+            "applied": true,
+            "formula": "order_amount * 0.15",
+            "substituted": "180000.0 * 0.15",
+            "skip_reasons": []
+          },
+          {
+            "type": "SALES_COMMISSION",
+            "amount": "0",
+            "applied": false,
+            "formula": "order_amount * 0.08",
+            "substituted": "",
+            "skip_reasons": [
+              "agent_tier 期望 'SILVER'，实际 'GOLD'"
+            ]
+          },
+          {
+            "type": "SALES_COMMISSION",
+            "amount": "0",
+            "applied": false,
+            "formula": "order_amount * 0.05",
+            "substituted": "",
+            "skip_reasons": [
+              "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+            ]
+          },
+          {
+            "type": "COLLECTION_COMMISSION",
+            "amount": "5400.00",
+            "applied": true,
+            "formula": "payment_amount * 0.03",
+            "substituted": "180000.0 * 0.03",
+            "skip_reasons": []
+          },
+          {
+            "type": "MONTHLY_INCENTIVE",
+            "amount": "0",
+            "applied": false,
+            "formula": "order_amount * 0.02",
+            "substituted": "",
+            "skip_reasons": [
+              "monthly_completed_orders='2' 不满足 monthly_completed_orders_gte 20"
+            ]
+          }
+        ],
+        "rounding_rule": "scale=2,mode=HALF_UP",
+        "facts_snapshot": {
+          "agent_tier": "GOLD",
+          "order_date": "2026-07-10",
+          "product_id": "SHS-500",
+          "order_amount": "180000.0",
+          "order_status": "COMPLETED",
+          "payment_date": "2026-07-28",
+          "payment_days": "16",
+          "refund_amount": "0",
+          "payment_amount": "180000.0",
+          "payment_status": "SETTLED",
+          "monthly_completed_orders": "2"
+        },
+        "policy_version": "2026-Q3",
+        "calculation_hash": "sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84",
+        "total_commission": "32400.00",
+        "eligibility_failures": []
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-calculation",
+        "next_skill": "CommissionCalculateSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-917283a955a61755-03",
+        "case_version": "sha256:de7c81ee843ee2fc67a8b192cf1a58088cda8aad460ef1ac90e886d4384811ab",
+        "recording_id": null,
+        "previous_actor": "revguard-policy",
+        "previous_skill": "PolicyVersionMatchSkill",
+        "matrix_event_id": "$da_2dcZyifJ6LaZbZvN9bef_xGl50YRHHAElUIEj0bo",
+        "next_input_hash": "sha256:963586eb2187aa09cc293c4c61321299f65bdd5dd9c07f34af54f59e25f8fd4a",
+        "next_input_keys": [
+          "currency",
+          "facts",
+          "rule_dsl"
+        ],
+        "next_stage_task_id": "TASK-330D987F",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db",
+        "previous_skill_receipt": "SKR-843FAD25",
+        "previous_stage_task_id": "TASK-AE3ABAE0",
+        "previous_result_summary": {
+          "result_keys": [
+            "cited_clauses",
+            "confidence",
+            "decision_date",
+            "effective_rule_set",
+            "excluded_versions",
+            "policy_id",
+            "policy_version",
+            "time_basis",
+            "unresolved_conflicts"
+          ],
+          "policy_version": "2026-Q3",
+          "collection_sizes": {
+            "cited_clauses": 5,
+            "excluded_versions": 2,
+            "effective_rule_set": 5,
+            "unresolved_conflicts": 0
+          }
+        },
+        "previous_matrix_response_event_id": "$z0kA994fgTOjo2T2EfS8pakyf6JN5e8nay4ZzWyC6TQ"
+      },
+      "task_id": "TASK-330D987F",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:36:12.319901Z",
+      "request_id": "REQ-AGT-8F535DAB",
+      "skill_name": "CommissionCalculateSkill",
+      "updated_at": "2026-09-17T18:37:11.994250Z",
+      "case_status": "CALCULATING",
+      "traceparent": "",
+      "case_version": "sha256:de7c81ee843ee2fc67a8b192cf1a58088cda8aad460ef1ac90e886d4384811ab",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-1275FE65",
+      "assigned_actor": "revguard-calculation",
+      "matrix_room_id": "!Wsz75LhijkscxzttcQ:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$--RAtyIrXjDoIYuKEC41eqD_Me39GkSj0I7KXnNavD0",
+      "matrix_retry_event_ids": [
+        "$dOLaefedv8fj09kcreFq9GKOtdx84W_If0Pxs2CwbsE"
+      ],
+      "matrix_handoff_event_id": "$da_2dcZyifJ6LaZbZvN9bef_xGl50YRHHAElUIEj0bo",
+      "matrix_trigger_event_id": "$vwtrSvnkBmnW2HlI-bF0ZRg3QJE22K1GqlYpXadnfOo",
+      "matrix_dispatch_event_id": "$--RAtyIrXjDoIYuKEC41eqD_Me39GkSj0I7KXnNavD0",
+      "matrix_response_event_id": "$VP2AcJJE3ymdMq1JxCurrnaQs28MVd6KiZJu-p0w0NI"
+    },
+    {
+      "error": null,
+      "input": {
+        "calculation": {
+          "currency": "KES",
+          "eligible": true,
+          "components": [
+            {
+              "type": "SALES_COMMISSION",
+              "amount": "27000.00",
+              "applied": true,
+              "formula": "order_amount * 0.15",
+              "substituted": "180000.0 * 0.15",
+              "skip_reasons": []
+            },
+            {
+              "type": "SALES_COMMISSION",
+              "amount": "0",
+              "applied": false,
+              "formula": "order_amount * 0.08",
+              "substituted": "",
+              "skip_reasons": [
+                "agent_tier 期望 'SILVER'，实际 'GOLD'"
+              ]
+            },
+            {
+              "type": "SALES_COMMISSION",
+              "amount": "0",
+              "applied": false,
+              "formula": "order_amount * 0.05",
+              "substituted": "",
+              "skip_reasons": [
+                "agent_tier 期望 'BRONZE'，实际 'GOLD'"
+              ]
+            },
+            {
+              "type": "COLLECTION_COMMISSION",
+              "amount": "5400.00",
+              "applied": true,
+              "formula": "payment_amount * 0.03",
+              "substituted": "180000.0 * 0.03",
+              "skip_reasons": []
+            },
+            {
+              "type": "MONTHLY_INCENTIVE",
+              "amount": "0",
+              "applied": false,
+              "formula": "order_amount * 0.02",
+              "substituted": "",
+              "skip_reasons": [
+                "monthly_completed_orders='2' 不满足 monthly_completed_orders_gte 20"
+              ]
+            }
+          ],
+          "rounding_rule": "scale=2,mode=HALF_UP",
+          "facts_snapshot": {
+            "agent_tier": "GOLD",
+            "order_date": "2026-07-10",
+            "product_id": "SHS-500",
+            "order_amount": "180000.0",
+            "order_status": "COMPLETED",
+            "payment_date": "2026-07-28",
+            "payment_days": "16",
+            "refund_amount": "0",
+            "payment_amount": "180000.0",
+            "payment_status": "SETTLED",
+            "monthly_completed_orders": "2"
+          },
+          "policy_version": "2026-Q3",
+          "calculation_hash": "sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84",
+          "total_commission": "32400.00",
+          "eligibility_failures": []
+        },
+        "tier_conflict": null,
+        "ledger_entries": [
+          {
+            "amount": "18000.00",
+            "source": "BATCH-CALC-2026-07",
+            "status": "POSTED",
+            "comment": "7月佣金批处理（误用 2026-Q2 版本）",
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "ledger_id": "LED-50001",
+            "posted_at": "2026-08-01T02:00:00Z",
+            "policy_version": "2026-Q2"
+          },
+          {
+            "amount": "9000.00",
+            "source": "REVGUARD:CASE-2026-0001",
+            "status": "POSTED",
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "ledger_id": "LED-F0A0D1E2",
+            "posted_at": "2026-09-17T12:58:08.818303Z",
+            "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+            "policy_version": "2026-Q3"
+          },
+          {
+            "amount": "5400.00",
+            "source": "REVGUARD:CASE-2026-0001",
+            "status": "POSTED",
+            "currency": "KES",
+            "order_id": "EZ202608001",
+            "component": "COLLECTION_COMMISSION",
+            "ledger_id": "LED-2092EB52",
+            "posted_at": "2026-09-17T12:58:08.818431Z",
+            "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+            "policy_version": "2026-Q3"
+          }
+        ],
+        "matched_policy_version": "2026-Q3"
+      },
+      "result": {
+        "diffs": [
+          {
+            "delta": "0",
+            "posted": "27000.00",
+            "expected": "27000.00",
+            "component": "SALES_COMMISSION",
+            "root_cause": null
+          },
+          {
+            "delta": "0",
+            "posted": "5400.00",
+            "expected": "5400.00",
+            "component": "COLLECTION_COMMISSION",
+            "root_cause": null
+          }
+        ],
+        "confidence": 0.95,
+        "root_causes": [],
+        "total_delta": "0",
+        "total_posted": "32400.00",
+        "total_expected": "32400.00"
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-rootcause",
+        "next_skill": "DifferenceExplainSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-843789f1324f70ae-03",
+        "case_version": "sha256:831dac986f1a5d9bdcde4d422a77d0cad86c0e73f29bfec42abfc1d67f1f52a7",
+        "recording_id": null,
+        "previous_actor": "revguard-calculation",
+        "previous_skill": "CommissionCalculateSkill",
+        "matrix_event_id": "$FMy6qwemdCqK5LePVslF2LrKKRssEM_C1tb454yCFfM",
+        "next_input_hash": "sha256:7e78ea94cf308fb3da4322090248c8061d4ef2db212c6a07eefec6878788f56d",
+        "next_input_keys": [
+          "calculation",
+          "ledger_entries",
+          "matched_policy_version",
+          "tier_conflict"
+        ],
+        "next_stage_task_id": "TASK-01B88C45",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:7900ebcaa2dd2eb990f96341b10e587debed8d787cccff75698dd4f673afb02d",
+        "previous_skill_receipt": "SKR-1275FE65",
+        "previous_stage_task_id": "TASK-330D987F",
+        "previous_result_summary": {
+          "currency": "KES",
+          "eligible": true,
+          "result_keys": [
+            "calculation_hash",
+            "components",
+            "currency",
+            "eligibility_failures",
+            "eligible",
+            "facts_snapshot",
+            "policy_version",
+            "rounding_rule",
+            "total_commission"
+          ],
+          "policy_version": "2026-Q3",
+          "collection_sizes": {
+            "components": 5,
+            "facts_snapshot": 11,
+            "eligibility_failures": 0
+          },
+          "total_commission": "32400.00"
+        },
+        "previous_matrix_response_event_id": "$VP2AcJJE3ymdMq1JxCurrnaQs28MVd6KiZJu-p0w0NI"
+      },
+      "task_id": "TASK-01B88C45",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:37:12.008114Z",
+      "request_id": "REQ-AGT-41E29161",
+      "skill_name": "DifferenceExplainSkill",
+      "updated_at": "2026-09-17T18:37:38.408989Z",
+      "case_status": "ROOT_CAUSE_ANALYZING",
+      "traceparent": "",
+      "case_version": "sha256:831dac986f1a5d9bdcde4d422a77d0cad86c0e73f29bfec42abfc1d67f1f52a7",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-C685B277",
+      "assigned_actor": "revguard-rootcause",
+      "matrix_room_id": "!RVDCDeecDISlLb1SPz:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$RQ-l-ETH84nzONEiLKJ2UtOLYqwxbJyL1qfr-6eO_4A",
+      "matrix_handoff_event_id": "$FMy6qwemdCqK5LePVslF2LrKKRssEM_C1tb454yCFfM",
+      "matrix_trigger_event_id": "$3s-lTZ764gLgydM1dh1V5dsfuWCdSOut2XzC9VHEiyI",
+      "matrix_dispatch_event_id": "$RQ-l-ETH84nzONEiLKJ2UtOLYqwxbJyL1qfr-6eO_4A",
+      "matrix_response_event_id": "$xRKNdyj3VlUl7AzwyDhyIogtHfSSCW6cKl8g3ecP0Qs"
+    },
+    {
+      "error": null,
+      "input": {
+        "currency": "KES",
+        "case_type": "COMMISSION_UNDERPAYMENT",
+        "action_type": "READONLY",
+        "evidence_score": 1.0,
+        "policy_conflict": false,
+        "adjustment_amount": "0"
+      },
+      "result": {
+        "risk_level": "L0",
+        "reason_codes": [
+          "READONLY_OR_ZERO_AMOUNT"
+        ],
+        "approver_role": null,
+        "approval_required": false,
+        "execution_constraints": {
+          "write": false
+        },
+        "rollback_plan_required": false
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-risk",
+        "next_skill": "RiskClassifySkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-fd62909b32b7e63e-03",
+        "case_version": "sha256:242c956d4e95cd95f46c203d207c1bdb29fc071bdbad2835b1635996471f71fa",
+        "recording_id": null,
+        "previous_actor": "revguard-rootcause",
+        "previous_skill": "DifferenceExplainSkill",
+        "matrix_event_id": "$w7TSdXz39emg2NObYqd0RQlqqqLJS0-UXL2F-F3v_oo",
+        "next_input_hash": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+        "next_input_keys": [
+          "action_type",
+          "adjustment_amount",
+          "case_type",
+          "currency",
+          "evidence_score",
+          "policy_conflict"
+        ],
+        "next_stage_task_id": "TASK-931B9E13",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:6c04797fb019aa6fec790f771b342f99ddba5cc6009d75be87c927b7fe64725b",
+        "previous_skill_receipt": "SKR-C685B277",
+        "previous_stage_task_id": "TASK-01B88C45",
+        "previous_result_summary": {
+          "result_keys": [
+            "confidence",
+            "diffs",
+            "root_causes",
+            "total_delta",
+            "total_expected",
+            "total_posted"
+          ],
+          "collection_sizes": {
+            "diffs": 2,
+            "root_causes": 0
+          }
+        },
+        "previous_matrix_response_event_id": "$xRKNdyj3VlUl7AzwyDhyIogtHfSSCW6cKl8g3ecP0Qs"
+      },
+      "task_id": "TASK-931B9E13",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:37:38.421873Z",
+      "request_id": "REQ-AGT-5A65653B",
+      "skill_name": "RiskClassifySkill",
+      "updated_at": "2026-09-17T18:38:41.747603Z",
+      "case_status": "RISK_REVIEW",
+      "traceparent": "00-51057d3b712947d730a22de165232169-fd62909b32b7e63e-03",
+      "case_version": "sha256:242c956d4e95cd95f46c203d207c1bdb29fc071bdbad2835b1635996471f71fa",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-28E72942",
+      "assigned_actor": "revguard-risk",
+      "matrix_room_id": "!QmdcIdAibbhLHE4Rn3:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$bwmORBrRdFT80x_wrCWx8liB_YdxRFj-5F1DMXqdc0A",
+      "matrix_retry_event_ids": [
+        "$KKCpeH9_wGRUvRCtyjw4I3xE3XGb1wvxuEwKHO2TwQU"
+      ],
+      "matrix_handoff_event_id": "$w7TSdXz39emg2NObYqd0RQlqqqLJS0-UXL2F-F3v_oo",
+      "matrix_trigger_event_id": "$uNsgc59WhwhTUD6lexSf8BgTlF04ypHHZqpU9Nc_o0I",
+      "matrix_dispatch_event_id": "$bwmORBrRdFT80x_wrCWx8liB_YdxRFj-5F1DMXqdc0A",
+      "matrix_response_event_id": "$rV0w32llQYjG1CDIeZ1ov_xchg4MbtRH3y8vBGHtStE"
+    },
+    {
+      "error": null,
+      "input": {
+        "case": {
+          "claim": {
+            "currency": "KES",
+            "actual_amount": 18000,
+            "expected_amount": 27000
+          },
+          "status": "RESOLVED",
+          "case_id": "CASE-82822305",
+          "entities": {
+            "order_id": "EZ202608001",
+            "partner_id": "AGT-10001",
+            "contract_id": null,
+            "partner_name": "Nairobi Solar Solutions Ltd"
+          },
+          "case_type": "COMMISSION_UNDERPAYMENT"
+        },
+        "shared_state": {
+          "run_id": "RUN-AGT-12C7C20A",
+          "trace_ref": "case:CASE-82822305",
+          "policy_decision": {
+            "policy_version": "2026-Q3"
+          },
+          "root_cause_report": {
+            "root_causes": []
+          },
+          "calculation_result": {
+            "total_commission": "32400.00"
+          }
+        },
+        "verification": {}
+      },
+      "result": {
+        "input": {
+          "claim": {
+            "currency": "KES",
+            "actual_amount": 18000,
+            "expected_amount": 27000
+          },
+          "entities": {
+            "order_id": "EZ202608001",
+            "partner_id": "AGT-10001",
+            "contract_id": null,
+            "partner_name": "Nairobi Solar Solutions Ltd"
+          }
+        },
+        "label": "BAD",
+        "case_id": "CASE-82822305",
+        "case_type": "COMMISSION_UNDERPAYMENT",
+        "archived_at": "2026-09-17T18:39:03.442461Z",
+        "root_causes": [],
+        "verification": {},
+        "expected_amount": "32400.00",
+        "expected_policy_version": "2026-Q3"
+      },
+      "run_id": "RUN-AGT-12C7C20A",
+      "status": "SUCCEEDED",
+      "attempt": 1,
+      "case_id": "CASE-82822305",
+      "handoff": {
+        "run_id": "RUN-AGT-12C7C20A",
+        "case_id": "CASE-82822305",
+        "next_actor": "revguard-knowledge",
+        "next_skill": "CaseToDatasetSkill",
+        "traceparent": "00-51057d3b712947d730a22de165232169-e5ba8b895d337779-03",
+        "case_version": "sha256:067b5072431309840b1a4bc0fb8b0f4245cfedab65f55fdab38da2fb11ccda90",
+        "recording_id": null,
+        "previous_actor": "revguard-risk",
+        "previous_skill": "RiskClassifySkill",
+        "matrix_event_id": "$-JOlQsM86MrpAmNmUe9s0JmxBY01oQo6i0KE44pQuL8",
+        "next_input_hash": "sha256:be722c5f33fc97c64ef63149e3f48ab50ed3505f91b01a13f7c50402fb2fc54f",
+        "next_input_keys": [
+          "case",
+          "shared_state",
+          "verification"
+        ],
+        "next_stage_task_id": "TASK-4F98D06C",
+        "failure_requirement": "缺证或调用失败必须返回结构化错误并停止推进；不得猜测、静默回退或把失败写成成功",
+        "previous_artifact_hash": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e",
+        "previous_skill_receipt": "SKR-28E72942",
+        "previous_stage_task_id": "TASK-931B9E13",
+        "previous_result_summary": {
+          "risk_level": "L0",
+          "result_keys": [
+            "approval_required",
+            "approver_role",
+            "execution_constraints",
+            "reason_codes",
+            "risk_level",
+            "rollback_plan_required"
+          ],
+          "collection_sizes": {
+            "reason_codes": 1,
+            "execution_constraints": 1
+          },
+          "approval_required": false
+        },
+        "previous_matrix_response_event_id": "$rV0w32llQYjG1CDIeZ1ov_xchg4MbtRH3y8vBGHtStE"
+      },
+      "task_id": "TASK-4F98D06C",
+      "telemetry": {
+        "token_source": null,
+        "token_collection_status": "UNAVAILABLE"
+      },
+      "transport": "agentteams-matrix",
+      "created_at": "2026-09-17T18:38:41.761226Z",
+      "request_id": "REQ-AGT-2F321303",
+      "skill_name": "CaseToDatasetSkill",
+      "updated_at": "2026-09-17T18:39:13.337439Z",
+      "case_status": "RESOLVED",
+      "traceparent": "",
+      "case_version": "sha256:067b5072431309840b1a4bc0fb8b0f4245cfedab65f55fdab38da2fb11ccda90",
+      "model_limits": {
+        "max_calls": 3,
+        "max_completion_tokens": 2048,
+        "stage_timeout_seconds": 240.0
+      },
+      "skill_receipt": "SKR-D7EE5A77",
+      "assigned_actor": "revguard-knowledge",
+      "matrix_room_id": "!36PRSKPYOcIBDWpnMG:matrix-local.agentteams.io:8086",
+      "skill_transport": "higress-mcp",
+      "agentteams_message_id": "$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY",
+      "matrix_handoff_event_id": "$-JOlQsM86MrpAmNmUe9s0JmxBY01oQo6i0KE44pQuL8",
+      "matrix_trigger_event_id": "$jT-GhjCbJpc79LztNp4PQWhygd2MR3N-5CNjUEfhXjg",
+      "matrix_dispatch_event_id": "$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY",
+      "matrix_response_event_id": "$-Nf1pcap6WxtW9QYHyygPbL-ctDmXn0CYjg698i21Ow"
+    }
+  ],
+  "audit_tail": [
+    {
+      "seq": 515,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-risk",
+      "event": "AGENTTEAMS_MATRIX_RESPONSE_CAPTURED",
+      "detail": "{\"task_id\": \"TASK-931B9E13\", \"transport\": \"agentteams-matrix\", \"matrix_room_id\": \"!QmdcIdAibbhLHE4Rn3:matrix-local.agentteams.io:8086\", \"matrix_response_event_id\": \"$rV0w32llQYjG1CDIeZ1ov_xchg4MbtRH3y8vBGHtStE\"}",
+      "created_at": "2026-09-17 18:38:41.745247+00",
+      "previous_hash": "49896928a47788f27d25f1cac157b80d375a9699f123167e7036b7cf76f8e550",
+      "row_digest": "74099ed0c43ab0ac3b8cddf9a52146eeeef40ef3f9ec27bd35d034d26172d981",
+      "row_hash": "a6686030cf27a8bef9345c70489840ee833153e2938ae7e837954e18f726ee5f"
+    },
+    {
+      "seq": 516,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-risk",
+      "event": "RISK_CLASSIFIED",
+      "detail": "{\"transport\": \"agentteams-matrix\", \"risk_level\": \"L0\", \"reason_codes\": [\"READONLY_OR_ZERO_AMOUNT\"], \"approver_role\": null, \"approval_required\": false, \"execution_constraints\": {\"write\": false}, \"rollback_plan_required\": false}",
+      "created_at": "2026-09-17 18:38:41.753329+00",
+      "previous_hash": "a6686030cf27a8bef9345c70489840ee833153e2938ae7e837954e18f726ee5f",
+      "row_digest": "eb118b5e719446e529415313586534a9071102a6a3b93be10b195574cb59988c",
+      "row_hash": "6879f5845067a1279476615eb1468a15010e23cbaa9d4ddc4443c3e03c1472f9"
+    },
+    {
+      "seq": 517,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-risk",
+      "event": "NO_ACTION_NEEDED",
+      "detail": "{\"note\": \"台账金额与政策复算一致\"}",
+      "created_at": "2026-09-17 18:38:41.756932+00",
+      "previous_hash": "6879f5845067a1279476615eb1468a15010e23cbaa9d4ddc4443c3e03c1472f9",
+      "row_digest": "f065d1b31ed05e221e9a3ead5d5bf410153454669fe14836fa2a65ff995f995e",
+      "row_hash": "9799f1696f87bcd3186a10a4fcf4fe75ca66b36a9ebefcc446898d11fd9d3912"
+    },
+    {
+      "seq": 518,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-orchestrator",
+      "event": "STATE_TRANSITION",
+      "detail": "{\"to\": \"RESOLVED\", \"from\": \"RISK_REVIEW\", \"reason\": \"无需调整\"}",
+      "created_at": "2026-09-17 18:38:41.759769+00",
+      "previous_hash": "9799f1696f87bcd3186a10a4fcf4fe75ca66b36a9ebefcc446898d11fd9d3912",
+      "row_digest": "18e5a7fb62250ca50dcc47941c0d2146921b2d924b3d12963c2d26e5176c120f",
+      "row_hash": "d6610faa09730d05a5308f63d1e4639529a4efedf9922488edb207a6b267d4be"
+    },
+    {
+      "seq": 519,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-orchestrator",
+      "event": "AGENT_TASK_DISPATCHED",
+      "detail": "{\"skill\": \"CaseToDatasetSkill\", \"run_id\": \"RUN-AGT-12C7C20A\", \"runner\": \"agentteams-matrix-stage-runner\", \"task_id\": \"TASK-4F98D06C\", \"transport\": \"agentteams-matrix\", \"request_id\": \"REQ-AGT-2F321303\", \"case_version\": \"sha256:067b5072431309840b1a4bc0fb8b0f4245cfedab65f55fdab38da2fb11ccda90\", \"assigned_actor\": \"revguard-knowledge\", \"matrix_room_id\": \"!36PRSKPYOcIBDWpnMG:matrix-local.agentteams.io:8086\", \"agentteams_message_id\": \"$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY\", \"matrix_handoff_event_id\": \"$-JOlQsM86MrpAmNmUe9s0JmxBY01oQo6i0KE44pQuL8\", \"matrix_trigger_event_id\": \"$jT-GhjCbJpc79LztNp4PQWhygd2MR3N-5CNjUEfhXjg\", \"matrix_dispatch_event_id\": \"$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY\"}",
+      "created_at": "2026-09-17 18:38:41.798758+00",
+      "previous_hash": "d6610faa09730d05a5308f63d1e4639529a4efedf9922488edb207a6b267d4be",
+      "row_digest": "b7d1349386f121a642c35f053d7898ac8875e5f9f5f3736933ad1addc9ce4ed4",
+      "row_hash": "c8a2447a3a588cc14115e7e917cb8adb4235673788743f46ce6e8cbafcd1e5cf"
+    },
+    {
+      "seq": 520,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-knowledge",
+      "event": "AGENT_TASK_STARTED",
+      "detail": "{\"skill\": \"CaseToDatasetSkill\", \"task_id\": \"TASK-4F98D06C\", \"request_id\": \"REQ-AGT-2F321303\", \"traceparent\": \"\", \"skill_transport\": \"higress-mcp\", \"agentteams_message_id\": \"$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY\"}",
+      "created_at": "2026-09-17 18:39:03.439706+00",
+      "previous_hash": "c8a2447a3a588cc14115e7e917cb8adb4235673788743f46ce6e8cbafcd1e5cf",
+      "row_digest": "aebc797c58944a10a096b6b0d35a1c7600c64409edc0e8d3f52064c513d8492b",
+      "row_hash": "6976da4b2e573d7735b3d92e45047bc603c4ea8630804dc55cf6277013aa6549"
+    },
+    {
+      "seq": 521,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-knowledge",
+      "event": "SKILL_INVOKED",
+      "detail": "{\"skill\": \"CaseToDatasetSkill\", \"version\": \"1.0.0\", \"transport\": \"higress-mcp\", \"request_id\": \"REQ-AGT-2F321303\", \"traceparent\": \"\", \"agent_task_id\": \"TASK-4F98D06C\", \"skill_receipt\": \"SKR-D7EE5A77\", \"agentteams_message_id\": \"$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY\"}",
+      "created_at": "2026-09-17 18:39:03.444011+00",
+      "previous_hash": "6976da4b2e573d7735b3d92e45047bc603c4ea8630804dc55cf6277013aa6549",
+      "row_digest": "2d81e1ec865f3ae99c829154abf5f247fcc0199ffe9301a0e2b530eb3839a752",
+      "row_hash": "3047b0c3269aeddd351666d2c2986fa64ed538b74c39f4d90bfb7de9440f5bcd"
+    },
+    {
+      "seq": 522,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-knowledge",
+      "event": "AGENT_TASK_SUCCEEDED",
+      "detail": "{\"skill\": \"CaseToDatasetSkill\", \"status\": \"SUCCEEDED\", \"attempt\": 1, \"task_id\": \"TASK-4F98D06C\", \"transport\": \"agentteams-matrix\", \"request_id\": \"REQ-AGT-2F321303\", \"traceparent\": \"\", \"skill_receipt\": \"SKR-D7EE5A77\", \"matrix_room_id\": \"!36PRSKPYOcIBDWpnMG:matrix-local.agentteams.io:8086\", \"skill_transport\": \"higress-mcp\", \"agentteams_message_id\": \"$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY\", \"matrix_trigger_event_id\": \"$jT-GhjCbJpc79LztNp4PQWhygd2MR3N-5CNjUEfhXjg\", \"matrix_dispatch_event_id\": \"$kRRCPXHpogz0fNxPeLBxfX9Qp2Wlv_Jj1NGmJNNJqpY\"}",
+      "created_at": "2026-09-17 18:39:03.446337+00",
+      "previous_hash": "3047b0c3269aeddd351666d2c2986fa64ed538b74c39f4d90bfb7de9440f5bcd",
+      "row_digest": "8031445f67ff908f575ae14288a7719e688e790e74cd94362d047588334c0448",
+      "row_hash": "cbc7c6c1473980017cd7ab38c78694fd939571d572feb740898028e7feba49e4"
+    },
+    {
+      "seq": 523,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-knowledge",
+      "event": "AGENTTEAMS_MATRIX_RESPONSE_CAPTURED",
+      "detail": "{\"task_id\": \"TASK-4F98D06C\", \"transport\": \"agentteams-matrix\", \"matrix_room_id\": \"!36PRSKPYOcIBDWpnMG:matrix-local.agentteams.io:8086\", \"matrix_response_event_id\": \"$-Nf1pcap6WxtW9QYHyygPbL-ctDmXn0CYjg698i21Ow\"}",
+      "created_at": "2026-09-17 18:39:13.335302+00",
+      "previous_hash": "cbc7c6c1473980017cd7ab38c78694fd939571d572feb740898028e7feba49e4",
+      "row_digest": "abf1c9cf0f5f778708ab22c2ee00b80d23044626bea5ca8ca053b7071a20114f",
+      "row_hash": "46b9253a61783ecf50fbfdc0302d8fc1cfbc6501cd61973662fd785223e75989"
+    },
+    {
+      "seq": 524,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-knowledge",
+      "event": "KNOWLEDGE_ARCHIVED",
+      "detail": "{\"transport\": \"agentteams-matrix\", \"terminal_status_preserved\": \"RESOLVED\"}",
+      "created_at": "2026-09-17 18:39:13.362343+00",
+      "previous_hash": "46b9253a61783ecf50fbfdc0302d8fc1cfbc6501cd61973662fd785223e75989",
+      "row_digest": "399a62401089d3a14a712dfd300a21928ac194b24af4437aa7df03a4b8898898",
+      "row_hash": "118aed50ae281b3fc945ef70a05442b7fcc86a15f60764abefb4f7b9b57de3b5"
+    },
+    {
+      "seq": 525,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-orchestrator",
+      "event": "STATE_TRANSITION",
+      "detail": "{\"to\": \"KNOWLEDGE_ARCHIVED\", \"from\": \"RESOLVED\", \"reason\": \"AgentTeams Matrix Knowledge Worker 已沉淀可回放样本\"}",
+      "created_at": "2026-09-17 18:39:13.365488+00",
+      "previous_hash": "118aed50ae281b3fc945ef70a05442b7fcc86a15f60764abefb4f7b9b57de3b5",
+      "row_digest": "574178f9b6209b929c5bf204612878311b2cb768305d6bb0193dd0091a27f633",
+      "row_hash": "3dd13abc1dd930d27d28da4cdf5d58d87003d538ce174227f929d97937813722"
+    },
+    {
+      "seq": 526,
+      "case_id": "CASE-82822305",
+      "actor": "revguard-orchestrator",
+      "event": "STATE_TRANSITION",
+      "detail": "{\"to\": \"CLOSED\", \"from\": \"KNOWLEDGE_ARCHIVED\", \"reason\": \"案件关闭\"}",
+      "created_at": "2026-09-17 18:39:13.368422+00",
+      "previous_hash": "3dd13abc1dd930d27d28da4cdf5d58d87003d538ce174227f929d97937813722",
+      "row_digest": "bb34093ddc86d0a74d6ae7ff07fb36e3c7d62b9d2292f34971cd5057a14a5fa1",
+      "row_hash": "d97ce12d91ec4691e6fbd0cdd20b0def7d8025761fc89a5f355b5cdc534e0cdc"
+    }
+  ],
+  "generated_at": "2026-09-18T18:41:00Z"
+}
