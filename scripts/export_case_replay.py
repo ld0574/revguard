@@ -36,6 +36,12 @@ from typing import Any
 
 SCHEMA = "revguard.replay/v1"
 
+# 回放页标签按案件终态生成：正常闭环与偏差恢复用不同配色，避免两条记录混在一起。
+DISPLAY_BY_STATUS: dict[str, dict[str, str]] = {
+    "CLOSED": {"title": "正常闭环", "summary": "取证 → 复算 → 真人审批 → 执行 → 独立复核", "tone": "normal"},
+    "ROLLED_BACK": {"title": "偏差与冲销恢复", "summary": "复核发现偏差 → 禁止重试 → 冲销 → 恢复复核", "tone": "alert"},
+}
+
 # 脱敏规则：先替换 URL 与主机名，再兜底替换残留的 IPv4 与内部域名。
 URL_RE = re.compile(r"https?://[^\s\"'<>]+")
 HOST_RE = re.compile(
@@ -604,7 +610,7 @@ def main(argv: list[str] | None = None) -> int:
         api_key = args.api_key_file.read_text(encoding="utf-8").strip()
     if not api_key:
         parser.error("必须提供 --api-key 或 --api-key-file")
-    cases = args.cases or ["CASE-2026-0001", "CASE-2026-0008"]
+    cases = args.cases or ["CASE-82822305", "CASE-3083A688"]
 
     health = get_json(args.base_url, "/api/v1/health", api_key)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -618,12 +624,30 @@ def main(argv: list[str] | None = None) -> int:
         # 回放页只按文件名取数据，保持与案例编号一一对应。
         path = args.output_dir / f"{case_id.lower()}.json"
         path.write_text(json.dumps(bundle, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        written.append({"case_id": case_id, "path": str(path), "steps": len(bundle["steps"]),
-                        "spans": len(bundle["trace"]["spans"]), "audit_events": bundle["audit"]["count"]})
+        case = bundle.get("case") or {}
+        display = DISPLAY_BY_STATUS.get(
+            str(case.get("status") or ""), {"title": "运行记录", "summary": "", "tone": "normal"}
+        )
+        written.append(
+            {
+                "case_id": case_id,
+                "file": path.name,
+                "status": case.get("status"),
+                "order_id": case.get("order_id"),
+                "title": display["title"],
+                "summary": display["summary"],
+                "tone": display["tone"],
+                "steps": len(bundle["steps"]),
+                "spans": len(bundle["trace"]["spans"]),
+                "audit_events": bundle["audit"]["count"],
+                "wall_duration_ms": (bundle.get("run") or {}).get("wall_duration_ms"),
+            }
+        )
         print(json.dumps(written[-1], ensure_ascii=False))
     if not written:
         print("没有任何案件被导出", file=sys.stderr)
         return 1
+    written.sort(key=lambda item: 0 if item.get("status") == "CLOSED" else 1)
     index = args.output_dir / "index.json"
     index.write_text(json.dumps({"schema": SCHEMA, "release": health.get("release"),
                                  "cases": written}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

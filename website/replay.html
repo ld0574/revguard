@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RevGuard 运行回放 — CASE-0001 与 CASE-0008 真实运行记录</title>
-<meta name="description" content="按真实运行记录回放 RevGuard 的两条完整案件：正常闭环的 CASE-0001 与发现偏差后冲销恢复的 CASE-0008。回放数据来自候选版本的真实执行记录，不需要等待模型调用。">
+<title>RevGuard 运行回放 — 真实运行记录逐步回放</title>
+<meta name="description" content="按真实运行记录回放 RevGuard 的完整案件：正常闭环的主案例与发现偏差后冲销恢复的副案例。回放数据来自候选版本在真实运行栈中的执行记录，不需要等待模型调用。">
 <meta property="og:title" content="RevGuard 运行回放 — 两条真实案件记录">
 <meta property="og:description" content="确定性复算、真人审批、受控执行、独立复核与冲销恢复的分步回放，每一步都带记录原值与证据哈希。">
 <meta property="og:type" content="website">
@@ -29,24 +29,14 @@
   <section class="replay-head">
     <div class="head-main">
       <span class="badge-live">真实运行记录回放</span>
-      <h1>两条完整案件，按记录逐步回放</h1>
+      <h1>完整案件，按记录逐步回放</h1>
       <p class="lead">
-        下面两条时间线来自 RevGuard <b id="release-label">v0.6.0</b> 的一次真实执行：每一步的时点、金额、哈希与审批记录都取自当时的运行记录，
+        下面每条时间线都来自 RevGuard <b id="release-label">v0.6.0-rc3</b> 在真实运行栈中的一次执行：每一步的时点、金额、哈希与审批记录都取自当时的运行记录，
         不改写、不补拍。回放只做展示加速，让评委不必等待模型调用时间。
       </p>
+      <p class="case-note" id="case-note" hidden></p>
     </div>
-    <div class="case-switch" role="tablist" aria-label="选择回放案件">
-      <button class="case-tab" data-case="case-2026-0001" role="tab" aria-selected="false">
-        <span class="tab-kicker">CASE-0001</span>
-        <strong>正常闭环</strong>
-        <small>取证 → 复算 → 真人审批 → 执行 → 独立复核</small>
-      </button>
-      <button class="case-tab" data-case="case-2026-0008" role="tab" aria-selected="false">
-        <span class="tab-kicker">CASE-0008</span>
-        <strong>偏差与冲销恢复</strong>
-        <small>复核发现偏差 → 禁止重试 → 冲销 → 恢复复核</small>
-      </button>
-    </div>
+    <div class="case-switch" id="case-switch" role="tablist" aria-label="选择回放案件"></div>
   </section>
 
   <section class="facts" id="facts" aria-label="案件摘要"></section>

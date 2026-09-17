@@ -45,5 +45,5 @@ python3 -m unittest tests.test_execution_reference -v   # 5 项
 - 监视器证明"事实被真实读取过"，不重算金额；金额由 `revguard/rule_engine.py` 确定性内核计算、
   由 `revguard/commitment.py` 的人工审批参数承诺锁定；
 - 历史回执只能给出 `CASE_ONLY` 弱绑定，强绑定只对开关打开后新产生的回执有效；
-- 开关默认关闭（`REVGUARD_REQUIRE_EXECUTION_REFERENCES=false`），演示/验收栈显式打开；
+- 开关默认关闭（`REVGUARD_REQUIRE_EXECUTION_REFERENCES=false`）；可在演示/验收栈通过环境变量显式打开，本轮彩排栈保持默认关闭以固定单一口径，能力验证在验收镜像内由对抗探针 5/5 与单测完成；
 - 覆盖范围为 RevGuard 受控台账与真实 ERPNext 只读集成，不含外部 ERP 会计写入。

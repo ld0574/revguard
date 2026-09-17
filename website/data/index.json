@@ -4,17 +4,29 @@
   "cases": [
     {
       "case_id": "CASE-2026-0001",
-      "path": "/out/case-2026-0001.json",
+      "file": "case-2026-0001.json",
+      "status": "CLOSED",
+      "order_id": "EZ202608001",
+      "title": "正常闭环",
+      "summary": "取证 → 复算 → 真人审批 → 执行 → 独立复核",
+      "tone": "normal",
       "steps": 10,
       "spans": 35,
-      "audit_events": 88
+      "audit_events": 88,
+      "wall_duration_ms": 273
     },
     {
       "case_id": "CASE-2026-0008",
-      "path": "/out/case-2026-0008.json",
+      "file": "case-2026-0008.json",
+      "status": "ROLLED_BACK",
+      "order_id": "EZ202608008",
+      "title": "偏差与冲销恢复",
+      "summary": "复核发现偏差 → 禁止重试 → 冲销 → 恢复复核",
+      "tone": "alert",
       "steps": 11,
       "spans": 40,
-      "audit_events": 99
+      "audit_events": 99,
+      "wall_duration_ms": 257
     }
   ]
 }

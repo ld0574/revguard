@@ -17,14 +17,12 @@
   };
   const ALERT_STAGES = new Set(["recovery", "verification"]);
   const BASE_STEP_MS = 4200;
-  const CASES = ["case-2026-0001", "case-2026-0008"];
   const requested = new URLSearchParams(window.location.search).get("case");
-  const DEFAULT_CASE = CASES.includes(requested) ? requested : "case-2026-0001";
 
   const el = (id) => document.getElementById(id);
   const text = (node, value) => { node.textContent = value == null || value === "" ? "—" : String(value); };
 
-  const state = { bundle: null, index: 0, playing: false, speed: 1, timer: null };
+  const state = { bundle: null, index: 0, playing: false, speed: 1, timer: null, cases: [] };
 
   function clockOf(iso) {
     if (!iso) return "—";
@@ -217,13 +215,12 @@
   async function load(caseId) {
     stop();
     toast("正在加载运行记录…");
-    const response = await fetch(`data/${caseId}.json`, { cache: "no-store" });
+    const fileName = String(caseId).endsWith(".json") ? String(caseId) : `${caseId}.json`;
+    const response = await fetch(`data/${fileName}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`数据加载失败：${response.status}`);
     state.bundle = await response.json();
     state.index = 0;
-    document.querySelectorAll(".case-tab").forEach((tab) => {
-      tab.setAttribute("aria-selected", String(tab.dataset.case === caseId));
-    });
+    renderTabs(state.bundle.case.case_id);
     text(el("release-label"), state.bundle.release || "v0.6.0");
     document.title = `RevGuard 运行回放 — ${state.bundle.case.case_id} ${state.bundle.case.status}`;
     facts();
@@ -232,12 +229,44 @@
     renderTrace();
   }
 
-  function bind() {
+  function renderTabs(activeCaseId) {
+    el("case-switch").innerHTML = state.cases.map((item) => {
+      const tone = item.tone === "alert" ? " alert" : "";
+      const selected = String(item.case_id === activeCaseId);
+      return `<button class="case-tab${tone}" data-file="${item.file}" role="tab" aria-selected="${selected}">` +
+        `<span class="tab-kicker">${item.case_id || item.file}</span>` +
+        `<strong>${item.title || "运行记录"}</strong>` +
+        `<small>${item.summary || ""}</small></button>`;
+    }).join("");
     document.querySelectorAll(".case-tab").forEach((tab) => {
       tab.addEventListener("click", () => {
-        load(tab.dataset.case).catch((error) => toast(String(error.message || error)));
+        load(tab.dataset.file).catch((error) => toast(String(error.message || error)));
       });
     });
+  }
+
+  function showNote(message) {
+    const note = el("case-note");
+    if (!note) return;
+    note.textContent = message || "";
+    note.hidden = !message;
+  }
+
+  async function boot() {
+    const response = await fetch("data/index.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`回放索引加载失败：${response.status}`);
+    const index = await response.json();
+    state.cases = (index.cases || []).filter((item) => item && item.file);
+    if (!state.cases.length) throw new Error("回放索引中没有可用案件");
+    const match = (item) => requested && (item.case_id === requested || item.file === requested || item.file === `${String(requested).toLowerCase()}.json`);
+    const entry = state.cases.find(match) || state.cases[0];
+    if (requested && !state.cases.find(match)) {
+      showNote(`未找到案件 ${requested} 的回放数据，已展示可用的运行记录。`);
+    }
+    await load(entry.file);
+  }
+
+  function bind() {
     el("btn-play").addEventListener("click", () => (state.playing ? stop() : play()));
     el("btn-next").addEventListener("click", () => { stop(); next(); });
     el("btn-prev").addEventListener("click", () => { stop(); if (state.index > 0) { state.index -= 1; renderStep(); } });
@@ -255,5 +284,5 @@
   }
 
   bind();
-  load(DEFAULT_CASE).catch((error) => toast(String(error.message || error)));
+  boot().catch((error) => toast(String(error.message || error)));
 })();
