@@ -1,4 +1,4 @@
-"""GitHub Pages 运行回放页验收：内容、交互、移动端与资源路径。
+"""GitHub Pages 运行回放页验收：内容、交互、材料直链、移动端与资源路径。
 
 在 202 的 `revguard-grafana-browser` 浏览器容器内执行，服务端由独立 Nginx
 容器以 `/revguard/` 前缀提供静态文件，验证的是与 GitHub Pages 项目站点相同的
@@ -57,6 +57,22 @@ try:
     WebDriverWait(driver, 20).until(lambda d: d.find_elements(By.CSS_SELECTOR, "a[href='replay.html']"))
     record("首页含回放入口", True)
     driver.save_screenshot(str(out / "site-home.png"))
+
+    # 材料入口：两个决赛成片必须给出 Release 附件直链，且真的能下载
+    material_links = [
+        element.get_attribute("href")
+        for element in driver.find_elements(By.CSS_SELECTOR, "#materials a[href$='.mp4']")
+    ]
+    record("材料入口含两个成片直链", len(material_links) == 2, f"links={material_links}")
+    reachable = []
+    for link in material_links:
+        request = urllib.request.Request(link, method="HEAD", headers={"User-Agent": "revguard-website-probe"})
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                reachable.append([link.rsplit("/", 1)[-1], response.status])
+        except Exception as exc:  # noqa: BLE001 - 探针把下载失败转成检查结果
+            reachable.append([link.rsplit("/", 1)[-1], f"error:{type(exc).__name__}"])
+    record("成片直链可下载", all(status == 200 for _, status in reachable), f"reachable={reachable}")
 
     driver.get(BASE + "replay.html")
     WebDriverWait(driver, 20).until(lambda d: "STEP" in d.find_element(By.ID, "step-card").text)

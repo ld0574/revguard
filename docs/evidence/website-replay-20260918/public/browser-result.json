@@ -9,6 +9,14 @@
       "passed": true,
       "detail": ""
     },
+    "材料入口含两个成片直链": {
+      "passed": true,
+      "detail": "links=['https://github.com/ld0574/revguard/releases/download/v0.6.0-rc3/revguard_finals_demo_v0.6.0-rc3.mp4', 'https://github.com/ld0574/revguard/releases/download/v0.6.0-rc3/revguard_finals_recovery_90s_v0.6.0-rc3.mp4']"
+    },
+    "成片直链可下载": {
+      "passed": true,
+      "detail": "reachable=[['revguard_finals_demo_v0.6.0-rc3.mp4', 200], ['revguard_finals_recovery_90s_v0.6.0-rc3.mp4', 200]]"
+    },
     "回放标签与索引一致": {
       "passed": true,
       "detail": "tabs=2 index=2"

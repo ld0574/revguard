@@ -32,11 +32,13 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 
 ## 验收结果
 
-浏览器检查在独立 Nginx 容器提供的 `/revguard/` 子路径下执行（与 GitHub Pages 项目站点的相对路径加载方式一致），检查项直接读 `index.json`，逐个切换索引里的案件，核对摘要卡片数、阶段数、步骤数与追踪表行数。
+浏览器检查在独立 Nginx 容器提供的 `/revguard/` 子路径下执行（与 GitHub Pages 项目站点的相对路径加载方式一致），检查项直接读 `index.json`，逐个切换索引里的案件，核对摘要卡片数、阶段数、步骤数与追踪表行数；另外核对首页「材料入口」的两个成片直链真实可下载。
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
 | 首页入口 | 首页含 `replay.html` 入口，静态资源 200 | site-home.png |
+| 材料入口直链 | 官网「08 · 材料入口」给出两个成片 mp4 的 Release 附件直链 | browser-result.json |
+| 成片可下载 | 两个 mp4 直链 HEAD 均返回 200 | browser-result.json |
 | 标签与索引一致 | 页面标签数 = `index.json` 案件数（2） | browser-result.json |
 | CASE-2026-0001 渲染 | 摘要 8 项、阶段 10 个、步骤 10 步、追踪 53 行 | replay-case-2026-0001.png |
 | CASE-2026-0008 渲染 | 摘要 8 项、阶段 11 个、步骤 11 步、追踪 60 行 | replay-case-2026-0008.png |
@@ -46,7 +48,7 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 
 `replay-case-82822305.png` 是 rc3 传输验证案件（只读运行，无资金写入）在同一套预览栈下的渲染结果，用于确认 rc3 数据包也能被页面正确加载。
 
-部署完成后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，8 项全绿，结果保存在 [`public/browser-result.json`](public/browser-result.json)。
+部署完成后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，**10 项全绿**（含新增的两个成片直链检查：直链存在且 HEAD 200），结果与截图保存在 [`public/`](public/)（[`public/browser-result.json`](public/browser-result.json)）。
 
 ## 数据代次
 
