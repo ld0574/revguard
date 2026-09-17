@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-12T10:26:17Z",
+  "generated_at": "2026-09-17T20:17:27Z",
   "environment": {
-    "python": "3.12.13",
+    "python": "3.11.16",
     "implementation": "CPython",
-    "platform": "macOS-26.6.1-arm64-arm-64bit"
+    "platform": "Linux-7.0.14-12-pve-x86_64-with-glibc2.41"
   },
   "method": "external_expected_matrix_and_golden_holdout",
   "expected_dataset": "data/expected/risk_matrix.csv",
@@ -38,28 +38,28 @@
     "method": "median_of_latency_injection_runs",
     "iterations": 7,
     "injected_delay_ms_per_tool": 50,
-    "parallel_batch_ms": 55,
+    "parallel_batch_ms": 53,
     "parallel_batch_ms_samples": [
-      54,
-      55,
-      55,
-      57,
-      56,
-      55,
-      56
+      52,
+      53,
+      53,
+      53,
+      52,
+      53,
+      53
     ],
-    "end_to_end_ms": 57,
+    "end_to_end_ms": 54,
     "end_to_end_ms_samples": [
-      55,
-      55,
-      57,
-      58,
-      57,
-      56,
-      57
+      53,
+      54,
+      54,
+      54,
+      53,
+      54,
+      54
     ],
     "serial_io_baseline_ms": 350,
-    "estimated_speedup": 6.36,
+    "estimated_speedup": 6.6,
     "workers": 7,
     "task_count": 7
   }

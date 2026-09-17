@@ -2,6 +2,8 @@
 
 ## Unreleased — 2026-09-18
 
+- 评测快照在 10.10.10.202 Docker（Linux / Python 3.11）重跑：105/105 确定性场景与 7 路并行基准数字刷新，`scripts/validate_evaluation_snapshot.py` 校验通过（`docs/evaluation-summary.json`）。
+- 发布门禁扩展：官网回放索引与数据包一致（`scripts/check_website_replay.py`，接入 `checks.yml`）、候选版本号必须在 CHANGELOG 与导出 OpenAPI 中同时出现。
 - AgentTeams Manager glm-5.3-flash 生成预算修复：重建 Manager 镜像，使 bridge 重新投影 provider 时保持 `max_tokens=2048` + `reasoning_effort=low`；预算脚本新增 Manager 目标（端口 18799），新增从 `docker inspect` 原样重建 Manager 容器的脚本（证据 `docs/evidence/agentteams-manager-glm-20260918/`）。
 
 ## 0.6.0-rc3 — 2026-09-18
