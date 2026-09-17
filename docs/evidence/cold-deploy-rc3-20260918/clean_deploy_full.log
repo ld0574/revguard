@@ -1,0 +1,143 @@
+Read-only metrics credential and Grafana password prepared in .runtime/observability
+
+==> 先构建，再确认静止并停止旧 API
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+#0 building with "default" instance using docker driver
+
+#1 [revguard-api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 3.19kB done
+#1 DONE 0.0s
+
+#2 [revguard-api internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 0.0s
+
+#3 [revguard-api internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.1s
+
+#4 [revguard-api internal] load .dockerignore
+#4 transferring context: 217B done
+#4 DONE 0.1s
+
+#5 [revguard-api stage-1  1/17] FROM docker.io/library/python:3.11-slim
+#5 DONE 0.0s
+
+#6 [revguard-api demo-ui-build 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#6 DONE 0.0s
+
+#7 [revguard-api internal] load build context
+#7 transferring context: 7.13kB 0.0s done
+#7 DONE 0.0s
+
+#8 [revguard-api stage-1 13/17] COPY docs/evaluation-summary.json      docs/value-evaluation-synthetic.json      docs/synthetic-data-validation.json      docs/public-data-experiment-summary.json      docs/polardb-local-verification-2026-08-27.json      docs/polardb-local-instance-acceptance-2026-08-29.json      ./docs/
+#8 CACHED
+
+#9 [revguard-api stage-1  4/17] COPY requirements.txt requirements.lock ./
+#9 CACHED
+
+#10 [revguard-api stage-1  2/17] RUN apt-get update && apt-get upgrade -y --no-install-recommends     && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [revguard-api stage-1  6/17] COPY revguard/ ./revguard/
+#11 CACHED
+
+#12 [revguard-api stage-1 11/17] COPY data/fixtures/ ./data/fixtures/
+#12 CACHED
+
+#13 [revguard-api stage-1  5/17] RUN pip install --no-cache-dir -r requirements.lock &&     pip uninstall --yes setuptools
+#13 CACHED
+
+#14 [revguard-api stage-1  7/17] COPY scripts/ ./scripts/
+#14 CACHED
+
+#15 [revguard-api stage-1 10/17] COPY config/skill-integrity.json ./config/skill-integrity.json
+#15 CACHED
+
+#16 [revguard-api stage-1  9/17] COPY config/demo_principals.json ./config/demo_principals.json
+#16 CACHED
+
+#17 [revguard-api demo-ui-build 4/6] RUN npm ci
+#17 CACHED
+
+#18 [revguard-api stage-1  3/17] WORKDIR /app
+#18 CACHED
+
+#19 [revguard-api stage-1 16/17] RUN getent group revguard >/dev/null || addgroup --system revguard;     id -u revguard >/dev/null 2>&1 || adduser --system --ingroup revguard revguard
+#19 CACHED
+
+#20 [revguard-api stage-1  8/17] COPY migrations/ ./migrations/
+#20 CACHED
+
+#21 [revguard-api demo-ui-build 5/6] COPY demo-ui/ ./
+#21 CACHED
+
+#22 [revguard-api demo-ui-build 6/6] RUN npm run build
+#22 CACHED
+
+#23 [revguard-api demo-ui-build 2/6] WORKDIR /ui
+#23 CACHED
+
+#24 [revguard-api demo-ui-build 3/6] COPY demo-ui/package.json demo-ui/package-lock.json ./
+#24 CACHED
+
+#25 [revguard-api stage-1 12/17] COPY data/golden_cases/ ./data/golden_cases/
+#25 CACHED
+
+#26 [revguard-api stage-1 14/17] COPY docs/evidence/demo-rehearsal/manifest.json ./docs/evidence/demo-rehearsal/manifest.json
+#26 CACHED
+
+#27 [revguard-api stage-1 15/17] COPY --from=demo-ui-build /ui/dist/client/ ./demo-ui/dist/client/
+#27 CACHED
+
+#28 [revguard-api stage-1 17/17] RUN mkdir -p /app/data/outputs /app/docs/reports /app/runtime &&     chmod +x /app/scripts/start_api.sh &&     chown -R revguard:revguard /app
+#28 CACHED
+
+#29 [revguard-api] exporting to image
+#29 exporting layers done
+#29 writing image sha256:1c1ade2936c79b1b7e15997595f487d46257d586f2913c438759c9b4a0a46af1 done
+#29 naming to docker.io/library/work-revguard-api done
+#29 DONE 0.0s
+
+#30 [revguard-api] resolving provenance for metadata file
+ revguard-api  Built
+#30 DONE 0.0s
+旧 API 已在独占运行租约内停止；维护标记保留
+
+==> 保存跨重启维护标记；失败后重跑部署，验收通过才开放业务
+
+==> 准备 SQLite + MCP 参考拓扑
+
+==> 停机状态下检查持久化任务，并播种合成案件
+ Container revguard-api  Created
+ Container revguard-api  Starting
+ Container revguard-api  Started
+
+==> 校验并启动可观测组件和只读 Grafana 共享看板
+Checking /etc/prometheus/prometheus.yaml
+  SUCCESS: 1 rule files found
+ SUCCESS: /etc/prometheus/prometheus.yaml is valid prometheus config file syntax
+
+Checking /etc/prometheus/alerts.yaml
+  SUCCESS: 7 rules found
+
+ Container work-blackbox-1  Running
+ Container work-otel-collector-1  Running
+ Container work-grafana-1  Running
+ Container work-tempo-1  Running
+ Container work-alertmanager-1  Running
+ Container revguard-api  Running
+ Container work-alloy-1  Running
+ Container work-loki-1  Running
+ Container work-prometheus-1  Running
+Grafana selected-dashboard sharing enabled; no admin credential exposed
+
+==> 执行部署验收
+
+==> 全部验收通过，最后解除维护封锁
+
+部署完成：
+  WebUI  http://127.0.0.1:19000/demo/
+  Health http://127.0.0.1:19000/api/v1/health
+  模式    local
+  案件    8
+  配置    /work/.env（权限 0600，请勿提交）

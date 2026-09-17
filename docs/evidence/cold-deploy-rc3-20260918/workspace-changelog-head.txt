@@ -1,0 +1,5 @@
+# Changelog
+
+## Unreleased — 2026-09-18
+
+- 修复录制代次缺陷：注入的写后偏差（`REVGUARD_POSTING_TAMPER_*`）从全局一次性开关改为按案件记录消费状态，单案重新准备（`POST /api/v1/cases/{id}/reprepare`）会为新代次重新武装该案，不再出现第二次录制静默退化为正常结案、冲销与恢复演示消失；回归用例 `tests/test_api.py::test_15z_*`（`revguard/mocks.py`）。

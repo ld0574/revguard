@@ -1,0 +1,10 @@
+work_alertmanager-data
+work_alloy-data
+work_grafana-data
+work_loki-data
+work_otel-queue
+work_prometheus-data
+work_revguard-db
+work_revguard-outputs
+work_revguard-reports
+work_tempo-data

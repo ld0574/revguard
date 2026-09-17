@@ -15,7 +15,15 @@
     },
     "成片直链可下载": {
       "passed": true,
-      "detail": "reachable=[['revguard_finals_demo_v0.6.0-rc3.mp4', 200], ['revguard_finals_recovery_90s_v0.6.0-rc3.mp4', 200]]"
+      "detail": "reachable=[['revguard_finals_demo_v0.6.0-rc3.mp4', 200, 'attempt-1'], ['revguard_finals_recovery_90s_v0.6.0-rc3.mp4', 200, 'attempt-1']]"
+    },
+    "首页分享卡片元数据完整": {
+      "passed": true,
+      "detail": "share={'height': '630', 'image': 'https://ld0574.github.io/revguard/og-image.png', 'twitter': 'summary_large_image', 'type': 'image/png', 'url': 'https://ld0574.github.io/revguard/', 'width': '1200'}"
+    },
+    "分享卡片直链可抓取且为 1200x630 PNG": {
+      "passed": true,
+      "detail": "status=200 type=image/png bytes=277406 dims=[1200, 630]"
     },
     "回放标签与索引一致": {
       "passed": true,
