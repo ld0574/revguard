@@ -29,6 +29,7 @@ from .adapters import (
     EnterpriseAdapterError,
     ProviderRegistry,
 )
+from .commitment import approval_commitment, approval_digest
 from .models import CaseStatus, new_id, utc_now
 from .money_journal import MONEY_TOOLS, MoneyJournal, RecoveryRequired, request_hash
 from .security import CapabilityTokenSigner, SecurityError, authorize_tool
@@ -647,6 +648,21 @@ class ToolGateway:
             approval = self._approvals.get(str(claims.get("approval_id", "")))
             if not approval or approval.get("status") != "APPROVED":
                 raise ToolError("AUTH_FAILED", "审批单不存在或未批准")
+            # 审批 = 参数承诺：审批单摘要、令牌摘要与执行时重算摘要必须三方一致。
+            committed = str(approval.get("parameters_digest") or "")
+            if not committed:
+                raise ToolError("AUTH_FAILED", "审批缺少参数承诺，拒绝执行")
+            if str(claims.get("parameters_digest") or "") != committed:
+                raise ToolError("AUTH_FAILED", "审批凭证与审批单参数承诺不一致（参数漂移）")
+            if approval_digest(approval) != committed:
+                raise ToolError("AUTH_FAILED", "审批参数已被改动（参数漂移）")
+            approved_release = str(approval.get("release_version") or "")
+            current_release = os.getenv("REVGUARD_RELEASE_VERSION", "")
+            if approved_release and current_release and approved_release != current_release:
+                raise ToolError(
+                    "AUTH_FAILED",
+                    f"审批版本 {approved_release} 与当前运行版本 {current_release} 不一致",
+                )
             jti = str(claims.get("jti", ""))
             approved_amount = Decimal(str(claims.get("max_amount", "0")))
             consumed = Decimal(self._token_consumed_amount.get(jti, "0"))
@@ -825,6 +841,10 @@ class ToolGateway:
             approval["comment"] = p.get("comment", "")
             approval["decided_at"] = utc_now()
             if approval["status"] == "APPROVED":
+                # 审批 = 参数承诺：把此刻批准的参数规范化成摘要，执行时二次比对。
+                approval["release_version"] = os.getenv("REVGUARD_RELEASE_VERSION", "")
+                approval["parameters_commitment"] = approval_commitment(approval)
+                approval["parameters_digest"] = approval_digest(approval)
                 approval["approval_token"] = self._token_signer.issue("ledger_adjust", {
                     "approval_id": approval["approval_id"],
                     "case_id": approval["case_id"],
@@ -836,6 +856,7 @@ class ToolGateway:
                     "approver_role": approval["approver_role"],
                     "human_subject": human_subject,
                     "human_auth_time": p.get("human_auth_time"),
+                    "parameters_digest": approval["parameters_digest"],
                 }, ttl_seconds=900)
             self._persist_state()
             return copy.deepcopy(approval)
@@ -857,6 +878,12 @@ class ToolGateway:
                 raise ToolError("DATA_CONFLICT", "只有已批准审批单可重新授权")
             if p.get("case_id") and p["case_id"] != approval.get("case_id"):
                 raise ToolError("AUTH_FAILED", "审批单与案件不匹配")
+            # 重新授权同样受参数承诺约束：审批记录被改动后不得再签发能力令牌。
+            committed = str(approval.get("parameters_digest") or "")
+            if not committed:
+                raise ToolError("AUTH_FAILED", "审批缺少参数承诺，拒绝重新授权")
+            if approval_digest(approval) != committed:
+                raise ToolError("AUTH_FAILED", "审批参数已被改动（参数漂移），拒绝重新授权")
 
             consumed: dict[str, Decimal] = {}
             for draft in self._adjustments.values():
@@ -895,6 +922,7 @@ class ToolGateway:
                     "approver": actor,
                     "approver_role": approval["approver_role"],
                     "renewal": True,
+                    "parameters_digest": approval.get("parameters_digest"),
                 }, ttl_seconds=900)
             approval["approval_token"] = token
             approval["capability_renewed_at"] = utc_now()

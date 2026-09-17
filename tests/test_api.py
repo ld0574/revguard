@@ -412,6 +412,33 @@ class TestApiSmoke(unittest.TestCase):
         }, headers={**self.evidence, "X-RevGuard-Task-ID": task["task_id"]})
         self.assertEqual(forbidden.status_code, 403)
 
+    def test_10b_skill_identity_cannot_be_self_reported(self):
+        """审计主体来自服务端会话：请求体自报 actor/scope 一律 422，不进入审计。"""
+        case = Case(case_id="CASE-SKILL-IDENTITY", case_type="COMMISSION_UNDERPAYMENT",
+                    source="TEST").to_dict()
+        store.save_case(case)
+        skill_input = {"raw_case": {"partner_id": "AGT-10001", "order_id": "EZ202608001"}}
+        task = api_module.create_agent_task(case, "CaseNormalizeSkill", skill_input)
+        store.save_agent_task(task)
+        headers = {**self.intake, "X-RevGuard-Task-ID": task["task_id"]}
+
+        forged = self.client.post("/api/v1/skills/CaseNormalizeSkill/invoke", json={
+            "case_id": case["case_id"], "input": skill_input,
+            "actor": "revguard-risk", "scope": ["approval:write"],
+        }, headers=headers)
+        self.assertEqual(forged.status_code, 422, forged.text)
+        self.assertEqual(store.list_audit(case["case_id"]), [])
+        self.assertEqual(store.get_agent_task(task["task_id"])["status"], "PENDING")
+
+        accepted = self.client.post("/api/v1/skills/CaseNormalizeSkill/invoke", json={
+            "case_id": case["case_id"], "input": skill_input,
+        }, headers=headers)
+        self.assertEqual(accepted.status_code, 200, accepted.text)
+        events = [item for item in store.list_audit(case["case_id"])
+                  if item.get("event") == "SKILL_INVOKED"]
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["actor"], "revguard-intake")
+
     def test_11_waiting_for_evidence_can_resume(self):
         spec = json.loads((ROOT / "data" / "golden_cases" / "GOLDEN-003.json")
                           .read_text(encoding="utf-8"))

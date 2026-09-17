@@ -1,0 +1,65 @@
+{
+  "probe": "approval-parameter-commitment",
+  "generated_at": "2026-09-17T19:05:29.955622+00:00",
+  "python": "3.11.16",
+  "results": [
+    {
+      "scenario": "unsealed_drift",
+      "expectation": "AUTH_FAILED / 参数漂移，且台账无写入",
+      "observed": {
+        "type": "AUTH_FAILED",
+        "message": "[AUTH_FAILED] 审批参数已被改动（参数漂移）",
+        "retryable": false
+      },
+      "passed": true
+    },
+    {
+      "scenario": "resealed_drift",
+      "expectation": "AUTH_FAILED / 参数漂移（能力令牌摘要与审批单不一致）",
+      "observed": {
+        "type": "AUTH_FAILED",
+        "message": "[AUTH_FAILED] 审批凭证与审批单参数承诺不一致（参数漂移）",
+        "retryable": false
+      },
+      "passed": true
+    },
+    {
+      "scenario": "renewal_drift",
+      "expectation": "AUTH_FAILED / 参数漂移，拒绝重新签发能力令牌",
+      "observed": {
+        "type": "AUTH_FAILED",
+        "message": "[AUTH_FAILED] 审批参数已被改动（参数漂移），拒绝重新授权",
+        "retryable": false
+      },
+      "passed": true
+    },
+    {
+      "scenario": "canonical_amount",
+      "expectation": "写法定点化一致；摘要按审批单/案件绑定而不同",
+      "observed": {
+        "digests": {
+          "CASE-PROBE-CANON-A": "sha256:28f4122210c3a8bc9032f60a0efe739f1a07d27637576b7b5164df3aecb25966",
+          "CASE-PROBE-CANON-B": "sha256:5a21b47a95cdb4d73e4d85d7bbf1d257a3a6a462142bf2720f1e43235e59c938"
+        },
+        "canonical_amounts": {
+          "CASE-PROBE-CANON-A": "100.00",
+          "CASE-PROBE-CANON-B": "100.00"
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "happy_path",
+      "expectation": "承诺未变动的审批正常执行，台账金额等于承诺金额",
+      "observed": {
+        "success": true,
+        "ledger_amount": "100",
+        "committed_digest": "sha256:93a02c2960a6154b7f193b46bbaed58b4ac4b986ed31ef81cf6e254f97591d53"
+      },
+      "passed": true
+    }
+  ],
+  "passed": true
+}
+
+审批参数承诺探针：5/5 通过
