@@ -19,14 +19,16 @@ import csv
 import hashlib
 import json
 import os
+import tempfile
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
 import frappe
 
-STAGING = Path(os.getenv("REVGUARD_OLIST_STAGING", "/tmp/olist-staging"))
-OUTPUT = Path(os.getenv("REVGUARD_OLIST_IMPORT_OUTPUT", "/tmp/olist-import.json"))
+_RUNTIME_DIR = Path(tempfile.gettempdir())
+STAGING = Path(os.getenv("REVGUARD_OLIST_STAGING", str(_RUNTIME_DIR / "olist-staging")))
+OUTPUT = Path(os.getenv("REVGUARD_OLIST_IMPORT_OUTPUT", str(_RUNTIME_DIR / "olist-import.json")))
 DATASET = "olist-brazilian-ecommerce"
 PROVENANCE = "PUBLIC_REAL"
 COMPANY = "RevGuard Olist Public Lab"
