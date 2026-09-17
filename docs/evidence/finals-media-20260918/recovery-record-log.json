@@ -1,0 +1,41 @@
+{
+  "scenes": [
+    {
+      "scene": "case8-overview",
+      "at_seconds": 0.0,
+      "frame": 0,
+      "detail": "错误恢复案件终态"
+    },
+    {
+      "scene": "case-selected",
+      "at_seconds": 0.0,
+      "frame": 0,
+      "detail": "CASE-2026-0008"
+    },
+    {
+      "scene": "case8-audit",
+      "at_seconds": 28.0,
+      "frame": 52,
+      "detail": "偏差、冻结与冲销记录"
+    },
+    {
+      "scene": "observability",
+      "at_seconds": 91.3,
+      "frame": 236,
+      "detail": "资金恢复与运行监控"
+    },
+    {
+      "scene": "replay",
+      "at_seconds": 117.4,
+      "frame": 316,
+      "detail": "公网运行回放"
+    }
+  ],
+  "frames": 356,
+  "recorded_seconds": 136.9,
+  "fps": 4.0,
+  "viewport": [
+    1920,
+    1080
+  ]
+}
