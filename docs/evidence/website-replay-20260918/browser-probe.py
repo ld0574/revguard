@@ -74,6 +74,50 @@ try:
             reachable.append([link.rsplit("/", 1)[-1], f"error:{type(exc).__name__}"])
     record("成片直链可下载", all(status == 200 for _, status in reachable), f"reachable={reachable}")
 
+    # 社交分享卡片：og:image 必须是绝对 PNG 直链，且真的能被爬虫抓到
+    share = driver.execute_script(
+        """
+        const meta = (selector) => (document.querySelector(selector) || {}).content || "";
+        return {
+          image: meta('meta[property="og:image"]'),
+          url: meta('meta[property="og:url"]'),
+          type: meta('meta[property="og:image:type"]'),
+          width: meta('meta[property="og:image:width"]'),
+          height: meta('meta[property="og:image:height"]'),
+          twitter: meta('meta[name="twitter:card"]'),
+        };
+        """
+    )
+    record(
+        "首页分享卡片元数据完整",
+        share["image"].startswith("https://") and share["image"].endswith(".png")
+        and share["url"].startswith("https://") and share["type"] == "image/png"
+        and share["twitter"] == "summary_large_image",
+        f"share={share}",
+    )
+    share_status, share_type, share_size = "not-requested", "", 0
+    share_dims = [0, 0]
+    if share["image"].startswith("https://"):
+        try:
+            with urllib.request.urlopen(share["image"], timeout=30) as response:
+                share_status = response.status
+                share_type = response.headers.get("Content-Type", "")
+                payload = response.read()
+                share_size = len(payload)
+                if payload[:8] == b"\x89PNG\r\n\x1a\n":
+                    share_dims = [
+                        int.from_bytes(payload[16:20], "big"),
+                        int.from_bytes(payload[20:24], "big"),
+                    ]
+        except Exception as exc:  # noqa: BLE001 - 探针把抓取失败转成检查结果
+            share_status = f"error:{type(exc).__name__}"
+    record(
+        "分享卡片直链可抓取且为 1200x630 PNG",
+        share_status == 200 and share_type.startswith("image/png")
+        and share_size > 10_000 and share_dims == [1200, 630],
+        f"status={share_status} type={share_type} bytes={share_size} dims={share_dims}",
+    )
+
     driver.get(BASE + "replay.html")
     WebDriverWait(driver, 20).until(lambda d: "STEP" in d.find_element(By.ID, "step-card").text)
     time.sleep(1)

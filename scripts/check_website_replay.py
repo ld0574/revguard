@@ -18,6 +18,9 @@ REQUIRED_FIELDS = (
     "case_id", "file", "status", "title", "summary", "tone", "steps", "spans", "audit_events",
 )
 LINK_RE = re.compile(r"replay\.html\?case=([A-Za-z0-9_.-]+)")
+SITE_ORIGIN = "https://ld0574.github.io/revguard/"
+OG_IMAGE = SITE_ORIGIN + "og-image.png"
+META_RE = re.compile(r'<meta\s+(?:property|name)="([^"]+)"\s+content="([^"]*)"', re.I)
 
 
 def fail(message: str) -> None:
@@ -77,7 +80,37 @@ def check(root: Path) -> list[str]:
     if "data-case=" in replay_html:
         fail("replay.html 仍写死案件标签；案件清单必须由 index.json 驱动")
 
+    check_share_card(website, home, replay_html)
+
     return case_ids
+
+
+def check_share_card(website: Path, home: str, replay_html: str) -> None:
+    """社交分享卡片必须是可抓取的绝对 PNG，且卡片文件随站点发布。"""
+    image_path = website / "og-image.png"
+    if not image_path.exists():
+        fail("缺少 website/og-image.png（社交分享卡片）")
+    for page, html in (("index.html", home), ("replay.html", replay_html)):
+        meta = {name.lower(): value for name, value in META_RE.findall(html)}
+        if meta.get("og:image") != OG_IMAGE:
+            fail(f"{page} 的 og:image 必须是绝对地址 {OG_IMAGE}（社交爬虫不解析相对 SVG）")
+        if meta.get("og:image:type") != "image/png":
+            fail(f"{page} 缺少 og:image:type=image/png")
+        if (meta.get("og:image:width"), meta.get("og:image:height")) != ("1200", "630"):
+            fail(f"{page} 的 og:image 尺寸必须是 1200x630")
+        if not str(meta.get("og:url", "")).startswith(SITE_ORIGIN):
+            fail(f"{page} 的 og:url 必须是 {SITE_ORIGIN} 下的绝对地址")
+        if meta.get("twitter:card") != "summary_large_image":
+            fail(f"{page} 缺少 twitter:card=summary_large_image")
+    png = image_path.read_bytes()
+    if png[:8] != b"\x89PNG\r\n\x1a\n":
+        fail("website/og-image.png 不是有效的 PNG 文件")
+    if len(png) < 10_000:
+        fail("website/og-image.png 体积异常，疑似占位文件")
+    width = int.from_bytes(png[16:20], "big")
+    height = int.from_bytes(png[20:24], "big")
+    if (width, height) != (1200, 630):
+        fail(f"website/og-image.png 实际尺寸是 {width}x{height}，应为 1200x630")
 
 
 def main(argv: list[str] | None = None) -> int:
