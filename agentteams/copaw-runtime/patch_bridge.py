@@ -1,4 +1,4 @@
-"""Preserve Sol/Luna tool compatibility and prevent idle model heartbeats.
+"""Preserve bounded model settings and prevent idle model heartbeats.
 
 Run during the image build on 202. CoPaw Worker 1.0.3 regenerates legacy
 providers.json at startup; its model projection otherwise discards kwargs
@@ -15,7 +15,9 @@ new = """            {
                     "reasoning_effort": "none",
                     "max_completion_tokens": 512,
                 }}
-                   if m["id"] in {"gpt-5.6-sol", "gpt-5.6-luna"} else {}),
+                   if m["id"] in {"gpt-5.6-sol", "gpt-5.6-luna"}
+                   else {"generate_kwargs": {"max_tokens": 512}}
+                   if m["id"] == "glm-5.3-flash" else {}),
             }"""
 paths = sorted(Path("/opt").glob("**/site-packages/copaw_worker/bridge.py"))
 if not paths:

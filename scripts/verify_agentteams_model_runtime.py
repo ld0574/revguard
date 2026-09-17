@@ -22,18 +22,26 @@ async def main():
     # Fixed loopback HTTP endpoint with an allowlisted numeric port.
     with urllib.request.urlopen(url, timeout=10) as r:  # nosec B310
         active = json.load(r)["active_llm"]
-    expected = os.environ.get("REVGUARD_EXPECTED_MODEL", "gpt-5.6-luna")
+    expected = os.environ.get("REVGUARD_EXPECTED_MODEL", "glm-5.3-flash")
     if active["model"] != expected:
         raise RuntimeError("Active model does not match expected target")
     manager = ProviderManager.get_instance()
     provider = manager.get_provider(active["provider_id"])
     if provider is None:
         raise RuntimeError("No persisted provider")
-    if (
-        provider.get_effective_generate_kwargs(active["model"]).get("reasoning_effort")
-        != "none"
-    ):
-        raise RuntimeError("Persisted reasoning_effort is not none")
+    effective = provider.get_effective_generate_kwargs(active["model"])
+    if expected in {"gpt-5.6-luna", "gpt-5.6-sol"}:
+        if effective.get("reasoning_effort") != "none":
+            raise RuntimeError("Persisted reasoning_effort is not none")
+        if effective.get("max_completion_tokens") != 512:
+            raise RuntimeError("Persisted max_completion_tokens is not 512")
+        request_limit = {"max_completion_tokens": 128}
+        bounded_field = "max_completion_tokens"
+    else:
+        if effective.get("max_tokens") != 512:
+            raise RuntimeError("Persisted max_tokens is not 512")
+        request_limit = {"max_tokens": 128}
+        bounded_field = "max_tokens"
     model = provider.get_chat_model_instance(active["model"])
     tools = [
         {
@@ -53,7 +61,7 @@ async def main():
     messages = [{"role": "user", "content": "Call readiness_probe with status=ok."}]
     start = time.monotonic()
     stream = await model(
-        messages, tools=tools, tool_choice="readiness_probe", max_completion_tokens=128
+        messages, tools=tools, tool_choice="readiness_probe", **request_limit
     )
     last = None
     async for chunk in stream:
@@ -86,9 +94,7 @@ async def main():
         {"role": "tool", "tool_call_id": call["id"], "content": '{"status":"ok"}'},
         {"role": "user", "content": "Reply MODEL_READY only."},
     ]
-    stream = await model(
-        messages, tools=tools, tool_choice="none", max_completion_tokens=128
-    )
+    stream = await model(messages, tools=tools, tool_choice="none", **request_limit)
     async for chunk in stream:
         last = chunk
     answer = "".join(c["text"] for c in last.content if c["type"] == "text").strip()
@@ -99,7 +105,8 @@ async def main():
             {
                 "model": active["model"],
                 "provider": active["provider_id"],
-                "reasoning_effort": "none",
+                "bounded_field": bounded_field,
+                "bounded_value": 512,
                 "streaming_tool_call": True,
                 "tool_result_continuation": True,
                 "answer": answer,

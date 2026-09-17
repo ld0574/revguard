@@ -78,6 +78,11 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 - 10 个合成伙伴、11 笔订单和 8 个案件带来源边界、关联/时序/币种检查与源文件哈希；
   录制服务器已运行官方开源 PolarDB-PG 15 local_instance，所有材料明确区分“合成业务
   数据”“真实执行链路”“开源单机 PolarDB-PG 已验收”“云 PolarDB 高可用/PITR 待验收”。
+- 决赛公开数据实验使用固定种子抽取 10,000 笔 Olist 匿名真实交易，叠加官方公开费率快照和
+  明确标注的合成平台映射、结算与异常；标准 ERPNext DocType 以 Draft 导入，不产生 GL 影响。
+  数据与许可证边界见 [`docs/data-provenance.md`](docs/data-provenance.md)。
+- ERPNext 是已验收的只读企业 Provider；金蝶、用友和 SAP 仅提供配置/对象映射契约并标记
+  `NOT_VALIDATED`，详见 [`docs/adapters.md`](docs/adapters.md)。
 
 最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
 当前资金恢复合同与观测证据见 [`docs/evidence/finals-acceptance-20260912/`](docs/evidence/finals-acceptance-20260912/)，新 Case8 隔离参考链为 18 个任务；Grafana 真实 iframe 及部署数据保留证据见 [`docs/evidence/grafana-embed-20260912/`](docs/evidence/grafana-embed-20260912/)。历史 Matrix 录像与新隔离验证分别标记，不混用任务计数。
@@ -114,7 +119,7 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 bash scripts/deploy_demo.sh --local
 
 # 已安装 AgentTeams v1.2.0 的宿主机：PolarDB + Matrix + 10 个 Agent 角色
-bash scripts/deploy_demo.sh --full --model gpt-5.6-luna
+bash scripts/deploy_demo.sh --full --model glm-5.3-flash
 ```
 
 脚本会生成权限为 `0600` 的本地 `.env`，完成镜像构建、Schema、Golden Case、

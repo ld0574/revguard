@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "revguard-olist-public-rates-20260916",
+  "title": "Olist 公开真实交易收入保障实验",
+  "data_boundary": {
+    "transaction": "PUBLIC_REAL",
+    "erp": "LIVE_SYSTEM",
+    "fee_rules": "PUBLIC_REAL",
+    "platform_mapping": "SYNTHETIC_DOMAIN",
+    "settlement": "SYNTHETIC_DOMAIN",
+    "exceptions": "SYNTHETIC_DOMAIN",
+    "historical_recalculation": false,
+    "statement": "三真一合成：真实公开交易、真实 ERP、真实公开费率；合成结算与异常。"
+  },
+  "source": {
+    "dataset": "Brazilian E-Commerce Public Dataset by Olist",
+    "source_url": "https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce",
+    "license": "CC BY-NC-SA 4.0",
+    "archive_sha256": "967e41e04fc306fe604e2a693f488995a8b41e5047418f8a5c8e4abd6deca784",
+    "sampling_method": "deterministic_hash_rank_with_cancelled_stratum_for_exception_coverage",
+    "random_seed": 202609,
+    "sampling_quality": {
+      "complete_order_count": 20229,
+      "eligible_single_seller_product_count": 19587,
+      "excluded_multi_seller_or_product_count": 642,
+      "erp_mapping_mode": "ORDER_LEVEL_SINGLE_SELLER_PRODUCT_AGGREGATE"
+    }
+  },
+  "metrics": {
+    "total_transactions": 10000,
+    "normal_transactions": 9200,
+    "risk_cases": 800,
+    "anomaly_rate": "0.08",
+    "total_revenue_audited_brl": "1584484.24",
+    "expected_commission_brl": "138298.34",
+    "actual_commission_brl": "141353.32",
+    "revenue_at_risk_brl": "41156.21"
+  },
+  "rules": {
+    "count": 6,
+    "assignments": {
+      "EBAY-GUITARS-BASSES-6_7": 1679,
+      "EBAY-MEDIA-CATEGORIES-15_3": 1722,
+      "EBAY-MOST-CATEGORIES-13_6": 1667,
+      "EBAY-SNEAKERS-OVER-150-8": 1645,
+      "ETSY-CURRENCY-CONVERSION-2_5": 1686,
+      "ETSY-TRANSACTION-6_5": 1601
+    },
+    "rules_sha256": "38ec189386a60776cfe261c2293fc31d41af34b73f5a9859d9b818680b6b4f59",
+    "evaluation_mode": "CURRENT_POLICY_COUNTERFACTUAL",
+    "component_scope": "Percentage fee components only. The experiment does not claim to reproduce a platform's complete invoice; currency-specific payment fees, taxes, caps, thresholds and eBay per-order fixed fees are excluded unless a rule explicitly models them."
+  },
+  "anomaly_types": {
+    "CANCELLED_ORDER_SETTLED": 80,
+    "COMMISSION_RATE_MISMATCH": 80,
+    "DUPLICATE_COMMISSION": 80,
+    "DUPLICATE_SETTLEMENT": 80,
+    "INVALID_RULE_EFFECTIVE_DATE": 80,
+    "MISSING_COMMISSION": 80,
+    "MISSING_FEE": 80,
+    "SETTLEMENT_AMOUNT_MISMATCH": 80,
+    "UNEXPECTED_FEE": 80,
+    "WRONG_SELLER_TIER": 80
+  },
+  "erpnext": {
+    "version": "v16.34.2",
+    "document_state": "DRAFT_NO_GL_EFFECT",
+    "authenticated_rest_read_status": 200,
+    "read_only_write_rejection_status": 403,
+    "observed_counts": {
+      "Customer": 10000,
+      "Item": 6510,
+      "Sales Partner": 1664,
+      "Sales Order": 10000,
+      "Sales Invoice": 10000,
+      "Payment Entry": 10000
+    },
+    "mapping_sha256": "415e43457b071a2b06bd140d30565921346aba1cb95f4cfe266170732ad33ed9"
+  },
+  "validation_status": "PASSED"
+}

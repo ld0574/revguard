@@ -13,7 +13,7 @@
 - 11 个 Controller 资源显式指定 Luna。当前 Manager 使用 `revguard-agentteams-manager:luna-20260912`，Worker 使用 `revguard-agentteams-worker:luna-20260912`。
 - 保留现有上游 Provider 和授权凭证，不复制 Manager 凭证给 Worker。Higress 的 `revguard-sol` 是原 Provider 名称，模型随请求指定；没有必要为了名称轮换上游或凭证。
 - CoPaw 继续使用 Chat Completions、流式函数工具和 `reasoning_effort=none`。桥接补丁覆盖 Sol/Luna，其他模型条目不添加这一参数。
-- 10 个 Worker 的 MinIO `active_model.json` 与自定义 Provider 的 Luna 条目均持久化更新；原内部网关密钥逐项核对保持不变。
+- 10 个 Worker 的 MinIO `active_model.json` 与 `.copaw.secret/providers/custom/agentteams-gateway.json` 中 Luna 条目均持久化更新；`reasoning_effort=none` 与 `max_completion_tokens=512` 在睡眠重建后仍生效，原内部网关密钥保持不变且不会被配置工具输出。
 - 部署脚本及服务器默认模型改为 Luna。构建入口为 `scripts/build_agentteams_images.sh`；旧 Sol 构建入口保留为兼容包装，历史 Sol 证据不改写。
 
 ## 实际容器问题

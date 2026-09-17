@@ -682,6 +682,10 @@ class TestApiSmoke(unittest.TestCase):
             evidence.json()["business_value"]["production_claim_allowed"]
         )
         self.assertEqual(
+            evidence.json()["public_data_experiment"]["metrics"]["total_transactions"],
+            10_000,
+        )
+        self.assertEqual(
             evidence.json()["business_value"]["simulation_contract"]
             ["default_assumptions"]["monthly_case_volume"],
             500,
@@ -789,7 +793,48 @@ class TestApiSmoke(unittest.TestCase):
     def test_15a_mcp_team_api_pauses_and_resumes_after_human_approval(self):
         case_id = "CASE-2026-0008"
         api_module.gateway._posting_tamper_amount = Decimal("1")
+        api_module.gateway._posting_tamper_case_ids = frozenset({case_id})
         api_module.gateway._posting_tamper_used = False
+
+        # The finals fault profile is scoped to CASE-0008.  A complete normal
+        # run must remain unaffected even when the profile is enabled.
+        normal_id = "CASE-TAMPER-SCOPE-NORMAL"
+        normal_spec = json.loads(
+            (ROOT / "data" / "golden_cases" / "GOLDEN-001.json").read_text(
+                encoding="utf-8",
+            )
+        )["input"]
+        store.save_case(Case(
+            case_id=normal_id,
+            case_type=normal_spec["case_type"],
+            source="TEST",
+            partner_id=normal_spec.get("partner_id"),
+            partner_name=normal_spec.get("partner_name"),
+            order_id=normal_spec.get("order_id"),
+            description=normal_spec.get("description", ""),
+            claim=normal_spec.get("claim", {}),
+            entities={
+                "partner_id": normal_spec.get("partner_id"),
+                "partner_name": normal_spec.get("partner_name"),
+                "order_id": normal_spec.get("order_id"),
+                "contract_id": None,
+            },
+        ).to_dict())
+        normal_started = self.client.post(
+            f"/api/v1/cases/{normal_id}/team/run", headers=self.operator,
+        )
+        self.assertEqual(normal_started.status_code, 200, normal_started.text)
+        normal_approved = self.client.post(
+            f"/api/v1/cases/{normal_id}/approval",
+            json={"decision": "APPROVED", "comment": "正常案例审批"},
+            headers=self.human_headers(normal_id, "APPROVED"),
+        )
+        self.assertEqual(normal_approved.status_code, 200, normal_approved.text)
+        self.assertEqual(
+            normal_approved.json()["case"]["status"], CaseStatus.CLOSED.value,
+        )
+        self.assertFalse(api_module.gateway._posting_tamper_used)
+
         started = self.client.post(
             f"/api/v1/cases/{case_id}/team/run",
             headers={**self.operator, "X-Request-ID": "REQ-MCP-TEAM-API"},

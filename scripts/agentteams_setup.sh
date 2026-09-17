@@ -11,7 +11,7 @@ set -euo pipefail
 
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
-MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-gpt-5.6-luna}}"
+MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-glm-5.3-flash}}"
 MAX_COMPLETION_TOKENS="${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-512}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
@@ -52,9 +52,10 @@ docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 
 echo "==> 2/6 创建/更新 1 Orchestrator + 9 Worker（model=$MODEL）"
 worker_image_args=()
-if [ "$MODEL" = "gpt-5.6-sol" ] || [ "$MODEL" = "gpt-5.6-luna" ]; then
+if [ "$MODEL" = "gpt-5.6-sol" ] || [ "$MODEL" = "gpt-5.6-luna" ] \
+  || [ "$MODEL" = "glm-5.3-flash" ]; then
   # The base image drops per-model kwargs when it re-bridges on startup.
-  runtime_image="${AGENTTEAMS_WORKER_IMAGE:-revguard-agentteams-worker:luna-20260912}"
+  runtime_image="${AGENTTEAMS_WORKER_IMAGE:-revguard-agentteams-worker:glm-20260917}"
   if ! docker image inspect "$runtime_image" >/dev/null 2>&1; then
     bash "$REVGUARD_HOME/scripts/build_agentteams_images.sh"
   fi
@@ -143,6 +144,10 @@ if [ "$CONFIGURE_HIGRESS_MCP_GATEWAY" = "true" ]; then
     bash "$REVGUARD_HOME/scripts/setup_higress_mcp_gateway.sh"
 fi
 
+echo "==> 对齐 AgentTeams 模型 Provider、Service Source 与默认 AI Route"
+CONTROLLER="$CONTROLLER" \
+  bash "$REVGUARD_HOME/scripts/configure_agentteams_model_gateway.sh"
+
 echo "==> 5/6 同步 CoPaw 运行时激活模型"
 for w in $WORKERS; do
   container="${WORKER_CONTAINER_PREFIX}revguard-$w"
@@ -194,6 +199,26 @@ if target in {"gpt-5.6-sol", "gpt-5.6-luna"}:
     )
     with urllib.request.urlopen(req, timeout=10):
         pass
+elif target == "glm-5.3-flash":
+    model_config = next((
+        item.get("generate_kwargs") or {}
+        for item in [*(provider.get("models") or []), *(provider.get("extra_models") or [])]
+        if item.get("id") == target
+    ), {})
+    model_config.pop("reasoning_effort", None)
+    model_config.pop("max_completion_tokens", None)
+    req = urllib.request.Request(
+        base + "/api/models/agentteams-gateway/models/" + target + "/config",
+        data=json.dumps({
+            "generate_kwargs": {
+                **model_config,
+                "max_tokens": max_completion_tokens,
+            },
+        }).encode(),
+        method="PUT", headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=10):
+        pass
 payload = json.dumps({
     "provider_id": "agentteams-gateway", "model": target, "scope": "global",
 }).encode()
@@ -207,6 +232,10 @@ if active.get("provider_id") != "agentteams-gateway" or active.get("model") != t
     raise SystemExit(f"active model mismatch: {active}")
 PY
 done
+python3 "$REVGUARD_HOME/scripts/configure_agentteams_persistent_model.py" \
+  --controller "$CONTROLLER" \
+  --model "$MODEL" \
+  --max-completion-tokens "$MAX_COMPLETION_TOKENS"
 
 echo "==> 6/6 状态与 LLM Gateway 核验"
 for w in $WORKERS; do

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "revguard-agent-infra"
-version = "0.5.10"
+version = "0.6.0rc2"
 description = "Auditable multi-agent commission dispute resolution on AgentTeams"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -98,6 +98,12 @@ class TestPublicDataExperiment(unittest.TestCase):
             self.assertEqual(summary["anomaly_count"], 10)
             self.assertEqual(set(summary["anomaly_types"]), set(ANOMALY_TYPES))
             self.assertGreaterEqual(summary["rule_count"], 5)
+            self.assertEqual(summary["rule_evaluation_mode"], "CURRENT_POLICY_COUNTERFACTUAL")
+            self.assertFalse(summary["historical_transaction_time_recalculation"])
+            self.assertEqual(
+                summary["sampling_quality"]["erp_mapping_mode"],
+                "ORDER_LEVEL_SINGLE_SELLER_PRODUCT_AGGREGATE",
+            )
             self.assertEqual(
                 (first / "risk-cases.jsonl").read_bytes(),
                 (second / "risk-cases.jsonl").read_bytes(),
@@ -115,6 +121,14 @@ class TestPublicDataExperiment(unittest.TestCase):
                 transactions = list(csv.DictReader(handle))
             self.assertTrue(all(item["order_id"].startswith("ORDER-") for item in transactions))
             self.assertTrue((first / "erpnext-staging" / "sales_orders.csv").exists())
+            dictionary = json.loads(
+                (first / "data-dictionary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(set(dictionary["transaction_fields"]), set(transactions[0]))
+            self.assertEqual(
+                dictionary["erp_mapping"]["mode"],
+                "ORDER_LEVEL_SINGLE_SELLER_PRODUCT_AGGREGATE",
+            )
 
 
 if __name__ == "__main__":

@@ -215,6 +215,14 @@ function cny(value) {
   }).format(number);
 }
 
+function brl(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency", currency: "BRL", maximumFractionDigits: 2,
+  }).format(number);
+}
+
 async function api(path, key, options = {}) {
   const response = await fetch(path, {
     ...options,
@@ -293,24 +301,24 @@ function stageValue(snapshot, id) {
   return values[id];
 }
 
-function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange, monitoring }) {
+function Header({ snapshot, cases, caseId, busy, onReset, onCaseChange, mode }) {
   const status = snapshot?.case?.status || "CONNECTING";
   const mcpTeam = snapshot?.case?.execution_mode === "MCP_TEAM";
   const matrixTeam = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX";
   const risk = snapshot?.case?.risk_level || "—";
   return (
-    <header className="topbar">
+    <header className={`topbar ${mode ? "global-mode" : ""}`}>
       <div className="brand-group">
         <ShieldCheck className="brand-mark" weight="duotone" aria-hidden="true" />
         <span className="brand-name">RevGuard</span><span className="top-divider" />
-        {monitoring ? <span className="approval-label">全局运行总览</span> : <><select className="case-select" value={caseId} onChange={(event) => onCaseChange(event.target.value)} disabled={busy} aria-label="选择演示案件">
+        {mode ? <span className="approval-label">{mode === "public-data" ? "公开数据实验" : "全局运行总览"}</span> : <><select className="case-select" value={caseId} onChange={(event) => onCaseChange(event.target.value)} disabled={busy} aria-label="选择演示案件">
           {(cases.length ? cases : [{ case_id: caseId }]).map((item) => <option value={item.case_id} key={item.case_id}>{item.case_id} · {item.status || "CREATED"}</option>)}
         </select><span className="risk-pill">{risk}</span>{mcpTeam && <span className="mcp-pill">MCP 参考链路</span>}{matrixTeam && <span className="mcp-pill matrix-pill">AgentTeams · Matrix</span>}
         <span className="approval-label">人工审批</span></>}
       </div>
-      <div className="disclosure">合成业务数据 · 真实运行链路</div>
+      <div className="disclosure">{mode === "public-data" ? "公开真实交易 · 合成结算与异常" : "合成业务数据 · 真实运行链路"}</div>
       <div className="top-actions">
-        {monitoring ? <span className="observability-mode">实时观测 · 只读展示</span> : <><span className="health-pill">审批与写后验证约束</span>
+        {mode ? <span className="observability-mode">{mode === "public-data" ? "三真一合成 · 可复算" : "实时观测 · 只读展示"}</span> : <><span className="health-pill">审批与写后验证约束</span>
         <button className="icon-button" onClick={onReset} disabled={busy} title="谨慎操作：重置全部演示案件，会影响其他案件">
           <ArrowClockwise className={busy ? "spin" : ""} weight="bold" /><span>重置全部</span>
         </button>
@@ -687,6 +695,54 @@ function BusinessValueSimulator({ evidence }) {
   );
 }
 
+function PublicDataExperiment({ evidence }) {
+  const experiment = evidence?.public_data_experiment;
+  if (!experiment) {
+    return <div className="empty-state"><Clock weight="duotone" />公开数据实验清单尚未装载</div>;
+  }
+  const metrics = experiment.metrics || {};
+  const boundary = experiment.data_boundary || {};
+  const source = experiment.source || {};
+  const rules = experiment.rules || {};
+  const erp = experiment.erpnext || {};
+  const anomalyRows = Object.entries(experiment.anomaly_types || {}).sort();
+  const ruleRows = Object.entries(rules.assignments || {}).sort();
+  const cards = [
+    ["公开真实交易", Number(metrics.total_transactions || 0).toLocaleString(), "Olist 固定种子抽样"],
+    ["审计交易总额", brl(metrics.total_revenue_audited_brl), "真实交易金额聚合"],
+    ["预期费率金额", brl(metrics.expected_commission_brl), "确定性反事实计算"],
+    ["合成实际费率金额", brl(metrics.actual_commission_brl), "明确标记为合成结算"],
+    ["风险金额", brl(metrics.revenue_at_risk_brl), "800 个受控异常的金额影响"],
+    ["异常率", percent(metrics.anomaly_rate), `${metrics.risk_cases || 0} 个 Risk Case`],
+  ];
+  return (
+    <div className="public-data-dashboard">
+      <section className="detail-section public-data-hero">
+        <div><span className="value-eyebrow">THREE REAL FOUNDATIONS · ONE SYNTHETIC LAYER</span><h2>三真一合成</h2><p>{boundary.statement}</p></div>
+        <div className="public-provenance-grid">
+          {[["交易", boundary.transaction, "Olist"], ["ERP", boundary.erp, "ERPNext v16"], ["费率", boundary.fee_rules, `${rules.count || 0} 条官方公开规则`], ["结算与异常", boundary.settlement, "固定种子生成"]].map(([label, value, note]) => <div key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></div>)}
+        </div>
+      </section>
+      <section className="public-kpi-grid" aria-label="公开数据实验关键指标">{cards.map(([label, value, note]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}</section>
+      <div className="public-detail-grid">
+        <section className="detail-section">
+          <div className="section-title"><WarningCircle weight="duotone" /><strong>异常覆盖</strong><span>固定种子 {source.random_seed}</span></div>
+          <div className="public-bar-list">{anomalyRows.map(([name, count]) => <div key={name}><code>{name}</code><span><i style={{ width: `${Number(count) / Math.max(Number(metrics.risk_cases || 1), 1) * 100}%` }} /></span><strong>{count}</strong></div>)}</div>
+        </section>
+        <section className="detail-section">
+          <div className="section-title"><Calculator weight="duotone" /><strong>公开费率组件</strong><span>当前政策反事实</span></div>
+          <div className="public-bar-list rule-bars">{ruleRows.map(([name, count]) => <div key={name}><code>{name}</code><span><i style={{ width: `${Number(count) / Math.max(Number(metrics.total_transactions || 1), 1) * 100}%` }} /></span><strong>{Number(count).toLocaleString()}</strong></div>)}</div>
+        </section>
+      </div>
+      <section className="detail-section public-acceptance">
+        <div className="section-title"><Database weight="duotone" /><strong>真实 ERPNext 验收</strong><span>Token 鉴权 · REST API · 只读边界</span></div>
+        <div className="public-acceptance-grid">{Object.entries(erp.observed_counts || {}).map(([name, count]) => <div key={name}><span>{name}</span><strong>{Number(count).toLocaleString()}</strong></div>)}<div><span>REST 读取</span><strong>HTTP {erp.authenticated_rest_read_status}</strong></div><div><span>越权写入</span><strong>HTTP {erp.read_only_write_rejection_status}</strong></div><div><span>会计影响</span><strong>{erp.document_state}</strong></div></div>
+      </section>
+      <div className="claim-boundary public-boundary"><Info weight="fill" /><span>{rules.component_scope} 本实验不是 2016–2018 订单的历史费率复算，也不代表任何 Olist 卖家实际使用 Etsy 或 eBay。</span></div>
+    </div>
+  );
+}
+
 function SafetyRail({ snapshot, onExport }) {
   const c = snapshot?.case || {};
   const approval = snapshot?.approval || {};
@@ -792,7 +848,10 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get("view") === "observability" ? "observability" : "decision");
+  const [tab, setTab] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("view");
+    return ["observability", "public-data"].includes(requested) ? requested : "decision";
+  });
   const [humanAction, setHumanAction] = useState(null);
   const [beijingNow, setBeijingNow] = useState(() => new Date());
   const dashboardRequest = useRef(0);
@@ -809,6 +868,7 @@ export function App() {
     && ["LedgerReverseSkill", "PostRollbackVerifySkill"].includes(teamFailure.current_stage)
     && snapshot?.verification?.rollback_required,
   );
+  const globalView = ["observability", "public-data"].includes(tab);
 
   const loadCases = useCallback(async () => {
     const page = await api("/api/v1/cases?limit=200", API_KEYS.viewer);
@@ -898,17 +958,17 @@ export function App() {
     } catch (err) { setError(err.message); }
   };
   const readObservability = useCallback(() => api("/api/v1/ops/observability", API_KEYS.viewer), []);
-  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["engineering", "工程证据", Gauge], ["observability", "可观测大屏", Gauge]], []);
+  const tabs = useMemo(() => [["decision", "决策依据", ClipboardText], ["audit", "执行与审计", Fingerprint], ["permissions", "权限边界", LockKey], ["value", "价值模拟", Calculator], ["public-data", "真实数据实验", Database], ["engineering", "工程证据", Gauge], ["observability", "可观测大屏", Gauge]], []);
 
   return (
-    <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} monitoring={tab === "observability"} />
+    <div className="app-shell"><Header snapshot={snapshot} cases={cases} caseId={caseId} busy={busy || teamRunning} onReset={onReset} onCaseChange={onCaseChange} mode={globalView ? tab : null} />
       {error && <div className="system-banner error-banner"><WarningCircle weight="fill" />{error}<button onClick={load}>重试</button></div>}
-      {tab !== "observability" && !error && recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>资金结果需要核对</strong><small>相关写入已暂停。先核对原操作是否提交，再恢复未完成阶段。</small></div><button onClick={onResume} disabled={busy}>核对并恢复</button></div>}
-      {tab !== "observability" && !error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{executionStartRecoverable ? "审批已通过，执行尚未启动" : `${skillLabel(teamFailure.current_stage)}未完成`}</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable || executionStartRecoverable ? onResume : onLocateFailure} disabled={busy}>{executionStartRecoverable ? "核对并恢复执行" : rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
-      {tab !== "observability" && !error && teamStale && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；恢复会先查询原资金操作，确认结果后再继续。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "核对并恢复"}</button></div>}
+      {!globalView && !error && recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>资金结果需要核对</strong><small>相关写入已暂停。先核对原操作是否提交，再恢复未完成阶段。</small></div><button onClick={onResume} disabled={busy}>核对并恢复</button></div>}
+      {!globalView && !error && teamFailure && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>{executionStartRecoverable ? "审批已通过，执行尚未启动" : `${skillLabel(teamFailure.current_stage)}未完成`}</strong><small>{teamFailure.error?.message || "AgentTeams 未返回具体错误"}</small></div><button onClick={rollbackRecoverable || executionStartRecoverable ? onResume : onLocateFailure} disabled={busy}>{executionStartRecoverable ? "核对并恢复执行" : rollbackRecoverable ? "核对并恢复补偿" : "定位任务"}</button></div>}
+      {!globalView && !error && teamStale && !recoveryRequired && <div className="system-banner run-failure-banner"><WarningCircle weight="fill" /><div><strong>执行已中断，不是仍在运行</strong><small>上次进度停在 {skillLabel(teamRun.current_stage)} · {teamRun.completed_tasks || 0}/{teamRun.total_tasks || 0}；恢复会先查询原资金操作，确认结果后再继续。</small></div><button onClick={onResume} disabled={busy}>{busy ? "恢复中…" : "核对并恢复"}</button></div>}
       {notice && <div className="system-banner notice-banner"><CheckCircle weight="fill" />{notice}</div>}
-      <main>{tab !== "observability" && <><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /></>}
-        <div className={`workspace ${tab === "observability" ? "workspace-observability" : ""}`}><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}{tab === "observability" && <ObservabilityView readStatus={readObservability} />}</section>{tab !== "observability" && <SafetyRail snapshot={snapshot} onExport={onExport} />}</div>
+      <main>{!globalView && <><SummaryStrip snapshot={snapshot} /><Pipeline snapshot={snapshot} busy={busy || teamRunning} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /></>}
+        <div className={`workspace ${globalView ? "workspace-observability" : ""}`}><section className="content-area"><nav className="tabs" aria-label="案件详情视图">{tabs.map(([id, label, Icon]) => <button className={tab === id ? "active" : ""} onClick={() => setTab(id)} key={id}><Icon weight="duotone" />{label}</button>)}</nav>{tab === "decision" && <DecisionView snapshot={snapshot} />}{tab === "audit" && <TraceView snapshot={snapshot} />}{tab === "permissions" && <Permissions snapshot={snapshot} evidence={engineering} />}{tab === "value" && <BusinessValueSimulator evidence={engineering} />}{tab === "public-data" && <PublicDataExperiment evidence={engineering} />}{tab === "engineering" && <EngineeringEvidence evidence={engineering} />}{tab === "observability" && <ObservabilityView readStatus={readObservability} />}</section>{!globalView && <SafetyRail snapshot={snapshot} onExport={onExport} />}</div>
       </main><footer><span>RevGuard 面向企业渠道佣金结算异常的多智能体治理平台</span><span>合成业务数据，仅用于演示验证；不代表真实企业交易。</span><span><Clock weight="bold" />{formatBeijingDateTime(beijingNow)}</span></footer>
       <HumanActionDialog intent={humanAction} caseId={caseId} busy={busy} onClose={() => setHumanAction(null)} onCommit={commitHumanAction} />
     </div>

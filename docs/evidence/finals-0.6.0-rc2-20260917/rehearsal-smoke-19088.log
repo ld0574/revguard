@@ -1,0 +1,16 @@
+== RevGuard 决赛现场冒烟：http://10.10.10.202:19088 ==
+-- 1/5 API 健康 --
+  PASS  API 健康 (HTTP 200)
+-- 2/5 演示驾驶舱页面 --
+  PASS  WebUI 页面 (HTTP 200)
+-- 3/5 双案例终态（真人审批记录完好） --
+  PASS  CASE-2026-0001 = CLOSED
+  PASS  CASE-2026-0008 = ROLLED_BACK
+-- 4/5 证据来源仍为真实 ERPNext --
+  PASS  Trace 含 erpnext 来源
+  PASS  Trace 含真人身份验证 Span
+-- 5/5 ERPNext 站点可达（经服务器本机） --
+  PASS  ERPNext ping = 200（在 202 本机执行时）
+
+== 结果：7 PASS / 0 FAIL ==
+结论：现场 Demo 通路可用。建议现场仍保留与当前候选版本同源的视频作为兜底。

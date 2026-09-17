@@ -1,0 +1,11 @@
+{'gateway_http_status': 429, 'error_code': '1308', 'route_uses_new_upstream': True}
+{'worker_active_model': 'glm-5.3-flash', 'generate_kwargs': {'max_tokens': 512}}
+已持久化 10 个 Agent 的 glm-5.3-flash 成本上限：limit=512。
+{'count': 10, 'all_sleeping': True, 'models': ['glm-5.3-flash'], 'images': ['revguard-agentteams-worker:glm-20260917']}
+{'persistent_provider_objects': 10, 'model': 'glm-5.3-flash', 'max_tokens': 512}
+{'manager_active': {'provider_id': 'agentteams-gateway', 'model': 'glm-5.3-flash'}, 'generate_kwargs': {'max_tokens': 512}}
+{'container': 'agentteams-controller', 'key_match': True, 'base_match': True, 'model_match': True}
+{'container': 'agentteams-dashboard', 'key_match': True, 'base_match': True, 'model_match': True}
+matrix_ready=true
+higress_ready=true
+dashboard_ready=true

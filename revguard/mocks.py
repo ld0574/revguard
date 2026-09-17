@@ -78,6 +78,7 @@ class ToolGateway:
                  state_path: str | Path | None = None,
                  verification_tamper_amount: str | Decimal = "0",
                  store=None, posting_tamper_amount: str | Decimal = "0",
+                 posting_tamper_case_ids: str | list[str] | tuple[str, ...] = "",
                  provider_registry: ProviderRegistry | None = None):
         self.fixtures = _load_fixtures(fixtures_dir)
         self.providers = provider_registry or ProviderRegistry.from_env()
@@ -103,6 +104,13 @@ class ToolGateway:
         self._verification_tamper_used = False
         self._posting_tamper_amount = Decimal(str(posting_tamper_amount))
         self._posting_tamper_used = False
+        if isinstance(posting_tamper_case_ids, str):
+            tamper_cases = posting_tamper_case_ids.split(",")
+        else:
+            tamper_cases = posting_tamper_case_ids
+        self._posting_tamper_case_ids = frozenset(
+            str(case_id).strip() for case_id in tamper_cases if str(case_id).strip()
+        )
         self._execution_results: dict[str, dict] = {}
         self._recording_epochs: dict[str, int] = {}
         self._in_transaction = False
@@ -344,6 +352,8 @@ class ToolGateway:
         with self._lock:
             with self.journal.transaction() as tx:
                 state = self._reset_case_state(tx.state(), case_id)
+                if case_id in self._posting_tamper_case_ids:
+                    state["posting_tamper_used"] = False
                 tx.save_state(state)
             self._apply_state(state)
 
@@ -406,6 +416,8 @@ class ToolGateway:
                         "human_display_name": parameters.get("human_display_name"),
                         "human_auth_time": parameters.get("human_auth_time"),
                         "human_auth_method": parameters.get("human_auth_method"),
+                        "matrix_event_id": parameters.get("matrix_event_id"),
+                        "recording_id": parameters.get("recording_id"),
                         "assertion_id_ref": assertion_ref,
                     }, actor=actor)
                     approved = decided["status"] == "APPROVED"
@@ -664,7 +676,15 @@ class ToolGateway:
                 "source": f"REVGUARD:{draft.get('case_id')}",
                 "posted_at": utc_now(),
             }
-            if self._posting_tamper_amount and not self._posting_tamper_used:
+            tamper_targets_case = (
+                not self._posting_tamper_case_ids
+                or draft["case_id"] in self._posting_tamper_case_ids
+            )
+            if (
+                self._posting_tamper_amount
+                and tamper_targets_case
+                and not self._posting_tamper_used
+            ):
                 entry["amount"] = str(Decimal(entry["amount"]) + self._posting_tamper_amount)
                 self._posting_tamper_used = True
             self._ledger.append(entry)
@@ -798,6 +818,10 @@ class ToolGateway:
                     "auth_time": p.get("human_auth_time"),
                     "auth_method": str(p.get("human_auth_method") or "matrix-password"),
                 }
+            if p.get("matrix_event_id"):
+                approval["matrix_event_id"] = str(p["matrix_event_id"])
+            if p.get("recording_id"):
+                approval["recording_id"] = str(p["recording_id"])
             approval["comment"] = p.get("comment", "")
             approval["decided_at"] = utc_now()
             if approval["status"] == "APPROVED":
