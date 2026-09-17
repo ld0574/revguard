@@ -23,7 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 import time
 
@@ -39,7 +39,8 @@ SECRET_ENV_NAMES = (
 
 
 def run_docker(*args: str, check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(  # nosec B603 - fixed docker CLI calls only
+    # Fixed docker CLI calls only: no shell, no user-controlled executable path.
+    return subprocess.run(  # nosec B603, B607
         ["docker", *args], capture_output=True, text=True, check=check
     )
 
