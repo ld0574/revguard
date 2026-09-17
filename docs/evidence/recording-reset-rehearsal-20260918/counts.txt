@@ -1,0 +1,5 @@
+ approvals | executions | audit_events 
+-----------+------------+--------------
+         0 |          0 |           16
+(1 row)
+

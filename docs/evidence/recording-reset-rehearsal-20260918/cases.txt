@@ -1,0 +1,5 @@
+ status  | count 
+---------+-------
+ CREATED |     8
+(1 row)
+
