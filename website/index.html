@@ -129,14 +129,14 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
     <p class="lead">两个案件使用不同订单（EZ202608001 / EZ202608008）、不同任务、不同审批与 Trace，不共享任何运行记录。</p>
     <div class="grid g2">
       <div class="card case">
-        <h3>CASE-0001 · 正常闭环（EZ202608001）</h3>
+        <h3>CASE-2026-0001 · 正常闭环（EZ202608001）</h3>
         <p>从 ERPNext 真实取证 → 按订单时点匹配政策版本 → Decimal 确定性复算佣金 32,400.00 KES → 真人批准 → 范围受限的能力令牌执行 → 独立复核 → 终态 <b>CLOSED / PASSED</b>。</p>
-        <p style="margin-top:12px"><a href="replay.html?case=case-2026-0001">回放这条运行记录 →</a></p>
+        <p style="margin-top:12px"><a href="replay.html?case=CASE-2026-0001">回放这条运行记录 →</a></p>
       </div>
       <div class="card case rollback">
-        <h3>CASE-0008 · 错误恢复（EZ202608008）</h3>
+        <h3>CASE-2026-0008 · 错误恢复（EZ202608008）</h3>
         <p>受控写入发生 1 KES 偏差 → 独立验证失败 → 系统禁止盲目重试，冻结通道并查询权威账务 → 按原操作 ID 创建关联反向冲销 → 恢复后净影响归零 → 终态 <b>ROLLED_BACK / PASSED</b>。</p>
-        <p style="margin-top:12px"><a href="replay.html?case=case-2026-0008">回放这条运行记录 →</a></p>
+        <p style="margin-top:12px"><a href="replay.html?case=CASE-2026-0008">回放这条运行记录 →</a></p>
       </div>
     </div>
   </div>
