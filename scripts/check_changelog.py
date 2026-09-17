@@ -7,8 +7,9 @@ OpenAPI 文档”三处版本号各说各话。检查内容：
 1. CHANGELOG 首节必须是 ``Unreleased``，其余每节必须是 ``## <版本> — YYYY-MM-DD``；
 2. 版本号不重复，且按语义化版本严格降序（含 rc / beta / alpha 预发布次序）；
 3. 最新发布条目归一化后等于 ``revguard.__version__``；
-4. ``docs/openapi.json`` 的 ``info.version`` 与包版本一致；
-5. 传 ``--tag`` 时（CI 打 tag 发布），tag 归一化后也必须等于包版本。
+4. ``pyproject.toml`` 的项目版本与 ``revguard.__version__`` 一致（封版时两处都要改）；
+5. ``docs/openapi.json`` 的 ``info.version`` 与包版本一致；
+6. 传 ``--tag`` 时（CI 打 tag 发布），tag 归一化后也必须等于包版本。
 
 任一不成立即以非零退出，供 GitHub Actions 与 ``make generated-check`` 使用。
 """
@@ -104,6 +105,10 @@ def check(root: Path, tag: str | None = None) -> tuple[str, str]:
     if normalize(latest_version) != normalize(package_version):
         fail(f"包版本 {package_version!r} 与 CHANGELOG 最新发布条目 {latest_version!r} 不一致")
 
+    packaging_version = pyproject_version_from(root)
+    if normalize(packaging_version) != normalize(package_version):
+        fail(f"pyproject.toml 版本 {packaging_version!r} 与包版本 {package_version!r} 不一致")
+
     openapi_version = openapi_version_from(root)
     if normalize(openapi_version) != normalize(package_version):
         fail(f"docs/openapi.json 的 info.version {openapi_version!r} 与包版本 {package_version!r} 不一致")
@@ -125,6 +130,16 @@ def package_version_from(root: Path) -> str:
     match = PINNED_VERSION_RE.search(init_path.read_text(encoding="utf-8"))
     if not match:
         fail(f"{init_path.relative_to(root)} 里没有 __version__")
+    return match.group(1)
+
+
+def pyproject_version_from(root: Path) -> str:
+    pyproject_path = root / "pyproject.toml"
+    if not pyproject_path.exists():
+        fail("缺少 pyproject.toml")
+    match = re.search(r'^\s*version\s*=\s*"([^"]+)"', pyproject_path.read_text(encoding="utf-8"), re.M)
+    if not match:
+        fail("pyproject.toml 缺少 project.version")
     return match.group(1)
 
 

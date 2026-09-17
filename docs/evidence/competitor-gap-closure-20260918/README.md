@@ -41,7 +41,7 @@
 
 | 项 | 状态 | 说明与证据 |
 |---|---|---|
-| `changelog-check` 式发布门禁 | ✅ 本轮闭合 | 新增 `scripts/check_changelog.py`：机读 CHANGELOG 结构（Unreleased 首节、`## <版本> — YYYY-MM-DD`、版本唯一且严格降序），并要求 **包版本 = CHANGELOG 最新发布条目 = 导出 OpenAPI 版本**；打 tag 时再校验 tag 与包版本一致。负例用例 `tests/test_changelog.py`（9 项：缺条目 / 乱序 / 重复 / 缺日期 / 非二级标题 / OpenAPI 漂移 / tag 不匹配 / 缺 Unreleased / 正常通过），接入 `Makefile` 的 `generated-check` 与 `checks.yml`（tag 推送也会跑） |
+| `changelog-check` 式发布门禁 | ✅ 本轮闭合 | 新增 `scripts/check_changelog.py`：机读 CHANGELOG 结构（Unreleased 首节、`## <版本> — YYYY-MM-DD`、版本唯一且严格降序），并要求 **包版本 = `pyproject.toml` 版本 = CHANGELOG 最新发布条目 = 导出 OpenAPI 版本**；打 tag 时再校验 tag 与包版本一致。负例用例 `tests/test_changelog.py`（10 项：缺条目 / 乱序 / 重复 / 缺日期 / 非二级标题 / pyproject 漂移 / OpenAPI 漂移 / tag 不匹配 / 缺 Unreleased / 正常通过），接入 `Makefile` 的 `generated-check` 与 `checks.yml`（tag 推送也会跑） |
 | Zenodo DOI | ⏳ OPEN | 需要 Zenodo 账号与机构授权，未申请；当前用 GitHub Release + `SHA256SUMS.txt` + 官网证据包保证可引用与可校验，材料里不宣称有 DOI |
 | 多租户 + 并发压测数字 | ⏳ OPEN（不包装成 SLO） | 竞品 14 家均无成型多租户设计，这是我们投入产出比第二高的机会，但工作量 3–5 天，决赛前不引入未验证的多租户代码。现有能力如实表述：`make capacity` 是**本地合成容量回归**，给出 P50/P95 与失败模式，不冒充 PolarDB 生产 SLO；`docs/evidence/` 里的主从复制、延迟回退与恢复演练才是生产语义证据 |
 
@@ -56,5 +56,5 @@ python3 -m unittest tests.test_risk_and_mocks -v   # 承诺 / 幂等 / 故障恢
 python3 scripts/execution_reference_probe.py       # 执行引用监视器（5 场景，失败非零退出）
 python3 -m unittest tests.test_execution_reference -v  # 未读取即不可执行
 python3 scripts/check_changelog.py                    # CHANGELOG/包版本/OpenAPI 版本一致
-python3 -m unittest tests.test_changelog -v            # 门禁负例（9 项）
+python3 -m unittest tests.test_changelog -v            # 门禁负例（10 项）
 ```
