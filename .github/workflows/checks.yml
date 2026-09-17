@@ -6,6 +6,7 @@ name: checks
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -33,6 +34,13 @@ jobs:
         run: python scripts/export_openapi.py --check
       - name: 官网回放索引与数据包一致
         run: python scripts/check_website_replay.py
+      - name: CHANGELOG、包版本与 OpenAPI 版本一致
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            python scripts/check_changelog.py --tag "${GITHUB_REF_NAME}"
+          else
+            python scripts/check_changelog.py
+          fi
       - name: Lint
         run: python -m ruff check revguard scripts tests
       - name: Unit tests（不含需要外部服务的 PostgreSQL 集成）
