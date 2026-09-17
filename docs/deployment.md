@@ -9,7 +9,7 @@
 bash scripts/deploy_demo.sh --local
 
 # 决赛环境；要求宿主机已有 AgentTeams v1.2.0；保留现有案件
-bash scripts/deploy_demo.sh --full --model gpt-5.6-luna
+bash scripts/deploy_demo.sh --full --model glm-5.3-flash
 ```
 
 `--full` 会依次完成私密后端 Principal、PolarDB 启动与核心/资金恢复 Schema、RevGuard API、AgentTeams 角色和 Team、
@@ -25,13 +25,13 @@ PolarDB 官方 local_instance 在初始化账号之前会临时启动 PostgreSQL
 
 新 API 启动时保持维护状态：业务写入返回 `503 / DEPLOYMENT_MAINTENANCE`，只读页面和存活检查仍可访问，readiness 返回 503。只有数据库、8 个案件、页面，以及完整拓扑下的 Team 和观测组件验收通过后，部署脚本才解除维护。中途失败或重启不会自动开放业务；修复日志中的问题后，使用原拓扑重新运行部署命令。不要手动删除 `.deployment-fence.json` 或运行锁文件。该机制保护单台 Docker 主机的合作式升级，不替代跨主机数据库 HA 隔离。
 
-2026-09-12 已按成本要求将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
-`gpt-5.6-luna`，关闭空闲模型心跳。Higress 的 `revguard-sol` Provider 使用当前获授权的模型网关配置，
-Worker 继续使用各自的内部网关凭证。CoPaw 的 Chat Completions 工具调用对该模型明确设置
-`reasoning_effort=none`。Luna 与成本治理记录见 [`agentteams-luna-migration-20260912.md`](agentteams-luna-migration-20260912.md)；原 Sol 验收保留为历史记录。
+2026-09-17 已按当前授权配置将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
+`glm-5.3-flash`，关闭空闲模型心跳，并将单次输出限制为 512 token。Higress 的模型 Provider 使用
+服务器权限受限环境文件中的上游配置；Worker 继续使用各自的内部网关凭据。当前迁移与额度边界见
+[`agentteams-glm-migration-20260917.md`](agentteams-glm-migration-20260917.md)；Luna 与 Sol 验收保留为历史记录。
 
-构建入口为 `scripts/build_agentteams_images.sh`，镜像为 `revguard-agentteams-worker:luna-20260912` 与
-`revguard-agentteams-manager:luna-20260912`。运行时补丁在每次启动时将模型心跳设为关闭，避免无人操作时发送整个工作区上下文；容器健康检查和 Prometheus 采集继续工作。Manager 保持接收人工请求，10 个 Worker 闲时维持 Sleeping。若要重新启用模型定时巡检，应先明确频率与预算，再调整这一启动策略。
+构建入口为 `scripts/build_agentteams_images.sh`，镜像为 `revguard-agentteams-worker:glm-20260917` 与
+`revguard-agentteams-manager:glm-20260917`。运行时补丁在每次启动时将模型心跳设为关闭，避免无人操作时发送整个工作区上下文；容器健康检查和 Prometheus 采集继续工作。Manager 保持接收人工请求，10 个 Worker 闲时维持 Sleeping。若要重新启用模型定时巡检，应先明确频率与预算，再调整这一启动策略。
 
 仅修改 Worker 资源的 image 字段，现存休眠容器可能仍使用旧镜像。升级时须先确认无活动业务、备份 Worker 工作区及 MinIO 配置，再替换旧容器，并核对 Docker 实际镜像 ID、运行时模型与 heartbeat；不要删除 Worker/Team 资源或演示数据库。
 
@@ -117,7 +117,7 @@ API 全量重置和单案重新准备持有独占运行锁，与其他业务请�
 bash scripts/verify_docker.sh
 ```
 
-其中的 `test_money_recovery` 与 PostgreSQL 同合同测试使用 `REVGUARD_POSTING_TAMPER_AMOUNT` 对应的受控写入偏差，验证“写入 → 独立验证失败 → 批次反向冲销 → 回滚后核验”。生产及正常演示的两个 tamper 值均保持 `0`。证据中的旧录制任务计数保持历史标记，不能直接当作当前新运行的任务数。
+其中的 `test_money_recovery` 与 PostgreSQL 同合同测试使用 `REVGUARD_POSTING_TAMPER_AMOUNT` 对应的受控写入偏差，验证“写入 → 独立验证失败 → 批次反向冲销 → 回滚后核验”。决赛隔离演示环境同时设置 `REVGUARD_POSTING_TAMPER_CASE_IDS=CASE-2026-0008`，因此偏差只会命中错误恢复副案例；CASE-0001 与生产环境不会受影响。生产环境的 tamper 值保持 `0`。证据中的旧录制任务计数保持历史标记，不能直接当作当前新运行的任务数。
 
 ## 3. PolarDB 正式存储
 

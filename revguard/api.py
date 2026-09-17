@@ -32,7 +32,12 @@ from .hitl import (
     load_human_approvers,
     verify_human_action_assertion,
 )
-from .matrix_team import MatrixSettings, MatrixTeamRunner
+from .matrix_team import (
+    MatrixClient,
+    MatrixSettings,
+    MatrixTeamRunner,
+    MatrixTransportError,
+)
 from .mcp_server import hydrate_server_secrets
 from .mcp_team import McpTeamRunner
 from .mocks import ToolError, ToolGateway
@@ -83,7 +88,7 @@ configure_structured_logging(LOGGER)
 DB_PATH = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
 DATABASE_URL = os.getenv("REVGUARD_DATABASE_URL")
 READ_DATABASE_URL = os.getenv("REVGUARD_READ_DATABASE_URL")
-RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.5.10")
+RELEASE_VERSION = os.getenv("REVGUARD_RELEASE_VERSION", "0.6.0-rc2")
 FIXTURES = os.getenv("REVGUARD_FIXTURES_DIR", str(ROOT / "data" / "fixtures"))
 OUTPUT_DIR = os.getenv("REVGUARD_OUTPUT_DIR", str(ROOT / "data" / "outputs"))
 REPORT_DIR = os.getenv("REVGUARD_REPORT_DIR", str(ROOT / "docs" / "reports"))
@@ -111,6 +116,9 @@ HITL_ASSERTION_TTL_SECONDS = int(os.getenv(
 HITL_MAX_AUTH_AGE_SECONDS = int(os.getenv(
     "REVGUARD_HITL_MAX_AUTH_AGE_SECONDS", "300"
 ))
+REQUIRE_APPROVAL_MATRIX_EVENT = os.getenv(
+    "REVGUARD_REQUIRE_APPROVAL_MATRIX_EVENT", "false"
+).lower() == "true"
 HITL_MATRIX_HOMESERVER_URL = os.getenv(
     "REVGUARD_HITL_MATRIX_HOMESERVER_URL",
     os.getenv("REVGUARD_MATRIX_HOMESERVER_URL", ""),
@@ -183,6 +191,7 @@ def _new_gateway() -> ToolGateway:
         state_path=GATEWAY_STATE_PATH,
         verification_tamper_amount=VERIFICATION_TAMPER_AMOUNT,
         posting_tamper_amount=os.getenv("REVGUARD_POSTING_TAMPER_AMOUNT", "0"),
+        posting_tamper_case_ids=os.getenv("REVGUARD_POSTING_TAMPER_CASE_IDS", ""),
     )
 
 
@@ -555,6 +564,52 @@ async def create_human_action_assertion(
     }
 
 
+async def _publish_human_decision_intent(
+    case: dict,
+    approval: dict,
+    decision: str,
+    human,
+) -> str | None:
+    """Record the authenticated decision intent in the authoritative Team room.
+
+    The event is emitted before the local approval transaction and is labelled
+    as an intent.  If the transaction subsequently fails, the room therefore
+    never contains a false claim that funds were approved.  Finals deployments
+    require this event; lightweight local test deployments can leave it off.
+    """
+    if not REQUIRE_APPROVAL_MATRIX_EVENT:
+        return None
+    try:
+        settings = MatrixSettings.from_env()
+        client = MatrixClient(settings)
+        await client.authenticate()
+        event_id = await client.send_text(
+            "REVGUARD_HUMAN_APPROVAL_INTENT\n" + json.dumps({
+                "case_id": case["case_id"],
+                "recording_id": case.get("recording_id"),
+                "approval_id": approval["approval_id"],
+                "decision": decision,
+                "human_subject": human.sub,
+                "human_display_name": human.display_name,
+                "human_auth_time": human.auth_time,
+                "human_auth_method": human.auth_method,
+                "condition": "local approval commit must reference this Matrix event",
+            }, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+            room_id=settings.room_id,
+        )
+    except (MatrixTransportError, OSError, ValueError) as exc:
+        store.audit(case["case_id"], human.actor, "APPROVAL_MATRIX_EVENT_FAILED", {
+            "approval_id": approval["approval_id"],
+            "decision": decision,
+            "error_type": type(exc).__name__,
+        })
+        raise HTTPException(503, {
+            "code": "APPROVAL_MATRIX_EVIDENCE_UNAVAILABLE",
+            "message": "审批身份已验证，但 Element 证据事件未写入；未提交审批和资金动作。",
+        }) from exc
+    return event_id
+
+
 # --------------------------------------------------------------------- 案件
 @app.post("/api/v1/cases", status_code=201)
 def create_case(payload: CaseCreate,
@@ -914,6 +969,9 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
         action=payload.decision,
     )
     human = proof.identity
+    matrix_event_id = await _publish_human_decision_intent(
+        case, approval, payload.decision, human,
+    )
 
     with Tracer(store, case_id).span(
         "APPROVAL",
@@ -936,6 +994,8 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
                 "human_display_name": human.display_name,
                 "human_auth_time": human.auth_time,
                 "human_auth_method": human.auth_method,
+                "matrix_event_id": matrix_event_id,
+                "recording_id": case.get("recording_id"),
             }, actor=human.actor, assertion_ref=secret_fingerprint(proof.assertion_id))
         except (StaleCaseTransition, ToolError) as exc:
             raise HTTPException(409, {"code": "APPROVAL_CONFLICT", "message": str(exc)}) from exc
@@ -1356,6 +1416,7 @@ def engineering_evidence(
         "deterministic_evaluation": read_json("evaluation-summary.json"),
         "business_value": read_json("value-evaluation-synthetic.json"),
         "synthetic_dataset": read_json("synthetic-data-validation.json"),
+        "public_data_experiment": read_json("public-data-experiment-summary.json"),
         "mcp_rehearsal": read_json("evidence/demo-rehearsal/manifest.json"),
         "local_postgresql": read_json("polardb-local-verification-2026-08-27.json"),
         "self_hosted_polardb": read_json(

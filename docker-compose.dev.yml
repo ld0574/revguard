@@ -10,8 +10,20 @@ services:
       POSTGRES_USER: revguard
       POSTGRES_PASSWORD: ${REVGUARD_DEV_DB_PASSWORD:-revguard-dev-only}
       POSTGRES_DB: revguard
+      REVGUARD_REPLICATION_PASSWORD: ${REVGUARD_REPLICATION_PASSWORD:-revguard-replica-only}
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - wal_keep_size=256MB
     volumes:
       - revguard-dev-db:/var/lib/postgresql/data
+      - ./config/postgres/init-replication.sh:/docker-entrypoint-initdb.d/20-replication.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U revguard -d revguard"]
       interval: 5s
@@ -19,11 +31,33 @@ services:
       retries: 24
     restart: unless-stopped
 
+  revguard-dev-postgres-replica:
+    image: postgres:16-alpine
+    container_name: revguard-dev-postgres-replica
+    entrypoint: ["/bin/sh", "/opt/revguard/replica-entrypoint.sh"]
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PRIMARY_HOST: revguard-dev-postgres
+      REPLICATION_USER: revguard_replicator
+      REPLICATION_PASSWORD: ${REVGUARD_REPLICATION_PASSWORD:-revguard-replica-only}
+    volumes:
+      - revguard-dev-replica:/var/lib/postgresql/data
+      - ./config/postgres/replica-entrypoint.sh:/opt/revguard/replica-entrypoint.sh:ro
+    depends_on:
+      revguard-dev-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U revguard -d revguard && psql -U revguard -d revguard -tAc 'SELECT pg_is_in_recovery()' | grep -qx t"]
+      interval: 5s
+      timeout: 3s
+      retries: 36
+    restart: unless-stopped
+
   revguard-api-dev:
     build:
       context: .
       args:
-        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc1}
+        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc2}
     container_name: revguard-api-dev
     ports:
       - "19088:9000"
@@ -34,7 +68,7 @@ services:
       - /root/revguard-0.6.0-dev/scripts:/app/scripts:ro
       - /root/revguard-0.6.0-dev/revguard:/app/revguard:ro
     environment:
-      REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc1}
+      REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc2}
       REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_DEV_DB_PASSWORD:-revguard-dev-only}@revguard-dev-postgres:5432/revguard
       REVGUARD_AUTO_MIGRATE: "true"
       REVGUARD_ENTERPRISE_PROVIDER: ${REVGUARD_ENTERPRISE_PROVIDER:-mock}
@@ -46,6 +80,10 @@ services:
       REVGUARD_APPROVAL_MODE: ${REVGUARD_APPROVAL_MODE:-wait}
       REVGUARD_FINANCE_FAIL_TIMES: ${REVGUARD_FINANCE_FAIL_TIMES:-1}
       REVGUARD_VERIFICATION_TAMPER_AMOUNT: ${REVGUARD_VERIFICATION_TAMPER_AMOUNT:-0}
+      # Isolated finals demo only: inject one observable posting deviation into
+      # CASE-0008 without changing CASE-0001 or production defaults.
+      REVGUARD_POSTING_TAMPER_AMOUNT: ${REVGUARD_POSTING_TAMPER_AMOUNT:-1}
+      REVGUARD_POSTING_TAMPER_CASE_IDS: ${REVGUARD_POSTING_TAMPER_CASE_IDS:-CASE-2026-0008}
       REVGUARD_APPROVAL_SIGNING_KEY: ${REVGUARD_APPROVAL_SIGNING_KEY:-}
       REVGUARD_API_KEYS_JSON: ${REVGUARD_API_KEYS_JSON:-}
       REVGUARD_ALLOW_INSECURE_DEMO_KEYS: ${REVGUARD_ALLOW_INSECURE_DEMO_KEYS:-true}
@@ -54,7 +92,9 @@ services:
       REVGUARD_MONEY_RECOVERY_LOCK: ${REVGUARD_MONEY_RECOVERY_LOCK:-false}
       REVGUARD_ALLOW_DATABASE_RESET: ${REVGUARD_ALLOW_DATABASE_RESET:-false}
       REVGUARD_RESET_ON_START: ${REVGUARD_RESET_ON_START:-false}
-      REVGUARD_READ_DATABASE_URL: ${REVGUARD_READ_DATABASE_URL:-}
+      REVGUARD_READ_DATABASE_URL: ${REVGUARD_READ_DATABASE_URL:-postgresql://revguard:${REVGUARD_DEV_DB_PASSWORD:-revguard-dev-only}@revguard-dev-postgres-replica:5432/revguard}
+      REVGUARD_READ_REPLICA_MAX_LAG_SECONDS: ${REVGUARD_READ_REPLICA_MAX_LAG_SECONDS:-5}
+      REVGUARD_READ_REPLICA_MAX_LAG_BYTES: ${REVGUARD_READ_REPLICA_MAX_LAG_BYTES:-1048576}
       REVGUARD_DB_POOL_MIN: ${REVGUARD_DB_POOL_MIN:-1}
       REVGUARD_DB_POOL_MAX: ${REVGUARD_DB_POOL_MAX:-10}
       REVGUARD_TEAM_TRANSPORT: ${REVGUARD_TEAM_TRANSPORT:-mcp}
@@ -69,6 +109,7 @@ services:
       REVGUARD_HITL_MATRIX_USERS_JSON: '${REVGUARD_HITL_MATRIX_USERS_JSON:-{}}'
       REVGUARD_HITL_ASSERTION_TTL_SECONDS: ${REVGUARD_HITL_ASSERTION_TTL_SECONDS:-120}
       REVGUARD_HITL_MAX_AUTH_AGE_SECONDS: ${REVGUARD_HITL_MAX_AUTH_AGE_SECONDS:-300}
+      REVGUARD_REQUIRE_APPROVAL_MATRIX_EVENT: ${REVGUARD_REQUIRE_APPROVAL_MATRIX_EVENT:-true}
       REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS:-240}
       REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS:-90}
       REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS:-120}
@@ -78,6 +119,8 @@ services:
       REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS: ${REVGUARD_TEAM_RUN_STALE_AFTER_SECONDS:-600}
     depends_on:
       revguard-dev-postgres:
+        condition: service_healthy
+      revguard-dev-postgres-replica:
         condition: service_healthy
     networks:
       - default
@@ -99,6 +142,7 @@ volumes:
   revguard-dev-reports:
   revguard-dev-runtime:
   revguard-dev-db:
+  revguard-dev-replica:
 
 networks:
   enterprise:

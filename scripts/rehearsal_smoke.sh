@@ -27,7 +27,7 @@ echo "-- 3/5 双案例终态（真人审批记录完好） --"
 S1=$(curl -s -m 10 "$BASE/api/v1/cases/CASE-2026-0001" -H "Authorization: Bearer $VIEWER" | python3 -c "import json,sys;print(json.load(sys.stdin).get('status'))" 2>/dev/null)
 [ "$S1" = "CLOSED" ] && ok "CASE-2026-0001 = CLOSED" || bad "CASE-2026-0001 = ${S1:-不可达}"
 S8=$(curl -s -m 10 "$BASE/api/v1/cases/CASE-2026-0008" -H "Authorization: Bearer $VIEWER" | python3 -c "import json,sys;print(json.load(sys.stdin).get('status'))" 2>/dev/null)
-[ "$S8" = "CLOSED" ] && ok "CASE-2026-0008 = CLOSED" || bad "CASE-2026-0008 = ${S8:-不可达}"
+[ "$S8" = "ROLLED_BACK" ] && ok "CASE-2026-0008 = ROLLED_BACK" || bad "CASE-2026-0008 = ${S8:-不可达}"
 
 echo "-- 4/5 证据来源仍为真实 ERPNext --"
 ERP=$(curl -s -m 10 "$BASE/api/v1/cases/CASE-2026-0001/trace" -H "Authorization: Bearer $VIEWER" | grep -o erpnext | head -1)
@@ -43,7 +43,7 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -m 10 "http://localhost:18080/api/
 echo
 echo "== 结果：$pass PASS / $fail FAIL =="
 if [ "$fail" = "0" ]; then
-  echo "结论：现场 Demo 通路可用。建议现场仍保留 v0.6.0-rc1 视频作为兜底。"
+  echo "结论：现场 Demo 通路可用。建议现场仍保留与当前候选版本同源的视频作为兜底。"
 else
   echo "结论：存在 $fail 项失败 —— 现场改用视频兜底（submission/finals-media/revguard_demo_webui_20260917.mp4 + 截图序列）。"
   exit 1

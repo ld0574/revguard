@@ -17,7 +17,7 @@ USER root
 
 ARG PIP_INDEX_URL=https://pypi.org/simple
 
-ARG REVGUARD_VERSION=0.5.10
+ARG REVGUARD_VERSION=0.6.0-rc2
 LABEL org.opencontainers.image.title="RevGuard" \
       org.opencontainers.image.version="$REVGUARD_VERSION"
 
@@ -38,6 +38,7 @@ COPY data/golden_cases/ ./data/golden_cases/
 COPY docs/evaluation-summary.json \
      docs/value-evaluation-synthetic.json \
      docs/synthetic-data-validation.json \
+     docs/public-data-experiment-summary.json \
      docs/polardb-local-verification-2026-08-27.json \
      docs/polardb-local-instance-acceptance-2026-08-29.json \
      ./docs/

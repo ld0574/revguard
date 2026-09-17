@@ -163,7 +163,16 @@ def load_source(
                 payment["installments"], int(row["payment_installments"] or 0)
             )
 
-        eligible = [item for item in ranked if item in items and item in payments]
+        complete = [item for item in ranked if item in items and item in payments]
+        # The ERP acceptance model stores one Sales Partner and one product on
+        # each order header.  Selecting only single-seller/single-product orders
+        # keeps that mapping lossless instead of silently choosing the first ID
+        # from a multi-party order.  The source archive itself remains intact.
+        eligible = [
+            item for item in complete
+            if len(items[item]["seller_ids"]) == 1
+            and len(items[item]["product_ids"]) == 1
+        ]
         cancelled_eligible = [
             item for item in eligible
             if orders[item]["order_status"] in {"canceled", "unavailable"}
@@ -234,6 +243,12 @@ def load_source(
             "sellers": [sellers[item] for item in sorted(sellers)],
             "products": [products[item] for item in sorted(products)],
             "selected_order_ids": selected,
+            "sampling_quality": {
+                "complete_order_count": len(complete),
+                "eligible_single_seller_product_count": len(eligible),
+                "excluded_multi_seller_or_product_count": len(complete) - len(eligible),
+                "erp_mapping_mode": "ORDER_LEVEL_SINGLE_SELLER_PRODUCT_AGGREGATE",
+            },
         }
         return transactions, dimensions
 
@@ -505,18 +520,96 @@ def run(
     for name, rows in staging.items():
         write_csv(output_dir / "erpnext-staging" / f"{name}.csv", rows, staging_fields[name])
 
+    transaction_sources = {
+        "order_id": "olist_orders_dataset.order_id",
+        "customer_id": "olist_orders_dataset.customer_id",
+        "seller_id": "olist_order_items_dataset.seller_id",
+        "product_id": "olist_order_items_dataset.product_id",
+        "order_status": "olist_orders_dataset.order_status",
+        "purchase_timestamp": "olist_orders_dataset.order_purchase_timestamp",
+        "approved_at": "olist_orders_dataset.order_approved_at",
+        "delivered_at": "olist_orders_dataset.order_delivered_customer_date",
+        "payment_value": "sum(olist_order_payments_dataset.payment_value)",
+        "payment_types": "set(olist_order_payments_dataset.payment_type)",
+        "payment_installments": "max(olist_order_payments_dataset.payment_installments)",
+    }
+    transaction_derived = {
+        "seller_count": "count(distinct seller_id)",
+        "product_count": "count(distinct product_id)",
+        "item_count": "count(olist_order_items_dataset rows)",
+        "item_amount": "sum(olist_order_items_dataset.price)",
+        "freight_amount": "sum(olist_order_items_dataset.freight_value)",
+        "gross_amount": "item_amount + freight_amount",
+        "currency": "dataset country currency assumption: BRL",
+        "transaction_provenance": "constant PUBLIC_REAL",
+        "source_dataset": "constant olist-brazilian-ecommerce",
+        "source_row_hash": "canonical SHA-256 of normalized transaction",
+    }
+    transaction_dictionary = {
+        name: {"source": source, "provenance": "PUBLIC_REAL"}
+        for name, source in transaction_sources.items()
+    }
+    transaction_dictionary.update({
+        name: {"source": source, "provenance": "PUBLIC_REAL_DERIVED"}
+        for name, source in transaction_derived.items()
+    })
+    settlement_dictionary = {
+        name: {
+            "source": (
+                "official public fee-rule snapshot"
+                if name in {
+                    "rule_id", "commission_rate", "fixed_fee",
+                    "rule_source_url", "rule_effective_basis",
+                }
+                else "deterministic counterfactual rule engine"
+            ),
+            "provenance": (
+                "PUBLIC_REAL" if name in {
+                    "rule_id", "commission_rate", "fixed_fee",
+                    "rule_source_url", "rule_effective_basis",
+                }
+                else "SYSTEM_GENERATED"
+            ),
+        }
+        for name in settlement_fields
+    }
+    for name in {
+        "actual_rule_id", "actual_commission", "actual_settlement",
+        "settlement_status", "scenario_id", "exception_source_type",
+    }:
+        settlement_dictionary[name] = {
+            "source": "fixed-seed controlled settlement generator",
+            "provenance": "SYNTHETIC_DOMAIN",
+        }
+    settlement_dictionary["platform"] = {
+        "source": "deterministic assignment of external rule to Olist row",
+        "provenance": "SYNTHETIC_DOMAIN",
+    }
     dictionary = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "source": "Olist Brazilian E-Commerce Public Dataset",
-        "fields": {
-            "order_id": {"source": "olist_orders_dataset.order_id", "provenance": "PUBLIC_REAL"},
-            "seller_id": {"source": "olist_order_items_dataset.seller_id", "provenance": "PUBLIC_REAL"},
-            "gross_amount": {"source": "sum(price + freight_value)", "provenance": "PUBLIC_REAL_DERIVED"},
-            "rule_id": {"source": "official public fee rule snapshot", "provenance": "PUBLIC_REAL"},
-            "platform": {"source": "deterministic experiment mapping", "provenance": "SYNTHETIC_DOMAIN"},
-            "expected_commission": {"source": "deterministic rule engine", "provenance": "SYSTEM_GENERATED"},
-            "actual_commission": {"source": "controlled settlement generator", "provenance": "SYNTHETIC_DOMAIN"},
-            "risk_type": {"source": "fixed-seed controlled injection", "provenance": "SYNTHETIC_DOMAIN"},
+        "transaction_fields": transaction_dictionary,
+        "settlement_fields": settlement_dictionary,
+        "risk_case_fields": {
+            "identity": ["case_id", "risk_type", "order_id", "seller_id", "rule_id"],
+            "amounts": [
+                "gross_amount", "expected_commission", "actual_commission",
+                "expected_settlement", "actual_settlement", "variance_amount",
+            ],
+            "provenance": [
+                "source_transaction_type", "rule_source_type",
+                "rule_mapping_source_type", "settlement_source_type",
+                "scenario_source_type",
+            ],
+            "explainability": ["explanation", "evidence", "severity", "status"],
+        },
+        "erp_mapping": {
+            "mode": dimensions["sampling_quality"]["erp_mapping_mode"],
+            "reason": (
+                "single-seller/single-product source orders prevent lossy header mapping; "
+                "item price and freight are aggregated at order level"
+            ),
+            "staging_files": staging_fields,
         },
     }
     (output_dir / "data-dictionary.json").write_text(
@@ -529,6 +622,7 @@ def run(
         "experiment_id": "revguard-olist-public-rates-20260916",
         "random_seed": SEED,
         "sampling_method": "deterministic_hash_rank_with_cancelled_stratum_for_exception_coverage",
+        "sampling_quality": dimensions["sampling_quality"],
         "transaction_count": len(transactions),
         "normal_count": len(transactions) - len(cases),
         "anomaly_count": len(cases),
@@ -549,6 +643,9 @@ def run(
             "exceptions": "SYNTHETIC_DOMAIN",
         },
         "counterfactual_notice": rules_document["mapping_boundary"],
+        "rule_evaluation_mode": "CURRENT_POLICY_COUNTERFACTUAL",
+        "historical_transaction_time_recalculation": False,
+        "rule_component_scope": rules_document["calculation_scope"],
         "source_archive_sha256": file_hash(archive_path),
         "rules_sha256": file_hash(rules_path),
         "validation_status": "PASSED",

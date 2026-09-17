@@ -97,6 +97,48 @@ def prometheus_text(snapshot: dict) -> str:
     for metric in ("money_unresolved_operations", "money_frozen_channels"):
         if metric in snapshot:
             lines.extend([f"# TYPE revguard_{metric} gauge", f"revguard_{metric} {snapshot[metric]}"])
+    scalar_metrics = {
+        "evidence_gaps_total": "counter",
+        "agent_model_calls_total": "counter",
+        "agent_model_input_tokens_total": "counter",
+        "agent_model_output_tokens_total": "counter",
+        "agent_model_timeouts_total": "counter",
+        "rollback_success_total": "counter",
+        "money_reversal_entries_total": "counter",
+        "read_replica_fallback_total": "counter",
+    }
+    for metric, metric_type in scalar_metrics.items():
+        if metric in snapshot:
+            lines.extend([
+                f"# TYPE revguard_{metric} {metric_type}",
+                f"revguard_{metric} {int(snapshot[metric] or 0)}",
+            ])
+    for metric in ("read_replica_lag_seconds", "read_replica_lag_bytes"):
+        value = snapshot.get(metric)
+        if value is not None:
+            lines.extend([
+                f"# TYPE revguard_{metric} gauge",
+                f"revguard_{metric} {float(value)}",
+            ])
+    for metric in ("database_connections", "database_lock_waits"):
+        if metric in snapshot:
+            lines.extend([
+                f"# TYPE revguard_{metric} gauge",
+                f"revguard_{metric} {int(snapshot[metric] or 0)}",
+            ])
+    if "read_replica_healthy" in snapshot:
+        lines.extend([
+            "# TYPE revguard_read_replica_healthy gauge",
+            "revguard_read_replica_healthy "
+            + ("1" if snapshot["read_replica_healthy"] else "0"),
+            "# TYPE revguard_read_replica_fallback_active gauge",
+            "revguard_read_replica_fallback_active "
+            + ("1" if snapshot.get("read_replica_fallback_active") else "0"),
+        ])
+    for status, count in sorted((snapshot.get("money_operations_by_status") or {}).items()):
+        lines.append(
+            f'revguard_money_operations_by_status{{status={json.dumps(status)}}} {int(count)}'
+        )
     for status, count in sorted(snapshot["cases_by_status"].items()):
         lines.append(f'revguard_cases_by_status{{status="{status}"}} {int(count)}')
     for status, count in sorted(snapshot["agent_tasks_by_status"].items()):

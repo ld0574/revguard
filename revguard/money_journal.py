@@ -285,4 +285,17 @@ class MoneyJournal:
         with self.transaction() as tx:
             unresolved = tx.execute("SELECT COUNT(*) AS n FROM money_operations WHERE status IN ('PREPARED','RESULT_UNKNOWN')").fetchone()["n"]
             frozen = tx.execute("SELECT COUNT(DISTINCT channel) AS n FROM money_holds").fetchone()["n"]
-            return {"money_unresolved_operations": int(unresolved), "money_frozen_channels": int(frozen)}
+            status_rows = tx.execute(
+                "SELECT status, COUNT(*) AS n FROM money_operations GROUP BY status"
+            ).fetchall()
+            reversals = tx.execute(
+                "SELECT COUNT(*) AS n FROM money_ledger WHERE reversal_of IS NOT NULL"
+            ).fetchone()["n"]
+            return {
+                "money_unresolved_operations": int(unresolved),
+                "money_frozen_channels": int(frozen),
+                "money_operations_by_status": {
+                    row["status"]: int(row["n"]) for row in status_rows
+                },
+                "money_reversal_entries_total": int(reversals),
+            }

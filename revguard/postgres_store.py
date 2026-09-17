@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
+from threading import Lock
 
 from .models import utc_now
 from .money_journal import MoneyJournal
@@ -64,6 +66,34 @@ class PostgresStore:
             )
             if self.read_replica_enabled else self._write_pool
         )
+        self._replica_max_lag_seconds = float(
+            os.getenv("REVGUARD_READ_REPLICA_MAX_LAG_SECONDS", "5")
+        )
+        self._replica_max_lag_bytes = int(
+            os.getenv("REVGUARD_READ_REPLICA_MAX_LAG_BYTES", "1048576")
+        )
+        self._replica_check_interval_seconds = float(
+            os.getenv("REVGUARD_READ_REPLICA_CHECK_INTERVAL_SECONDS", "1")
+        )
+        if (
+            self._replica_max_lag_seconds < 0
+            or self._replica_max_lag_bytes < 0
+            or not 0 <= self._replica_check_interval_seconds <= 60
+        ):
+            raise ValueError("只读副本延迟阈值配置无效")
+        self._replica_status_lock = Lock()
+        self._replica_status_checked_at = 0.0
+        self._replica_status_cache: dict = {
+            "enabled": self.read_replica_enabled,
+            "healthy": not self.read_replica_enabled,
+            "fallback_active": False,
+            "reason": "NOT_CONFIGURED" if not self.read_replica_enabled else "UNCHECKED",
+            "lag_seconds": None,
+            "lag_bytes": None,
+            "primary_lsn": None,
+            "replay_lsn": None,
+        }
+        self._replica_fallback_total = 0
         if os.getenv("REVGUARD_AUTO_MIGRATE", "false").lower() == "true":
             self._apply_core_schema()
         else:
@@ -97,9 +127,110 @@ class PostgresStore:
 
     @contextmanager
     def _conn(self, *, analytical: bool = False):
-        pool = self._read_pool if analytical else self._write_pool
+        pool = self._write_pool
+        if analytical and self.read_replica_enabled:
+            status = self._replica_status()
+            if status["healthy"]:
+                pool = self._read_pool
+            else:
+                with self._replica_status_lock:
+                    self._replica_fallback_total += 1
         with pool.connection() as conn:
             yield conn
+
+    def _replica_status(self, *, force: bool = False) -> dict:
+        """Measure physical replay state and decide whether reads may use it.
+
+        A stale or unreachable replica never blocks the API.  Analytical reads
+        fall back to the primary; transactionally significant reads always use
+        the primary regardless of this status.
+        """
+        if not self.read_replica_enabled:
+            return dict(self._replica_status_cache)
+        now = time.monotonic()
+        with self._replica_status_lock:
+            if (
+                not force
+                and now - self._replica_status_checked_at
+                < self._replica_check_interval_seconds
+            ):
+                return dict(self._replica_status_cache)
+        try:
+            with self._write_pool.connection(timeout=3) as primary:
+                primary_lsn = primary.execute(
+                    "SELECT pg_current_wal_lsn()::text AS lsn"
+                ).fetchone()["lsn"]
+                with self._read_pool.connection(timeout=3) as replica:
+                    row = replica.execute(
+                        """SELECT pg_is_in_recovery() AS in_recovery,
+                                  pg_last_wal_replay_lsn()::text AS replay_lsn,
+                                  CASE WHEN pg_last_xact_replay_timestamp() IS NULL
+                                       THEN NULL
+                                       ELSE EXTRACT(EPOCH FROM (
+                                           clock_timestamp() - pg_last_xact_replay_timestamp()
+                                       )) END AS lag_seconds"""
+                    ).fetchone()
+                replay_lsn = row["replay_lsn"]
+                lag_bytes = (
+                    primary.execute(
+                        "SELECT pg_wal_lsn_diff(%s::pg_lsn,%s::pg_lsn) AS value",
+                        (primary_lsn, replay_lsn),
+                    ).fetchone()["value"]
+                    if replay_lsn else None
+                )
+            lag_seconds = (
+                max(0.0, float(row["lag_seconds"]))
+                if row["lag_seconds"] is not None else None
+            )
+            lag_bytes_int = max(0, int(lag_bytes)) if lag_bytes is not None else None
+            in_recovery = bool(row["in_recovery"])
+            caught_up = lag_bytes_int == 0
+            healthy = (
+                in_recovery
+                and lag_bytes_int is not None
+                and lag_bytes_int <= self._replica_max_lag_bytes
+                and (caught_up or (
+                    lag_seconds is not None
+                    and lag_seconds <= self._replica_max_lag_seconds
+                ))
+            )
+            if not in_recovery:
+                reason = "NOT_PHYSICAL_REPLICA"
+            elif replay_lsn is None or lag_bytes_int is None:
+                reason = "REPLAY_STATE_UNKNOWN"
+            elif lag_bytes_int > self._replica_max_lag_bytes:
+                reason = "LAG_BYTES_EXCEEDED"
+            elif not caught_up and (
+                lag_seconds is None or lag_seconds > self._replica_max_lag_seconds
+            ):
+                reason = "LAG_SECONDS_EXCEEDED"
+            else:
+                reason = "HEALTHY"
+            status = {
+                "enabled": True,
+                "healthy": healthy,
+                "fallback_active": not healthy,
+                "reason": reason,
+                "lag_seconds": lag_seconds,
+                "lag_bytes": lag_bytes_int,
+                "primary_lsn": primary_lsn,
+                "replay_lsn": replay_lsn,
+            }
+        except Exception as exc:  # noqa: BLE001 - the primary is the safe fallback
+            status = {
+                "enabled": True,
+                "healthy": False,
+                "fallback_active": True,
+                "reason": "CHECK_FAILED_" + type(exc).__name__.upper(),
+                "lag_seconds": None,
+                "lag_bytes": None,
+                "primary_lsn": None,
+                "replay_lsn": None,
+            }
+        with self._replica_status_lock:
+            self._replica_status_cache = status
+            self._replica_status_checked_at = now
+            return dict(status)
 
     def close(self) -> None:
         if self._read_pool is not self._write_pool:
@@ -613,11 +744,12 @@ class PostgresStore:
     def readiness(self) -> dict:
         with self._conn() as conn:
             conn.execute("SELECT 1").fetchone()
-        if self.read_replica_enabled:
-            with self._conn(analytical=True) as conn:
-                conn.execute("SELECT 1").fetchone()
+        replica = self._replica_status(force=True)
         return {"ready": True, "backend": self.backend,
-                "read_replica": self.read_replica_enabled}
+                "read_replica": self.read_replica_enabled,
+                "read_replica_healthy": replica["healthy"],
+                "read_replica_fallback": replica["fallback_active"],
+                "read_replica_reason": replica["reason"]}
 
     def verify_audit_chain(self) -> dict:
         with self._conn(analytical=True) as conn:
@@ -644,6 +776,7 @@ class PostgresStore:
                 "broken_links": int(row["broken"])}
 
     def operational_metrics(self) -> dict:
+        replica = self._replica_status()
         with self._conn(analytical=True) as conn:
             engine_version = conn.execute(
                 "SELECT version() AS version"
@@ -664,10 +797,38 @@ class PostgresStore:
             attempt_total = conn.execute(
                 "SELECT COUNT(*) AS total FROM agent_task_results"
             ).fetchone()["total"]
+            evidence_gaps = conn.execute(
+                "SELECT COUNT(*) AS total FROM audit_events WHERE event='EVIDENCE_GAP'"
+            ).fetchone()["total"]
+            model_row = conn.execute(
+                """SELECT
+                       COALESCE(SUM((data#>>'{token_usage,call_count}')::BIGINT),0) AS calls,
+                       COALESCE(SUM((data#>>'{token_usage,input_tokens}')::BIGINT),0) AS input_tokens,
+                       COALESCE(SUM((data#>>'{token_usage,output_tokens}')::BIGINT),0) AS output_tokens,
+                       COUNT(*) FILTER (WHERE data#>>'{telemetry,status}'='TIMEOUT'
+                                           OR data#>>'{error,type}' LIKE '%TIMEOUT%') AS timeouts
+                     FROM agent_tasks
+                    WHERE data ? 'token_usage' OR data ? 'telemetry' OR data ? 'error'"""
+            ).fetchone()
+            rollback_success = conn.execute(
+                "SELECT COUNT(*) AS total FROM audit_events WHERE event='ROLLBACK_VERIFIED' "
+                "AND detail->>'verification_status'='PASSED'"
+            ).fetchone()["total"]
+            database_row = conn.execute(
+                """SELECT COUNT(*) AS connections,
+                          COUNT(*) FILTER (WHERE wait_event_type='Lock') AS lock_waits
+                     FROM pg_stat_activity WHERE datname=current_database()"""
+            ).fetchone()
         return {
             "storage_backend": self.backend,
             "database_engine_version": engine_version,
             "read_replica_enabled": self.read_replica_enabled,
+            "read_replica_healthy": replica["healthy"],
+            "read_replica_fallback_active": replica["fallback_active"],
+            "read_replica_fallback_total": self._replica_fallback_total,
+            "read_replica_reason": replica["reason"],
+            "read_replica_lag_seconds": replica["lag_seconds"],
+            "read_replica_lag_bytes": replica["lag_bytes"],
             "cases_total": sum(int(row["count"]) for row in case_rows),
             "cases_by_status": {row["status"]: int(row["count"]) for row in case_rows},
             "agent_tasks_by_status": {
@@ -677,5 +838,13 @@ class PostgresStore:
             "trace_spans_total": int(span_row["total"]),
             "trace_error_spans_total": int(span_row["errors"]),
             "audit_events_total": int(audit_total),
+            "evidence_gaps_total": int(evidence_gaps),
+            "agent_model_calls_total": int(model_row["calls"] or 0),
+            "agent_model_input_tokens_total": int(model_row["input_tokens"] or 0),
+            "agent_model_output_tokens_total": int(model_row["output_tokens"] or 0),
+            "agent_model_timeouts_total": int(model_row["timeouts"] or 0),
+            "rollback_success_total": int(rollback_success),
+            "database_connections": int(database_row["connections"]),
+            "database_lock_waits": int(database_row["lock_waits"]),
             "audit_chain": self.verify_audit_chain(),
         }

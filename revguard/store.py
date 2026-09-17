@@ -619,6 +619,9 @@ class Store:
             task_rows = self.conn.execute(
                 "SELECT status, COUNT(*) AS count FROM agent_tasks GROUP BY status"
             ).fetchall()
+            task_payload_rows = self.conn.execute(
+                "SELECT data FROM agent_tasks"
+            ).fetchall()
             span_row = self.conn.execute(
                 "SELECT COUNT(*) AS total, "
                 "SUM(CASE WHEN status='ERROR' THEN 1 ELSE 0 END) AS errors "
@@ -630,9 +633,33 @@ class Store:
             result_row = self.conn.execute(
                 "SELECT COUNT(*) AS total FROM agent_task_results"
             ).fetchone()
+            evidence_gap_row = self.conn.execute(
+                "SELECT COUNT(*) AS total FROM audit_events WHERE event='EVIDENCE_GAP'"
+            ).fetchone()
+            rollback_row = self.conn.execute(
+                "SELECT COUNT(*) AS total FROM audit_events "
+                "WHERE event='ROLLBACK_VERIFIED' AND detail LIKE '%\"verification_status\": \"PASSED\"%'"
+            ).fetchone()
+        model = {"calls": 0, "input": 0, "output": 0, "timeouts": 0}
+        for row in task_payload_rows:
+            payload = json.loads(row["data"]) if isinstance(row["data"], str) else row["data"]
+            usage = payload.get("token_usage") or {}
+            model["calls"] += int(usage.get("call_count") or 0)
+            model["input"] += int(usage.get("input_tokens") or 0)
+            model["output"] += int(usage.get("output_tokens") or 0)
+            telemetry = payload.get("telemetry") or {}
+            error = payload.get("error") or {}
+            if telemetry.get("status") == "TIMEOUT" or "TIMEOUT" in str(error.get("type", "")):
+                model["timeouts"] += 1
         return {
             "storage_backend": self.backend,
             "read_replica_enabled": False,
+            "read_replica_healthy": False,
+            "read_replica_fallback_active": False,
+            "read_replica_fallback_total": 0,
+            "read_replica_reason": "NOT_CONFIGURED",
+            "read_replica_lag_seconds": None,
+            "read_replica_lag_bytes": None,
             "cases_total": sum(int(row["count"]) for row in case_rows),
             "cases_by_status": {row["status"]: int(row["count"]) for row in case_rows},
             "agent_tasks_by_status": {
@@ -642,6 +669,14 @@ class Store:
             "trace_spans_total": int(span_row["total"]),
             "trace_error_spans_total": int(span_row["errors"] or 0),
             "audit_events_total": int(audit_row["total"]),
+            "evidence_gaps_total": int(evidence_gap_row["total"]),
+            "agent_model_calls_total": model["calls"],
+            "agent_model_input_tokens_total": model["input"],
+            "agent_model_output_tokens_total": model["output"],
+            "agent_model_timeouts_total": model["timeouts"],
+            "rollback_success_total": int(rollback_row["total"]),
+            "database_connections": 1,
+            "database_lock_waits": 0,
             "audit_chain": {"enforced": False, "reason": "SQLite demo backend"},
         }
 

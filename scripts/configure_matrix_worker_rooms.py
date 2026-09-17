@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Persist Matrix settings; inspect Docker using argument arrays without a shell."""
+"""Persist Matrix settings from the live AgentTeams resource inventory."""
 from __future__ import annotations
 
 import argparse
@@ -36,16 +36,21 @@ def container_environment(container: str) -> dict[str, str]:
     return dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
 
 
-def collect_rooms(prefix: str) -> dict[str, str]:
-    rooms = {}
-    for actor in ACTORS:
-        room_id = container_environment(prefix + actor).get(
-            "AGENTTEAMS_WORKER_ROOM_ID"
-        )
-        if not room_id:
-            raise RuntimeError(f"Worker 缺少 AGENTTEAMS_WORKER_ROOM_ID: {actor}")
-        rooms[actor] = room_id
-    return rooms
+def worker_resources(controller: str) -> dict[str, dict]:
+    """Read room IDs without waking sleeping Workers or invoking a model."""
+    output = subprocess.check_output(  # nosec B603, B607
+        ["docker", "exec", controller, "agt", "get", "workers", "-o", "json"],
+        text=True,
+    )
+    payload = json.loads(output)
+    resources = {
+        str(item.get("name")): item for item in payload.get("workers", [])
+    }
+    required = {*ACTORS, "revguard-orchestrator"}
+    missing = sorted(required.difference(resources))
+    if missing:
+        raise RuntimeError("AgentTeams Worker 资源缺失: " + ", ".join(missing))
+    return resources
 
 
 def runtime_homeserver_url(value: str, controller: str) -> str:
@@ -61,18 +66,23 @@ def runtime_homeserver_url(value: str, controller: str) -> str:
 
 def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
     controller_env = container_environment(controller)
-    orchestrator_env = container_environment(prefix + "revguard-orchestrator")
+    resources = worker_resources(controller)
     required = {
         "AGENTTEAMS_MATRIX_URL": controller_env.get("AGENTTEAMS_MATRIX_URL"),
         "AGENTTEAMS_MATRIX_DOMAIN": controller_env.get("AGENTTEAMS_MATRIX_DOMAIN"),
         "AGENTTEAMS_ADMIN_USER": controller_env.get("AGENTTEAMS_ADMIN_USER"),
         "AGENTTEAMS_ADMIN_PASSWORD": controller_env.get("AGENTTEAMS_ADMIN_PASSWORD"),
-        "AGENTTEAMS_WORKER_ROOM_ID": orchestrator_env.get("AGENTTEAMS_WORKER_ROOM_ID"),
+        "AGENTTEAMS_WORKER_ROOM_ID": resources["revguard-orchestrator"].get("roomID"),
     }
     missing = [key for key, value in required.items() if not value]
     if missing:
         raise RuntimeError("AgentTeams Matrix 运行配置缺失: " + ", ".join(missing))
-    rooms = collect_rooms(prefix)
+    rooms = {
+        actor: str(resources[actor].get("roomID") or "") for actor in ACTORS
+    }
+    missing_rooms = sorted(actor for actor, room_id in rooms.items() if not room_id)
+    if missing_rooms:
+        raise RuntimeError("AgentTeams Worker 房间缺失: " + ", ".join(missing_rooms))
     matrix_username = required["AGENTTEAMS_ADMIN_USER"]
     matrix_subject = (
         matrix_username

@@ -11,7 +11,8 @@ def verify(bridge):
     config = {
         "agents": {"defaults": {"model": {"primary": "test/gpt-5.6-luna"}}},
         "models": {"providers": {"test": {"baseUrl": "http://isolated.invalid/v1", "apiKey": "synthetic", "models": [
-            {"id": "gpt-5.6-luna"}, {"id": "gpt-5.6-sol"}, {"id": "other-model"},
+            {"id": "gpt-5.6-luna"}, {"id": "gpt-5.6-sol"},
+            {"id": "glm-5.3-flash"}, {"id": "other-model"},
         ]}}},
         "channels": {"matrix": {"enabled": True, "groups": {"!synthetic:test": {"requireMention": True}}}},
     }
@@ -40,6 +41,9 @@ def verify(bridge):
                 for model in ("gpt-5.6-luna", "gpt-5.6-sol"):
                     assert models[model]["generate_kwargs"]["reasoning_effort"] == "none"
                     assert models[model]["generate_kwargs"]["max_completion_tokens"] == 512
+                assert models["glm-5.3-flash"]["generate_kwargs"] == {
+                    "max_tokens": 512,
+                }
                 assert "generate_kwargs" not in models["other-model"]
 
 paths = sorted(Path("/opt").glob("**/site-packages/copaw_worker/bridge.py"))

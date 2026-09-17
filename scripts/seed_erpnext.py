@@ -30,9 +30,19 @@ FIXTURES = os.getenv("REVGUARD_SEED_FIXTURES", "/tmp/fixtures")  # nosec B108 - 
 OUTPUT = os.getenv("REVGUARD_SEED_OUTPUT", "/tmp/revguard_api_keys.json")  # nosec B108 - 同上，密钥产物 chmod 600
 COMPANY = "RevGuard Demo Ltd"
 API_USER = "revguard-api@revguard.local"
+DEMO_USER = "revguard-viewer@revguard.local"
 ROLE = "RevGuard API"
+VIEWER_ROLE = "RevGuard Demo Viewer"
 
-CUSTOM_FIELDS: list[dict] = [
+CUSTOM_FIELDS: list[tuple[str, str, str, str]] = [
+    ("Customer", "custom_revguard_partner_id", "RevGuard Partner ID", "Data"),
+    ("Customer", "custom_revguard_region", "RevGuard Region", "Data"),
+    ("Customer", "custom_revguard_source_id", "RevGuard Source ID", "Data"),
+    ("Customer", "custom_revguard_source_dataset", "RevGuard Source Dataset", "Data"),
+    ("Customer", "custom_revguard_provenance_kind", "RevGuard Provenance", "Data"),
+    ("Item", "custom_revguard_source_id", "RevGuard Source ID", "Data"),
+    ("Item", "custom_revguard_source_dataset", "RevGuard Source Dataset", "Data"),
+    ("Item", "custom_revguard_provenance_kind", "RevGuard Provenance", "Data"),
     ("Sales Order", "custom_revguard_order_id", "RevGuard Order ID", "Data"),
     ("Sales Order", "custom_revguard_partner_id", "RevGuard Partner ID", "Data"),
     ("Sales Order", "custom_revguard_product_id", "RevGuard Product ID", "Data"),
@@ -52,6 +62,16 @@ CUSTOM_FIELDS: list[dict] = [
     ("Payment Entry", "custom_revguard_order_id", "RevGuard Order ID", "Data"),
     ("Payment Entry", "custom_revguard_payment_id", "RevGuard Payment ID", "Data"),
     ("Payment Entry", "custom_revguard_payment_status", "RevGuard Payment Status", "Data"),
+    ("Sales Partner", "custom_revguard_source_id", "RevGuard Source ID", "Data"),
+    ("Sales Partner", "custom_revguard_source_dataset", "RevGuard Source Dataset", "Data"),
+    ("Sales Partner", "custom_revguard_provenance_kind", "RevGuard Provenance", "Data"),
+    ("Sales Order", "custom_revguard_source_dataset", "RevGuard Source Dataset", "Data"),
+    ("Sales Order", "custom_revguard_provenance_kind", "RevGuard Provenance", "Data"),
+    ("Sales Order", "custom_revguard_source_hash", "RevGuard Source Hash", "Data"),
+    ("Sales Invoice", "custom_revguard_source_dataset", "RevGuard Source Dataset", "Data"),
+    ("Sales Invoice", "custom_revguard_provenance_kind", "RevGuard Provenance", "Data"),
+    ("Payment Entry", "custom_revguard_source_dataset", "RevGuard Source Dataset", "Data"),
+    ("Payment Entry", "custom_revguard_provenance_kind", "RevGuard Provenance", "Data"),
 ]
 
 
@@ -105,11 +125,11 @@ def _ensure_company() -> str:
 
 def _ensure_role() -> None:
     # 裸站点可能连标准角色都没有，一并补齐
-    for role_name in ("System User", ROLE):
+    for role_name in ("System User", ROLE, VIEWER_ROLE):
         if not frappe.db.exists("Role", role_name):
             frappe.get_doc({
                 "doctype": "Role", "role_name": role_name,
-                "desk_access": role_name == "System User",
+                "desk_access": role_name in {"System User", VIEWER_ROLE},
             }).insert(ignore_permissions=True)
     frappe.db.commit()
 
@@ -121,8 +141,11 @@ def _ensure_doctype_permissions() -> None:
         "Sales Order", "Sales Partner", "Contract",
         "Sales Invoice", "Payment Entry", "Partner Tier History",
     ):
-        if not frappe.db.exists("DocPerm", {"parent": doctype, "role": ROLE}):
-            add_permission(doctype, ROLE, 0, ptype="read")
+        for role in (ROLE, VIEWER_ROLE):
+            if not frappe.db.exists(
+                "Custom DocPerm", {"parent": doctype, "role": role, "permlevel": 0}
+            ):
+                add_permission(doctype, role, 0, ptype="read")
     frappe.db.commit()
 
 
@@ -153,6 +176,7 @@ def _ensure_custom_doctype() -> None:
         "permissions": [
             {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
             {"role": ROLE, "read": 1},
+            {"role": VIEWER_ROLE, "read": 1},
         ],
     }).insert(ignore_permissions=True)
     frappe.db.commit()
@@ -469,14 +493,34 @@ def main() -> None:
     decrypted = get_decrypted_password(
         "User", API_USER, fieldname="api_secret", raise_exception=False) or ""
     api_secret = decrypted or stored
+
+    # 演示查看用户：与初始化管理员、API 用户分离，只授予相同的只读 DocType。
+    # 密码每次受控种数时轮换并只写入权限受限的服务器文件，避免固定 Demo 密码。
+    if not frappe.db.exists("User", DEMO_USER):
+        frappe.get_doc({
+            "doctype": "User", "email": DEMO_USER,
+            "first_name": "RevGuard Demo Viewer", "enabled": 1,
+            "user_type": "System User",
+            "roles": [{"role": "System User"}, {"role": VIEWER_ROLE}],
+        }).insert(ignore_permissions=True)
+    from frappe.utils.password import update_password
+
+    demo_password = frappe.generate_hash(length=24)
+    update_password(DEMO_USER, demo_password)
     frappe.db.commit()
     with open(OUTPUT, "w", encoding="utf-8") as fh:
-        json.dump({"api_key": api_key, "api_secret": api_secret}, fh)
+        json.dump({
+            "api_user": API_USER,
+            "api_key": api_key,
+            "api_secret": api_secret,
+            "demo_user": DEMO_USER,
+            "demo_password": demo_password,
+        }, fh)
     os.chmod(OUTPUT, 0o600)
 
     print("seeded:")
     for doctype in ("Customer", "Sales Partner", "Partner Tier History", "Contract",
                     "Sales Order", "Sales Invoice", "Payment Entry"):
         print(f"  {doctype}: {frappe.db.count(doctype)}")
-if os.getenv("REVGUARD_SEED_AUTORUN", "1") != "0":
+if __name__ == "__main__":
     main()
