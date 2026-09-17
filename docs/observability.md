@@ -21,7 +21,7 @@ Higress承担MCP发现、鉴权和路由。观测后端使用OpenTelemetry SDK �
 
 ## demo-ui 内嵌 Grafana
 
-RevGuard 0.6.0-rc2 的「可观测大屏」入口为 `http://10.10.10.202:19088/demo/?view=observability`（彩排栈）与 `http://10.10.10.202:19000/demo/?view=observability`（常驻栈），两栈复用同一块只读共享看板。这是全部案件的只读视图，支持手动刷新、全屏和独立打开。23 个面板展示 API 采集、数据库就绪、审计链、待对账操作、冻结通道、告警、请求速率、P95 延迟、资金结果恢复、服务可用性、案件状态、Agent 任务状态、ERPNext 调用与延迟、Agent 模型调用与 Token、模型超时、PostgreSQL 副本健康与复制延迟、数据库连接与锁等待、审计事件增长与 Evidence Gap、资金操作状态、冲销与恢复。指标来自实际 Prometheus 采集，业务案件仍为合成演示数据；未采集时显示缺失状态。
+RevGuard 0.6.0-rc3 的「可观测大屏」入口为 `http://10.10.10.202:19088/demo/?view=observability`（彩排栈）与 `http://10.10.10.202:19000/demo/?view=observability`（常驻栈），两栈复用同一块只读共享看板。这是全部案件的只读视图，支持手动刷新、全屏和独立打开。23 个面板展示 API 采集、数据库就绪、审计链、待对账操作、冻结通道、告警、请求速率、P95 延迟、资金结果恢复、服务可用性、案件状态、Agent 任务状态、ERPNext 调用与延迟、Agent 模型调用与 Token、模型超时、PostgreSQL 副本健康与复制延迟、数据库连接与锁等待、审计事件增长与 Evidence Gap、资金操作状态、冲销与恢复。指标来自实际 Prometheus 采集，业务案件仍为合成演示数据；未采集时显示缺失状态。
 
 页面通过同源 `/grafana/` iframe 访问唯一的 externally shared dashboard（UID `revguard-operations`）。Grafana 匿名 Viewer 登录保持关闭，管理员密码只供短时配置容器使用，不进入 API 服务或浏览器。代理仅允许该看板的公开 HTML、保存面板查询和静态资源；管理员、登录、通用数据源查询及写入接口均拒绝，浏览器的 Authorization/Cookie 不转发，Grafana Set-Cookie 不回传。共享链接本身可被持有者读取，因此该看板仅放置允许展示的演示运行指标。
 
