@@ -1,0 +1,71 @@
+{
+  "scenes": [
+    {
+      "scene": "site-home",
+      "at_seconds": 0.0,
+      "frame": 0,
+      "detail": "官网首屏"
+    },
+    {
+      "scene": "demo-case1",
+      "at_seconds": 34.1,
+      "frame": 80,
+      "detail": "彩排栈案件概览"
+    },
+    {
+      "scene": "case-selected",
+      "at_seconds": 34.1,
+      "frame": 80,
+      "detail": "CASE-2026-0001"
+    },
+    {
+      "scene": "decision-tab",
+      "at_seconds": 84.7,
+      "frame": 200,
+      "detail": "决策依据"
+    },
+    {
+      "scene": "audit-tab",
+      "at_seconds": 153.0,
+      "frame": 400,
+      "detail": "执行与审计"
+    },
+    {
+      "scene": "verify",
+      "at_seconds": 208.8,
+      "frame": 560,
+      "detail": "独立验证卡片"
+    },
+    {
+      "scene": "demo-case8",
+      "at_seconds": 243.3,
+      "frame": 664,
+      "detail": "错误恢复案件"
+    },
+    {
+      "scene": "case-selected",
+      "at_seconds": 243.3,
+      "frame": 664,
+      "detail": "CASE-2026-0008"
+    },
+    {
+      "scene": "observability",
+      "at_seconds": 295.2,
+      "frame": 784,
+      "detail": "只读大屏"
+    },
+    {
+      "scene": "replay",
+      "at_seconds": 332.4,
+      "frame": 900,
+      "detail": "公网回放页"
+    }
+  ],
+  "frames": 936,
+  "recorded_seconds": 350.6,
+  "fps": 4.0,
+  "viewport": [
+    1920,
+    1080
+  ]
+}
