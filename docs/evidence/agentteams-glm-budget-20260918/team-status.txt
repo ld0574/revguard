@@ -1,0 +1,2 @@
+NAME           PHASE   LEADER                 WORKERS                                                                                                                                                         READY
+revguard-team  Active  revguard-orchestrator  revguard-intake,revguard-evidence,revguard-policy,revguard-calculation,revguard-rootcause,revguard-risk,revguard-executor,revguard-verifier,revguard-knowledge  9/9
