@@ -1,0 +1,1 @@
+{"active": {"provider_id": "agentteams-gateway", "model": "glm-5.3-flash"}, "has_provider": true, "effective": {"max_tokens": 2048, "reasoning_effort": "low"}}

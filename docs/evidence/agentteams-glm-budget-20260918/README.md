@@ -57,3 +57,11 @@ Worker 的 `.copaw.secret/providers/custom/agentteams-gateway.json`。
   `scripts/agentteams_setup.sh` 与部署流程）。
 - `reasoning_effort=low` 只降低思考量，不关闭思考；金额、政策、权限与
   资金操作仍由确定性代码决定。
+
+## 后续复验（2026-09-18 02:46）
+
+Worker 容器重建后再次回读：10/10 生效值仍为
+`{"max_tokens": 2048, "reasoning_effort": "low"}`，4 个 Worker 的真实流式工具调用
+与工具结果续接全部返回 `MODEL_READY`。证据见
+[`../agentteams-glm-recheck-20260918/`](../agentteams-glm-recheck-20260918/README.md)，
+其中记录了"探针必须显式覆盖 `HOME`"这一踩坑。
