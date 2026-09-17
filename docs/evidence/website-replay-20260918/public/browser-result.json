@@ -1,0 +1,45 @@
+{
+  "site_url": "https://ld0574.github.io/revguard/",
+  "cases": [
+    "CASE-2026-0001",
+    "CASE-2026-0008"
+  ],
+  "checks": {
+    "首页含回放入口": {
+      "passed": true,
+      "detail": ""
+    },
+    "回放标签与索引一致": {
+      "passed": true,
+      "detail": "tabs=2 index=2"
+    },
+    "CASE-2026-0001 渲染": {
+      "passed": true,
+      "detail": "facts=8 stages=10 steps=10 trace=35 release=0.6.0-rc2"
+    },
+    "CASE-2026-0008 渲染": {
+      "passed": true,
+      "detail": "facts=8 stages=11 steps=11 trace=40 release=0.6.0-rc2"
+    },
+    "播放可推进": {
+      "passed": true,
+      "detail": "step_index=3 button=暂停"
+    },
+    "移动端无横向溢出": {
+      "passed": true,
+      "detail": "overflow=False"
+    },
+    "无失败请求": {
+      "passed": true,
+      "detail": "[]"
+    },
+    "无浏览器错误": {
+      "passed": true,
+      "detail": "[]"
+    }
+  },
+  "failed_requests": [],
+  "console": [],
+  "release": "0.6.0-rc2",
+  "passed": true
+}
