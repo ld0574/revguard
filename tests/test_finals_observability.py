@@ -59,7 +59,7 @@ class TestFinalsObservabilityContract(unittest.TestCase):
 
     def test_candidate_version_is_consistent_in_active_artifacts(self):
         metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
-        self.assertEqual(metadata["project"]["version"], "0.6.0rc2")
+        self.assertEqual(metadata["project"]["version"], "0.6.0rc3")
         for path in (
             ROOT / "Dockerfile",
             ROOT / "docker-compose.yml",
@@ -67,7 +67,7 @@ class TestFinalsObservabilityContract(unittest.TestCase):
             ROOT / "revguard/api.py",
             ROOT / "website/index.html",
         ):
-            self.assertIn("0.6.0-rc2", path.read_text(), str(path))
+            self.assertIn("0.6.0-rc3", path.read_text(), str(path))
 
     def test_public_data_summary_keeps_real_and_synthetic_layers_separate(self):
         summary = json.loads((

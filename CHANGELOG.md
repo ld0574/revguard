@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0-rc3 — 2026-09-18
+
+- 审批 = 参数承诺：规范化参数摘要同时落审批单与执行能力令牌，执行前三方比对，参数漂移即拒绝；重新授权走同一校验（`revguard/commitment.py`）。
+- 执行引用监视器：未实际读取订单/合同/佣金台账即 `EVIDENCE_GAP`，资金分录携带事实引用与折叠锚点；开关 `REVGUARD_REQUIRE_EXECUTION_REFERENCES` 默认关闭（`revguard/execution_reference.py`）。
+- Skill 三级摘要（manifest / instruction / callable）与加载期 fail-closed、运行期 `SKILL_INVOKED` 审计。
+- 身份不可自报：请求体 `actor`/`scope` 一律 422；审计主体来自服务端 Bearer Principal。
+- 真实 AgentTeams Matrix 链路：StageTask 绑定的 Worker 只读回执，真实案件 `CASE-82822305` 8/8 任务。
+- GitHub Actions 校验工作流、官网运行回放页与六项核心创新、招标差距闭合清单。
+
 ## 0.6.0-rc2 — 2026-09-17
 
 - Added a fail-closed ERPNext REST provider with authenticated receipts,

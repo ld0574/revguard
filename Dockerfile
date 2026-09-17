@@ -22,7 +22,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 
 ARG PIP_INDEX_URL=https://pypi.org/simple
 
-ARG REVGUARD_VERSION=0.6.0-rc2
+ARG REVGUARD_VERSION=0.6.0-rc3
 LABEL org.opencontainers.image.title="RevGuard" \
       org.opencontainers.image.version="$REVGUARD_VERSION"
 
