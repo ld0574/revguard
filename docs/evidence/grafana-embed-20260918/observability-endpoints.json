@@ -1,0 +1,66 @@
+{
+  "19000": {
+    "health": {
+      "status": "ok",
+      "release": "0.6.0rc2",
+      "cases": 8,
+      "ready": true,
+      "backend": "postgresql-polardb",
+      "read_replica": false,
+      "read_replica_healthy": true,
+      "read_replica_fallback": false,
+      "read_replica_reason": "NOT_CONFIGURED",
+      "maintenance": false
+    },
+    "observability": {
+      "enabled": true,
+      "available": true,
+      "embed_url": "/grafana/public-dashboards/466b289374814aaf86d3560ca683cfcc?theme=dark&kiosk",
+      "refresh_seconds": 15,
+      "scope": "all_cases"
+    }
+  },
+  "19088": {
+    "health": {
+      "status": "ok",
+      "release": "0.6.0-rc2",
+      "cases": 8,
+      "ready": true,
+      "backend": "postgresql-polardb",
+      "read_replica": true,
+      "read_replica_healthy": true,
+      "read_replica_fallback": false,
+      "read_replica_reason": "HEALTHY",
+      "maintenance": false
+    },
+    "observability": {
+      "enabled": true,
+      "available": true,
+      "embed_url": "/grafana/public-dashboards/466b289374814aaf86d3560ca683cfcc?theme=dark&kiosk",
+      "refresh_seconds": 15,
+      "scope": "all_cases"
+    }
+  },
+  "prometheus_targets": [
+    {
+      "job": "otel-collector",
+      "health": "up",
+      "scrapeUrl": "http://otel-collector:8888/metrics"
+    },
+    {
+      "job": "prometheus",
+      "health": "up",
+      "scrapeUrl": "http://localhost:9090/metrics"
+    },
+    {
+      "job": "readiness",
+      "health": "up",
+      "scrapeUrl": "http://blackbox:9115/probe?module=http_ready&target=http%3A%2F%2Frevguard-api%3A9000%2Fapi%2Fv1%2Fhealth%2Fready"
+    },
+    {
+      "job": "revguard",
+      "health": "up",
+      "scrapeUrl": "http://revguard-api:9000/api/v1/ops/metrics/prometheus"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "revguard-olist-public-rates-20260916",
+  "files": {
+    "data-dictionary.json": {
+      "bytes": 8485,
+      "sha256": "3c67ba8cf6dc7265a1cd20c19136b01ec76e459f903adde8457a0591f69ee8f8"
+    },
+    "erpnext-staging/customers.csv": {
+      "bytes": 883148,
+      "sha256": "82dd422ea64c78cbbd06c9d78c281d93c173823519b112dd92648ef67ae8e710"
+    },
+    "erpnext-staging/items.csv": {
+      "bytes": 576388,
+      "sha256": "6da756606c1c21448186fdb975811be9aa54bd957f2322840da977a35671bead"
+    },
+    "erpnext-staging/partners.csv": {
+      "bytes": 143142,
+      "sha256": "27679615c5fffe809480e3935537e53192ce96520711fb3dbb63d097e5888c84"
+    },
+    "erpnext-staging/payment_entries.csv": {
+      "bytes": 1096386,
+      "sha256": "efb956d4a2764ba521e2187a3e8b0db758c0309355bf5c85eefaffa68ad96109"
+    },
+    "erpnext-staging/sales_invoices.csv": {
+      "bytes": 985248,
+      "sha256": "d671b10b33b6d65c97ea70b1307482ebf6137d0dc4859ea66a6928b46db9666e"
+    },
+    "erpnext-staging/sales_orders.csv": {
+      "bytes": 2365020,
+      "sha256": "0570d575a2d8cb97d3e3796f6834ce2db01801ad939a51ca9f93341349f988b9"
+    },
+    "risk-cases.jsonl": {
+      "bytes": 1345984,
+      "sha256": "409e16edc263254049944a2293aee83d3bacdf6224f85ba3f178d5e12814d2d0"
+    },
+    "summary.json": {
+      "bytes": 2417,
+      "sha256": "c80abf755389a064a445ad7a965b4e3403f713631c2e6b93b5b15376dcf31e2e"
+    },
+    "synthetic-settlements.csv": {
+      "bytes": 5123934,
+      "sha256": "2832b4dc599ba085596bcc6d8279b2ae9e42f1e10f8cc4b3078a3076f0cad45a"
+    },
+    "transactions.csv": {
+      "bytes": 3610622,
+      "sha256": "ff65a2fff93e1997e9c81c11bce46cb746dc82eccf0f9db6fb391c9eeb8d2f14"
+    }
+  }
+}

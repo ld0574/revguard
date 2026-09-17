@@ -33,7 +33,7 @@ docker run --rm --user 0:0 --network revguard-dev_default \
 | 移动端 | 390×844 无横向溢出，页头改为两行不遮挡 | replay-mobile.png |
 | 资源完整性 | 无 4xx/5xx 请求、无浏览器 SEVERE 日志 | browser-result.json |
 
-浏览器检查在独立 Nginx 容器提供的 `/revguard/` 子路径下执行，与 GitHub Pages 项目站点的相对路径加载方式一致，因此同时验证了 `assets/` 与 `data/` 的相对路径。
+浏览器检查先在独立 Nginx 容器提供的 `/revguard/` 子路径下执行（与 GitHub Pages 项目站点的相对路径加载方式一致），随后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，公网结果同样 8 项全绿（见 `public/browser-result.json`）。
 
 ## 边界
 
