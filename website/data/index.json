@@ -1,0 +1,20 @@
+{
+  "schema": "revguard.replay/v1",
+  "release": "0.6.0-rc2",
+  "cases": [
+    {
+      "case_id": "CASE-2026-0001",
+      "path": "/out/case-2026-0001.json",
+      "steps": 10,
+      "spans": 35,
+      "audit_events": 88
+    },
+    {
+      "case_id": "CASE-2026-0008",
+      "path": "/out/case-2026-0008.json",
+      "steps": 11,
+      "spans": 40,
+      "audit_events": 99
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "site_url": "http://10.10.10.202:18099/revguard/",
+  "checks": {
+    "首页含回放入口": {
+      "passed": true,
+      "detail": ""
+    },
+    "CASE-0001 摘要与阶段渲染": {
+      "passed": true,
+      "detail": "facts=8 stages=10 steps=10"
+    },
+    "运行追踪表渲染": {
+      "passed": true,
+      "detail": "rows=35"
+    },
+    "切换到 CASE-0008": {
+      "passed": true,
+      "detail": "stages=11"
+    },
+    "播放可推进并暂停": {
+      "passed": true,
+      "detail": "step_index=3 button=暂停"
+    },
+    "移动端无横向溢出": {
+      "passed": true,
+      "detail": "overflow=False"
+    },
+    "无失败请求": {
+      "passed": true,
+      "detail": "[]"
+    },
+    "无浏览器错误": {
+      "passed": true,
+      "detail": "[]"
+    }
+  },
+  "failed_requests": [],
+  "console": [],
+  "passed": true
+}

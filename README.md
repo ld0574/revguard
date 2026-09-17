@@ -4,6 +4,8 @@
 
 复赛演示视频已上传 B 站：[RevGuard 面向企业渠道佣金结算异常的多智能体治理平台](https://www.bilibili.com/video/BV1fhtS6GE2y/)。
 
+项目官网与运行回放：[ld0574.github.io/revguard](https://ld0574.github.io/revguard/) · [两条案件的逐步回放](https://ld0574.github.io/revguard/replay.html)。回放数据由 `scripts/export_case_replay.py` 从真实运行记录导出，评委不必等待模型调用时间。
+
 ## 场景背景
 
 企业通常通过代理商、经销商和服务商销售产品，再按照订单、回款、合作等级和阶段政策，
@@ -262,7 +264,8 @@ revguard/
 ├── data/golden_cases/    # 8 个端到端场景
 ├── migrations/polardb/  # 核心 Schema 与可选 pgvector 迁移
 ├── docs/                 # API、Agent、PolarDB、运维、评测与报告
-├── scripts/              # seed、demo、evaluation、AgentTeams setup
+├── website/              # GitHub Pages 官网与运行回放页（纯静态）
+├── scripts/              # seed、demo、evaluation、回放导出、AgentTeams setup
 └── tests/                # 自动化测试（含需一次性 PostgreSQL 的条件测试）
 ```
 

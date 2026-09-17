@@ -1,0 +1,971 @@
+{
+  "schema": "revguard.replay/v1",
+  "generated_at": "2026-09-17T17:41:11.452458Z",
+  "release": "0.6.0-rc2",
+  "case": {
+    "case_id": "CASE-2026-0008",
+    "type": "COMMISSION_UNDERPAYMENT",
+    "status": "ROLLED_BACK",
+    "recording_id": "REC-338AC35B",
+    "state_version": "STATE-F9D126D9",
+    "order_id": "EZ202608008",
+    "partner_id": "AGT-10001",
+    "partner_name": "Nairobi Solar Solutions Ltd",
+    "currency": "KES",
+    "created_at": "2026-09-17T08:54:43.249149Z",
+    "updated_at": "2026-09-17T12:41:33.728650Z",
+    "description": "独立恢复案例：订单 EZ202608008 的受控账务写入发生 1 KES 偏差；独立核对后禁止盲目重试，按原操作创建关联冲销并再次验证净影响归零。",
+    "execution_mode": "MCP_TEAM",
+    "team_run": {
+      "status": "COMPLETED",
+      "phase": "EXECUTION",
+      "total_tasks": 18,
+      "completed_tasks": 18,
+      "workers": [
+        "取证智能体",
+        "受理智能体",
+        "执行智能体",
+        "政策智能体",
+        "根因智能体",
+        "知识智能体",
+        "计算智能体",
+        "风险智能体",
+        "验证智能体"
+      ]
+    }
+  },
+  "headline": {
+    "expected": "32,400.00 KES",
+    "posted": "18,000.00 KES",
+    "verified": "32,401.00 KES",
+    "variance": "1.00 KES",
+    "verification_status": "FAILED",
+    "approved_by": "财务负责人（演示）",
+    "approval_status": "APPROVED"
+  },
+  "run": {
+    "started_at": "2026-09-17T12:41:32.868334Z",
+    "ended_at": "2026-09-17T12:41:33.773265Z",
+    "wall_duration_ms": 257,
+    "span_count": 40
+  },
+  "steps": [
+    {
+      "stage": "intake",
+      "title": "受理佣金差异申诉",
+      "subtitle": "CASE-2026-0008",
+      "at": "2026-09-17T12:41:32.868334Z",
+      "bullets": [
+        "来源 EVALUATION · 优先级 P1",
+        "订单 EZ202608008 · 代理商 Nairobi Solar Solutions Ltd",
+        "申诉口径：台账 18,000.00 KES，声明应为 32,400.00 KES"
+      ],
+      "facts": {
+        "订单金额": "180,000.00 KES",
+        "回款": "180,000.00 KES",
+        "回款天数": "16",
+        "业务时点": "2026-07-11"
+      }
+    },
+    {
+      "stage": "evidence",
+      "title": "跨系统只读取证",
+      "subtitle": "8 条强证据",
+      "at": "2026-09-17T12:41:32.933119Z",
+      "bullets": [
+        "来源系统：erpnext, revguard-ledger, revguard-policy",
+        "每条证据都带来源系统、单据编号、内容哈希与工具回执，可逐条复核"
+      ],
+      "evidence": [
+        {
+          "id": "EV-DAF0D2F1",
+          "type": "ORDER",
+          "source": "erpnext",
+          "document": "SAL-ORD-2026-00002",
+          "provenance": "LIVE_SYSTEM",
+          "strength": "STRONG",
+          "hash": "sha256:4014a31b4e11f6c1aa042f0196d289b41268a0d1038316296285dfbd2646999a",
+          "receipt": "RCPT-F7B74BC0",
+          "provider": "erpnext",
+          "latency_ms": 11,
+          "http_status": 200,
+          "collected_at": "2026-09-17T12:41:33.038844Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-74D860EF",
+          "type": "TIER_HISTORY",
+          "source": "erpnext",
+          "document": "AGT-10001-SILVER-00001,AGT-10001-GOLD-00002",
+          "provenance": "LIVE_SYSTEM",
+          "strength": "STRONG",
+          "hash": "sha256:8d721777642c8a0fc6a858db3b0f4d1dd8832cc51fba735dd91269259a0560fd",
+          "receipt": "RCPT-D98F300A",
+          "provider": "erpnext",
+          "latency_ms": 5,
+          "http_status": 200,
+          "collected_at": "2026-09-17T12:41:33.038870Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-B76346C4",
+          "type": "CONTRACT",
+          "source": "erpnext",
+          "document": "CON-2026-00001",
+          "provenance": "LIVE_SYSTEM",
+          "strength": "STRONG",
+          "hash": "sha256:436e773743708f870faa9346840fbe7a5e2fd20b0ba10bb06d3dbab200189073",
+          "receipt": "RCPT-893B6BD6",
+          "provider": "erpnext",
+          "latency_ms": 6,
+          "http_status": 200,
+          "collected_at": "2026-09-17T12:41:33.038892Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-833EC834",
+          "type": "PAYMENT_RECORD",
+          "source": "erpnext",
+          "document": "ACC-PAY-2026-00002",
+          "provenance": "LIVE_SYSTEM",
+          "strength": "STRONG",
+          "hash": "sha256:3cf9ec8cfed6d3ac7df2d99f1fd7a9e11b70a45c99dcf8a05e87d0e6c721d021",
+          "receipt": "RCPT-9E042947",
+          "provider": "erpnext",
+          "latency_ms": 11,
+          "http_status": 200,
+          "collected_at": "2026-09-17T12:41:33.038908Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-7BD41DE9",
+          "type": "REFUND_RECORD",
+          "source": "erpnext",
+          "document": "EZ202608008",
+          "provenance": "LIVE_SYSTEM",
+          "strength": "STRONG",
+          "hash": "sha256:670dd9637a85833f06cf1c687076caa5557c4457130e83f02db3da670be30fc7",
+          "receipt": "RCPT-AF3114C9",
+          "provider": "erpnext",
+          "latency_ms": 11,
+          "http_status": 200,
+          "collected_at": "2026-09-17T12:41:33.038920Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-5AD6B638",
+          "type": "INVOICE",
+          "source": "erpnext",
+          "document": "ACC-SINV-2026-00002",
+          "provenance": "LIVE_SYSTEM",
+          "strength": "STRONG",
+          "hash": "sha256:e9a2011c05cf454babea62c135a96f7305b7dcb76f62561655d005b1340e0760",
+          "receipt": "RCPT-934989A3",
+          "provider": "erpnext",
+          "latency_ms": 11,
+          "http_status": 200,
+          "collected_at": "2026-09-17T12:41:33.038933Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-C1349A93",
+          "type": "COMMISSION_LEDGER",
+          "source": "revguard-ledger",
+          "document": "EZ202608008",
+          "provenance": "SYSTEM_GENERATED",
+          "strength": "STRONG",
+          "hash": "sha256:484e8eb9f8fd00a1ef95245a205a87073eabcb32f249b8540c7ec2de70dc150c",
+          "receipt": "RCPT-C13FD73C",
+          "provider": "revguard-ledger",
+          "latency_ms": 0,
+          "http_status": null,
+          "collected_at": "2026-09-17T12:41:33.038950Z",
+          "collected_by": "取证智能体"
+        },
+        {
+          "id": "EV-D08265D1",
+          "type": "POLICY_VERSIONS",
+          "source": "revguard-policy",
+          "document": "KE-COMMISSION-2026",
+          "provenance": "SYNTHETIC_DOMAIN",
+          "strength": "STRONG",
+          "hash": "sha256:a5d8940e992f3b49407ce01744b15deb2bb9e449eadcb255f7a4013301cb9994",
+          "receipt": "RCPT-C5AAC64D",
+          "provider": "revguard-policy",
+          "latency_ms": 0,
+          "http_status": null,
+          "collected_at": "2026-09-17T12:41:33.046413Z",
+          "collected_by": "取证智能体"
+        }
+      ]
+    },
+    {
+      "stage": "policy",
+      "title": "按业务时点回溯政策版本",
+      "subtitle": "2026-Q3",
+      "at": "2026-09-17T12:41:33.080983Z",
+      "bullets": [
+        "业务时点 2026-07-11，时点依据 order_date",
+        "采用 KE-COMMISSION-2026 / 2026-Q3，置信度 1.0",
+        "排除 2 个不覆盖业务时点的历史版本"
+      ],
+      "policy": {
+        "排除版本": [
+          "2026-Q1（有效期 2026-01-01~2026-03-31 不覆盖业务时点 2026-07-11）",
+          "2026-Q2（有效期 2026-04-01~2026-06-30 不覆盖业务时点 2026-07-11）"
+        ],
+        "引用条款": [
+          "GOLD 级代理商销售佣金按订单金额 15% 计算",
+          "SILVER 级代理商销售佣金按订单金额 8% 计算",
+          "BRONZE 级代理商销售佣金按订单金额 5% 计算",
+          "订单完成后 30 天内回款的，按回款金额 3% 计回款佣金",
+          "代理商当月完成订单满 20 笔的，按订单金额 2% 计月度激励"
+        ],
+        "等级解析": "GOLD（生效 2026-06-01）"
+      }
+    },
+    {
+      "stage": "calculation",
+      "title": "确定性金额内核复算",
+      "subtitle": "32,400.00 KES",
+      "at": "2026-09-17T12:41:33.130974Z",
+      "bullets": [
+        "合计应付佣金 32,400.00 KES，台账 18,000.00 KES",
+        "取整规则 scale=2,mode=HALF_UP，金额与政策规则分离于模型之外",
+        "计算哈希 sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317"
+      ],
+      "components": [
+        {
+          "name": "销售佣金",
+          "amount": "27,000.00 KES",
+          "applied": true
+        },
+        {
+          "name": "销售佣金",
+          "amount": "0.00 KES",
+          "applied": false
+        },
+        {
+          "name": "销售佣金",
+          "amount": "0.00 KES",
+          "applied": false
+        },
+        {
+          "name": "回款佣金",
+          "amount": "5,400.00 KES",
+          "applied": true
+        },
+        {
+          "name": "月度激励",
+          "amount": "0.00 KES",
+          "applied": false
+        }
+      ]
+    },
+    {
+      "stage": "rootcause",
+      "title": "解释差异根因",
+      "subtitle": "MISSING_COMPONENT、WRONG_POLICY_VERSION",
+      "at": "2026-09-17T12:41:33.161855Z",
+      "bullets": [
+        "总差额 14,400.00 KES",
+        "根因 MISSING_COMPONENT, WRONG_POLICY_VERSION，置信度 1.0"
+      ],
+      "diffs": [
+        {
+          "component": "销售佣金",
+          "posted": "18,000.00 KES",
+          "expected": "27,000.00 KES",
+          "delta": "9,000.00 KES"
+        },
+        {
+          "component": "回款佣金",
+          "posted": "0.00 KES",
+          "expected": "5,400.00 KES",
+          "delta": "5,400.00 KES"
+        }
+      ]
+    },
+    {
+      "stage": "risk",
+      "title": "风险分级与审批路由",
+      "subtitle": "L2",
+      "at": "2026-09-17T12:41:33.191540Z",
+      "bullets": [
+        "风险等级 L2，原因码 REQUIRES_HUMAN_APPROVAL",
+        "审批角色 FINANCE_LEAD，执行约束 max_amount=50,000.00 KES",
+        "风险策略只决定边界，不参与金额计算"
+      ]
+    },
+    {
+      "stage": "approval",
+      "title": "真人在线审批",
+      "subtitle": "APPROVED",
+      "at": "2026-09-17T12:41:33.363976Z",
+      "bullets": [
+        "审批人 财务负责人（演示）（FINANCE_LEAD），身份认证方式 matrix-password",
+        "认证时间 2026-09-17T12:41:33Z",
+        "批准金额上限 14,400.00 KES，审批单 APR-9AC86340",
+        "Matrix 事件哈希 sha256:5976198996355d3a，身份断言 sha256:db2bc6d03447d5ae"
+      ],
+      "quota": [
+        {
+          "component": "销售佣金",
+          "limit": "9,000.00 KES"
+        },
+        {
+          "component": "回款佣金",
+          "limit": "5,400.00 KES"
+        }
+      ],
+      "comment": "9·21 决赛彩排：真人在线审批（Admin）",
+      "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION"
+    },
+    {
+      "stage": "execution",
+      "title": "受控执行写入资金台账",
+      "subtitle": "2 笔操作",
+      "at": "2026-09-17T12:41:33.388840Z",
+      "bullets": [
+        "执行前校验权限范围与幂等键，写入使用一次性的短时能力令牌",
+        "每笔操作保留操作 ID、幂等键与写入前后台账快照"
+      ],
+      "executions": [
+        {
+          "action_id": "ACT-4B6C400D",
+          "component": "销售佣金",
+          "action_type": "LEDGER_ADJUST",
+          "amount": "9,000.00 KES",
+          "status": "ROLLED_BACK",
+          "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317",
+          "idempotency_key": "CASE-2026-0008:SALES_COMMISSION",
+          "ledger_status": "POSTED",
+          "before": [
+            {
+              "amount": "18000.00",
+              "source": "BATCH-CALC-2026-07",
+              "status": "POSTED",
+              "comment": "独立恢复案例基线（误用 2026-Q2 版本）",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "SALES_COMMISSION",
+              "ledger_id": "LED-50008",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "policy_version": "2026-Q2"
+            }
+          ],
+          "after": [
+            {
+              "amount": "18000.00",
+              "source": "BATCH-CALC-2026-07",
+              "status": "POSTED",
+              "comment": "独立恢复案例基线（误用 2026-Q2 版本）",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "SALES_COMMISSION",
+              "ledger_id": "LED-50008",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "policy_version": "2026-Q2"
+            },
+            {
+              "amount": "9001.00",
+              "source": "REVGUARD:CASE-2026-0008",
+              "status": "POSTED",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "SALES_COMMISSION",
+              "ledger_id": "LED-FC9E5E92",
+              "posted_at": "2026-09-17T12:41:33.555291Z",
+              "policy_version": "2026-Q3"
+            }
+          ]
+        },
+        {
+          "action_id": "ACT-2C5D4A1F",
+          "component": "回款佣金",
+          "action_type": "LEDGER_ADJUST",
+          "amount": "5,400.00 KES",
+          "status": "ROLLED_BACK",
+          "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317",
+          "idempotency_key": "CASE-2026-0008:COLLECTION_COMMISSION",
+          "ledger_status": "POSTED",
+          "before": [
+            {
+              "amount": "18000.00",
+              "source": "BATCH-CALC-2026-07",
+              "status": "POSTED",
+              "comment": "独立恢复案例基线（误用 2026-Q2 版本）",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "SALES_COMMISSION",
+              "ledger_id": "LED-50008",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "policy_version": "2026-Q2"
+            }
+          ],
+          "after": [
+            {
+              "amount": "18000.00",
+              "source": "BATCH-CALC-2026-07",
+              "status": "POSTED",
+              "comment": "独立恢复案例基线（误用 2026-Q2 版本）",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "SALES_COMMISSION",
+              "ledger_id": "LED-50008",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "policy_version": "2026-Q2"
+            },
+            {
+              "amount": "9001.00",
+              "source": "REVGUARD:CASE-2026-0008",
+              "status": "POSTED",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "SALES_COMMISSION",
+              "ledger_id": "LED-FC9E5E92",
+              "posted_at": "2026-09-17T12:41:33.555291Z",
+              "policy_version": "2026-Q3"
+            },
+            {
+              "amount": "5400.00",
+              "source": "REVGUARD:CASE-2026-0008",
+              "status": "POSTED",
+              "currency": "KES",
+              "order_id": "EZ202608008",
+              "component": "COLLECTION_COMMISSION",
+              "ledger_id": "LED-7F10EF6D",
+              "posted_at": "2026-09-17T12:41:33.555415Z",
+              "policy_version": "2026-Q3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "verification",
+      "title": "独立主体复核",
+      "subtitle": "FAILED",
+      "at": "2026-09-17T12:41:33.600840Z",
+      "bullets": [
+        "复核读取到的台账金额 32,401.00 KES，预期 32,400.00 KES",
+        "差异 1.00 KES，是否需要回滚：是",
+        "复核由独立验证智能体发起，不复用执行阶段的会话"
+      ],
+      "checks": [
+        {
+          "component": "销售佣金",
+          "expected": "27,000.00 KES",
+          "actual": "27,001.00 KES",
+          "passed": false
+        },
+        {
+          "component": "回款佣金",
+          "expected": "5,400.00 KES",
+          "actual": "5,400.00 KES",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "stage": "recovery",
+      "title": "冲销与恢复复核",
+      "subtitle": "PASSED",
+      "at": "2026-09-17T12:41:33.658207Z",
+      "bullets": [
+        "发现偏差后不直接重试，保留原操作 ID CASE-2026-0008:compensation",
+        "冲销分录 2 条，与原操作关联",
+        "恢复后复核结论 PASSED，运输方式 mcp"
+      ],
+      "checks": [
+        {
+          "component": "回款佣金",
+          "expected": "0.00 KES",
+          "actual": "0.00 KES",
+          "passed": true
+        },
+        {
+          "component": "销售佣金",
+          "expected": "18,000.00 KES",
+          "actual": "18,000.00 KES",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "stage": "closing",
+      "title": "终态与审计留痕",
+      "subtitle": "ROLLED_BACK",
+      "at": "2026-09-17T12:41:33.746918Z",
+      "bullets": [
+        "案件终态 ROLLED_BACK，状态版本 STATE-F9D126D9",
+        "本案件审计事件 99 条，记录编号 REC-338AC35B",
+        "审计链按顺序追加，任何一条被改动都会破坏后续哈希"
+      ]
+    }
+  ],
+  "trace": {
+    "span_count": 40,
+    "wall_duration_ms": 257,
+    "spans": [
+      {
+        "sequence": 1,
+        "kind": "SKILL",
+        "name": "CaseNormalizeSkill",
+        "label": "整理案件信息",
+        "actor": "受理智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:32.868334Z",
+        "stage": "intake"
+      },
+      {
+        "sequence": 2,
+        "kind": "SKILL",
+        "name": "EntityResolveSkill",
+        "label": "匹配代理商与订单",
+        "actor": "受理智能体",
+        "status": "OK",
+        "duration_ms": 13,
+        "started_at": "2026-09-17T12:41:32.893529Z",
+        "stage": "intake"
+      },
+      {
+        "sequence": 3,
+        "kind": "TOOL",
+        "name": "crm.get_partner",
+        "label": "crm.get_partner",
+        "actor": "受理智能体",
+        "status": "OK",
+        "duration_ms": 12,
+        "started_at": "2026-09-17T12:41:32.893615Z",
+        "stage": null
+      },
+      {
+        "sequence": 4,
+        "kind": "SKILL",
+        "name": "EvidenceCollectSkill",
+        "label": "收集跨系统证据",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 113,
+        "started_at": "2026-09-17T12:41:32.933119Z",
+        "stage": "evidence"
+      },
+      {
+        "sequence": 5,
+        "kind": "TOOL",
+        "name": "crm.get_order",
+        "label": "crm.get_order",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 17,
+        "started_at": "2026-09-17T12:41:32.933546Z",
+        "stage": null
+      },
+      {
+        "sequence": 6,
+        "kind": "TOOL",
+        "name": "crm.get_partner_tier_history",
+        "label": "crm.get_partner_tier_history",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 29,
+        "started_at": "2026-09-17T12:41:32.933851Z",
+        "stage": null
+      },
+      {
+        "sequence": 7,
+        "kind": "TOOL",
+        "name": "contract.get_contract",
+        "label": "contract.get_contract",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 42,
+        "started_at": "2026-09-17T12:41:32.934112Z",
+        "stage": null
+      },
+      {
+        "sequence": 8,
+        "kind": "TOOL",
+        "name": "finance.get_payment",
+        "label": "finance.get_payment",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 59,
+        "started_at": "2026-09-17T12:41:32.934365Z",
+        "stage": null
+      },
+      {
+        "sequence": 9,
+        "kind": "TOOL",
+        "name": "finance.get_refund",
+        "label": "finance.get_refund",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 77,
+        "started_at": "2026-09-17T12:41:32.934651Z",
+        "stage": null
+      },
+      {
+        "sequence": 10,
+        "kind": "TOOL",
+        "name": "finance.get_invoice",
+        "label": "finance.get_invoice",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 95,
+        "started_at": "2026-09-17T12:41:32.934993Z",
+        "stage": null
+      },
+      {
+        "sequence": 11,
+        "kind": "TOOL",
+        "name": "finance.get_commission_ledger",
+        "label": "finance.get_commission_ledger",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 102,
+        "started_at": "2026-09-17T12:41:32.935233Z",
+        "stage": null
+      },
+      {
+        "sequence": 12,
+        "kind": "TOOL",
+        "name": "policy.search_versions",
+        "label": "policy.search_versions",
+        "actor": "取证智能体",
+        "status": "OK",
+        "duration_ms": 4,
+        "started_at": "2026-09-17T12:41:33.039795Z",
+        "stage": null
+      },
+      {
+        "sequence": 13,
+        "kind": "SKILL",
+        "name": "PolicyVersionMatchSkill",
+        "label": "匹配业务时点政策",
+        "actor": "政策智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.080983Z",
+        "stage": "policy"
+      },
+      {
+        "sequence": 14,
+        "kind": "TOOL",
+        "name": "crm.list_orders_by_partner",
+        "label": "crm.list_orders_by_partner",
+        "actor": "计算智能体",
+        "status": "OK",
+        "duration_ms": 15,
+        "started_at": "2026-09-17T12:41:33.100111Z",
+        "stage": null
+      },
+      {
+        "sequence": 15,
+        "kind": "SKILL",
+        "name": "CommissionCalculateSkill",
+        "label": "重新计算应付佣金",
+        "actor": "计算智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.130974Z",
+        "stage": "calculation"
+      },
+      {
+        "sequence": 16,
+        "kind": "SKILL",
+        "name": "DifferenceExplainSkill",
+        "label": "分析佣金差异原因",
+        "actor": "根因智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.161855Z",
+        "stage": "rootcause"
+      },
+      {
+        "sequence": 17,
+        "kind": "SKILL",
+        "name": "RiskClassifySkill",
+        "label": "判断案件风险等级",
+        "actor": "风险智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.191540Z",
+        "stage": "risk"
+      },
+      {
+        "sequence": 18,
+        "kind": "SKILL",
+        "name": "ApprovalRouteSkill",
+        "label": "确定审批流程",
+        "actor": "风险智能体",
+        "status": "OK",
+        "duration_ms": 6,
+        "started_at": "2026-09-17T12:41:33.217164Z",
+        "stage": "risk"
+      },
+      {
+        "sequence": 19,
+        "kind": "TOOL",
+        "name": "workflow.create_approval",
+        "label": "workflow.create_approval",
+        "actor": "风险智能体",
+        "status": "OK",
+        "duration_ms": 5,
+        "started_at": "2026-09-17T12:41:33.217263Z",
+        "stage": null
+      },
+      {
+        "sequence": 20,
+        "kind": "APPROVAL",
+        "name": "HumanIdentityVerification",
+        "label": "验证真人身份",
+        "actor": "human-identity-provider",
+        "status": "OK",
+        "duration_ms": 26,
+        "started_at": "2026-09-17T12:41:33.291224Z",
+        "stage": null
+      },
+      {
+        "sequence": 21,
+        "kind": "APPROVAL",
+        "name": "HumanApprovalGate",
+        "label": "人工审批门禁",
+        "actor": "finance.lead",
+        "status": "OK",
+        "duration_ms": 7,
+        "started_at": "2026-09-17T12:41:33.359543Z",
+        "stage": null
+      },
+      {
+        "sequence": 22,
+        "kind": "SKILL",
+        "name": "PermissionCheckSkill",
+        "label": "检查执行权限",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.388840Z",
+        "stage": "execution"
+      },
+      {
+        "sequence": 23,
+        "kind": "SKILL",
+        "name": "IdempotencyGuardSkill",
+        "label": "防止重复执行",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.416884Z",
+        "stage": "execution"
+      },
+      {
+        "sequence": 24,
+        "kind": "SKILL",
+        "name": "AdjustmentDraftSkill",
+        "label": "生成佣金调整草稿",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 6,
+        "started_at": "2026-09-17T12:41:33.445449Z",
+        "stage": "execution"
+      },
+      {
+        "sequence": 25,
+        "kind": "TOOL",
+        "name": "commission.create_adjustment_draft",
+        "label": "commission.create_adjustment_draft",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 5,
+        "started_at": "2026-09-17T12:41:33.445606Z",
+        "stage": null
+      },
+      {
+        "sequence": 26,
+        "kind": "SKILL",
+        "name": "IdempotencyGuardSkill",
+        "label": "防止重复执行",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.480763Z",
+        "stage": "execution"
+      },
+      {
+        "sequence": 27,
+        "kind": "SKILL",
+        "name": "AdjustmentDraftSkill",
+        "label": "生成佣金调整草稿",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 12,
+        "started_at": "2026-09-17T12:41:33.505590Z",
+        "stage": "execution"
+      },
+      {
+        "sequence": 28,
+        "kind": "TOOL",
+        "name": "commission.create_adjustment_draft",
+        "label": "commission.create_adjustment_draft",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 11,
+        "started_at": "2026-09-17T12:41:33.505704Z",
+        "stage": null
+      },
+      {
+        "sequence": 29,
+        "kind": "SKILL",
+        "name": "LedgerAdjustSkill",
+        "label": "更新佣金台账",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 13,
+        "started_at": "2026-09-17T12:41:33.548190Z",
+        "stage": "execution"
+      },
+      {
+        "sequence": 30,
+        "kind": "TOOL",
+        "name": "commission.submit_adjustment",
+        "label": "commission.submit_adjustment",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 12,
+        "started_at": "2026-09-17T12:41:33.548316Z",
+        "stage": null
+      },
+      {
+        "sequence": 31,
+        "kind": "SKILL",
+        "name": "PostActionVerifySkill",
+        "label": "独立核验调整结果",
+        "actor": "验证智能体",
+        "status": "OK",
+        "duration_ms": 15,
+        "started_at": "2026-09-17T12:41:33.600840Z",
+        "stage": "verification"
+      },
+      {
+        "sequence": 32,
+        "kind": "TOOL",
+        "name": "finance.get_commission_ledger",
+        "label": "finance.get_commission_ledger",
+        "actor": "验证智能体",
+        "status": "OK",
+        "duration_ms": 5,
+        "started_at": "2026-09-17T12:41:33.600963Z",
+        "stage": null
+      },
+      {
+        "sequence": 33,
+        "kind": "TOOL",
+        "name": "finance.get_commission_ledger",
+        "label": "finance.get_commission_ledger",
+        "actor": "验证智能体",
+        "status": "OK",
+        "duration_ms": 6,
+        "started_at": "2026-09-17T12:41:33.608313Z",
+        "stage": null
+      },
+      {
+        "sequence": 34,
+        "kind": "SKILL",
+        "name": "LedgerReverseSkill",
+        "label": "冲销佣金调整",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 15,
+        "started_at": "2026-09-17T12:41:33.658207Z",
+        "stage": "recovery"
+      },
+      {
+        "sequence": 35,
+        "kind": "TOOL",
+        "name": "commission.reverse_adjustment",
+        "label": "commission.reverse_adjustment",
+        "actor": "执行智能体",
+        "status": "OK",
+        "duration_ms": 14,
+        "started_at": "2026-09-17T12:41:33.658330Z",
+        "stage": null
+      },
+      {
+        "sequence": 36,
+        "kind": "SKILL",
+        "name": "PostRollbackVerifySkill",
+        "label": "复核回滚结果",
+        "actor": "验证智能体",
+        "status": "OK",
+        "duration_ms": 8,
+        "started_at": "2026-09-17T12:41:33.706526Z",
+        "stage": "recovery"
+      },
+      {
+        "sequence": 37,
+        "kind": "TOOL",
+        "name": "finance.get_commission_ledger",
+        "label": "finance.get_commission_ledger",
+        "actor": "验证智能体",
+        "status": "OK",
+        "duration_ms": 6,
+        "started_at": "2026-09-17T12:41:33.706633Z",
+        "stage": null
+      },
+      {
+        "sequence": 38,
+        "kind": "SKILL",
+        "name": "CaseToDatasetSkill",
+        "label": "归档案件经验",
+        "actor": "知识智能体",
+        "status": "OK",
+        "duration_ms": 0,
+        "started_at": "2026-09-17T12:41:33.746918Z",
+        "stage": "closing"
+      },
+      {
+        "sequence": 39,
+        "kind": "TOOL",
+        "name": "mail.create_reply_draft",
+        "label": "mail.create_reply_draft",
+        "actor": "知识智能体",
+        "status": "OK",
+        "duration_ms": 4,
+        "started_at": "2026-09-17T12:41:33.762585Z",
+        "stage": null
+      },
+      {
+        "sequence": 40,
+        "kind": "TOOL",
+        "name": "ticket.update_case",
+        "label": "ticket.update_case",
+        "actor": "知识智能体",
+        "status": "OK",
+        "duration_ms": 4,
+        "started_at": "2026-09-17T12:41:33.768510Z",
+        "stage": null
+      }
+    ]
+  },
+  "audit": {
+    "count": 99,
+    "first_seq": 123,
+    "last_seq": 221,
+    "head_hash": "b7b5f8ae11b669f40f0bef4d5d5a6f6fd6810227358125457502b0b37accdbdb",
+    "chain_ok": true
+  },
+  "provenance": {
+    "snapshot_sha256": "sha256:f40b1b3d1ab83bd1182db632dcacca710d9ca05e5342cbbe54e4aa592ce556f3",
+    "health_release": "0.6.0-rc2",
+    "read_replica": true,
+    "backend": "postgresql-polardb"
+  },
+  "disclosure": {
+    "business_data": "synthetic",
+    "workflow": "real_executable",
+    "ledger": "simulated"
+  }
+}
