@@ -1,0 +1,119 @@
+{
+  "probe": "execution-reference-monitor",
+  "generated_at": "2026-09-17T19:11:04.650133+00:00",
+  "python": "3.11.16",
+  "results": [
+    {
+      "scenario": "missing_reads_blocked",
+      "expectation": "EVIDENCE_GAP：未读取必备事实槽位 ORDER / CONTRACT / COMMISSION_LEDGER，台账无写入",
+      "observed": {
+        "error": {
+          "type": "EVIDENCE_GAP",
+          "message": "[EVIDENCE_GAP] 执行缺少事实引用：未读取必备事实槽位 ORDER；未读取必备事实槽位 CONTRACT；未读取必备事实槽位 COMMISSION_LEDGER",
+          "retryable": false
+        },
+        "ledger_written": false
+      },
+      "passed": true
+    },
+    {
+      "scenario": "fact_bound_references",
+      "expectation": "执行成功，分录携带 3 条 FACT_BOUND 引用与可复算锚点",
+      "observed": {
+        "success": true,
+        "references": [
+          {
+            "slot": "ORDER",
+            "tool_name": "crm.get_order",
+            "tool_receipt": "RCPT-3EA31A48",
+            "actor": "revguard-evidence",
+            "called_at": "2026-09-17T19:11:04.639462Z",
+            "binding": "FACT_BOUND",
+            "binding_key": "order_id",
+            "binding_value": "EZ202608001",
+            "fact_digest": "sha256:54a741652c8b6e86ac8fcb0c8eabae6d6c65651a94b0c7cbfcd6b08a5d1e5897",
+            "reference_keys": {
+              "order_id": "EZ202608001",
+              "partner_id": "AGT-10001",
+              "currency": "KES"
+            }
+          },
+          {
+            "slot": "CONTRACT",
+            "tool_name": "contract.get_contract",
+            "tool_receipt": "RCPT-16C4BAFB",
+            "actor": "revguard-evidence",
+            "called_at": "2026-09-17T19:11:04.639600Z",
+            "binding": "FACT_BOUND",
+            "binding_key": "partner_id",
+            "binding_value": "AGT-10001",
+            "fact_digest": "sha256:faae19846969d0ca62c731b9568f55231f1dfc30fddd54f2086b93cfaf5a4a07",
+            "reference_keys": {
+              "partner_id": "AGT-10001"
+            }
+          },
+          {
+            "slot": "COMMISSION_LEDGER",
+            "tool_name": "finance.get_commission_ledger",
+            "tool_receipt": "RCPT-78C76FCC",
+            "actor": "revguard-evidence",
+            "called_at": "2026-09-17T19:11:04.639750Z",
+            "binding": "FACT_BOUND",
+            "binding_key": "order_id",
+            "binding_value": "EZ202608001",
+            "fact_digest": "sha256:294c72859b146bacac5956284d1929429f9275bf116934d76e9adf53d40441d2",
+            "reference_keys": {
+              "order_id": "EZ202608001"
+            }
+          }
+        ],
+        "reference_anchor": "sha256:edc9f7edb30b1e7f8cadf00536ada6bf77cf0d97507540ec07256106730a830a"
+      },
+      "passed": true
+    },
+    {
+      "scenario": "foreign_order_rejected",
+      "expectation": "读了别的订单也不能授权：EVIDENCE_GAP，台账无写入",
+      "observed": {
+        "error": {
+          "type": "EVIDENCE_GAP",
+          "message": "[EVIDENCE_GAP] 执行缺少事实引用：事实引用与执行依据不一致：ORDER；事实引用与执行依据不一致：CONTRACT；事实引用与执行依据不一致：COMMISSION_LEDGER",
+          "retryable": false
+        },
+        "ledger_written": false
+      },
+      "passed": true
+    },
+    {
+      "scenario": "legacy_receipts_case_only",
+      "expectation": "监视器上线前的历史回执（无事实摘要）允许执行，但标注为 CASE_ONLY 弱绑定",
+      "observed": {
+        "success": true,
+        "bindings": [
+          "CASE_ONLY",
+          "CASE_ONLY",
+          "CASE_ONLY"
+        ],
+        "fact_digests": [
+          null,
+          null,
+          null
+        ]
+      },
+      "passed": true
+    },
+    {
+      "scenario": "monitor_off_control",
+      "expectation": "关闭监视器时保持历史行为（默认关闭，演示栈显式打开）",
+      "observed": {
+        "success": true,
+        "execution_references": [],
+        "reference_anchor": null
+      },
+      "passed": true
+    }
+  ],
+  "passed": true
+}
+
+执行引用监视器探针：5/5 通过

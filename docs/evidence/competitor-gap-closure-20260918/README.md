@@ -24,7 +24,7 @@
 | Skill 三级摘要（manifest / instruction / callable） | ✅ | `revguard/skill_integrity.py`、基线 `config/skill-integrity.json`、`scripts/gen_skill_integrity.py --check`、加载期 fail-closed（API/MCP 启动）、运行期写入 `SKILL_INVOKED`；`tests/test_skill_integrity.py` 10 项；CI 步骤之一 |
 | 样例数据 + 一条命令起全套 | ✅ | `bash scripts/deploy_demo.sh --local`（SQLite + 进程内团队）/ `--full`（PolarDB + Matrix + 10 Agent），见 `README.md` 一键复现 |
 | 审批 = 参数承诺（`SHA-256(canonical_json(...))`，参数漂移即失效） | ✅ | `revguard/commitment.py` + `docs/evidence/approval-commitment-20260918/`：摘要同时落审批单与能力令牌，执行时三方比对（审批单 / 令牌 / 重算），金额定点化；重新授权走同一校验；对抗探针 5/5 通过（`scripts/approval_commitment_probe.py`），单测 `tests/test_risk_and_mocks.py` 4 项 |
-| 执行依赖来自实际读取（金额结论绑定实际读取过的事实 slot） | ⚠️ OPEN | 取证链路已保存工具回执与证据缺口；尚未实现"未读取即不可引用"的执行引用监视器 |
+| 执行依赖来自实际读取（金额结论绑定实际读取过的事实 slot） | ✅ | `revguard/execution_reference.py` + `docs/execution-reference-monitor.md`：读取时回执写事实摘要与绑定键，执行前校验 ORDER/CONTRACT/COMMISSION_LEDGER 三槽位，缺读取或跨订单即 `EVIDENCE_GAP` 零写入，分录携带 `execution_references` 与 `reference_anchor`；探针 5/5（`scripts/execution_reference_probe.py`），单测 `tests/test_execution_reference.py` 5 项；`REVGUARD_REQUIRE_EXECUTION_REFERENCES` 默认关闭，演示栈显式打开 |
 
 ## 本轮新增的运行链路证据（非竞品项）
 
@@ -35,6 +35,7 @@
   （10/10 Worker 生效 `max_tokens=2048 + reasoning_effort=low`，4/4 真实工具调用探针 `MODEL_READY`）。
 - 官网运行回放页验收：`docs/evidence/website-replay-20260918/`（CASE-0001/CASE-0008 浏览器回放、移动端、子路径资源）。
 - 审批参数承诺对抗验证：`docs/evidence/approval-commitment-20260918/`（5 场景探针 + JSON 机器可读结果）。
+- 执行引用监视器对抗验证：`docs/evidence/execution-reference-20260918/`（5 场景探针 + JSON 机器可读结果）。
 
 ## 复核方式
 
@@ -44,4 +45,6 @@ python3 -m unittest tests.test_skill_integrity -v  # 摘要与审计落点
 python3 -m unittest tests.test_api -v              # 身份不可自报
 python3 scripts/approval_commitment_probe.py       # 审批参数承诺（5 场景，失败非零退出）
 python3 -m unittest tests.test_risk_and_mocks -v   # 承诺 / 幂等 / 故障恢复契约
+python3 scripts/execution_reference_probe.py       # 执行引用监视器（5 场景，失败非零退出）
+python3 -m unittest tests.test_execution_reference -v  # 未读取即不可执行
 ```
