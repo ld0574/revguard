@@ -61,6 +61,7 @@ openapi:
 generated-check:
 	$(VENV_PYTHON) scripts/gen_skill_docs.py --check
 	$(VENV_PYTHON) scripts/export_openapi.py --check
+	$(VENV_PYTHON) scripts/check_changelog.py
 	$(VENV_PYTHON) scripts/validate_evaluation_snapshot.py
 	$(VENV_PYTHON) scripts/validate_synthetic_dataset.py \
 		--check docs/synthetic-data-validation.json

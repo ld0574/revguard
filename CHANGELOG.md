@@ -5,6 +5,7 @@
 - 修复录制代次缺陷：注入的写后偏差（`REVGUARD_POSTING_TAMPER_*`）从全局一次性开关改为按案件记录消费状态，单案重新准备（`POST /api/v1/cases/{id}/reprepare`）会为新代次重新武装该案，不再出现第二次录制静默退化为正常结案、冲销与恢复演示消失；回归用例 `tests/test_api.py::test_15z_*`（`revguard/mocks.py`）。
 - 评测快照在 10.10.10.202 Docker（Linux / Python 3.11）重跑：105/105 确定性场景与 7 路并行基准数字刷新，`scripts/validate_evaluation_snapshot.py` 校验通过（`docs/evaluation-summary.json`）。
 - 发布门禁扩展：官网回放索引与数据包一致（`scripts/check_website_replay.py`，接入 `checks.yml`）、候选版本号必须在 CHANGELOG 与导出 OpenAPI 中同时出现。
+- 发布门禁再扩展：新增 `scripts/check_changelog.py`，机读 CHANGELOG 结构（Unreleased 首节、`## <版本> — YYYY-MM-DD`、版本唯一且严格降序），并要求包版本 = CHANGELOG 最新发布条目 = 导出 OpenAPI 版本，打 tag 时再校验 tag 与包版本一致；负例用例见 `tests/test_changelog.py`。
 - AgentTeams Manager glm-5.3-flash 生成预算修复：重建 Manager 镜像，使 bridge 重新投影 provider 时保持 `max_tokens=2048` + `reasoning_effort=low`；预算脚本新增 Manager 目标（端口 18799），新增从 `docker inspect` 原样重建 Manager 容器的脚本（证据 `docs/evidence/agentteams-manager-glm-20260918/`）。
 
 ## 0.6.0-rc3 — 2026-09-18
@@ -30,6 +31,14 @@
   database waits, evidence gaps and money recovery.
 - Added the static GitHub Pages site, adapter documentation, contribution and
   security policies, release evidence and finals presentation assets.
+
+## 0.6.0-rc1 — 2026-09-17
+
+- 决赛候选版首发：ERPNext REST 只读取证接入、Adapter Provider Registry 与
+  证据来源标签（`PUBLIC_REAL` / `SYNTHETIC_DOMAIN` / `LIVE_SYSTEM` / `SYSTEM_GENERATED`）。
+- CASE-2026-0001 正常闭环与 CASE-2026-0008 冲销恢复拆成两条独立运行记录。
+- 10,000 行 Olist 公开真实交易实验、公开费用规则快照与受控异常注入。
+- 口径统一（真实系统 / 真实调用 / 无企业生产数据）、官网首版与验收工具。
 
 ## 0.5.10 — 2026-09-12
 
