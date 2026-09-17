@@ -722,20 +722,8 @@ class MatrixTeamRunner(McpTeamRunner):
         adapter_command = " ".join(shlex.quote(item) for item in [
             "python3",
             f"/root/.copaw-worker/{actor}/skills/revguard-api/scripts/revguard_call.py",
-            "--skill", skill_name,
             "--task-id", task["task_id"],
-            "--case-id", case["case_id"],
-            "--input", json.dumps(
-                skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
-            ),
-            # Matrix event ids are untrusted random text.  Passing them raw
-            # through a Worker shell command can accidentally match CoPaw's
-            # command guard (for example an id ending in "-SU").  Hex keeps
-            # the argument shell/tool-guard safe; the adapter restores the
-            # exact event id before sending the correlation header.
-            "--message-id-hex", dispatch_event_id.encode("utf-8").hex(),
-            "--request-id", request_id,
-            "--traceparent", otel.carrier().get("traceparent", ""),
+            "--from-task",
         ])
         trigger_body = (
             f"{worker_mxid}\n"

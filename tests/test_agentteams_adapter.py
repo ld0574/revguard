@@ -128,6 +128,43 @@ class TestAgentTeamsAdapter(unittest.TestCase):
         invoke.assert_called_once()
         secret.assert_not_called()
 
+    def test_from_task_fetches_server_bound_payload_before_mcp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            secret = Path(tmp) / "key"
+            secret.write_text("adapter-test-key", encoding="utf-8")
+            config = Path(tmp) / "config" / "mcporter.json"
+            config.parent.mkdir()
+            config.write_text("{}", encoding="utf-8")
+            bound = {
+                "task_id": "TASK-BOUND",
+                "case_id": "CASE-BOUND",
+                "skill_name": "EvidenceCollectSkill",
+                "input": {"order_id": "EZ202608001", "partner": {}},
+                "request_id": "REQ-BOUND",
+                "agentteams_message_id": "$matrix-bound",
+                "traceparent": "00-12345678901234567890123456789012-1234567890123456-01",
+            }
+            with patch.object(adapter, "_credential_path", return_value=secret), \
+                    patch.object(adapter, "_api_json", return_value=bound) as fetch, \
+                    patch.object(adapter, "_mcporter_config", return_value=config), \
+                    patch.object(adapter, "_invoke_higress_mcp", return_value={
+                        "success": True, "skill_receipt": "SKR-BOUND",
+                    }) as invoke:
+                code, result = self._run([
+                    "--task-id", "TASK-BOUND", "--from-task",
+                ], worker="revguard-evidence")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["skill_receipt"], "SKR-BOUND")
+        fetch.assert_called_once_with(
+            "http://revguard-api:9000", "/api/v1/agent-tasks/TASK-BOUND",
+            "adapter-test-key",
+        )
+        kwargs = invoke.call_args.kwargs
+        self.assertEqual(kwargs["case_id"], "CASE-BOUND")
+        self.assertEqual(kwargs["skill_input"], bound["input"])
+        self.assertEqual(kwargs["message_id"], "$matrix-bound")
+        self.assertEqual(kwargs["request_id"], "REQ-BOUND")
+
     def test_hex_message_id_restores_exact_matrix_correlation(self):
         matrix_event_id = "$event-with-random-SU"
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,0 +1,5 @@
+effective: {'max_tokens': 2048, 'reasoning_effort': 'low'}
+run1 json_ok=True inputs_match=True cmd_len=278 (32.46s)
+run2 json_ok=True inputs_match=True cmd_len=278 (29.14s)
+run3 json_ok=True inputs_match=True cmd_len=278 (30.6s)
+run4 json_ok=True inputs_match=True cmd_len=278 (34.21s)

@@ -1,0 +1,96 @@
+ Container revguard-verify-1789662479-3334126-ui-run-7c7028e73b02 Creating 
+ Container revguard-verify-1789662479-3334126-ui-run-7c7028e73b02 Created 
+
+> demo-ui@0.0.0 test:ui
+> node --test tests/pipeline-state.test.mjs
+
+TAP version 13
+# Subtest: outcome colors require evidence and separate rejection from a verified write
+ok 1 - outcome colors require evidence and separate rejection from a verified write
+  ---
+  duration_ms: 1.436636
+  ...
+# Subtest: completed verified writes do not keep waiting for rollback
+ok 2 - completed verified writes do not keep waiting for rollback
+  ---
+  duration_ms: 0.098301
+  ...
+# Subtest: rollback, pending, draft-only and rejected writes are not normal closures
+ok 3 - rollback, pending, draft-only and rejected writes are not normal closures
+  ---
+  duration_ms: 0.187312
+  ...
+# Subtest: safety rail distinguishes measured balances from original baselines
+ok 4 - safety rail distinguishes measured balances from original baselines
+  ---
+  duration_ms: 0.244193
+  ...
+# Subtest: security regression never defaults to a fabricated pass
+ok 5 - security regression never defaults to a fabricated pass
+  ---
+  duration_ms: 0.183922
+  ...
+# Subtest: external validation labels separate configuration from live verification
+ok 6 - external validation labels separate configuration from live verification
+  ---
+  duration_ms: 0.157601
+  ...
+# Subtest: task telemetry uses Agent Trace duration and never invents token usage
+ok 7 - task telemetry uses Agent Trace duration and never invents token usage
+  ---
+  duration_ms: 57.935747
+  ...
+# Subtest: duration and token formatting preserve zero and reject missing data
+ok 8 - duration and token formatting preserve zero and reject missing data
+  ---
+  duration_ms: 0.250223
+  ...
+# Subtest: Beijing clock formats the configured timezone instead of a fixed date
+ok 9 - Beijing clock formats the configured timezone instead of a fixed date
+  ---
+  duration_ms: 8.400422
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 138.890075
+
+> demo-ui@0.0.0 test:sites
+> node --test tests/sites-worker.test.mjs
+
+TAP version 13
+# Subtest: serves existing static assets without a fallback
+ok 1 - serves existing static assets without a fallback
+  ---
+  duration_ms: 39.13269
+  ...
+# Subtest: falls back to index.html for an unknown app route
+ok 2 - falls back to index.html for an unknown app route
+  ---
+  duration_ms: 3.317677
+  ...
+# Subtest: does not turn missing API or write requests into the app shell
+ok 3 - does not turn missing API or write requests into the app shell
+  ---
+  duration_ms: 0.82874
+  ...
+# Subtest: emits the files required by Sites packaging
+ok 4 - emits the files required by Sites packaging
+  ---
+  duration_ms: 5.52458
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108.412741
+found 0 vulnerabilities

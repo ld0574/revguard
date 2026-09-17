@@ -1,0 +1,7 @@
+base: https://www.tokens1688.com/v1 model: glm-5.3-flash key_fingerprint: 1b78d38e8b9b key_len: 51
+baseline                   -> HTTP 200 content='' reasoning_present=True usage={'completion_tokens': 8, 'completion_tokens_details': {'reasoning_tokens': 8}, 'prompt_tokens': 17, 'prompt_tokens_details': {'cached_tokens': 0}, 'total_tokens': 25}
+reasoning_effort=max       -> HTTP 200 content='' reasoning_present=True usage={'completion_tokens': 8, 'completion_tokens_details': {'reasoning_tokens': 7}, 'prompt_tokens': 17, 'prompt_tokens_details': {'cached_tokens': 0}, 'total_tokens': 25}
+reasoning_effort=low       -> HTTP 200 content='' reasoning_present=True usage={'completion_tokens': 8, 'completion_tokens_details': {'reasoning_tokens': 8}, 'prompt_tokens': 17, 'prompt_tokens_details': {'cached_tokens': 0}, 'total_tokens': 25}
+thinking=enabled           -> HTTP 200 content='' reasoning_present=True usage={'completion_tokens': 8, 'completion_tokens_details': {'reasoning_tokens': 8}, 'prompt_tokens': 17, 'prompt_tokens_details': {'cached_tokens': 0}, 'total_tokens': 25}
+thinking=disabled          -> HTTP 200 content='' reasoning_present=True usage={'completion_tokens': 8, 'completion_tokens_details': {'reasoning_tokens': 7}, 'prompt_tokens': 17, 'prompt_tokens_details': {'cached_tokens': 0}, 'total_tokens': 25}
+thinking=enabled+effort=max -> HTTP 200 content='' reasoning_present=True usage={'completion_tokens': 8, 'completion_tokens_details': {'reasoning_tokens': 8}, 'prompt_tokens': 17, 'prompt_tokens_details': {'cached_tokens': 0}, 'total_tokens': 25}

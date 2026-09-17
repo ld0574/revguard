@@ -553,7 +553,11 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(task["matrix_retry_event_ids"]), 1)
         self.assertGreaterEqual(client.counter, 5)
         self.assertIn("adapter_command=", client.bodies[-1])
-        self.assertIn("--message-id-hex", client.bodies[-1])
+        self.assertIn("--from-task", client.bodies[-1])
+        command = client.bodies[-1].split("adapter_command=", 1)[1]
+        self.assertNotIn("--input", command)
+        self.assertNotIn("--message-id", command)
+        self.assertNotIn(self.case["order_id"], command)
 
     async def test_execute_failure_marks_team_run_failed(self):
         self.case["team_run"] = {"run_id": "RUN-FAIL"}

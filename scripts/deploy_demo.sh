@@ -169,6 +169,13 @@ if [ "$PROFILE" = "full" ]; then
   docker run --rm --user root -v "$ROOT_DIR:/workspace" -w /workspace \
     --entrypoint python python:3.11-slim scripts/configure_demo_principals.py --env /workspace/.env
 fi
+if [ "$(env_get REVGUARD_ENTERPRISE_PROVIDER)" = "erpnext" ] \
+   && docker network inspect revguard-enterprise >/dev/null 2>&1; then
+  log "接入 ERPNext 真实企业系统网络（revguard-enterprise）"
+  compose+=(-f docker-compose.enterprise.yml)
+else
+  env_set REVGUARD_ENTERPRISE_PROVIDER mock
+fi
 if [ "$OBSERVABILITY" = "true" ]; then
   docker run --rm --user root -v "$ROOT_DIR:/workspace" -w /workspace \
     --entrypoint python python:3.11-slim scripts/prepare_observability.py

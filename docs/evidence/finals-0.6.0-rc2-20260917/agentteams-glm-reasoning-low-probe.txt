@@ -1,0 +1,7 @@
+model: glm-5.3-flash fingerprint: 1b78d38e8b9b
+effort=low           run1 finish=length     reasoning=512 total_comp=512 content_len=0 ok=False
+effort=low           run2 finish=length     reasoning=507 total_comp=512 content_len=0 ok=False
+effort=low           run3 finish=length     reasoning=512 total_comp=512 content_len=0 ok=False
+effort=low+thinking  run1 finish=length     reasoning=511 total_comp=512 content_len=0 ok=False
+effort=low+thinking  run2 finish=length     reasoning=511 total_comp=512 content_len=0 ok=False
+effort=low+thinking  run3 finish=length     reasoning=512 total_comp=512 content_len=0 ok=False

@@ -75,8 +75,13 @@ def update_provider(
         )
         kwargs.pop("max_tokens", None)
     else:
+        # glm-5.3-flash 是思考模型：缺少 reasoning_effort 时会按默认长思考把
+        # max_tokens 全部烧在 reasoning_content 上，最终 content 为空，
+        # Worker 表现为"没有产生命令"。上游探针确认 low 能降低思考量，
+        # 但 512 预算仍可能被思考耗尽，因此必须同时给足 completion budget；
+        # thinking.type=enabled 会进一步增加思考量，所以只下发 low。
         kwargs["max_tokens"] = max_tokens
-        kwargs.pop("reasoning_effort", None)
+        kwargs["reasoning_effort"] = "low"
         kwargs.pop("max_completion_tokens", None)
     selected["generate_kwargs"] = kwargs
 
@@ -85,7 +90,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--controller", default="agentteams-controller")
     parser.add_argument("--model", default="glm-5.3-flash")
-    parser.add_argument("--max-completion-tokens", type=int, default=512)
+    parser.add_argument("--max-completion-tokens", type=int, default=2048)
     args = parser.parse_args()
     if args.model not in {"glm-5.3-flash", "gpt-5.6-luna", "gpt-5.6-sol"}:
         raise SystemExit("只允许持久化已验收的 glm-5.3-flash / Luna / Sol")

@@ -21,7 +21,12 @@ from typing import Literal
 
 from . import telemetry
 from .adapters import ADAPTER_METRICS
-from .agent_bridge import create_agent_task, execute_agent_task
+from .agent_bridge import (
+    case_version,
+    create_agent_task,
+    execute_agent_task,
+    validate_task_invocation,
+)
 from .artifacts import artifact_path
 from .demo_dashboard import build_dashboard_snapshot
 from .grafana_embed import GrafanaEmbed
@@ -38,7 +43,7 @@ from .matrix_team import (
     MatrixTeamRunner,
     MatrixTransportError,
 )
-from .mcp_server import hydrate_server_secrets
+from .mcp_server import SERVER_INJECTION_REF, hydrate_server_secrets
 from .mcp_team import McpTeamRunner
 from .mocks import ToolError, ToolGateway
 from .models import Case, CaseStatus, new_id, utc_now
@@ -1076,6 +1081,32 @@ def _public_agent_task(task: dict) -> dict:
     return redact_secrets(task)
 
 
+def _bound_task_input(value):
+    """Keep server-injection references intact and reject any persisted secret."""
+    sensitive = {
+        "approval_token", "rollback_token", "assertion_token",
+        "human_assertion", "authorization", "api_key", "signing_key",
+        "password",
+    }
+    if isinstance(value, dict):
+        public = {}
+        for key, item in value.items():
+            # Do not use set membership here: a malformed persisted value may
+            # be a dict/list and therefore unhashable.  Secret fields are
+            # allowed only when empty or explicitly server-injected.
+            if key.lower() in sensitive and not (
+                item is None or item == "" or item == SERVER_INJECTION_REF
+            ):
+                raise HTTPException(409, "Agent task 输入包含非公开凭据，拒绝下发")
+            public[key] = _bound_task_input(item)
+        return public
+    if isinstance(value, list):
+        return [_bound_task_input(item) for item in value]
+    if isinstance(value, str) and redact_secrets(value) != value:
+        raise HTTPException(409, "Agent task 输入包含非公开凭据，拒绝下发")
+    return value
+
+
 @app.post("/api/v1/cases/{case_id}/agent-tasks", status_code=201)
 def dispatch_agent_task(case_id: str, payload: AgentTaskCreate,
                         response: Response,
@@ -1128,6 +1159,42 @@ def list_case_agent_tasks(case_id: str,
     if not privileged and not visible:
         raise HTTPException(403, "无权查看该案件的 Agent tasks")
     return {"tasks": [_public_agent_task(task) for task in visible]}
+
+
+@app.get("/api/v1/agent-tasks/{task_id}")
+def get_agent_task(
+    task_id: str,
+    principal: ApiPrincipal = Depends(require_roles("worker")),
+):
+    """Return one executable task only to its server-bound Worker identity."""
+    task = store.get_agent_task(task_id)
+    if not task:
+        raise HTTPException(404, f"Agent task 不存在: {task_id}")
+    if task["assigned_actor"] != principal.actor:
+        raise HTTPException(403, "Agent task 不属于当前 Worker")
+    case = store.get_case(task["case_id"])
+    if not case:
+        raise HTTPException(404, f"案件不存在: {task['case_id']}")
+    try:
+        validate_task_invocation(
+            task,
+            case,
+            skill_name=task["skill_name"],
+            actor=principal.actor,
+            skill_input=task["input"],
+        )
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return {
+        "task_id": task["task_id"],
+        "case_id": task["case_id"],
+        "skill_name": task["skill_name"],
+        "input": _bound_task_input(task["input"]),
+        "request_id": task.get("request_id"),
+        "agentteams_message_id": task.get("agentteams_message_id"),
+        "traceparent": task.get("traceparent"),
+        "case_version": case_version(case),
+    }
 
 
 @app.get("/api/v1/agent-tasks/{task_id}/results")

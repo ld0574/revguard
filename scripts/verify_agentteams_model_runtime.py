@@ -38,8 +38,11 @@ async def main():
         request_limit = {"max_completion_tokens": 128}
         bounded_field = "max_completion_tokens"
     else:
-        if effective.get("max_tokens") != 512:
-            raise RuntimeError("Persisted max_tokens is not 512")
+        expected_max_tokens = int(os.environ.get("REVGUARD_EXPECTED_MAX_TOKENS", "2048"))
+        if effective.get("max_tokens") != expected_max_tokens:
+            raise RuntimeError(f"Persisted max_tokens is not {expected_max_tokens}")
+        if effective.get("reasoning_effort") != "low":
+            raise RuntimeError("Persisted glm-5.3-flash reasoning_effort is not low")
         request_limit = {"max_tokens": 128}
         bounded_field = "max_tokens"
     model = provider.get_chat_model_instance(active["model"])
@@ -106,7 +109,8 @@ async def main():
                 "model": active["model"],
                 "provider": active["provider_id"],
                 "bounded_field": bounded_field,
-                "bounded_value": 512,
+                "bounded_value": effective.get(bounded_field),
+                "reasoning_effort": effective.get("reasoning_effort"),
                 "streaming_tool_call": True,
                 "tool_result_continuation": True,
                 "answer": answer,
