@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import os
 import statistics
-import subprocess
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
@@ -59,7 +59,8 @@ print(
     flush=True,
 )
 
-subprocess.run([
+# Fixed ffmpeg argv, no shell: every element comes from this script.
+subprocess.run([  # nosec B603, B607
     "ffmpeg", "-y", "-hide_banner", "-loglevel", "warning",
     "-f", "concat", "-safe", "0", "-i", str(list_path),
     "-vf", f"format=yuv420p,setpts=PTS/{speed:g}", "-r", "30",
