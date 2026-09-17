@@ -66,8 +66,9 @@ from .security import (
     redact_secrets,
     secret_fingerprint,
 )
+from .skill_integrity import assert_registry_integrity
 from .skill_runtime import SKILL_ACTORS, SkillInvocationError, validate_skill_request
-from .skills import list_skills
+from .skills import SKILL_REGISTRY, list_skills
 from .state_machine import StaleCaseTransition
 from .store import create_store
 from .trace import Tracer
@@ -199,6 +200,9 @@ def _new_gateway() -> ToolGateway:
         posting_tamper_case_ids=os.getenv("REVGUARD_POSTING_TAMPER_CASE_IDS", ""),
     )
 
+
+# Skill 三级摘要加载期门禁：manifest / instruction / callable 与基线不一致即拒绝启动。
+SKILL_INTEGRITY = assert_registry_integrity(SKILL_REGISTRY)
 
 gateway = _new_gateway()
 grafana_embed = GrafanaEmbed()
@@ -1331,6 +1335,7 @@ def get_skills(_principal: ApiPrincipal = Depends(require_roles("viewer"))):
             **item,
             "invoke_endpoint": f"/api/v1/skills/{item['name']}/invoke",
             "allowed_actors": sorted(SKILL_ACTORS.get(item["name"], [])),
+            "integrity": SKILL_INTEGRITY.get(item["name"], {}),
         })
     return {"skills": catalog}
 

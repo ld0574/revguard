@@ -10,6 +10,8 @@ from mcp.server.stdio import stdio_server
 
 from revguard.mcp_server import build_scoped_server
 from revguard.mocks import ToolGateway
+from revguard.skill_integrity import assert_registry_integrity
+from revguard.skills import SKILL_REGISTRY
 from revguard.store import create_store
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,6 +35,8 @@ def _signing_key() -> str:
 
 
 async def serve() -> None:
+    # Skill 三级摘要加载期门禁：第三方 fork 后实现被改动即拒绝启动。
+    assert_registry_integrity(SKILL_REGISTRY)
     db_path = os.getenv("REVGUARD_DB_PATH", str(ROOT / "data" / "revguard.db"))
     store = create_store(
         db_path,

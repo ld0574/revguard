@@ -19,7 +19,7 @@ setup:
 	$(VENV_PYTHON) -m pip install -r requirements.lock -r requirements-dev.txt
 
 test:
-	$(VENV_PYTHON) -m unittest discover -s tests -v
+	$(VENV_PYTHON) -m unittest discover -s tests -t . -v
 
 lint:
 	$(VENV_PYTHON) -m ruff check revguard scripts tests

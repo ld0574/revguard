@@ -1,0 +1,37 @@
+name: checks
+
+# 第三方 fork 后无需我们解释就能被自动验证一遍：
+# 只跑不需要外部服务的校验（后端单测、Skill 摘要、生成物一致性、静态检查）。
+# 真实资金链路、PostgreSQL 集成与前端构建在部署环境执行，见 docs/deployment.md。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock -r requirements-dev.txt
+      - name: Skill 三级摘要基线
+        run: python scripts/gen_skill_integrity.py --check
+      - name: Skill 清单文档一致
+        run: python scripts/gen_skill_docs.py --check
+      - name: OpenAPI 与实现一致
+        run: python scripts/export_openapi.py --check
+      - name: Lint
+        run: python -m ruff check revguard scripts tests
+      - name: Unit tests（不含需要外部服务的 PostgreSQL 集成）
+        run: python -m unittest discover -s tests -t .
