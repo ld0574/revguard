@@ -42,7 +42,8 @@ def verify(bridge):
                     assert models[model]["generate_kwargs"]["reasoning_effort"] == "none"
                     assert models[model]["generate_kwargs"]["max_completion_tokens"] == 512
                 assert models["glm-5.3-flash"]["generate_kwargs"] == {
-                    "max_tokens": 512,
+                    "max_tokens": 2048,
+                    "reasoning_effort": "low",
                 }
                 assert "generate_kwargs" not in models["other-model"]
 

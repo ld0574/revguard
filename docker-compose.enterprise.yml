@@ -1,0 +1,25 @@
+# ERPNext 真实企业系统覆盖层：把 RevGuard API 接入 ERPNext 所在网络并透传只读 API 凭据。
+#
+#   docker compose -f docker-compose.yml -f docker-compose.agentteams.yml \
+#     -f docker-compose.polardb.yml -f docker-compose.observability.yml \
+#     -f docker-compose.enterprise.yml up -d revguard-api
+#
+# 只在 REVGUARD_ENTERPRISE_PROVIDER=erpnext 且 revguard-enterprise 网络存在时使用；
+# 本地最小拓扑不加载本文件，避免为演示者引入 ERPNext 依赖。凭据只放在服务器
+# .env（chmod 600），不进入镜像、日志或证据包。
+services:
+  revguard-api:
+    environment:
+      REVGUARD_ENTERPRISE_PROVIDER: "${REVGUARD_ENTERPRISE_PROVIDER:-erpnext}"
+      REVGUARD_ERPNEXT_BASE_URL: "${REVGUARD_ERPNEXT_BASE_URL:-}"
+      REVGUARD_ERPNEXT_API_KEY: "${REVGUARD_ERPNEXT_API_KEY:-}"
+      REVGUARD_ERPNEXT_API_SECRET: "${REVGUARD_ERPNEXT_API_SECRET:-}"
+      REVGUARD_ERPNEXT_SITE_NAME: "${REVGUARD_ERPNEXT_SITE_NAME:-}"
+      REVGUARD_ERPNEXT_TIMEOUT_SECONDS: "${REVGUARD_ERPNEXT_TIMEOUT_SECONDS:-8}"
+    networks:
+      enterprise: {}
+
+networks:
+  enterprise:
+    external: true
+    name: revguard-enterprise

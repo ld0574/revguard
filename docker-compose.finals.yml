@@ -9,8 +9,21 @@
 # 确认 owner、解析地址与 release 与预期一致。
 services:
   revguard-api-dev:
+    environment:
+      # 决赛彩排栈同样要能嵌入 Grafana 大屏：复用 19000 常驻栈的只读共享看板，
+      # 不复制管理员凭据，也不引入第二套看板。
+      REVGUARD_GRAFANA_UPSTREAM: ${REVGUARD_GRAFANA_UPSTREAM:-http://grafana:3000}
+      REVGUARD_GRAFANA_PUBLIC_TOKEN_FILE: /run/secrets/grafana-public-token
+    volumes:
+      - ${REVGUARD_GRAFANA_TOKEN_FILE:-/root/revguard/.runtime/observability/grafana-public-token}:/run/secrets/grafana-public-token:ro
     networks:
       agentteams:
         aliases:
           - revguard-api
           - revguard-api.internal
+      observability: {}
+
+networks:
+  observability:
+    external: true
+    name: ${REVGUARD_OBSERVABILITY_NETWORK:-revguard_default}

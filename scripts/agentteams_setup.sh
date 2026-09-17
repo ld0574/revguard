@@ -12,7 +12,7 @@ set -euo pipefail
 REVGUARD_HOME="${REVGUARD_HOME:-/root/revguard}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
 MODEL="${MODEL:-${AGENTTEAMS_DEFAULT_MODEL:-glm-5.3-flash}}"
-MAX_COMPLETION_TOKENS="${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-512}"
+MAX_COMPLETION_TOKENS="${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-2048}"
 REVGUARD_API_BASE_URL="${REVGUARD_API_BASE_URL:-http://revguard-api:9000}"
 WORKER_CONTAINER_PREFIX="${WORKER_CONTAINER_PREFIX:-agentteams-worker-}"
 AGENTTEAMS_NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
@@ -205,7 +205,9 @@ elif target == "glm-5.3-flash":
         for item in [*(provider.get("models") or []), *(provider.get("extra_models") or [])]
         if item.get("id") == target
     ), {})
-    model_config.pop("reasoning_effort", None)
+    # glm-5.3-flash 是思考模型，必须显式 reasoning_effort=low；
+    # 缺省长思考会把 max_tokens 全部用光并返回空 content。
+    model_config["reasoning_effort"] = "low"
     model_config.pop("max_completion_tokens", None)
     req = urllib.request.Request(
         base + "/api/models/agentteams-gateway/models/" + target + "/config",
@@ -271,6 +273,8 @@ body = {
 }
 if body["model"] in {"gpt-5.6-sol", "gpt-5.6-luna"}:
     body["reasoning_effort"] = "none"
+elif body["model"] == "glm-5.3-flash":
+    body["reasoning_effort"] = "low"
 payload = json.dumps(body).encode()
 req = urllib.request.Request(
     base + "/chat/completions", data=payload, method="POST",

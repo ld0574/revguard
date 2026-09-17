@@ -458,6 +458,43 @@ class TestApiSmoke(unittest.TestCase):
         self.assertEqual(task["assigned_actor"], "revguard-intake")
         self.assertEqual(task["status"], "PENDING")
 
+        bound = self.client.get(
+            f"/api/v1/agent-tasks/{task['task_id']}", headers=self.intake
+        )
+        self.assertEqual(bound.status_code, 200, bound.text)
+        self.assertEqual(bound.json()["input"], skill_input)
+        self.assertEqual(bound.json()["skill_name"], "CaseNormalizeSkill")
+        wrong_bound = self.client.get(
+            f"/api/v1/agent-tasks/{task['task_id']}", headers=self.evidence
+        )
+        self.assertEqual(wrong_bound.status_code, 403)
+
+        leaked = self.client.post(f"/api/v1/cases/{case_id}/agent-tasks", json={
+            "skill_name": "CaseNormalizeSkill", "input": skill_input,
+        }, headers=self.orchestrator).json()
+        leaked["input"]["raw_case"]["description"] = (
+            "unexpected RGC1.eyJjYXNlIjoiQSJ9.invalid credential"
+        )
+        with patch.object(store, "get_agent_task", return_value=leaked):
+            leaked_read = self.client.get(
+                f"/api/v1/agent-tasks/{leaked['task_id']}", headers=self.intake
+            )
+        self.assertEqual(leaked_read.status_code, 409)
+        self.assertNotIn("RGC1.", leaked_read.text)
+
+        unhashable_secret = self.client.post(
+            f"/api/v1/cases/{case_id}/agent-tasks",
+            json={"skill_name": "CaseNormalizeSkill", "input": skill_input},
+            headers=self.orchestrator,
+        ).json()
+        unhashable_secret["input"]["raw_case"]["approval_token"] = {"bad": "value"}
+        with patch.object(store, "get_agent_task", return_value=unhashable_secret):
+            malformed_read = self.client.get(
+                f"/api/v1/agent-tasks/{unhashable_secret['task_id']}", headers=self.intake
+            )
+        self.assertEqual(malformed_read.status_code, 409)
+        self.assertNotIn("bad", malformed_read.text)
+
         wrong_worker = self.client.post(
             "/api/v1/skills/CaseNormalizeSkill/invoke",
             json={"case_id": case_id, "input": skill_input},
@@ -496,6 +533,10 @@ class TestApiSmoke(unittest.TestCase):
             headers={**self.intake, "X-RevGuard-Task-ID": task["task_id"]},
         )
         self.assertEqual(replay.status_code, 409)
+        consumed = self.client.get(
+            f"/api/v1/agent-tasks/{task['task_id']}", headers=self.intake
+        )
+        self.assertEqual(consumed.status_code, 409)
 
         stale = self.client.post(f"/api/v1/cases/{case_id}/agent-tasks", json={
             "skill_name": "CaseNormalizeSkill", "input": skill_input,
@@ -510,12 +551,28 @@ class TestApiSmoke(unittest.TestCase):
         mutated = store.get_case(case_id)
         mutated["description"] = "new evidence arrived"
         store.save_case(mutated)
+        stale_read = self.client.get(
+            f"/api/v1/agent-tasks/{stale['task_id']}", headers=self.intake
+        )
+        self.assertEqual(stale_read.status_code, 409)
         stale_snapshot = self.client.post(
             "/api/v1/skills/CaseNormalizeSkill/invoke",
             json={"case_id": case_id, "input": skill_input},
             headers={**self.intake, "X-RevGuard-Task-ID": stale["task_id"]},
         )
         self.assertEqual(stale_snapshot.status_code, 409)
+
+        cancelled = self.client.post(f"/api/v1/cases/{case_id}/agent-tasks", json={
+            "skill_name": "CaseNormalizeSkill", "input": skill_input,
+        }, headers=self.orchestrator).json()
+        store.transition_agent_task(
+            cancelled["task_id"], expected={TaskStatus.PENDING.value},
+            status=TaskStatus.CANCELLED.value,
+        )
+        cancelled_read = self.client.get(
+            f"/api/v1/agent-tasks/{cancelled['task_id']}", headers=self.intake
+        )
+        self.assertEqual(cancelled_read.status_code, 409)
 
         dispatcher_tasks = self.client.get(
             f"/api/v1/cases/{case_id}/agent-tasks", headers=self.orchestrator

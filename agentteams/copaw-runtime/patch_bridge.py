@@ -16,7 +16,10 @@ new = """            {
                     "max_completion_tokens": 512,
                 }}
                    if m["id"] in {"gpt-5.6-sol", "gpt-5.6-luna"}
-                   else {"generate_kwargs": {"max_tokens": 512}}
+                   else {"generate_kwargs": {
+                       "max_tokens": 2048,
+                       "reasoning_effort": "low",
+                   }}
                    if m["id"] == "glm-5.3-flash" else {}),
             }"""
 paths = sorted(Path("/opt").glob("**/site-packages/copaw_worker/bridge.py"))

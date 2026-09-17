@@ -5,13 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
 import urllib.error
 import urllib.request
 import uuid
+from pathlib import Path
 
 
 ALLOWED_SKILLS_BY_WORKER = {
@@ -147,14 +147,38 @@ def _invoke_higress_mcp(
     return result
 
 
+def _api_json(api_base: str, path: str, api_key: str) -> dict:
+    request = urllib.request.Request(
+        f"{api_base}{path}",
+        method="GET",
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:
+        value = json.load(response)
+    if not isinstance(value, dict):
+        raise ValueError("API response must be an object")
+    return value
+
+
+def _load_api_key() -> str:
+    try:
+        api_key = _credential_path().read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise ValueError("RevGuard Worker Principal is unavailable") from exc
+    if not api_key:
+        raise ValueError("RevGuard Worker Principal is empty")
+    return api_key
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    action = parser.add_mutually_exclusive_group(required=True)
+    action = parser.add_mutually_exclusive_group()
     action.add_argument("--skill")
     action.add_argument("--dispatch-skill")
-    parser.add_argument("--case-id", required=True)
-    parser.add_argument("--input", required=True)
-    message = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument("--case-id")
+    parser.add_argument("--input")
+    parser.add_argument("--from-task", action="store_true")
+    message = parser.add_mutually_exclusive_group()
     message.add_argument("--message-id")
     message.add_argument("--message-id-hex")
     parser.add_argument("--request-id")
@@ -162,16 +186,67 @@ def main() -> int:
     parser.add_argument("--traceparent", default="")
     args = parser.parse_args()
 
+    if not args.from_task and not (args.skill or args.dispatch_skill):
+        parser.error("必须提供 --skill、--dispatch-skill 或 --from-task")
+    if args.skill and args.dispatch_skill:
+        parser.error("--skill 与 --dispatch-skill 不能同时提供")
+
     try:
         message_id = (
             bytes.fromhex(args.message_id_hex).decode("utf-8")
-            if args.message_id_hex else args.message_id
+            if args.message_id_hex else (args.message_id or "")
         )
     except (ValueError, UnicodeDecodeError):
         print(json.dumps({"success": False, "error": {"type": "INVALID_PARAMS",
                          "message": "message-id-hex must encode UTF-8"}}))
         return 2
 
+    worker = _worker_name()
+    if args.dispatch_skill:
+        if worker != "revguard-orchestrator":
+            print(json.dumps({"success": False, "error": {"type": "DISPATCH_NOT_ALLOWED",
+                             "message": f"{worker or '<unknown>'} cannot dispatch tasks"}}))
+            return 4
+    elif not args.from_task:
+        allowed = ALLOWED_SKILLS_BY_WORKER.get(worker)
+        if allowed is None or args.skill not in allowed:
+            print(json.dumps({"success": False, "error": {"type": "SKILL_NOT_ALLOWED",
+                             "message": f"{worker or '<unknown>'} cannot invoke {args.skill}"}}))
+            return 4
+        if not args.task_id:
+            print(json.dumps({"success": False, "error": {"type": "TASK_ID_REQUIRED",
+                             "message": "Worker Skill invocation requires --task-id"}}))
+            return 4
+
+    api_base = os.getenv("REVGUARD_API_BASE_URL", "http://revguard-api:9000").rstrip("/")
+    api_key = ""
+    if args.from_task:
+        if args.dispatch_skill or not args.task_id:
+            print(json.dumps({"success": False, "error": {"type": "INVALID_PARAMS",
+                             "message": "--from-task requires a Worker --task-id"}}))
+            return 2
+        try:
+            api_key = _load_api_key()
+            bound = _api_json(api_base, f"/api/v1/agent-tasks/{args.task_id}", api_key)
+        except urllib.error.HTTPError as exc:
+            print(json.dumps({"success": False, "error": {"type": f"HTTP_{exc.code}",
+                             "message": "Bound StageTask is unavailable"}}))
+            return 1
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
+                             "message": f"Bound StageTask lookup failed ({type(exc).__name__})"}}))
+            return 3
+        args.skill = bound.get("skill_name")
+        args.case_id = bound.get("case_id")
+        args.input = json.dumps(bound.get("input"), ensure_ascii=False, separators=(",", ":"))
+        args.request_id = bound.get("request_id") or args.request_id
+        message_id = bound.get("agentteams_message_id") or message_id
+        args.traceparent = bound.get("traceparent") or args.traceparent
+
+    if not args.case_id or args.input is None or not message_id:
+        print(json.dumps({"success": False, "error": {"type": "INVALID_PARAMS",
+                         "message": "case, input and message correlation are required"}}))
+        return 2
     try:
         skill_input = json.loads(args.input)
         if not isinstance(skill_input, dict):
@@ -181,21 +256,11 @@ def main() -> int:
                          "message": str(exc)}}))
         return 2
 
-    worker = _worker_name()
-    if args.dispatch_skill:
-        if worker != "revguard-orchestrator":
-            print(json.dumps({"success": False, "error": {"type": "DISPATCH_NOT_ALLOWED",
-                             "message": f"{worker or '<unknown>'} cannot dispatch tasks"}}))
-            return 4
-    else:
+    if not args.dispatch_skill:
         allowed = ALLOWED_SKILLS_BY_WORKER.get(worker)
         if allowed is None or args.skill not in allowed:
             print(json.dumps({"success": False, "error": {"type": "SKILL_NOT_ALLOWED",
                              "message": f"{worker or '<unknown>'} cannot invoke {args.skill}"}}))
-            return 4
-        if not args.task_id:
-            print(json.dumps({"success": False, "error": {"type": "TASK_ID_REQUIRED",
-                             "message": "Worker Skill invocation requires --task-id"}}))
             return 4
 
     request_id = args.request_id or f"REQ-AGT-{uuid.uuid4().hex[:12].upper()}"
@@ -225,19 +290,14 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False))
         return 0 if result.get("success") else 1
 
-    secret_path = _credential_path()
-    try:
-        api_key = secret_path.read_text(encoding="utf-8").strip()
-    except OSError:
-        print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
-                         "message": "RevGuard Worker Principal is unavailable"}}))
-        return 3
     if not api_key:
-        print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
-                         "message": "RevGuard Worker Principal is empty"}}))
-        return 3
+        try:
+            api_key = _load_api_key()
+        except ValueError as exc:
+            print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
+                             "message": str(exc)}}))
+            return 3
 
-    api_base = os.getenv("REVGUARD_API_BASE_URL", "http://revguard-api:9000").rstrip("/")
     if args.dispatch_skill:
         body_data = {"skill_name": args.dispatch_skill, "input": skill_input}
         url = f"{api_base}/api/v1/cases/{args.case_id}/agent-tasks"
