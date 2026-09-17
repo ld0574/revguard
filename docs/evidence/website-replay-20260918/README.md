@@ -46,6 +46,8 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 
 `replay-case-82822305.png` 是 rc3 传输验证案件（只读运行，无资金写入）在同一套预览栈下的渲染结果，用于确认 rc3 数据包也能被页面正确加载。
 
+部署完成后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，8 项全绿，结果保存在 [`public/browser-result.json`](public/browser-result.json)。
+
 ## 数据代次
 
 当前 `index.json` 发布的是 rc2 代次的两条完整运行记录（含真人审批、受限执行、独立复核与冲销恢复）。rc3 代次的决赛运行记录在录制栈上重新跑通后会替换 `index.json` 的条目，届时案件编号、Step 数与审计序号都会更新。旧的 rc2 截图归档在 [`archive-rc2/`](archive-rc2/) 下。
