@@ -9,9 +9,12 @@
 | `rerun-CASE-2026-0001-*.json` | 19088 彩排栈 CASE-2026-0001 复跑摘要（终态、任务账本、Trace 标记、资金操作） |
 | `rerun-CASE-2026-0008-*.json` | 19088 彩排栈 CASE-2026-0008 复跑摘要（偏差 1.00 → 反向冲销 → 净额归零） |
 | `rehearsal-smoke-19088.log` | `scripts/rehearsal_smoke.sh` 在 202 本机的 7/7 PASS 输出 |
+| `verification/verify-gate-20260917.log` | `scripts/verify_docker.sh` 完整发布门禁（330 后端测试 + 82 PostgreSQL 集成测试 + `pip_audit` 0 漏洞 + `bandit` 0 问题 + npm audit 0 漏洞） |
+| `verification/frontend-gate-20260917.log` | 前端门禁：UI 站点测试与 npm audit 输出 |
 
 要点：
 
 - 凭据只以 sha256 前 12 位指纹和长度出现，仓库、日志与证据包均不含明文 Key、Token 或 Cookie。
+- 本轮同时修复了两处门禁缺陷：`tests/test_matrix_runtime_config.py` 为容器环境检查补齐 stub（verify 容器内无 docker CLI），`scripts/import_olist_erpnext.py` 改用 `tempfile.gettempdir()` 消除 bandit B108（`/tmp` 硬编码）中等风险告警；`docs/openapi.json` 已按 19088 容器导出的 rc2 快照更新。
 - 19088 彩排栈的两条记录由 `REVGUARD_TEAM_TRANSPORT=mcp` 参考执行器驱动：同一套 StageTask 与 Skill 契约、真实 ERPNext 读取、真实 Matrix 真人身份验证与审批、真实 PostgreSQL 资金写入与冲销。
 - 真实 AgentTeams Worker 的 Matrix 协作记录见 19000 常驻栈与决赛视频；本轮 dev 栈 Matrix 路径的失败原因与整改建议见 `docs/agentteams-glm-migration-20260917.md`。

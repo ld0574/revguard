@@ -40,7 +40,22 @@ class TestMatrixRuntimeConfig(unittest.TestCase):
             actor = container.removeprefix("agentteams-worker-")
             return {"AGENTTEAMS_WORKER_ROOM_ID": f"!{actor}:matrix.test"}
 
-        with patch.object(runtime, "container_environment", fake_environment):
+        def fake_resources(controller: str) -> dict[str, dict]:
+            # Host-side `docker exec ... agt get workers` is stubbed so the
+            # discovery contract is verified without a Docker CLI inside the
+            # verification container.
+            self.assertEqual(controller, "agentteams-controller")
+            return {
+                actor: {"roomID": f"!{actor}:matrix.test"}
+                # The host-side discovery returns the 9 Workers plus the
+                # orchestrator entry that binds the case room.
+                for actor in (*runtime.ACTORS, "revguard-orchestrator")
+            }
+
+        with (
+            patch.object(runtime, "container_environment", fake_environment),
+            patch.object(runtime, "worker_resources", fake_resources),
+        ):
             values = runtime.collect_runtime(
                 "agentteams-worker-", "agentteams-controller",
             )
