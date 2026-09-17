@@ -52,6 +52,8 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 
 部署完成后对公网站点 `https://ld0574.github.io/revguard/` 复跑同一套检查，**12 项全绿**：在原有 10 项之外新增“分享卡片元数据完整”与“分享卡片直链可抓取且为 1200×630 PNG”，结果与截图保存在 [`public/`](public/)（[`public/browser-result.json`](public/browser-result.json)）。两个成片直链的 HEAD 检查带 3 次重试：GitHub Release 附件在跨境网络下偶发超时，重试后仍非 200 才算失败，本轮两次探测均在第 1 次尝试返回 200。
 
+2026-09-18 官网内容更新后（「06 · 可验证成果」改为 360 项测试口径，「07 · 开源复用」新增六行业迁移矩阵）重新推送 `main` 并复跑同一套探针，公网**仍是 12 项全绿**：`release=0.6.0-rc3`，CASE-2026-0001 渲染 10 步 / 追踪 53 行，CASE-2026-0008 渲染 11 步 / 追踪 60 行，两个成片直链第 1 次尝试即返回 200，无失败请求与浏览器 SEVERE 日志；本轮结果与截图已覆盖 [`public/`](public/)，首页截图反映更新后的 KPI 与迁移矩阵。
+
 ## 社交分享卡片
 
 `og:image` 原先是相对路径的 SVG。主流社交爬虫不解析相对地址，也普遍不支持 SVG，分享时只能显示空白卡片。
