@@ -1,0 +1,513 @@
+{
+  "release": "0.6.0-rc3",
+  "cases": {
+    "CASE-2026-0001": {
+      "status": "CLOSED",
+      "recording_id": "REC-36B14AC3",
+      "risk_level": "L2",
+      "order_id": "EZ202608001",
+      "execution_mode": "AGENTTEAMS_MATRIX",
+      "workflow_provenance": {
+        "workflow": "real_executable",
+        "transport": "agentteams-matrix",
+        "business_data": "synthetic",
+        "orchestration": "state-driven",
+        "agentteams_room_evidence": "CAPTURED_FROM_RUNTIME"
+      },
+      "team_run": {
+        "run_id": "RUN-AGT-A680C477",
+        "status": "COMPLETED",
+        "phase": "EXECUTION",
+        "total_tasks": 20,
+        "completed_tasks": 16,
+        "room_id": "!NCserupQgE5k9AW8rP:matrix-local.agentteams.io:8086"
+      },
+      "task_ledger": {
+        "total": 16,
+        "by_status": {
+          "SUCCEEDED": 16
+        },
+        "workers": 9,
+        "by_worker": {
+          "revguard-intake": 2,
+          "revguard-evidence": 1,
+          "revguard-policy": 1,
+          "revguard-calculation": 1,
+          "revguard-rootcause": 1,
+          "revguard-risk": 2,
+          "revguard-executor": 6,
+          "revguard-verifier": 1,
+          "revguard-knowledge": 1
+        }
+      },
+      "approval": {
+        "approval_id": "APR-4A648C1D",
+        "status": "APPROVED",
+        "amount": "14400.00",
+        "currency": "KES",
+        "component_quota": {
+          "SALES_COMMISSION": "9000.00",
+          "COLLECTION_COMMISSION": "5400.00"
+        },
+        "approver": "finance.lead",
+        "approver_role": "FINANCE_LEAD",
+        "decided_at": "2026-09-17T20:28:00.961698Z",
+        "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
+        "human_identity": {
+          "sub": "@admin:matrix-local.agentteams.io:8086",
+          "auth_time": 1789676880,
+          "auth_method": "matrix-password",
+          "display_name": "财务负责人（演示）"
+        },
+        "parameters_digest": "sha256:d33c015c34a93b2740e8d7b60817f4ac117291a32fb9524882f58e9897cb2cc7",
+        "approval_token_ref": "sha256:c3733b23d78ff156",
+        "human_assertion_id_ref": "sha256:eadaa49bf1bed5e5",
+        "matrix_event_id": "$1FtOl9yow_6hBMGJ6rqPtrECVVB-wkrt66iCbljSf-U"
+      },
+      "verification": {
+        "variance": "0.00",
+        "checked_at": "2026-09-17T20:31:19.309745Z",
+        "actual_amount": "32400.00",
+        "evidence_refs": [
+          "RCPT-9BF3B28C"
+        ],
+        "expected_amount": "32400.00",
+        "component_checks": [
+          {
+            "actual": "27000.00",
+            "passed": true,
+            "expected": "27000.00",
+            "component": "SALES_COMMISSION"
+          },
+          {
+            "actual": "5400.00",
+            "passed": true,
+            "expected": "5400.00",
+            "component": "COLLECTION_COMMISSION"
+          }
+        ],
+        "rollback_required": false,
+        "verification_status": "PASSED"
+      },
+      "executions": [
+        {
+          "component": "SALES_COMMISSION",
+          "amount": "9000.00",
+          "status": "SUBMITTED",
+          "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-6"
+        },
+        {
+          "component": "COLLECTION_COMMISSION",
+          "amount": "5400.00",
+          "status": "SUBMITTED",
+          "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-6"
+        }
+      ],
+      "money_events": {
+        "HUMAN_IDENTITY_VERIFIED": [
+          {
+            "seq": 74,
+            "at": "2026-09-17 12:41:32.359328+00",
+            "summary": {
+              "approval_id": "APR-62CAA8C5"
+            }
+          },
+          {
+            "seq": 303,
+            "at": "2026-09-17 12:58:01.85266+00",
+            "summary": {
+              "approval_id": "APR-4716F262"
+            }
+          },
+          {
+            "seq": 395,
+            "at": "2026-09-17 12:58:08.609629+00",
+            "summary": {
+              "approval_id": "APR-C645F7E8"
+            }
+          },
+          {
+            "seq": 638,
+            "at": "2026-09-17 20:28:00.903648+00",
+            "summary": {
+              "approval_id": "APR-4A648C1D"
+            }
+          }
+        ],
+        "APPROVAL_DECIDED": [
+          {
+            "seq": 75,
+            "at": "2026-09-17 12:41:32.409044+00",
+            "summary": {
+              "matrix_event_id": "$-dZu-HfN7F7OZlTEnfVKMh0L7BkttJTGX6BV4qozZvA",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          },
+          {
+            "seq": 304,
+            "at": "2026-09-17 12:58:01.89836+00",
+            "summary": {
+              "matrix_event_id": "$LYs3mhK4fWvqxkx_VrqpmSS9ZpEU4TnflFWDhhg-ZAU",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          },
+          {
+            "seq": 396,
+            "at": "2026-09-17 12:58:08.65413+00",
+            "summary": {
+              "matrix_event_id": "$m0cE04M1czhl_IGw9tqL7EZ4P-AliZn-F_6V1EhbUT4",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          },
+          {
+            "seq": 639,
+            "at": "2026-09-17 20:28:00.965334+00",
+            "summary": {
+              "matrix_event_id": "$1FtOl9yow_6hBMGJ6rqPtrECVVB-wkrt66iCbljSf-U",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          }
+        ],
+        "EXECUTED": [
+          {
+            "seq": 105,
+            "at": "2026-09-17 12:41:32.611723+00",
+            "summary": {
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-2",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 334,
+            "at": "2026-09-17 12:58:02.097286+00",
+            "summary": {
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-4",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 426,
+            "at": "2026-09-17 12:58:08.836972+00",
+            "summary": {
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 676,
+            "at": "2026-09-17 20:30:29.952313+00",
+            "summary": {
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-6",
+              "transport": "agentteams-matrix"
+            }
+          }
+        ],
+        "VERIFIED": [
+          {
+            "seq": 111,
+            "at": "2026-09-17 12:41:32.649431+00",
+            "summary": {
+              "variance": "0.00",
+              "actual_amount": "32400.00",
+              "expected_amount": "32400.00",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 340,
+            "at": "2026-09-17 12:58:02.134071+00",
+            "summary": {
+              "variance": "0.00",
+              "actual_amount": "32400.00",
+              "expected_amount": "32400.00",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 432,
+            "at": "2026-09-17 12:58:08.874713+00",
+            "summary": {
+              "variance": "0.00",
+              "actual_amount": "32400.00",
+              "expected_amount": "32400.00",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 684,
+            "at": "2026-09-17 20:31:26.393606+00",
+            "summary": {
+              "variance": "0.00",
+              "actual_amount": "32400.00",
+              "expected_amount": "32400.00",
+              "transport": "agentteams-matrix"
+            }
+          }
+        ]
+      },
+      "audit_events": 435
+    },
+    "CASE-2026-0008": {
+      "status": "ROLLED_BACK",
+      "recording_id": "REC-63A0C9EC",
+      "risk_level": "L2",
+      "order_id": "EZ202608008",
+      "execution_mode": "AGENTTEAMS_MATRIX",
+      "workflow_provenance": {
+        "workflow": "real_executable",
+        "transport": "agentteams-matrix",
+        "business_data": "synthetic",
+        "orchestration": "state-driven",
+        "agentteams_room_evidence": "CAPTURED_FROM_RUNTIME"
+      },
+      "team_run": {
+        "run_id": "RUN-AGT-4A1C0DE2",
+        "status": "COMPLETED",
+        "phase": "EXECUTION",
+        "total_tasks": 20,
+        "completed_tasks": 18,
+        "room_id": "!NCserupQgE5k9AW8rP:matrix-local.agentteams.io:8086"
+      },
+      "task_ledger": {
+        "total": 18,
+        "by_status": {
+          "SUCCEEDED": 18
+        },
+        "workers": 9,
+        "by_worker": {
+          "revguard-intake": 2,
+          "revguard-evidence": 1,
+          "revguard-policy": 1,
+          "revguard-calculation": 1,
+          "revguard-rootcause": 1,
+          "revguard-risk": 2,
+          "revguard-executor": 7,
+          "revguard-verifier": 2,
+          "revguard-knowledge": 1
+        }
+      },
+      "approval": {
+        "approval_id": "APR-8DE30A08",
+        "status": "APPROVED",
+        "amount": "14400.00",
+        "currency": "KES",
+        "component_quota": {
+          "SALES_COMMISSION": "9000.00",
+          "COLLECTION_COMMISSION": "5400.00"
+        },
+        "approver": "finance.lead",
+        "approver_role": "FINANCE_LEAD",
+        "decided_at": "2026-09-17T20:50:44.775313Z",
+        "action_summary": "佣金差异调整：应有 32400.00，台账 18000.00，差额 14400.00；根因 MISSING_COMPONENT, WRONG_POLICY_VERSION",
+        "human_identity": {
+          "sub": "@admin:matrix-local.agentteams.io:8086",
+          "auth_time": 1789678244,
+          "auth_method": "matrix-password",
+          "display_name": "财务负责人（演示）"
+        },
+        "parameters_digest": "sha256:e2cc4759fba9bb28add0c7926c6ec461d16265e1c36666f53ec3b8d9d7646d2f",
+        "approval_token_ref": "sha256:870f20f5923ed17c",
+        "human_assertion_id_ref": "sha256:48b08a7cec0433a3",
+        "matrix_event_id": "$5PzdKUvStILd_dJ1vzMM828F5Dc-OjuM1YFvhQb2nWs"
+      },
+      "verification": {
+        "variance": "1.00",
+        "checked_at": "2026-09-17T20:52:11.128632Z",
+        "actual_amount": "32401.00",
+        "evidence_refs": [
+          "RCPT-94406F9A",
+          "RCPT-12C405C0"
+        ],
+        "expected_amount": "32400.00",
+        "component_checks": [
+          {
+            "actual": "27001.00",
+            "passed": false,
+            "expected": "27000.00",
+            "component": "SALES_COMMISSION"
+          },
+          {
+            "actual": "5400.00",
+            "passed": true,
+            "expected": "5400.00",
+            "component": "COLLECTION_COMMISSION"
+          }
+        ],
+        "rollback_required": true,
+        "verification_status": "FAILED"
+      },
+      "executions": [
+        {
+          "component": "SALES_COMMISSION",
+          "amount": "9000.00",
+          "status": "ROLLED_BACK",
+          "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317:recording-2"
+        },
+        {
+          "component": "COLLECTION_COMMISSION",
+          "amount": "5400.00",
+          "status": "ROLLED_BACK",
+          "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317:recording-2"
+        }
+      ],
+      "money_events": {
+        "HUMAN_IDENTITY_VERIFIED": [
+          {
+            "seq": 165,
+            "at": "2026-09-17 12:41:33.319116+00",
+            "summary": {
+              "approval_id": "APR-9AC86340"
+            }
+          },
+          {
+            "seq": 749,
+            "at": "2026-09-17 20:36:53.496625+00",
+            "summary": {
+              "approval_id": "APR-3FEFCD57"
+            }
+          },
+          {
+            "seq": 858,
+            "at": "2026-09-17 20:50:44.717939+00",
+            "summary": {
+              "approval_id": "APR-8DE30A08"
+            }
+          }
+        ],
+        "APPROVAL_DECIDED": [
+          {
+            "seq": 166,
+            "at": "2026-09-17 12:41:33.363976+00",
+            "summary": {
+              "matrix_event_id": "$hvbXGq_CliWgtM-5L4uZQresW-J2uJvoaEpGbjPwFHc",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          },
+          {
+            "seq": 750,
+            "at": "2026-09-17 20:36:53.552043+00",
+            "summary": {
+              "matrix_event_id": "$4CWbdhc1CHDrq6hVjKcIJGqps2gb3DH2arkTZQTnVU0",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          },
+          {
+            "seq": 859,
+            "at": "2026-09-17 20:50:44.778742+00",
+            "summary": {
+              "matrix_event_id": "$5PzdKUvStILd_dJ1vzMM828F5Dc-OjuM1YFvhQb2nWs",
+              "decision": "APPROVED",
+              "human_subject": "@admin:matrix-local.agentteams.io:8086",
+              "identity_verified": true
+            }
+          }
+        ],
+        "EXECUTED": [
+          {
+            "seq": 196,
+            "at": "2026-09-17 12:41:33.581417+00",
+            "summary": {
+              "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 786,
+            "at": "2026-09-17 20:38:11.974454+00",
+            "summary": {
+              "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317:recording-1",
+              "transport": "agentteams-matrix"
+            }
+          },
+          {
+            "seq": 895,
+            "at": "2026-09-17 20:51:59.415+00",
+            "summary": {
+              "operation_id": "CASE-2026-0008:settlement:sha256:7cedf8e5f8773c5247818e3184880d36d713995c70441919f10b79358f6bb317:recording-2",
+              "transport": "agentteams-matrix"
+            }
+          }
+        ],
+        "VERIFIED": [
+          {
+            "seq": 202,
+            "at": "2026-09-17 12:41:33.630783+00",
+            "summary": {
+              "variance": "1.00",
+              "actual_amount": "32401.00",
+              "expected_amount": "32400.00",
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 793,
+            "at": "2026-09-17 20:38:34.247432+00",
+            "summary": {
+              "variance": "0.00",
+              "actual_amount": "32400.00",
+              "expected_amount": "32400.00",
+              "transport": "agentteams-matrix"
+            }
+          },
+          {
+            "seq": 902,
+            "at": "2026-09-17 20:52:17.678515+00",
+            "summary": {
+              "variance": "1.00",
+              "actual_amount": "32401.00",
+              "expected_amount": "32400.00",
+              "transport": "agentteams-matrix"
+            }
+          }
+        ],
+        "ROLLED_BACK": [
+          {
+            "seq": 210,
+            "at": "2026-09-17 12:41:33.690666+00",
+            "summary": {
+              "operation_id": "CASE-2026-0008:compensation",
+              "entries": 2
+            }
+          },
+          {
+            "seq": 911,
+            "at": "2026-09-17 20:52:30.151106+00",
+            "summary": {
+              "operation_id": "CASE-2026-0008:compensation:recording-2",
+              "entries": 2
+            }
+          }
+        ],
+        "ROLLBACK_VERIFIED": [
+          {
+            "seq": 215,
+            "at": "2026-09-17 12:41:33.726736+00",
+            "summary": {
+              "transport": "mcp"
+            }
+          },
+          {
+            "seq": 917,
+            "at": "2026-09-17 20:52:49.054755+00",
+            "summary": {
+              "transport": "agentteams-matrix"
+            }
+          }
+        ]
+      },
+      "audit_events": 335
+    }
+  }
+}
