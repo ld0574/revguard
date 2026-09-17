@@ -34,7 +34,8 @@ class ChangelogGateTests(unittest.TestCase):
         )
 
     def make_tree(self, changelog: str, package_version: str = "0.6.0rc3",
-                  openapi_version: str = "0.6.0-rc3") -> tempfile.TemporaryDirectory[str]:
+                  openapi_version: str = "0.6.0-rc3",
+                  pyproject_version: str = "0.6.0rc3") -> tempfile.TemporaryDirectory[str]:
         temp = tempfile.TemporaryDirectory(prefix="revguard-changelog-gate-")
         root = Path(temp.name)
         (root / "revguard").mkdir()
@@ -42,6 +43,8 @@ class ChangelogGateTests(unittest.TestCase):
         (root / "CHANGELOG.md").write_text(changelog, encoding="utf-8")
         (root / "revguard" / "__init__.py").write_text(
             f'"""fixture"""\n\n__version__ = "{package_version}"\n', encoding="utf-8")
+        (root / "pyproject.toml").write_text(
+            f'[project]\nname = "revguard"\nversion = "{pyproject_version}"\n', encoding="utf-8")
         (root / "docs" / "openapi.json").write_text(
             json.dumps({"info": {"title": "RevGuard API", "version": openapi_version}}),
             encoding="utf-8")
@@ -86,6 +89,12 @@ class ChangelogGateTests(unittest.TestCase):
         with self.make_tree(changelog) as temp:
             result = self.run_gate(Path(temp))
         self.assertNotEqual(0, result.returncode)
+
+    def test_pyproject_version_drift_fails(self):
+        with self.make_tree(BASE_CHANGELOG, pyproject_version="0.6.0rc2") as temp:
+            result = self.run_gate(Path(temp))
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("pyproject.toml", result.stderr)
 
     def test_openapi_version_drift_fails(self):
         with self.make_tree(BASE_CHANGELOG, openapi_version="0.6.0-rc2") as temp:
