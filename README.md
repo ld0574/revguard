@@ -52,10 +52,17 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 
 风险分级回答“这笔异常最多允许处理到哪一步”，四重约束回答“Agent 为什么不能绕过这一步”。
 
+在这四重约束之上还有一层**可复算的工程约束**：16 个 Skill 各带 manifest / instruction /
+callable 三级 SHA-256 摘要，基线固定在 `config/skill-integrity.json`；API 与 MCP 进程启动时校验，
+不一致即拒绝启动，每次 Skill 调用把三级摘要写入 `SKILL_INVOKED` 审计事件。详见
+[`docs/skill-integrity.md`](docs/skill-integrity.md)。
+
 ## 已验证能力
 
 - 1 个 Orchestrator 加 9 个职能 Worker，共 10 个 Agent；Executor 负责受控写入，Verifier 独立复核。
 - 16 个版本化 Skill，每个 Skill 都有统一调用入口、允许身份、输入/输出格式、失败处理和复用说明。
+- 16 个 Skill 的 manifest / instruction / callable 三级摘要固定在同一 commit 的
+  `config/skill-integrity.json`，加载期 fail-closed，运行期随每次调用写入审计。
 - 录制环境由真实 AgentTeams/Matrix 驱动状态型 Team 流程：Team room 做 Orchestrator
   协同任务编排，9 个 Worker 独立 room 经 skills-only Adapter 调用各自的 Higress MCP Server；本地官方 MCP Client/Server
   保留为可复现 reference harness。底层 Tool 不暴露给模型，错 Worker、错 Skill、篡改输入、
@@ -287,3 +294,11 @@ Docker 验证入口和发布材料均已纳入仓库。见 [`LICENSE`](LICENSE)�
 [`docs/dependencies.md`](docs/dependencies.md) 与 [`docs/adr/`](docs/adr/README.md)。
 
 公开地址：<https://github.com/ld0574/revguard>。
+
+第三方拿到仓库后可以先跑三条只读校验，不需要任何凭据：
+
+```bash
+python3 scripts/gen_skill_integrity.py --check   # Skill 三级摘要
+python3 scripts/gen_skill_docs.py --check        # Skill 清单文档与注册表一致
+python3 scripts/export_openapi.py --check        # OpenAPI 与实现一致
+```

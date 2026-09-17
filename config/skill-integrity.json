@@ -1,0 +1,109 @@
+{
+  "schema": "revguard.skill-integrity/1",
+  "generated_at": "2026-09-17T18:50:29.414489+00:00",
+  "generator": "scripts/gen_skill_integrity.py",
+  "skill_count": 16,
+  "levels": [
+    "manifest",
+    "instruction",
+    "callable"
+  ],
+  "skills": {
+    "AdjustmentDraftSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:3181ef2658d5eb1885eabcdb658e7d5f5441e8dca8ef509821c50b29872b1cc6",
+      "instruction": "sha256:087ca0dd18d227fc8017cb77e69d08f0456d1875fa3f73106d1b06d404fa1e19",
+      "callable": "sha256:661ae041c3a82e234e615f7ab9db7131321843233b8d3e09205e1609d8fae8d9"
+    },
+    "ApprovalRouteSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:44425fdb43a4a25515fcb7f609c263cb5362800ba513b190723a879983f670c8",
+      "instruction": "sha256:2c98eb2cfd6c7132f672688a5a1c889b6d00145ef46dbe7cbc6c797951beddbb",
+      "callable": "sha256:4aeb8095d103a8385ba318d40624a8bd2e79da2e458be9b08ee4bf651f816b8b"
+    },
+    "CaseNormalizeSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:2d50174e356053d8ae170376cc270fe919b7751fc2d4636876bf0bb5b88553ec",
+      "instruction": "sha256:69a4aad49b78787409498583cea36d66cc010736160824a796dcf23cf290141c",
+      "callable": "sha256:f1e173dab607766616ba59651cd96e62e8575b630fa919282bc7c1e25197c87a"
+    },
+    "CaseToDatasetSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:44f1a17b79c236cb1d7cb3e62bd54ef9f46420d3d7c7cb9692cc390b3d2f5ad2",
+      "instruction": "sha256:1b75aaef5b99ac9e31cbe1eca36ce6de72f95a26276ded1c6bed874339e276ab",
+      "callable": "sha256:85916271c90da2ea01de6fc865ad6b193929e2cbf969b22534aea999f399f04c"
+    },
+    "CommissionCalculateSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:d72cd43581770063ea3ecdc36f81975d4721ea0f19573ecd05051b66ea489a8f",
+      "instruction": "sha256:f7003147f8f8e39bf3e0507e9f735af8f84d6a46d126cf067f1dc814ad77a9a9",
+      "callable": "sha256:1c207096deba16a431b157593ab142247824a7a1816b24ed2bd65e52448927e8"
+    },
+    "DifferenceExplainSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:d0ad617a73a75ac387314437393b79ee443415054d246c927535253979f9f347",
+      "instruction": "sha256:a1d8d91676d8c249286d9f772c1fbe3af975039e7ae623a03ff240e868cdf220",
+      "callable": "sha256:dba6487995877e33882f52c3ea2bfef9a1f6750605a4c0acd2fd52bdb31777f5"
+    },
+    "EntityResolveSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:5f38c1b19ae7c38f7e693d638c7f07e204733c433fb8d45e1b803183269a4c85",
+      "instruction": "sha256:dd7f10c99fc197247e34aa04d24fa346fbbe050a3a8fa83eb8620034f208b93e",
+      "callable": "sha256:abe45d38fa61c9f8b0be199fd546638876c886f1e47a64e37284bf26b5213eb2"
+    },
+    "EvidenceCollectSkill": {
+      "version": "1.1.0",
+      "manifest": "sha256:14d7522b228be18148e09eafc3e5a80509c8d92801d8195a00da7ed2d4abeb22",
+      "instruction": "sha256:da41f18cea1a5e09444fc424ab7772dcf9c07477482715082ed89a2dfc12dbf3",
+      "callable": "sha256:3e79dac452b0744e04ae8a192ff8a1f3a9332a3986813b2153a75d174b470646"
+    },
+    "IdempotencyGuardSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:4f7d9f91d369a65c703f0908c65db203dd43fb707d644ea280a758474ed9f9de",
+      "instruction": "sha256:d6408f62453bcef224e2d84dc9e6075356e3cca936f96dc837db75f7818dc308",
+      "callable": "sha256:a5937cd6ce95f9b1af6b1a74d2820c5e32f3da73a12e6566c42b3f5b3fa5624d"
+    },
+    "LedgerAdjustSkill": {
+      "version": "2.0.0",
+      "manifest": "sha256:e1c5552883b4a194cd105502362aa68cfaea5562909e6bb4d3ac63f481a89d54",
+      "instruction": "sha256:baea047adf51a80ad33846e556bcd8e9bec93287363b6869c50dde4c839c0476",
+      "callable": "sha256:18503c0e3084794a27e37cb549b2af90f4cdd3b86b4762dd8af05b1c5d9b66e5"
+    },
+    "LedgerReverseSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:af17481fc5e5932adac7d4980aa1df132bac8837567cacc367abcc79b610d710",
+      "instruction": "sha256:66a739673f5b696649890b169b9724c58cc5fc399854fd24cacaccb30bea4a2e",
+      "callable": "sha256:28d2182f89bd0e445a0a0ccb2e10ef6c21a3065b182f98760e0d16c0180a2cb2"
+    },
+    "PermissionCheckSkill": {
+      "version": "1.1.0",
+      "manifest": "sha256:a366c25b42789ca4f9a83561eda39f298569afe35e68628aefddc2311a4480da",
+      "instruction": "sha256:d2f829b9a1fe426c6ad501b57fecc6c5021a2332554efcf539e29f5fbc0031ae",
+      "callable": "sha256:8e6d1ce3e22a1f06fde8ee2eb38e5aaf2f38b3f6d1f7ecf98c613783ede61149"
+    },
+    "PolicyVersionMatchSkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:e124b4d0d110144b57baa4a9c96289f02cbd54707aa0e946e663c0fd71b40d62",
+      "instruction": "sha256:94fd9b30c300ada1f6659f0f4f0a628d9969a7d1bf169b957a7d517f250ba3da",
+      "callable": "sha256:d925638a67e916fdecbdce744c8952bfa222aad0b2722270882b4366780215b9"
+    },
+    "PostActionVerifySkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:a0a425ee5c00026a1f4ac9d7341392fe27c69aca45decfc769a3db3b8694ab42",
+      "instruction": "sha256:301a990f511ef2df651f194838c588b0764e5c8ffd4e4bf805aba4ca83b5c06b",
+      "callable": "sha256:3188f0413b82be41ea86e76de59128bfb8380ea4a9db3ac967cd6024e3400f71"
+    },
+    "PostRollbackVerifySkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:4310d1f69c199f3c3d9c5ae47e86151953c9eb13b1d9f81ab31857be46c41b03",
+      "instruction": "sha256:9a0502404de4ea54fe638b22dfead654433de4b356c9730e99d96f1416edfbf5",
+      "callable": "sha256:a30065d4ab57158aa5dcb5ec33d42e4d5d9c8f5908fe2ff251456ec25fc06013"
+    },
+    "RiskClassifySkill": {
+      "version": "1.0.0",
+      "manifest": "sha256:f65446b03d0edfb67335c9fafee33c2aab596d3b08e9ff9e87cbc11829731481",
+      "instruction": "sha256:c85111efb346e6ce033f7322815e970c31ceed2fe2f30ba3fb30ef3fa0901010",
+      "callable": "sha256:d5ae0c8ea347144586ae45369c88337558542491c21c91b35420836daa50fac7"
+    }
+  }
+}

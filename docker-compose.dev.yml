@@ -67,6 +67,8 @@ services:
       - revguard-dev-runtime:/app/runtime
       - /root/revguard-0.6.0-dev/scripts:/app/scripts:ro
       - /root/revguard-0.6.0-dev/revguard:/app/revguard:ro
+      # 源码挂载后 Skill 实现会随编辑变化，摘要基线必须来自同一份工作区
+      - /root/revguard-0.6.0-dev/config:/app/config:ro
     environment:
       REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0-rc2}
       REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_DEV_DB_PASSWORD:-revguard-dev-only}@revguard-dev-postgres:5432/revguard

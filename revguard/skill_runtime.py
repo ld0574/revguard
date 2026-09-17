@@ -8,6 +8,7 @@ from .json_schema import SchemaValidationError, validate_json
 from .mocks import ToolError, ToolGateway
 from .models import CalculationResult, RiskDecision, new_id
 from .security import redact_secrets
+from .skill_integrity import skill_digests
 from .store import Store
 from .trace import Tracer
 
@@ -206,8 +207,11 @@ def invoke_skill(name: str, payload: dict, *, actor: str, case_id: str,
             raise SkillContractError(str(exc)) from exc
         span["outputs"] = result
     skill_receipt = new_id("SKR")
+    digests = skill_digests(name, meta)
     audit_detail = {
         "skill": name, "version": meta["version"], "skill_receipt": skill_receipt,
+        # 三级摘要随每次调用写入审计：manifest=声称、instruction=契约、callable=实际代码
+        "skill_integrity": {level: digests[level] for level in ("manifest", "instruction", "callable")},
     }
     if correlation:
         audit_detail.update(correlation)

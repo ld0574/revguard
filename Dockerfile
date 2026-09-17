@@ -38,6 +38,8 @@ COPY revguard/ ./revguard/
 COPY scripts/ ./scripts/
 COPY migrations/ ./migrations/
 COPY config/demo_principals.json ./config/demo_principals.json
+# Skill 三级摘要基线：容器内加载期校验用，不通过即拒绝启动
+COPY config/skill-integrity.json ./config/skill-integrity.json
 COPY data/fixtures/ ./data/fixtures/
 COPY data/golden_cases/ ./data/golden_cases/
 COPY docs/evaluation-summary.json \
