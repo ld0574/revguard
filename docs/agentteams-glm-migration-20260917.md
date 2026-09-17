@@ -120,3 +120,30 @@ orchestrator / intake / evidence / policy 四个 Worker 的真实流式工具调
 
 残余风险：Controller 注册表本身仍是 512，Worker 容器每次重建后需要重跑
 `scripts/apply_agentteams_model_budget.py`（部署流程已自动执行）。
+
+## 2026-09-18 Manager 侧投影覆盖修复
+
+同一天的 Manager 复核发现：`agentteams-manager` 的 `glm-5.3-flash` 仍为
+`{"max_tokens": 512}` 且没有 `reasoning_effort`，上游 HTTP 200 但 `content` 为空。根因是 Manager
+镜像 `revguard-agentteams-manager:glm-20260917` 内置的 `copaw_worker/bridge.py` 在重新投影
+provider 时对 glm 写死 512；Manager 启动和周期同步都会触发重新投影，运行态 API 写入的 low 会被
+覆盖回 512（实测 19:44:46 写入 `low + 2048` 成功，19:45:07 被投影回 512）。
+
+修复与复验：
+
+1. 用 `agentteams/copaw-runtime` 重建 Manager 镜像
+   `revguard-agentteams-manager:glm-20260918`，bridge 对 glm 输出
+   `{"max_tokens": 2048, "reasoning_effort": "low"}`，镜像内 `verify_bridge.py` 的
+   worker/manager 双 profile 自检通过；同时构建 `revguard-agentteams-worker:glm-20260918`
+   供下一次 Worker 重建使用。
+2. `scripts/recreate_agentteams_manager.py` 从 `docker inspect` 原样重建 Manager 容器
+   （网络、挂载、控制台端口、restart 策略、日志、entrypoint 与环境不变，旧容器保留供回滚）。
+3. `scripts/apply_agentteams_model_budget.py` 增加 Manager 目标（CoPaw 端口 18799）；
+   `scripts/agentteams_setup.sh` 的 glm 分支默认带 `--include-manager`。
+4. `scripts/build_agentteams_images.sh` 与 `scripts/agentteams_setup.sh` 的默认镜像标签更新为
+   `glm-20260918`。
+
+复验证据：`docs/evidence/agentteams-manager-glm-20260918/`（Manager 真实流式工具调用 + 工具结果
+续接 + `MODEL_READY`；三层配置一致；容器重启与跨 MinIO 同步周期不回退；
+`--workers intake policy --include-manager` 全部 verified）。残余风险：正在运行的 10 个 Worker
+容器仍是 `glm-20260917`，运行态由预算脚本纠正；下一次 Worker 重建会使用 `glm-20260918`。

@@ -26,12 +26,17 @@ PolarDB 官方 local_instance 在初始化账号之前会临时启动 PostgreSQL
 新 API 启动时保持维护状态：业务写入返回 `503 / DEPLOYMENT_MAINTENANCE`，只读页面和存活检查仍可访问，readiness 返回 503。只有数据库、8 个案件、页面，以及完整拓扑下的 Team 和观测组件验收通过后，部署脚本才解除维护。中途失败或重启不会自动开放业务；修复日志中的问题后，使用原拓扑重新运行部署命令。不要手动删除 `.deployment-fence.json` 或运行锁文件。该机制保护单台 Docker 主机的合作式升级，不替代跨主机数据库 HA 隔离。
 
 2026-09-17 已按当前授权配置将 AgentTeams 管理端、Orchestrator 和 9 个职能 Worker 切换到
-`glm-5.3-flash`，关闭空闲模型心跳，并将单次输出限制为 512 token。Higress 的模型 Provider 使用
-服务器权限受限环境文件中的上游配置；Worker 继续使用各自的内部网关凭据。当前迁移与额度边界见
-[`agentteams-glm-migration-20260917.md`](agentteams-glm-migration-20260917.md)；Luna 与 Sol 验收保留为历史记录。
+`glm-5.3-flash`，关闭空闲模型心跳，并将生成预算固定为 `max_tokens=2048` + `reasoning_effort=low`
+（`glm-5.3-flash` 恒为思考模型；只给 512 预算或不传 reasoning 参数时，思考会吃光预算并返回空
+content）。Higress 的模型 Provider 使用服务器权限受限环境文件中的上游配置；Worker 继续使用各自的
+内部网关凭据。当前迁移与额度边界见
+[`agentteams-glm-migration-20260917.md`](agentteams-glm-migration-20260917.md)，Manager 侧投影覆盖
+修复见 [`evidence/agentteams-manager-glm-20260918/README.md`](evidence/agentteams-manager-glm-20260918/README.md)；
+Luna 与 Sol 验收保留为历史记录。
 
-构建入口为 `scripts/build_agentteams_images.sh`，镜像为 `revguard-agentteams-worker:glm-20260917` 与
-`revguard-agentteams-manager:glm-20260917`。运行时补丁在每次启动时将模型心跳设为关闭，避免无人操作时发送整个工作区上下文；容器健康检查和 Prometheus 采集继续工作。Manager 保持接收人工请求，10 个 Worker 闲时维持 Sleeping。若要重新启用模型定时巡检，应先明确频率与预算，再调整这一启动策略。
+构建入口为 `scripts/build_agentteams_images.sh`，镜像为 `revguard-agentteams-worker:glm-20260918` 与
+`revguard-agentteams-manager:glm-20260918`（2026-09-18 起 bridge 重新投影 provider 时也保持 glm 的
+`low + 2048`，Manager 不再被覆盖回 512）。运行时补丁在每次启动时将模型心跳设为关闭，避免无人操作时发送整个工作区上下文；容器健康检查和 Prometheus 采集继续工作。Manager 保持接收人工请求，10 个 Worker 闲时维持 Sleeping。若要重新启用模型定时巡检，应先明确频率与预算，再调整这一启动策略。
 
 仅修改 Worker 资源的 image 字段，现存休眠容器可能仍使用旧镜像。升级时须先确认无活动业务、备份 Worker 工作区及 MinIO 配置，再替换旧容器，并核对 Docker 实际镜像 ID、运行时模型与 heartbeat；不要删除 Worker/Team 资源或演示数据库。
 

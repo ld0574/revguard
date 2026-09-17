@@ -55,7 +55,7 @@ worker_image_args=()
 if [ "$MODEL" = "gpt-5.6-sol" ] || [ "$MODEL" = "gpt-5.6-luna" ] \
   || [ "$MODEL" = "glm-5.3-flash" ]; then
   # The base image drops per-model kwargs when it re-bridges on startup.
-  runtime_image="${AGENTTEAMS_WORKER_IMAGE:-revguard-agentteams-worker:glm-20260917}"
+  runtime_image="${AGENTTEAMS_WORKER_IMAGE:-revguard-agentteams-worker:glm-20260918}"
   if ! docker image inspect "$runtime_image" >/dev/null 2>&1; then
     bash "$REVGUARD_HOME/scripts/build_agentteams_images.sh"
   fi
@@ -261,7 +261,8 @@ if [ "$MODEL" = "glm-5.3-flash" ]; then
   python3 "$REVGUARD_HOME/scripts/apply_agentteams_model_budget.py" \
     --model "$MODEL" \
     --max-tokens "$MAX_COMPLETION_TOKENS" \
-    --reasoning-effort low
+    --reasoning-effort low \
+    --include-manager
 else
   echo "当前模型 $MODEL 不使用 glm 生成预算，跳过"
 fi

@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
-"""Apply the verified glm-5.3-flash generation budget to running AgentTeams workers.
+"""Apply the verified glm-5.3-flash generation budget to running AgentTeams agents.
 
-AgentTeams' controller regenerates each Worker's provider defaults from its own
-model registry when the Worker container (re)starts; for ``glm-5.3-flash`` that
+AgentTeams' controller regenerates each agent's provider defaults from its own
+model registry when the container (re)starts; for ``glm-5.3-flash`` that
 registry yields a 512-token completion budget without a reasoning-effort hint,
 which makes the thinking model burn the whole budget inside
 ``reasoning_content`` and return an empty answer.
 
 RevGuard therefore re-applies the verified budget (``max_tokens=2048`` plus
 ``reasoning_effort=low``) through CoPaw's own model configuration API right
-after a Worker is up, and verifies the effective kwargs that the Worker will
+after an agent is up, and verifies the effective kwargs that the agent will
 send upstream.  The synthetic probe performs no business action.
+
+The Manager runs the same CoPaw model API on port 18799 inside
+``agentteams-manager``; pass ``--include-manager`` (or ``--manager-only``) to
+cover it as well.
 
 Usage (on the AgentTeams host):
 
     python3 scripts/apply_agentteams_model_budget.py
-    python3 scripts/apply_agentteams_model_budget.py --workers intake policy
+    python3 scripts/apply_agentteams_model_budget.py --workers intake policy  # 自动补全 revguard- 前缀
+    python3 scripts/apply_agentteams_model_budget.py --include-manager
 
-Exit code is non-zero when any running Worker fails verification.
+Exit code is non-zero when any running agent fails verification.
 """
 from __future__ import annotations
 
@@ -26,6 +31,7 @@ import json
 import subprocess  # nosec B404 - fixed docker/CLI calls only
 import sys
 import time
+from typing import NamedTuple
 
 WORKERS = (
     "revguard-orchestrator",
@@ -43,20 +49,36 @@ DEFAULT_PROVIDER = "agentteams-gateway"
 DEFAULT_MODEL = "glm-5.3-flash"
 DEFAULT_MAX_TOKENS = 2048
 DEFAULT_REASONING_EFFORT = "low"
-CONTAINER_PREFIX = "agentteams-worker-"
+WORKER_CONTAINER_PREFIX = "agentteams-worker-"
+WORKER_PYTHON = "/opt/venv/standard/bin/python"
+WORKER_API_PORT = 8088
+MANAGER_CONTAINER = "agentteams-manager"
+MANAGER_PYTHON = "/opt/copaw-venv/bin/python3"
+MANAGER_API_PORT = 18799
 
-WORKER_PROBE = r'''
+
+class Target(NamedTuple):
+    name: str
+    container: str
+    python: str
+    port: int
+
+
+AGENT_PROBE = r'''
 import json
 import sys
 import urllib.error
 import urllib.request
 
-provider_id, model_id, raw_kwargs = sys.argv[1], sys.argv[2], sys.argv[3]
+provider_id, model_id, raw_kwargs, raw_port = (
+    sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+)
 kwargs = json.loads(raw_kwargs)
+port = int(raw_port)
 
 
 def call(method, path, body=None):
-    base = "http://127.0.0.1:8088/api/models"
+    base = f"http://127.0.0.1:{port}/api/models"
     url = f"{base}/{path}" if path else base
     data = json.dumps(body).encode() if body is not None else None
     request = urllib.request.Request(
@@ -97,21 +119,21 @@ def run_docker(args: list[str], **kwargs) -> subprocess.CompletedProcess:
     return subprocess.run(args, capture_output=True, text=True, **kwargs)  # nosec B603
 
 
-def apply_to_worker(
-    worker: str,
+def apply_to_target(
+    target: Target,
     provider: str,
     model: str,
     kwargs: dict,
     timeout: float,
 ) -> dict:
-    container = f"{CONTAINER_PREFIX}{worker}"
     state = run_docker(
-        ["docker", "inspect", "-f", "{{.State.Running}}", container], timeout=30
+        ["docker", "inspect", "-f", "{{.State.Running}}", target.container],
+        timeout=30,
     )
     if state.returncode != 0:
-        return {"worker": worker, "status": "missing", "passed": False}
+        return {"target": target.name, "status": "missing", "passed": False}
     if state.stdout.strip() != "true":
-        return {"worker": worker, "status": "not-running", "passed": False}
+        return {"target": target.name, "status": "not-running", "passed": False}
 
     deadline = time.monotonic() + timeout
     attempt = 0
@@ -122,14 +144,15 @@ def apply_to_worker(
                 "docker",
                 "exec",
                 "-i",
-                container,
-                "/opt/venv/standard/bin/python",
+                target.container,
+                target.python,
                 "-",
                 provider,
                 model,
                 json.dumps(kwargs),
+                str(target.port),
             ],
-            input=WORKER_PROBE,
+            input=AGENT_PROBE,
             timeout=180,
         )
         payload: dict = {}
@@ -141,7 +164,7 @@ def apply_to_worker(
         if payload.get("read_status") == 200:
             passed = payload.get("effective") == kwargs
             return {
-                "worker": worker,
+                "target": target.name,
                 "status": "verified" if passed else "mismatch",
                 "attempt": attempt,
                 "effective": payload.get("effective"),
@@ -149,7 +172,7 @@ def apply_to_worker(
             }
         if time.monotonic() >= deadline:
             return {
-                "worker": worker,
+                "target": target.name,
                 "status": "timeout",
                 "attempt": attempt,
                 "passed": False,
@@ -157,9 +180,33 @@ def apply_to_worker(
         time.sleep(5)
 
 
+def worker_targets(names: list[str]) -> list[Target]:
+    targets = []
+    for name in names:
+        actor = name if name.startswith("revguard-") else f"revguard-{name}"
+        targets.append(
+            Target(actor, f"{WORKER_CONTAINER_PREFIX}{actor}", WORKER_PYTHON, WORKER_API_PORT)
+        )
+    return targets
+
+
+def manager_target() -> Target:
+    return Target("manager", MANAGER_CONTAINER, MANAGER_PYTHON, MANAGER_API_PORT)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workers", nargs="*", default=list(WORKERS))
+    parser.add_argument(
+        "--include-manager",
+        action="store_true",
+        help="同时应用并验证 agentteams-manager（端口 18799）",
+    )
+    parser.add_argument(
+        "--manager-only",
+        action="store_true",
+        help="只应用并验证 agentteams-manager",
+    )
     parser.add_argument("--provider", default=DEFAULT_PROVIDER)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
@@ -171,22 +218,26 @@ def main() -> int:
         "max_tokens": args.max_tokens,
         "reasoning_effort": args.reasoning_effort,
     }
+    targets = [] if args.manager_only else worker_targets(args.workers)
+    if args.include_manager or args.manager_only:
+        targets.append(manager_target())
+
     failed: list[str] = []
     skipped: list[str] = []
     verified = 0
-    for worker in args.workers:
-        outcome = apply_to_worker(
-            worker, args.provider, args.model, kwargs, args.timeout
+    for target in targets:
+        outcome = apply_to_target(
+            target, args.provider, args.model, kwargs, args.timeout
         )
         detail = outcome.get("effective")
         suffix = f" effective={json.dumps(detail, ensure_ascii=False)}" if detail else ""
-        print(f"{worker}: {outcome['status']}{suffix}", flush=True)
+        print(f"{target.name}: {outcome['status']}{suffix}", flush=True)
         if outcome.get("passed"):
             verified += 1
         elif outcome.get("status") in {"not-running", "missing"}:
-            skipped.append(worker)
+            skipped.append(target.name)
         else:
-            failed.append(worker)
+            failed.append(target.name)
 
     if failed:
         print("模型预算应用失败: " + ", ".join(failed), file=sys.stderr)
