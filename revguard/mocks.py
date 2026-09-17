@@ -30,6 +30,12 @@ from .adapters import (
     ProviderRegistry,
 )
 from .commitment import approval_commitment, approval_digest
+from .execution_reference import (
+    attach_receipt_reference,
+    reference_anchor,
+    require_execution_references_from_env,
+    verify_execution_references,
+)
 from .models import CaseStatus, new_id, utc_now
 from .money_journal import MONEY_TOOLS, MoneyJournal, RecoveryRequired, request_hash
 from .security import CapabilityTokenSigner, SecurityError, authorize_tool
@@ -80,7 +86,8 @@ class ToolGateway:
                  verification_tamper_amount: str | Decimal = "0",
                  store=None, posting_tamper_amount: str | Decimal = "0",
                  posting_tamper_case_ids: str | list[str] | tuple[str, ...] = "",
-                 provider_registry: ProviderRegistry | None = None):
+                 provider_registry: ProviderRegistry | None = None,
+                 require_execution_references: bool | None = None):
         self.fixtures = _load_fixtures(fixtures_dir)
         self.providers = provider_registry or ProviderRegistry.from_env()
         self._lock = RLock()
@@ -111,6 +118,11 @@ class ToolGateway:
             tamper_cases = posting_tamper_case_ids
         self._posting_tamper_case_ids = frozenset(
             str(case_id).strip() for case_id in tamper_cases if str(case_id).strip()
+        )
+        self._require_execution_references = (
+            require_execution_references_from_env()
+            if require_execution_references is None
+            else bool(require_execution_references)
         )
         self._execution_results: dict[str, dict] = {}
         self._recording_epochs: dict[str, int] = {}
@@ -237,6 +249,11 @@ class ToolGateway:
                                 )
                             receipt.update(source_metadata)
                             receipt["success"] = True
+                            # 执行引用监视器：成功读取即留下事实引用，供执行时比对。
+                            attach_receipt_reference(
+                                receipt, tool_name=tool_name,
+                                parameters=parameters or {}, data=data,
+                            )
                             self._receipts.append(receipt)
                             tx.save_state(self._state_snapshot())
                     finally:
@@ -679,6 +696,19 @@ class ToolGateway:
             if component_consumed + requested > component_limit:
                 raise ToolError("AUTH_FAILED", "提交金额超过该组件审批额度")
 
+            # 执行引用监视器：金额必须依据同案实际读取过的事实（可在执行前 fail-open 关闭）。
+            execution_references: list[dict] = []
+            if self._require_execution_references:
+                execution_references, problems = verify_execution_references(
+                    case_id=case_id, order_id=str(draft.get("order_id") or ""),
+                    currency=str(draft.get("currency") or ""), receipts=self._receipts,
+                )
+                if problems:
+                    raise ToolError(
+                        "EVIDENCE_GAP",
+                        "执行缺少事实引用：" + "；".join(problems),
+                    )
+
             # 执行前快照 -> 写台账 -> 执行后快照（设计文档 7.6）
             before = [e for e in self._ledger if e.get("order_id") == draft["order_id"]]
             entry = {
@@ -691,6 +721,10 @@ class ToolGateway:
                 "status": "POSTED",
                 "source": f"REVGUARD:{draft.get('case_id')}",
                 "posted_at": utc_now(),
+                "execution_references": copy.deepcopy(execution_references),
+                "reference_anchor": (
+                    reference_anchor(execution_references) if execution_references else None
+                ),
             }
             tamper_targets_case = (
                 not self._posting_tamper_case_ids
