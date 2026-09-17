@@ -1,0 +1,13 @@
+                "id": m["id"],
+                "name": m.get("name", m["id"]),
+                **({"generate_kwargs": {
+                    "reasoning_effort": "none",
+                    "max_completion_tokens": 512,
+                }}
+                   if m["id"] in {"gpt-5.6-sol", "gpt-5.6-luna"}
+                   else {"generate_kwargs": {"max_tokens": 512}}
+                   if m["id"] == "glm-5.3-flash" else {}),
+            }
+            for m in models_raw
+            if m.get("id")
+        ]

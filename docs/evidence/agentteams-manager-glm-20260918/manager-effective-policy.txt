@@ -1,0 +1,3 @@
+providers.json {"max_tokens": 2048, "reasoning_effort": "low"}
+agentteams-gateway.json {"max_tokens": 2048, "reasoning_effort": "low"}
+api: {'max_tokens': 2048, 'reasoning_effort': 'low'}

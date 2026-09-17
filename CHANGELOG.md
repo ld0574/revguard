@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-09-18
+
+- AgentTeams Manager glm-5.3-flash 生成预算修复：重建 Manager 镜像，使 bridge 重新投影 provider 时保持 `max_tokens=2048` + `reasoning_effort=low`；预算脚本新增 Manager 目标（端口 18799），新增从 `docker inspect` 原样重建 Manager 容器的脚本（证据 `docs/evidence/agentteams-manager-glm-20260918/`）。
+
 ## 0.6.0-rc3 — 2026-09-18
 
 - 审批 = 参数承诺：规范化参数摘要同时落审批单与执行能力令牌，执行前三方比对，参数漂移即拒绝；重新授权走同一校验（`revguard/commitment.py`）。
