@@ -68,6 +68,10 @@ class TestFinalsObservabilityContract(unittest.TestCase):
             ROOT / "website/index.html",
         ):
             self.assertIn("0.6.0-rc3", path.read_text(), str(path))
+        # 发布门禁：候选版本必须在 CHANGELOG 与导出的 OpenAPI 文档里同时出现。
+        self.assertIn("## 0.6.0-rc3", (ROOT / "CHANGELOG.md").read_text())
+        openapi = json.loads((ROOT / "docs/openapi.json").read_text())
+        self.assertEqual(openapi["info"]["version"], "0.6.0-rc3")
 
     def test_public_data_summary_keeps_real_and_synthetic_layers_separate(self):
         summary = json.loads((
