@@ -1,0 +1,637 @@
+{
+  "case_id": "CASE-2026-0001",
+  "status": "CLOSED",
+  "run_id": null,
+  "run_status": "COMPLETED",
+  "phase": "EXECUTION",
+  "completed_tasks": 16,
+  "total_tasks": 16,
+  "recovery_state": null,
+  "approval_status": null,
+  "human_subject": null,
+  "matrix_event_id": null,
+  "verification": null,
+  "trace_spans": {
+    "erpnext": 26,
+    "HumanIdentityVerification": 1,
+    "HumanApprovalGate": 1,
+    "MoneyJournal": 0
+  },
+  "money_operations": {
+    "operations": [
+      {
+        "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-2",
+        "case_id": "CASE-2026-0001",
+        "channel": "order:EZ202608001",
+        "kind": "commission.submit_adjustment",
+        "request_hash": "774c7e709fc3ab37732161935aeab0dc58b49dee2192d58a9a5fa4d4c90028fd",
+        "status": "COMMITTED",
+        "generation": 1,
+        "result": {
+          "action_id": "ACT-C5FE9124",
+          "status": "SUBMITTED",
+          "ledger_entry": {
+            "ledger_id": "LED-984F37DE",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "amount": "9000.00",
+            "currency": "KES",
+            "policy_version": "2026-Q3",
+            "status": "POSTED",
+            "source": "REVGUARD:CASE-2026-0001",
+            "posted_at": "2026-09-17T12:41:32.591446Z"
+          },
+          "before_snapshot": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            }
+          ],
+          "after_snapshot": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            },
+            {
+              "ledger_id": "LED-984F37DE",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "9000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q3",
+              "status": "POSTED",
+              "source": "REVGUARD:CASE-2026-0001",
+              "posted_at": "2026-09-17T12:41:32.591446Z"
+            }
+          ],
+          "rollback_token": "<redacted:sha256:3490fdf5f570b359>",
+          "executions": [
+            {
+              "action_id": "ACT-C5FE9124",
+              "status": "SUBMITTED",
+              "ledger_entry": {
+                "ledger_id": "LED-984F37DE",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "9000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0001",
+                "posted_at": "2026-09-17T12:41:32.591446Z"
+              },
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-984F37DE",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:41:32.591446Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:3490fdf5f570b359>",
+              "case_id": "CASE-2026-0001",
+              "action_type": "LEDGER_ADJUST",
+              "amount": "9000.00",
+              "currency": "KES",
+              "component": "SALES_COMMISSION",
+              "idempotency_key": "CASE-2026-0001:SALES_COMMISSION",
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-2"
+            },
+            {
+              "action_id": "ACT-360F05AF",
+              "status": "SUBMITTED",
+              "ledger_entry": {
+                "ledger_id": "LED-8437AF22",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "amount": "5400.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0001",
+                "posted_at": "2026-09-17T12:41:32.591585Z"
+              },
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-984F37DE",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:41:32.591446Z"
+                },
+                {
+                  "ledger_id": "LED-8437AF22",
+                  "order_id": "EZ202608001",
+                  "component": "COLLECTION_COMMISSION",
+                  "amount": "5400.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:41:32.591585Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:e778b2b6d46a4b47>",
+              "case_id": "CASE-2026-0001",
+              "action_type": "LEDGER_ADJUST",
+              "amount": "5400.00",
+              "currency": "KES",
+              "component": "COLLECTION_COMMISSION",
+              "idempotency_key": "CASE-2026-0001:COLLECTION_COMMISSION",
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-2"
+            }
+          ],
+          "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-2"
+        },
+        "created_at": "2026-09-17T12:41:32.588877Z",
+        "updated_at": "2026-09-17T12:41:32.594960Z"
+      },
+      {
+        "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-4",
+        "case_id": "CASE-2026-0001",
+        "channel": "order:EZ202608001",
+        "kind": "commission.submit_adjustment",
+        "request_hash": "6dd4e7f0c95d9a50a66e95d383c8a8f2b8116bca75316f9a5a57c30b5f4eb85f",
+        "status": "COMMITTED",
+        "generation": 1,
+        "result": {
+          "action_id": "ACT-DBFD5695",
+          "status": "SUBMITTED",
+          "ledger_entry": {
+            "ledger_id": "LED-2F71116D",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "amount": "9000.00",
+            "currency": "KES",
+            "policy_version": "2026-Q3",
+            "status": "POSTED",
+            "source": "REVGUARD:CASE-2026-0001",
+            "posted_at": "2026-09-17T12:58:02.074992Z"
+          },
+          "before_snapshot": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            }
+          ],
+          "after_snapshot": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            },
+            {
+              "ledger_id": "LED-2F71116D",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "9000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q3",
+              "status": "POSTED",
+              "source": "REVGUARD:CASE-2026-0001",
+              "posted_at": "2026-09-17T12:58:02.074992Z"
+            }
+          ],
+          "rollback_token": "<redacted:sha256:f761ab6e6bff4533>",
+          "executions": [
+            {
+              "action_id": "ACT-DBFD5695",
+              "status": "SUBMITTED",
+              "ledger_entry": {
+                "ledger_id": "LED-2F71116D",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "9000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0001",
+                "posted_at": "2026-09-17T12:58:02.074992Z"
+              },
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-2F71116D",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:58:02.074992Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:f761ab6e6bff4533>",
+              "case_id": "CASE-2026-0001",
+              "action_type": "LEDGER_ADJUST",
+              "amount": "9000.00",
+              "currency": "KES",
+              "component": "SALES_COMMISSION",
+              "idempotency_key": "CASE-2026-0001:SALES_COMMISSION",
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-4"
+            },
+            {
+              "action_id": "ACT-1AB36519",
+              "status": "SUBMITTED",
+              "ledger_entry": {
+                "ledger_id": "LED-1FACDA90",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "amount": "5400.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0001",
+                "posted_at": "2026-09-17T12:58:02.075121Z"
+              },
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-2F71116D",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:58:02.074992Z"
+                },
+                {
+                  "ledger_id": "LED-1FACDA90",
+                  "order_id": "EZ202608001",
+                  "component": "COLLECTION_COMMISSION",
+                  "amount": "5400.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:58:02.075121Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:792d40bbb4960e33>",
+              "case_id": "CASE-2026-0001",
+              "action_type": "LEDGER_ADJUST",
+              "amount": "5400.00",
+              "currency": "KES",
+              "component": "COLLECTION_COMMISSION",
+              "idempotency_key": "CASE-2026-0001:COLLECTION_COMMISSION",
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-4"
+            }
+          ],
+          "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-4"
+        },
+        "created_at": "2026-09-17T12:58:02.070932Z",
+        "updated_at": "2026-09-17T12:58:02.079588Z"
+      },
+      {
+        "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5",
+        "case_id": "CASE-2026-0001",
+        "channel": "order:EZ202608001",
+        "kind": "commission.submit_adjustment",
+        "request_hash": "b068582e4eb0467f4cb200dc0dee18953cf0a3f4dc405d415db13fc2562596ba",
+        "status": "COMMITTED",
+        "generation": 1,
+        "result": {
+          "action_id": "ACT-FDBD87BC",
+          "status": "SUBMITTED",
+          "ledger_entry": {
+            "ledger_id": "LED-F0A0D1E2",
+            "order_id": "EZ202608001",
+            "component": "SALES_COMMISSION",
+            "amount": "9000.00",
+            "currency": "KES",
+            "policy_version": "2026-Q3",
+            "status": "POSTED",
+            "source": "REVGUARD:CASE-2026-0001",
+            "posted_at": "2026-09-17T12:58:08.818303Z"
+          },
+          "before_snapshot": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            }
+          ],
+          "after_snapshot": [
+            {
+              "ledger_id": "LED-50001",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "18000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q2",
+              "status": "POSTED",
+              "source": "BATCH-CALC-2026-07",
+              "posted_at": "2026-08-01T02:00:00Z",
+              "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+            },
+            {
+              "ledger_id": "LED-F0A0D1E2",
+              "order_id": "EZ202608001",
+              "component": "SALES_COMMISSION",
+              "amount": "9000.00",
+              "currency": "KES",
+              "policy_version": "2026-Q3",
+              "status": "POSTED",
+              "source": "REVGUARD:CASE-2026-0001",
+              "posted_at": "2026-09-17T12:58:08.818303Z"
+            }
+          ],
+          "rollback_token": "<redacted:sha256:3908800df5c43cf2>",
+          "executions": [
+            {
+              "action_id": "ACT-FDBD87BC",
+              "status": "SUBMITTED",
+              "ledger_entry": {
+                "ledger_id": "LED-F0A0D1E2",
+                "order_id": "EZ202608001",
+                "component": "SALES_COMMISSION",
+                "amount": "9000.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0001",
+                "posted_at": "2026-09-17T12:58:08.818303Z"
+              },
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-F0A0D1E2",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:58:08.818303Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:3908800df5c43cf2>",
+              "case_id": "CASE-2026-0001",
+              "action_type": "LEDGER_ADJUST",
+              "amount": "9000.00",
+              "currency": "KES",
+              "component": "SALES_COMMISSION",
+              "idempotency_key": "CASE-2026-0001:SALES_COMMISSION",
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5"
+            },
+            {
+              "action_id": "ACT-568A2FCF",
+              "status": "SUBMITTED",
+              "ledger_entry": {
+                "ledger_id": "LED-2092EB52",
+                "order_id": "EZ202608001",
+                "component": "COLLECTION_COMMISSION",
+                "amount": "5400.00",
+                "currency": "KES",
+                "policy_version": "2026-Q3",
+                "status": "POSTED",
+                "source": "REVGUARD:CASE-2026-0001",
+                "posted_at": "2026-09-17T12:58:08.818431Z"
+              },
+              "before_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                }
+              ],
+              "after_snapshot": [
+                {
+                  "ledger_id": "LED-50001",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "18000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q2",
+                  "status": "POSTED",
+                  "source": "BATCH-CALC-2026-07",
+                  "posted_at": "2026-08-01T02:00:00Z",
+                  "comment": "7月佣金批处理（误用 2026-Q2 版本）"
+                },
+                {
+                  "ledger_id": "LED-F0A0D1E2",
+                  "order_id": "EZ202608001",
+                  "component": "SALES_COMMISSION",
+                  "amount": "9000.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:58:08.818303Z"
+                },
+                {
+                  "ledger_id": "LED-2092EB52",
+                  "order_id": "EZ202608001",
+                  "component": "COLLECTION_COMMISSION",
+                  "amount": "5400.00",
+                  "currency": "KES",
+                  "policy_version": "2026-Q3",
+                  "status": "POSTED",
+                  "source": "REVGUARD:CASE-2026-0001",
+                  "posted_at": "2026-09-17T12:58:08.818431Z"
+                }
+              ],
+              "rollback_token": "<redacted:sha256:df7565140e0c7f3c>",
+              "case_id": "CASE-2026-0001",
+              "action_type": "LEDGER_ADJUST",
+              "amount": "5400.00",
+              "currency": "KES",
+              "component": "COLLECTION_COMMISSION",
+              "idempotency_key": "CASE-2026-0001:COLLECTION_COMMISSION",
+              "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5"
+            }
+          ],
+          "operation_id": "CASE-2026-0001:settlement:sha256:21a93a418c6a039df4ef2f03d27ff5889c491f6a84f1ff137b55fcdb21956f84:recording-5"
+        },
+        "created_at": "2026-09-17T12:58:08.815357Z",
+        "updated_at": "2026-09-17T12:58:08.822422Z"
+      }
+    ]
+  },
+  "captured_at": "2026-09-17T20:58:09+0800"
+}

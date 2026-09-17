@@ -15,3 +15,50 @@ Worker 继续访问 AgentTeams 内部 Higress Gateway。外部模型凭据由 Co
 - 真实最小生成请求因上游五小时使用上限返回 429，并明确给出恢复时间 `2026-09-17 18:02:57 +08:00`。因此本次记录不把模型生成链路标为通过，额度恢复后必须重新执行工具调用与结果续接探针。
 
 历史 Luna/Sol 证据保持原样，仅代表其记录日期当时的运行状态。
+
+## 额度恢复后的复验（2026-09-17 20:30 起，202）
+
+上游五小时使用上限在 18:02 之后恢复，20:30 重新执行了无需业务动作的探针，并观察到真实 Worker 调用：
+
+- `GET /models` → HTTP 200，返回 13 个模型且包含 `glm-5.3-flash`；
+- `POST /chat/completions`（`max_tokens=16`）→ HTTP 200，`model=glm-5.3-flash`，usage 34 tokens；
+- Controller、Dashboard、Manager 注入的 API Key 指纹（sha256 前 12 位 `1b78d38e8b9b`、长度 51）与 AgentTeams 安装环境文件完全一致，`AGENTTEAMS_OPENAI_BASE_URL` 为 `https://www.tokens1688.com/v1`；
+- 20:33 与 20:55 两次真实案件运行把 10 个 Worker 重新拉起，CoPaw 侧出现 `CoPawAgent.reply` 与 session 落盘，生成链路已恢复，不再是 429。
+
+因此本文件上一条“额度恢复后必须重新执行工具调用与结果续接探针”的前半部分已完成；工具调用结果续接由真实 StageTask 回执验证（见下）。
+
+## 202 双栈路由与 Worker 凭据（本轮定位并修复）
+
+同一台 202 上有两套互不干扰的 RevGuard 栈，但共用一个 AgentTeams 网络：
+
+| 栈 | 容器 | 端口 | 用途 |
+|---|---|---|---|
+| prod | `revguard-api` | 19000 | 常驻演示栈 |
+| dev | `revguard-api-dev` | 19088 | 0.6.0 研发 / 验收 / 决赛彩排栈 |
+
+Higress 的 REST-to-MCP Server 全部指向 `revguard-api.internal:9000`，Docker DNS 同时只能解析到一个容器，因此**任一时刻只有一套栈能被 Worker 回调**。本轮遇到的两个失败都由这里产生：
+
+1. **404 `Agent task 不存在`**：`revguard-api.internal` 由 prod 容器持有（`docker-compose.agentteams.yml` 的 network alias），dev 运行产生的 StageTask 被 Worker 回调到 prod，prod 自然查不到该任务。表现为 `MatrixTransportError`，且 prod 侧日志没有任何该任务记录。
+2. **401 `API key 无效`**：把别名切到 dev 后，Higress 里注册的 Worker 后端 Principal 是部署时生成的服务端密钥，dev 的 `.env` 尚未持有这些密钥。本轮把 Higress 中已注册的 9 个 Worker Principal（只读取指纹后落盘，不打印明文）合并进 dev 的 `REVGUARD_API_KEYS_JSON`，dev 即可校验同一批 Worker 凭据。
+
+修复后的运维入口：`bash scripts/switch_agentteams_api_target.sh {dev|prod|status}`，脚本负责别名归属、解析校验与 release 断言（dev=0.6.0*、prod=0.5*）。每次切换都必须确认目标栈已持有当前 Higress 的 Worker Principal 密钥，否则 Worker 会以 401 结束 StageTask。
+
+边界与代价：prod 容器一旦被 `docker compose up` 重新创建，`docker-compose.agentteams.yml` 里的别名会回到 prod，需要重新执行一次切换脚本；本轮决赛彩排栈为 dev（19088），因此把别名留在 dev，prod 的既有案件与审计记录保持只读不变。
+
+## dev 栈 Matrix 路径的实测结果与整改项
+
+把别名与 Worker 凭据都对齐之后，19088 彩排栈用 `REVGUARD_TEAM_TRANSPORT=matrix` 真实跑了一次 CASE-2026-0001：
+
+- OrchestratorHandshake 与 CaseNormalizeSkill 两个 StageTask 由真实 Worker 完成，任务账本推进到 3/8；
+- 第三个阶段 `PolicyVersionMatchSkill` 在 240 秒 Stage 超时后以 `MatrixTransportError` 结束；
+- 房间记录显示原因不是额度、不是鉴权，而是 **`glm-5.3-flash` 无法稳定复现触发器里那段内联 `adapter_command`**：模型先截断 JSON、再自我纠正“上一条命令因我截断 JSON 而未执行成功”，把两三次生成额度耗在转义上，始终没有形成服务端 StageResult。
+
+已做的低成本缓解：Worker 模型 `max_tokens` 由 512 提到 4096，`REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE` 由 2 提到 3（`scripts/configure_agentteams_persistent_model.py --max-completion-tokens 4096`）。这解决了“输出被截断”，但转义与引号问题仍在。
+
+建议的下一步整改（新增功能，本轮未实施）：
+
+1. 触发消息只下发短命令，例如 `python3 .../revguard_call.py --task-id TASK-XXXX --from-task`，把 `--input` 从命令行移除；
+2. Adapter 改为向 RevGuard 取该 StageTask 已绑定的输入（新增一个 Worker 可读、按 actor 与 task 绑定的只读接口，或复用 `GET /api/v1/cases/{case_id}/agent-tasks`）；
+3. 或者保留内联输入但改为 base64 传递（`--input-b64`），彻底消除引号转义。
+
+在整改完成前，19088 彩排栈的双案记录使用 `REVGUARD_TEAM_TRANSPORT=mcp` 参考执行器产生（同一 StageTask / Skill 契约 / 真实 ERPNext / 真实 Matrix 真人审批 / 真实 PostgreSQL 资金写入与冲销），现场只展示已存档记录；Element 里的真实 AgentTeams 多 Agent 交接仍以 19000 常驻栈的运行与决赛视频为准。

@@ -1,0 +1,16 @@
+# 决赛彩排覆盖层：让 0.6.0 研发/验收栈接管 AgentTeams 的 MCP 后端别名。
+#
+#   docker compose -f docker-compose.dev.yml -f docker-compose.finals.yml \
+#     -p revguard-dev up -d revguard-api-dev
+#
+# 与 docker-compose.agentteams.yml（19000 常驻栈）二选一：Docker DNS 同时只能把
+# revguard-api.internal 解析到一个容器，切换后请执行
+#   bash scripts/switch_agentteams_api_target.sh status
+# 确认 owner、解析地址与 release 与预期一致。
+services:
+  revguard-api-dev:
+    networks:
+      agentteams:
+        aliases:
+          - revguard-api
+          - revguard-api.internal
