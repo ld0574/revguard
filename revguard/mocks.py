@@ -107,6 +107,7 @@ class ToolGateway:
         self._token_consumed_amount: dict[str, str] = {}  # approval jti -> 已执行绝对金额
         self._token_consumed_by_component: dict[str, dict[str, str]] = {}
         self._used_rollback_tokens: set[str] = set()
+        self._posting_tamper_used_cases: set[str] = set()
         self._finance_fail_left = finance_fail_times   # 故障注入计数
         self._verification_tamper_amount = Decimal(str(verification_tamper_amount))
         self._verification_tamper_used = False
@@ -370,10 +371,37 @@ class ToolGateway:
         with self._lock:
             with self.journal.transaction() as tx:
                 state = self._reset_case_state(tx.state(), case_id)
-                if case_id in self._posting_tamper_case_ids:
-                    state["posting_tamper_used"] = False
+                self._rearm_posting_tamper(state, case_id)
                 tx.save_state(state)
             self._apply_state(state)
+
+    def _rearm_posting_tamper(self, state: dict, case_id: str) -> None:
+        """Re-arm the scoped one-shot posting fault for this recording generation.
+
+        ``posting_tamper_used`` 曾经是全局一次性开关，单案重新准备不会清掉它，
+        于是"重新准备当前案件"之后的第二次录制会静默退化成正常结案，
+        让"写后偏差 → 冲销 → 恢复"演示直接丢失。这里改成按案件记录消费状态，
+        新代次只重新武装该案，不影响其它案件的注入计划。
+        """
+        used = state.get("posting_tamper_used_cases")
+        if used is None:
+            legacy_used = bool(state.get("posting_tamper_used", False))
+            used = sorted(self._posting_tamper_case_ids) if legacy_used else []
+        remaining = [item for item in used if item != case_id]
+        state["posting_tamper_used_cases"] = remaining
+        state["posting_tamper_used"] = bool(remaining)
+
+    @property
+    def _posting_tamper_used(self) -> bool:
+        """全局视图：是否已有案件消费过一次注入的写后偏差。"""
+        return bool(self._posting_tamper_used_cases)
+
+    @_posting_tamper_used.setter
+    def _posting_tamper_used(self, value: bool) -> None:
+        # 兼容旧调用方：置 False 等价于重新武装全部注入目标案件。
+        self._posting_tamper_used_cases = (
+            set(self._posting_tamper_case_ids) if value else set()
+        )
 
     @staticmethod
     def _reset_case_state(state: dict, case_id: str) -> dict:
@@ -477,6 +505,7 @@ class ToolGateway:
                 if current != expected_case or fresh_case.get("status") != "CREATED":
                     raise ValueError("案件快照已变化，拒绝重新准备")
                 state = self._reset_case_state(tx.state(), case_id)
+                self._rearm_posting_tamper(state, case_id)
                 tasks = tx.execute("SELECT task_id FROM agent_tasks WHERE case_id=? AND status IN "
                                    "('PENDING','RUNNING','WAITING_TOOL','WAITING_HUMAN','FAILED_RETRYABLE')", (case_id,)).fetchall()
                 tx.save_state(state)
@@ -733,10 +762,10 @@ class ToolGateway:
             if (
                 self._posting_tamper_amount
                 and tamper_targets_case
-                and not self._posting_tamper_used
+                and draft["case_id"] not in self._posting_tamper_used_cases
             ):
                 entry["amount"] = str(Decimal(entry["amount"]) + self._posting_tamper_amount)
-                self._posting_tamper_used = True
+                self._posting_tamper_used_cases.add(draft["case_id"])
             self._ledger.append(entry)
             draft["status"] = "SUBMITTED"
             self._idempotency[idempotency_key] = draft["action_id"]
@@ -1039,7 +1068,13 @@ class ToolGateway:
     def _apply_state(self, state: dict) -> None:
         self._execution_results = state.get("execution_results", {})
         self._recording_epochs = state.get("recording_epochs", {})
-        self._posting_tamper_used = bool(state.get("posting_tamper_used", False))
+        used_cases = state.get("posting_tamper_used_cases")
+        if used_cases is None:
+            # 旧状态只有全局布尔：保守地视为所有注入目标案件都已消费，
+            # 需要靠单案重新准备或整库 reset 重新武装。
+            used_cases = (sorted(self._posting_tamper_case_ids)
+                          if state.get("posting_tamper_used") else [])
+        self._posting_tamper_used_cases = set(used_cases)
         self._ledger = state.get("ledger", self._ledger)
         self._adjustments = state.get("adjustments", {})
         self._approvals = state.get("approvals", {})
@@ -1072,6 +1107,7 @@ class ToolGateway:
             "execution_results": self._execution_results,
             "recording_epochs": self._recording_epochs,
             "posting_tamper_used": self._posting_tamper_used,
+            "posting_tamper_used_cases": sorted(self._posting_tamper_used_cases),
             "ledger": self._ledger,
             "adjustments": self._adjustments,
             "approvals": self._approvals,

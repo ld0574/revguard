@@ -948,6 +948,55 @@ class TestApiSmoke(unittest.TestCase):
         self.assertTrue(any(item.get("transport") == "mcp" for item in details))
         self.assertTrue(any(item.get("identity_verified") is True for item in details))
 
+    def test_15z_reprepare_rearms_scoped_posting_fault_for_next_generation(self):
+        """单案重新准备必须为下一录制代次重新武装注入的写后偏差。
+
+        2026-09-18 在 202 彩排栈复现：``posting_tamper_used`` 曾是全局一次性
+        开关，而"重新准备当前案件"不清它，于是第二次录制拿到 variance=0.00、
+        直接 CLOSED，冲销与恢复演示静默消失。修复后按案件记录消费状态，
+        重新准备只重新武装该案。
+        """
+        case_id = "CASE-2026-0008"
+        api_module.gateway._posting_tamper_amount = Decimal("1")
+        api_module.gateway._posting_tamper_case_ids = frozenset({case_id})
+        api_module.gateway._posting_tamper_used = False
+
+        def reprepare() -> None:
+            response = self.client.post(
+                f"/api/v1/cases/{case_id}/reprepare", headers=self.operator,
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json()["state_status"], CaseStatus.CREATED.value)
+
+        def tampered_run() -> str:
+            started = self.client.post(
+                f"/api/v1/cases/{case_id}/team/run", headers=self.operator,
+            )
+            self.assertEqual(started.status_code, 200, started.text)
+            approved = self.client.post(
+                f"/api/v1/cases/{case_id}/approval",
+                json={"decision": "APPROVED", "comment": "录制测试人工批准"},
+                headers=self.human_headers(case_id, "APPROVED"),
+            )
+            self.assertEqual(approved.status_code, 200, approved.text)
+            return approved.json()["case"]["status"]
+
+        reprepare()
+        self.assertEqual(tampered_run(), CaseStatus.ROLLED_BACK.value)
+        self.assertIn(case_id, api_module.gateway._posting_tamper_used_cases)
+
+        reprepare()
+        self.assertNotIn(case_id, api_module.gateway._posting_tamper_used_cases)
+        self.assertFalse(api_module.gateway._posting_tamper_used)
+
+        # 新代次仍能复现"写后偏差 → 冲销 → 恢复到净额零"。
+        self.assertEqual(tampered_run(), CaseStatus.ROLLED_BACK.value)
+
+        # 本类的 store/gateway 在用例之间共享：收尾恢复到基线代次，
+        # 既验证重新武装可重复执行，也不把消费状态泄漏给后续用例。
+        reprepare()
+        self.assertFalse(api_module.gateway._posting_tamper_used)
+
     def test_15b_stale_matrix_run_requires_approver_and_is_requeued(self):
         case_id = "CASE-STALE-MATRIX"
         case = Case(
