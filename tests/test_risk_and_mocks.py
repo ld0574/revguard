@@ -6,6 +6,7 @@ import unittest
 from decimal import Decimal
 from pathlib import Path
 
+from revguard.commitment import approval_digest
 from revguard.mocks import ToolGateway
 from revguard.risk import classify_risk
 
@@ -142,6 +143,84 @@ class TestToolContract(unittest.TestCase):
                             scope=["commission:write"], idempotency_key="k1")
         self.assertFalse(resp["success"])
         self.assertEqual(resp["error"]["type"], "AUTH_FAILED")
+
+    def _tamper_approval(self, approval_id, **changes):
+        """在持久层改动审批记录，模拟审批参数被事后改写。
+
+        执行入口每次都会从持久层重载权威状态，因此内存里的改动会先被覆盖；
+        这里显式落盘，确保篡改真的送达执行校验分支。
+        """
+        self.gw._approvals[approval_id].update(changes)
+        self.gw._persist_state()
+
+    def test_approval_commitment_blocks_parameter_drift(self):
+        """审批 = 参数承诺：审批后改动金额，执行必须被拒绝。"""
+        draft, token = self._approved_draft(case_id="CASE-DRIFT")
+        approval_id = next(iter(self.gw._approvals))
+        original = self.gw._approvals[approval_id]["parameters_digest"]
+        self.assertTrue(original.startswith("sha256:"))
+
+        self._tamper_approval(approval_id, amount="999")
+        resp = self.gw.call("commission.submit_adjustment", {
+            "action_id": draft["action_id"], "approval_token": token,
+        }, case_id="CASE-DRIFT", actor="revguard-executor",
+            scope=["commission:write"], idempotency_key="drift-1")
+        self.assertFalse(resp["success"])
+        self.assertEqual(resp["error"]["type"], "AUTH_FAILED")
+        self.assertIn("参数漂移", resp["error"]["message"])
+        self.assertEqual(self.gw._adjustments[draft["action_id"]]["status"], "DRAFT")
+        self.assertFalse([e for e in self.gw._ledger if e.get("source", "").endswith("CASE-DRIFT")])
+
+    def test_approval_commitment_blocks_resealed_parameter_drift(self):
+        """篡改者同时重算摘要，令牌与审批单仍对不上，执行必须被拒绝。"""
+        draft, token = self._approved_draft(case_id="CASE-RESEAL")
+        approval_id = next(iter(self.gw._approvals))
+        tampered = self.gw._approvals[approval_id]
+        tampered["amount"] = "999"
+        tampered["parameters_digest"] = approval_digest(tampered)
+        self.gw._persist_state()
+
+        resp = self.gw.call("commission.submit_adjustment", {
+            "action_id": draft["action_id"], "approval_token": token,
+        }, case_id="CASE-RESEAL", actor="revguard-executor",
+            scope=["commission:write"], idempotency_key="drift-2")
+        self.assertFalse(resp["success"])
+        self.assertEqual(resp["error"]["type"], "AUTH_FAILED")
+        self.assertIn("参数漂移", resp["error"]["message"])
+
+    def test_renew_approval_capability_rejects_tampered_parameters(self):
+        """审批记录被改动后，重新授权也不得签发新的能力令牌。"""
+        self._approved_draft(case_id="CASE-RENEW")
+        approval_id = next(iter(self.gw._approvals))
+        self._tamper_approval(approval_id, amount="999")
+
+        resp = self.gw.call("workflow.renew_approval_capability", {
+            "approval_id": approval_id, "case_id": "CASE-RENEW",
+        }, case_id="CASE-RENEW", actor="finance.lead",
+            scope=["approval:decide"])
+        self.assertFalse(resp["success"])
+        self.assertEqual(resp["error"]["type"], "AUTH_FAILED")
+        self.assertIn("参数漂移", resp["error"]["message"])
+
+    def test_approval_commitment_is_canonical_and_case_bound(self):
+        """同一组参数在不同审批单/案件上得到不同摘要；金额写法不影响摘要。"""
+        from revguard.commitment import approval_commitment, commitment_digest
+
+        self._approved_draft(case_id="CASE-COMMIT-A", amount="100")
+        self._approved_draft(case_id="CASE-COMMIT-B", amount="100.00")
+        digests = {}
+        for approval in self.gw._approvals.values():
+            digests[approval["case_id"]] = approval["parameters_digest"]
+        self.assertEqual(set(digests), {"CASE-COMMIT-A", "CASE-COMMIT-B"})
+        self.assertNotEqual(digests["CASE-COMMIT-A"], digests["CASE-COMMIT-B"])
+
+        approval = next(item for item in self.gw._approvals.values()
+                        if item["case_id"] == "CASE-COMMIT-A")
+        self.assertEqual(
+            commitment_digest(approval_commitment(approval)),
+            approval["parameters_digest"],
+        )
+        self.assertEqual(approval["parameters_commitment"]["amount"], "100.00")
 
     def test_idempotency_replays_committed_result(self):
         draft, token = self._approved_draft()
