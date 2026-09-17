@@ -22,6 +22,26 @@ SERVERS = {
     "revguard-knowledge": ["CaseToDatasetSkill"],
 }
 
+# Business Workers deliberately hold no RevGuard backend credential: Higress
+# injects it server-side.  The StageTask binding must therefore be readable
+# through the same scoped MCP server, otherwise a short ``--from-task`` retry
+# command has no way to resolve its own bound input.
+BINDING_TOOL = """- name: BoundStageTask
+  description: 取回服务端绑定给本 Worker 的 StageTask 输入（只读，Higress 侧注入凭据）
+  args:
+  - name: taskId
+    type: string
+    required: true
+    description: 服务端派发且绑定案件版本的 StageTask 编号
+  requestTemplate:
+    url: "http://revguard-api.internal:9000/api/v1/agent-tasks/{{.args.taskId}}"
+    method: GET
+    headers:
+    - key: Authorization
+      value: "Bearer {{.config.accessToken}}"
+"""
+
+
 ARGUMENTS = """  args:
   - name: caseId
     type: string
@@ -90,6 +110,7 @@ def render_server(actor: str, skills: list[str]) -> str:
             "    - key: X-RevGuard-Transport\n",
             '      value: "higress-mcp"\n\n',
         ])
+    parts.append(BINDING_TOOL)
     return "".join(parts).rstrip() + "\n"
 
 

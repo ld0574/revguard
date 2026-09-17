@@ -61,7 +61,12 @@ def valid_probe(own: str, expected: dict[str, list[str]], rows: list[dict]) -> b
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     manifest = json.loads((root / "agentteams/mcp/higress/manifest.json").read_text())
-    expected = {f"mcp-{worker}": skills for worker, skills in manifest.items()}
+    # Every scoped server also exposes the read-only StageTask binding tool, so
+    # a Worker without a backend credential can resolve its own bound input.
+    expected = {
+        f"mcp-{worker}": [*skills, "BoundStageTask"]
+        for worker, skills in manifest.items()
+    }
     for worker in manifest:
         own = f"mcp-{worker}"
         for attempt in range(5):

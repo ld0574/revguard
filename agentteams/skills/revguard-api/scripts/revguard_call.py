@@ -107,6 +107,29 @@ def _mcp_error(message: str) -> dict:
     return {"type": error_type, "message": summary[:800]}
 
 
+def _mcporter_call(worker: str, tool: str, arguments: dict, config_path: Path) -> object:
+    """Call one tool on the Worker's own scoped MCP server.
+
+    The Worker holds no RevGuard backend credential; Higress injects it
+    server-side after the per-Worker consumer allow-list check.
+    """
+    completed = subprocess.run(
+        [
+            "mcporter", "call", f"mcp-{worker}.{tool}",
+            "--args", json.dumps(arguments, ensure_ascii=False, separators=(",", ":")),
+            "--output", "json", "--timeout", "20000",
+        ],
+        cwd=config_path.parent.parent,
+        text=True,
+        capture_output=True,
+        timeout=25,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(f"mcporter exited with status {completed.returncode}")
+    return json.loads(completed.stdout)
+
+
 def _invoke_higress_mcp(
     worker: str,
     skill: str,
@@ -126,25 +149,46 @@ def _invoke_higress_mcp(
         "requestId": request_id,
         "taskId": task_id, "traceparent": traceparent,
     }
-    completed = subprocess.run(
-        [
-            "mcporter", "call", f"mcp-{worker}.{skill}",
-            "--args", json.dumps(arguments, ensure_ascii=False, separators=(",", ":")),
-            "--output", "json", "--timeout", "20000",
-        ],
-        cwd=config_path.parent.parent,
-        text=True,
-        capture_output=True,
-        timeout=25,
-        check=False,
+    result = _unwrap_mcporter_result(
+        _mcporter_call(worker, skill, arguments, config_path)
     )
-    if completed.returncode != 0:
-        raise RuntimeError(f"mcporter exited with status {completed.returncode}")
-    result = _unwrap_mcporter_result(json.loads(completed.stdout))
     result.setdefault("success", True)
     result.setdefault("request_id", request_id)
     result["transport"] = "higress-mcp"
     return result
+
+
+def _bound_task_payload(raw: object) -> dict:
+    """Accept both a raw REST body and an MCP content envelope."""
+    if isinstance(raw, dict) and str(raw.get("task_id") or ""):
+        return raw
+    if isinstance(raw, dict):
+        content = raw.get("content")
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, dict) or item.get("type") != "text":
+                    continue
+                try:
+                    value = json.loads(str(item.get("text") or ""))
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(value, dict) and value.get("task_id"):
+                    return value
+    raise ValueError("MCP binding response does not contain a StageTask")
+
+
+def _mcp_bound_task(worker: str, task_id: str) -> dict:
+    """Resolve one StageTask binding through the scoped MCP server.
+
+    Business Workers deliberately carry no RevGuard backend key, so the binding
+    lookup travels the same Higress path as the Skill call itself.
+    """
+    config_path = _mcporter_config(worker)
+    if config_path is None:
+        raise ValueError("Worker MCP binding lookup is unavailable")
+    return _bound_task_payload(
+        _mcporter_call(worker, "BoundStageTask", {"taskId": task_id}, config_path)
+    )
 
 
 def _api_json(api_base: str, path: str, api_key: str) -> dict:
@@ -225,17 +269,32 @@ def main() -> int:
             print(json.dumps({"success": False, "error": {"type": "INVALID_PARAMS",
                              "message": "--from-task requires a Worker --task-id"}}))
             return 2
-        try:
-            api_key = _load_api_key()
-            bound = _api_json(api_base, f"/api/v1/agent-tasks/{args.task_id}", api_key)
-        except urllib.error.HTTPError as exc:
-            print(json.dumps({"success": False, "error": {"type": f"HTTP_{exc.code}",
-                             "message": "Bound StageTask is unavailable"}}))
-            return 1
-        except (OSError, ValueError, json.JSONDecodeError) as exc:
-            print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
-                             "message": f"Bound StageTask lookup failed ({type(exc).__name__})"}}))
-            return 3
+        if _credential_path().exists():
+            try:
+                api_key = _load_api_key()
+                bound = _api_json(api_base, f"/api/v1/agent-tasks/{args.task_id}", api_key)
+            except urllib.error.HTTPError as exc:
+                print(json.dumps({"success": False, "error": {"type": f"HTTP_{exc.code}",
+                                 "message": "Bound StageTask is unavailable"}}))
+                return 1
+            except (OSError, ValueError, json.JSONDecodeError) as exc:
+                print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
+                                 "message": f"Bound StageTask lookup failed ({type(exc).__name__})"}}))
+                return 3
+        else:
+            # Business Workers hold no backend key; the binding is read through
+            # this Worker's own scoped MCP server (Higress injects credentials).
+            try:
+                bound = _mcp_bound_task(worker, args.task_id)
+            except urllib.error.HTTPError as exc:
+                print(json.dumps({"success": False, "error": {"type": f"HTTP_{exc.code}",
+                                 "message": "Bound StageTask is unavailable"}}))
+                return 1
+            except (OSError, ValueError, json.JSONDecodeError, RuntimeError,
+                    subprocess.TimeoutExpired) as exc:
+                print(json.dumps({"success": False, "error": {"type": "ADAPTER_CONFIG",
+                                 "message": f"Bound StageTask lookup failed ({type(exc).__name__})"}}))
+                return 3
         args.skill = bound.get("skill_name")
         args.case_id = bound.get("case_id")
         args.input = json.dumps(bound.get("input"), ensure_ascii=False, separators=(",", ":"))
