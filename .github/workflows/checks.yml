@@ -31,6 +31,8 @@ jobs:
         run: python scripts/gen_skill_docs.py --check
       - name: OpenAPI 与实现一致
         run: python scripts/export_openapi.py --check
+      - name: 官网回放索引与数据包一致
+        run: python scripts/check_website_replay.py
       - name: Lint
         run: python -m ruff check revguard scripts tests
       - name: Unit tests（不含需要外部服务的 PostgreSQL 集成）
