@@ -28,6 +28,31 @@ def _structured_audit(events: list[dict]) -> list[dict]:
     return structured
 
 
+def _current_generation_start(events: list[dict], recording_id: str | None) -> int | None:
+    """Seq of the marker that opened the case's current recording generation.
+
+    Audit rows are append-only, so a reprepared Golden Case keeps every earlier
+    generation.  The cockpit must show one run's evidence chain, so the read
+    model scopes audit rows to the generation whose ``recording_id`` matches the
+    case: rows emitted after ``DEMO_CASE_REPREPARED`` / ``DEMO_RESET`` for that
+    generation.  The full chain stays available from the case endpoint.
+    """
+    if not recording_id:
+        return None
+    for item in reversed(events):
+        if item.get("event") not in {"DEMO_CASE_REPREPARED", "DEMO_RESET"}:
+            continue
+        detail = item.get("detail")
+        if isinstance(detail, str):
+            try:
+                detail = json.loads(detail) if detail else {}
+            except json.JSONDecodeError:
+                detail = {}
+        if isinstance(detail, dict) and detail.get("recording_id") == recording_id:
+            return item.get("seq")
+    return None
+
+
 def _public_approval(approval: dict | None) -> dict | None:
     if not approval:
         return None
@@ -76,6 +101,12 @@ def build_dashboard_snapshot(
         return None
 
     trace = Tracer(store, case_id).export()
+    audit_history = store.list_audit(case_id)
+    generation_start = _current_generation_start(audit_history, case.get("recording_id"))
+    audit_events = [
+        item for item in audit_history
+        if generation_start is None or (item.get("seq") or 0) > generation_start
+    ]
     report_path = artifact_path(report_dir, case, ".md")
     executions = [_public_execution(item) for item in store.list_executions(case_id)]
     agent_tasks = [redact_secrets(item) for item in store.list_agent_tasks(case_id)]
@@ -86,7 +117,13 @@ def build_dashboard_snapshot(
         "approval": _public_approval(store.get_approval(case_id)),
         "executions": executions,
         "verification": store.get_verification(case_id),
-        "audit_events": _structured_audit(store.list_audit(case_id)),
+        "audit_events": _structured_audit(audit_events),
+        "audit_generation": {
+            "recording_id": case.get("recording_id"),
+            "start_seq": generation_start,
+            "event_count": len(audit_events),
+            "history_event_count": len(audit_history),
+        },
         "agent_tasks": agent_tasks,
         "trace": trace,
         "report_available": bool(trace["span_count"] and report_path.exists()),

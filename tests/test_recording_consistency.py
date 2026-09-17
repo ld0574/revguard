@@ -77,6 +77,36 @@ class TestRecordingConsistency(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(report.read_text(), old_report)
             self.assertTrue((await client.get(f"/api/v1/cases/{self.case_id}/dashboard", headers=self.viewer)).json()["report_available"])
 
+    async def test_dashboard_scopes_audit_to_current_recording_generation(self):
+        """驾驶舱只展示当前代次的证据链，历史代次保留在案件接口里。
+
+        审计链是 append-only：重新准备后的案件同时含新旧代次。决赛要展示的是
+        "同一条 Run 的完整证据"，所以读模型按 recording_id 收口到当前代次。
+        """
+        case_id = self.case_id
+        self.closed_case()
+        first_generation = self.store.get_case(case_id).get("recording_id")
+
+        async with self.client() as client:
+            reprepare = await client.post(f"/api/v1/cases/{case_id}/reprepare", headers=self.operator)
+            self.assertEqual(reprepare.status_code, 200, reprepare.text)
+            current = self.store.get_case(case_id)
+            self.assertTrue(current.get("recording_id"))
+            self.assertNotEqual(current.get("recording_id"), first_generation)
+            self.closed_case()
+
+            dashboard = (await client.get(f"/api/v1/cases/{case_id}/dashboard", headers=self.viewer)).json()
+            detail = (await client.get(f"/api/v1/cases/{case_id}", headers=self.viewer)).json()
+
+        generation = dashboard["audit_generation"]
+        self.assertEqual(generation["recording_id"], self.store.get_case(case_id)["recording_id"])
+        self.assertIsNotNone(generation["start_seq"])
+        self.assertTrue(dashboard["audit_events"])
+        self.assertLess(generation["event_count"], generation["history_event_count"])
+        self.assertTrue(all(item["seq"] > generation["start_seq"] for item in dashboard["audit_events"]))
+        # 历史代次没有被删除：案件接口仍然返回完整审计链。
+        self.assertGreater(len(detail["audit_events"]), len(dashboard["audit_events"]))
+
     def test_durable_gateway_ignores_corrupt_legacy_json(self):
         self.closed_case()
         before = self.snapshot()
