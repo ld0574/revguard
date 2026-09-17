@@ -60,9 +60,12 @@ class TestParallelEvidenceAndTrace(unittest.TestCase):
             exported = tracer.export()
             store.close()
 
-        # 直接观察同时在途调用，避免共享 CI 主机的调度抖动让固定毫秒阈值误报。
+        # 并行性是确定性事实：注入 80ms I/O 等待后，7 路里必须同时有多路在途。
+        # 共享主机的调度抖动会污染墙钟（同一台机器实测并行耗时可在 260ms–909ms 波动，
+        # 甚至高于 7×80ms 的串行下界），所以墙钟只保留一个明显超出抖动范围的挂起探针，
+        # 不再用它判定并行性。
         self.assertGreaterEqual(gateway.max_inflight, 5)
-        self.assertLess(result["parallel"]["duration_ms"], 800)
+        self.assertLess(result["parallel"]["duration_ms"], 7 * 80 * 10)
         self.assertEqual(result["parallel"]["task_count"], 7)
         self.assertEqual(result["evidence_score"], 1.0)
         self.assertTrue(all(e["content_hash"].startswith("sha256:")
