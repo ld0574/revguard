@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RevGuard 运行回放 — CASE-0001 与 CASE-0008 真实运行记录</title>
+<meta name="description" content="按真实运行记录回放 RevGuard 的两条完整案件：正常闭环的 CASE-0001 与发现偏差后冲销恢复的 CASE-0008。回放数据来自候选版本的真实执行记录，不需要等待模型调用。">
+<meta property="og:title" content="RevGuard 运行回放 — 两条真实案件记录">
+<meta property="og:description" content="确定性复算、真人审批、受控执行、独立复核与冲销恢复的分步回放，每一步都带记录原值与证据哈希。">
+<meta property="og:type" content="website">
+<meta property="og:image" content="og-image.svg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1f3a'/%3E%3Cpath d='M9 22V10h8.5a4 4 0 0 1 0 8H12l7 4' stroke='%2300d8c8' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/replay.css">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="./">Rev<b>Guard</b></a>
+    <nav>
+      <a href="./">项目首页</a>
+      <a href="#steps">回放步骤</a>
+      <a href="#trace">运行追踪</a>
+      <a href="#boundary">数据边界</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="replay-head">
+    <div class="head-main">
+      <span class="badge-live">真实运行记录回放</span>
+      <h1>两条完整案件，按记录逐步回放</h1>
+      <p class="lead">
+        下面两条时间线来自 RevGuard <b id="release-label">v0.6.0</b> 的一次真实执行：每一步的时点、金额、哈希与审批记录都取自当时的运行记录，
+        不改写、不补拍。回放只做展示加速，让评委不必等待模型调用时间。
+      </p>
+    </div>
+    <div class="case-switch" role="tablist" aria-label="选择回放案件">
+      <button class="case-tab" data-case="case-2026-0001" role="tab" aria-selected="false">
+        <span class="tab-kicker">CASE-0001</span>
+        <strong>正常闭环</strong>
+        <small>取证 → 复算 → 真人审批 → 执行 → 独立复核</small>
+      </button>
+      <button class="case-tab" data-case="case-2026-0008" role="tab" aria-selected="false">
+        <span class="tab-kicker">CASE-0008</span>
+        <strong>偏差与冲销恢复</strong>
+        <small>复核发现偏差 → 禁止重试 → 冲销 → 恢复复核</small>
+      </button>
+    </div>
+  </section>
+
+  <section class="facts" id="facts" aria-label="案件摘要"></section>
+
+  <section class="player" aria-label="回放控制">
+    <div class="controls">
+      <button id="btn-play" class="btn primary" type="button">播放</button>
+      <button id="btn-prev" class="btn ghost" type="button">上一步</button>
+      <button id="btn-next" class="btn ghost" type="button">下一步</button>
+      <button id="btn-reset" class="btn ghost" type="button">回到开头</button>
+      <label class="speed">速度
+        <select id="speed">
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </label>
+      <span class="counter"><b id="step-index">1</b>/<span id="step-total">1</span> 步</span>
+    </div>
+    <div class="progress" role="progressbar" aria-label="回放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <ol class="stages" id="stages"></ol>
+  </section>
+
+  <section class="stage-grid" id="steps">
+    <article class="step-card" id="step-card" aria-live="polite"></article>
+    <aside class="side">
+      <div class="side-card">
+        <h3>证据来源链</h3>
+        <div id="side-evidence" class="side-body"><p class="muted">回放到达取证步骤后显示。</p></div>
+      </div>
+      <div class="side-card">
+        <h3>审计链</h3>
+        <div id="side-audit" class="side-body"><p class="muted">加载中…</p></div>
+      </div>
+    </aside>
+  </section>
+
+  <section id="trace" class="trace-section">
+    <h2><em>RUN TRACE</em>运行追踪</h2>
+    <p class="muted">按真实跨度顺序列出智能体、技能与工具调用。时长是记录原值，本页不重新计时。</p>
+    <div class="trace-table" id="trace-table"></div>
+  </section>
+
+  <section id="boundary" class="boundary">
+    <h2><em>BOUNDARY</em>数据边界</h2>
+    <div class="boundary-grid">
+      <div class="note"><b>回放自真实运行记录</b><p>页面数据由候选版本对真实运行栈导出（导出脚本 <code>scripts/export_case_replay.py</code>），含本次运行的记录编号、跨度数量与审计链校验结果。</p></div>
+      <div class="note"><b>业务数据为合成样本</b><p>代理商、合同、政策与佣金争议是受控合成数据，用于可复现演示；ERPNext、PostgreSQL、AgentTeams 与监控组件均为真实运行的系统。</p></div>
+      <div class="note"><b>回放节奏为展示加速</b><p>每一步的时点来自记录，动画间隔为便于观看而设置，不代表真实执行耗时，也不构成性能指标。</p></div>
+      <div class="note"><b>脱敏发布</b><p>导出的数据包已移除凭据、内部地址、Matrix 用户与房间标识；审批人只保留角色与展示名。</p></div>
+    </div>
+    <p class="links">
+      <a href="./">返回项目首页</a>
+      <a href="https://github.com/ld0574/revguard/releases">GitHub Release 与发行包</a>
+      <a href="https://github.com/ld0574/revguard">源码仓库</a>
+    </p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>RevGuard · GOAI 开源大赛 Agent Infra 赛道决赛项目 · 回放数据来自真实运行记录，业务样本为合成数据。</p>
+</footer>
+
+<script src="assets/replay.js"></script>
+</body>
+</html>
