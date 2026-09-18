@@ -38,6 +38,16 @@
 - Element 多 Agent 任务交接证据（对应复赛答辩第 2 问）：`docs/evidence/agentteams-handoff-20260918/`，编排房间逐条 `REVGUARD_STAGE_HANDOFF`（上一步 StageTask/产物哈希 → 下一个 StageTask/输入哈希/案件版本），承接方 Worker 房间回 `skill_receipt`；截图 + 机读清单 + 抓取脚本。
 - 执行引用监视器对抗验证：`docs/evidence/execution-reference-20260918/`（5 场景探针 + JSON 机器可读结果）。
 
+## §5.6 两条"穿透式追问"的补强（2026-09-18 增补）
+
+| 追问 | 原状态 | 现状 | 证据 |
+|---|---|---|---|
+| 5. "105/105 是谁定的标准？判据从哪来？" | 材料只有数字，没有判据来源说明 | ✅ 本轮闭合 | `docs/evidence/evaluation-independence-20260918/`：冻结期望集构成与哈希、`input`/`expected` 分离、两组篡改实验（改期望 → `exit=1`）、`validate_evaluation_snapshot.py` 复核；诚实边界单列（真值由团队冻结，业务口径验收待客户）；`docs/EVIDENCE_HONESTY.md` §2.1 与 §5 同步补表 |
+| 7. "怎么证明这些 Agent 活动不是编出来的？" | 只有"六类标识可对账"的说法 | ✅ 本轮闭合 | 同目录探针：`ApprovalDecision` 只允许 `decision`/`comment`（`extra="forbid"`，自报 `matrix_event_id` → `ValidationError`）、审批事件 ID 由服务端发布后取回、审计主体来自 Bearer Principal（`tests/test_api.py::test_10b...` 422 且不产生审计）、`matrix_team.py` 未拿到 `event_id` 即报错 |
+
+答辩问答卡同步新增第 24、25 条（`submission/答辩发言稿与Top20问答-3+1+3.md`），
+两条都被写进提交包的 `05-运行证据/evaluation-independence/`。
+
 ## P2（竞品分析里“投产出比高但工作量大”的两项）
 
 | 项 | 状态 | 说明与证据 |

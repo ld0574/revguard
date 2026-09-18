@@ -1,0 +1,54 @@
+
+=== [1] 冻结期望集构成与哈希（静态数据，不在评测代码里复刻被测规则） ===
+golden cases: 8
+  GOLDEN-001.json  sha256[:16]=92437d0ab26d84e1  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'policy_version', 'risk_level', 'root_causes', 'total_commission', 'verification_status']
+  GOLDEN-002.json  sha256[:16]=0b6c20aabb1966f6  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'policy_version', 'risk_level', 'root_causes', 'tier_at_order_date', 'total_commission', 'verification_status']
+  GOLDEN-003.json  sha256[:16]=8ad43a1d09f34f1e  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_name', 'source']  expected_keys=['escalated', 'final_status', 'no_fake_conclusion']
+  GOLDEN-004.json  sha256[:16]=17c53e89ea53b975  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'no_adjustment', 'policy_version', 'risk_level', 'root_causes', 'total_commission']
+  GOLDEN-005.json  sha256[:16]=21690e73516db56f  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'policy_version', 'risk_level', 'root_causes', 'tier_at_order_date', 'total_commission', 'verification_status']
+  GOLDEN-006.json  sha256[:16]=b24750b8bcbe10ae  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'no_approval', 'policy_version', 'risk_level', 'root_causes', 'total_commission', 'verification_status']
+  GOLDEN-007.json  sha256[:16]=18172404b8c9e5d1  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'no_execution', 'policy_version', 'risk_level', 'root_causes', 'total_commission']
+  GOLDEN-008.json  sha256[:16]=8c269530f84a2cb6  input_keys=['case_id', 'case_type', 'claim', 'description', 'order_id', 'partner_id', 'source']  expected_keys=['final_status', 'policy_version', 'risk_level', 'rollback_verification_status', 'root_causes', 'total_commission', 'verification_status']
+risk boundary rows: 80  header=amount,evidence_score,policy_conflict,expected_risk  sha256[:16]=40ca423756da29c9
+policy date samples: 8 (含 Q2/Q3 生效边界：2026-06-30 -> 2026-Q2，2026-07-01 -> 2026-Q3)
+security probes: 9 (伪造签名 / 越权 / 跨案令牌 / 幂等重放等)
+
+=== [2] 正常评测：105 场景全通过 ===
+exit_code=0
+  method=external_expected_matrix_and_golden_holdout
+  total_scenarios=105 passed=105
+  golden_e2e: scenarios=8 passed=8 failures=0
+  risk_boundaries: scenarios=80 passed=80 failures=0
+  policy_dates: scenarios=8 passed=8 failures=0
+  security_probes: scenarios=9 passed=9 failures=0
+
+=== [3] 篡改 1：把 GOLDEN-001 期望佣金改成 99999.00（证明期望来自冻结文件而非系统自身输出） ===
+exit_code=1 (期望非 0)
+  failure: CASE-2026-0001 total_commission: 32400.00 != 99999.00
+  其它类别失败数: risk=0 policy=0 security=0
+
+=== [4] 篡改 2：把风险矩阵一行期望 L0 改成 L3（证明边界判据来自静态期望集） ===
+exit_code=1 (期望非 0)
+  failure: risk amount=0 score=1.0 conflict=False: L0!=L3
+
+=== [5] 发布快照校验（同一份快照被门禁复核） ===
+exit_code=0
+  verified /tmp/rg/docs/evaluation-summary.json: 105/105, UTC, median benchmark
+
+=== [6] 审批证据不可自报：ApprovalDecision 只接受 decision/comment ===
+exit_code=0
+  allowed_fields= ['comment', 'decision']
+  extra_field_rejected=ValidationError
+
+=== [7] 审计主体不可自报（服务端 Bearer Principal） ===
+exit_code=0
+  test_10b_skill_identity_cannot_be_self_reported (tests.test_api.TestApiSmoke.test_10b_skill_identity_cannot_be_self_reported)
+  Ran 29 tests in 2.649s
+  OK
+
+=== [8] Matrix 事件 ID 来自 Matrix 服务端响应 ===
+  response.get("event_id") 存在: True
+  未返回 event_id 视为错误: True
+  handoff 事件 ID 取自 send_text 返回值: True
+
+PROBE_DONE
