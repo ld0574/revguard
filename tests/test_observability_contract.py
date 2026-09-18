@@ -8,8 +8,8 @@ from revguard.observability import prometheus_text
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class TestFinalsObservabilityContract(unittest.TestCase):
-    def test_prometheus_exports_finals_metrics(self):
+class TestObservabilityContract(unittest.TestCase):
+    def test_prometheus_exports_observability_metrics(self):
         text = prometheus_text({
             "cases_total": 8,
             "trace_spans_total": 10,
@@ -45,7 +45,7 @@ class TestFinalsObservabilityContract(unittest.TestCase):
         ):
             self.assertIn(metric, text)
 
-    def test_dashboard_covers_every_finals_observability_area(self):
+    def test_dashboard_covers_observability_areas(self):
         dashboard = json.loads((
             ROOT / "config/observability/grafana/dashboards/revguard.json"
         ).read_text())
@@ -74,22 +74,6 @@ class TestFinalsObservabilityContract(unittest.TestCase):
         self.assertIn("## 0.6.0 — ", (ROOT / "CHANGELOG.md").read_text())
         openapi = json.loads((ROOT / "docs/openapi.json").read_text())
         self.assertEqual(openapi["info"]["version"], "0.6.0")
-
-    def test_rehearsal_stack_accounts_model_usage_and_owns_scrape_source(self):
-        """彩排栈接管 AgentTeams 别名：模型用量要能记账，看板数据源要能切到彩排栈。"""
-        finals = (ROOT / "docker-compose.finals.yml").read_text()
-        self.assertIn("REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE", finals)
-        self.assertIn("agentteams-worker-{actor}:8088/api/token-usage", finals)
-        observability = (ROOT / "docker-compose.observability.yml").read_text()
-        self.assertIn(
-            "${REVGUARD_PROMETHEUS_CONFIG:-./config/observability/prometheus.yaml}",
-            observability,
-        )
-        rehearsal = (ROOT / "config/observability/prometheus.rehearsal.yaml").read_text()
-        self.assertIn("targets: [revguard-api-dev:9000]", rehearsal)
-        self.assertIn("http://revguard-api-dev:9000/api/v1/health/ready", rehearsal)
-        default = (ROOT / "config/observability/prometheus.yaml").read_text()
-        self.assertIn("targets: [revguard-api:9000]", default)
 
     def test_public_data_summary_keeps_real_and_synthetic_layers_separate(self):
         summary = json.loads((

@@ -11,4 +11,4 @@ Describe the concrete trigger and the behavior after this change.
 
 ## Remaining boundary
 
-List any environment or integration that is still `NOT_VALIDATED`.
+列出仍处于“待验证”状态的环境或集成。

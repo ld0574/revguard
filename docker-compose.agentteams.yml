@@ -1,4 +1,4 @@
-# 正式 AgentTeams 同机部署覆盖层：把 RevGuard API 接入 Worker 所在网络。
+# 企业内网生产环境 AgentTeams 覆盖层：把 RevGuard API 接入 Worker 所在网络。
 services:
   revguard-api:
     environment:

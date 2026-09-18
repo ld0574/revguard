@@ -1,24 +1,6 @@
 # RevGuard — 面向企业渠道佣金结算异常的多智能体治理平台
 
-## 视频演示
-
-复赛演示视频已上传 B 站：[RevGuard 面向企业渠道佣金结算异常的多智能体治理平台](https://www.bilibili.com/video/BV1fhtS6GE2y/)。
-
-决赛视频（2026-09-18 录制，1920×1080，无音轨）：[主视频 4:04](https://github.com/ld0574/revguard/releases/download/v0.6.0/revguard_finals_demo_v0.6.0.mp4) · [90 秒故障备用片段](https://github.com/ld0574/revguard/releases/download/v0.6.0/revguard_finals_recovery_90s_v0.6.0.mp4)。录制方式与逐帧证据见 `docs/evidence/finals-media-20260918/`。
-
-项目官网与运行回放：[ld0574.github.io/revguard](https://ld0574.github.io/revguard/) · [两条案件的逐步回放](https://ld0574.github.io/revguard/replay.html)。回放数据由 `scripts/export_case_replay.py` 从真实运行记录导出，评委不必等待模型调用时间。
-
-## 场景背景
-
-企业通常通过代理商、经销商和服务商销售产品，再按照订单、回款、合作等级和阶段政策，
-向渠道伙伴支付佣金（销售提成）。一笔结算可能同时受政策版本、订单时间、回款状态、
-退款和激励条款影响；相关数据又分散在 CRM、合同、财务、佣金和工单系统中。
-因此，少算、多算、漏算或错用规则不仅难以及时发现，还会直接形成资金损失和对账争议。
-
-RevGuard 将这类异常处理做成一条可复核的协作流程：从受理问题开始，收集相关证据，
-找出正确规则，重新计算金额，说明差异原因，判断风险，经过审批后执行，并在执行后独立验证。
-它不是只给出一个答案，而是把“为什么这样算、谁可以批准、实际改了什么、结果是否恢复”
-都留下可追溯记录。
+RevGuard 把渠道佣金异常处理做成一条可复核的协作流程：取证、规则匹配、金额复算、风险判断、人工审批、受控写入和独立验证都有明确的状态和证据。
 
 ## 先看懂几个词
 
@@ -33,6 +15,34 @@ RevGuard 将这类异常处理做成一条可复核的协作流程：从受理�
 | Skill | 一个有固定输入、输出和权限边界、可由多个 Agent 复用的任务能力。 |
 | MCP | Agent 与 Skill 之间的标准协议层；本项目按 Worker 隔离可见 Skill，并要求绑定 StageTask。 |
 | Adapter | 连接 Agent 与 CRM、财务、工单等外部系统的适配层；它负责传递请求，不负责替代业务规则。 |
+
+## 演示与官网
+
+[项目官网](https://ld0574.github.io/revguard/) · [运行回放](https://ld0574.github.io/revguard/replay.html) · [B 站演示视频](https://www.bilibili.com/video/BV1fhtS6GE2y/)
+
+运行回放由 `scripts/export_case_replay.py` 从运行记录导出，页面只展示脱敏后的案件、Trace 和审计证据。
+
+## 场景背景
+
+企业通常通过代理商、经销商和服务商销售产品，再按照订单、回款、合作等级和阶段政策，
+向渠道伙伴支付佣金（销售提成）。一笔结算可能同时受政策版本、订单时间、回款状态、
+退款和激励条款影响；相关数据又分散在 CRM、合同、财务、佣金和工单系统中。
+因此，少算、多算、漏算或错用规则不仅难以及时发现，还会直接形成资金损失和对账争议。
+
+RevGuard 将这类异常处理做成一条可复核的协作流程：从受理问题开始，收集相关证据，
+找出正确规则，重新计算金额，说明差异原因，判断风险，经过审批后执行，并在执行后独立验证。
+它不是只给出一个答案，而是把“为什么这样算、谁可以批准、实际改了什么、结果是否恢复”
+都留下可追溯记录。
+
+## RevGuard 生产架构
+
+![RevGuard生产架构：模块关联与可观测闭环](docs/assets/revguard-architecture-module-observability.png)
+
+架构按企业内网生产环境组织：CRM、合同系统和财务系统提供合成业务数据，ERPNext 提供真实数据接口，
+金蝶 / 用友 / SAP 通过适配器接口接入。Leader 通过 AgentTeams / Matrix 派发九类 Agent，
+StageTask、Skill Registry、Higress / MCP 网关、审批、受控写入和独立验证共同组成业务闭环。
+写入走 PolarDB 主节点，读取与验证走备节点；Trace、Metrics、Logs、Grafana、Alertmanager
+和 Evidence Pack 统一沉淀可观测证据。
 
 ## 系统边界
 
@@ -64,51 +74,17 @@ callable 三级 SHA-256 摘要，基线固定在 `config/skill-integrity.json`�
 
 ## 已验证能力
 
-- 1 个 Orchestrator 加 9 个职能 Worker，共 10 个 Agent；Executor 负责受控写入，Verifier 独立复核。
-- 16 个版本化 Skill，每个 Skill 都有统一调用入口、允许身份、输入/输出格式、失败处理和复用说明。
-- 16 个 Skill 的 manifest / instruction / callable 三级摘要固定在同一 commit 的
-  `config/skill-integrity.json`，加载期 fail-closed，运行期随每次调用写入审计。
-- 录制环境由真实 AgentTeams/Matrix 驱动状态型 Team 流程：Team room 做 Orchestrator
-  协同任务编排，9 个 Worker 独立 room 经 skills-only Adapter 调用各自的 Higress MCP Server；本地官方 MCP Client/Server
-  保留为可复现 reference harness。底层 Tool 不暴露给模型，错 Worker、错 Skill、篡改输入、
-  过期 task 和重放都会拒绝。
-- 复赛历史 CASE-0008 实测 20 个成功 StageTask、9 个 Worker、16 种 Skill；L2 在 WebUI 真实暂停，
-  人工批准后从持久化状态续跑并完成 `FAILED → ROLLED_BACK → rollback PASSED`。
-- 7 路独立 I/O 真实并行取证；政策查询会在合同证据返回后按依赖继续执行。
-- L0 只读，L1 只创建不生效的草稿，L2 经过人工审批后写入，L3 只给出方案、禁止自动执行。
-- HMAC-SHA256 能力令牌把案件、币种、总额、逐组件额度、用途、有效期和唯一编号绑定在一起。
-- 执行后核验确认本次分录有误时，系统创建对应的反向分录，再由 Verifier 核对本操作净影响。短暂读取偏差先重查；写结果未知则冻结通道，按原操作 ID 对账后恢复。
-- 8 个端到端 Golden Case；105 个确定性场景（8 Golden + 80 风险 + 8 政策 + 9 安全）；
-  自动化测试覆盖内核、MCP、API、状态桥接、安全和持久层，核心路径行覆盖门禁为 90%。
-- 包含 `RECOVERY_REQUIRED` 的显式状态迁移白名单；SQLite WAL + keyset 分页；支持隔离演示重置、
-  重复 seed 与容器重启。
-- 真实 Matrix → Orchestrator handshake → Worker StageTask → Skill 已用
-  room/message/request/task/receipt/trace ID 与 Audit 对账；旧 Matrix → Evidence → Tool 链保留为历史证据。
-- 持久化 StageTask/StageResult 桥接绑定 case version、Skill、Worker actor 和输入快照；
-  Task 终态与每次 StageResult 同事务落库，支持失败重试、显式重派和 lineage。
-- 正式持久化可切换到 PostgreSQL/PolarDB：金额使用 `NUMERIC(18,2)`，审计事件由
-  DB trigger 强制 append-only 哈希链，列表/Trace/Metrics 可分流到只读端点。
-- 可查询 JSON/Prometheus Metrics、JSON 日志、liveness/readiness；202 已部署 OTel Collector、Tempo、Loki、Prometheus、Alertmanager 与 Grafana，demo-ui 可只读嵌入 12 面板大屏。PITR 仍为待真实环境验收的流程。
-- 10 个合成伙伴、11 笔订单和 8 个案件带来源边界、关联/时序/币种检查与源文件哈希；
-  录制服务器已运行官方开源 PolarDB-PG 15 local_instance，所有材料明确区分“合成业务
-  数据”“真实执行链路”“开源单机 PolarDB-PG 已验收”“云 PolarDB 高可用/PITR 待验收”。
-- 决赛公开数据实验使用固定种子抽取 10,000 笔 Olist 匿名真实交易，叠加官方公开费率快照和
-  明确标注的合成平台映射、结算与异常；标准 ERPNext DocType 以 Draft 导入，不产生 GL 影响。
-  数据与许可证边界见 [`docs/data-provenance.md`](docs/data-provenance.md)。
-- ERPNext 是已验收的只读企业 Provider；金蝶、用友和 SAP 仅提供配置/对象映射契约并标记
-  `NOT_VALIDATED`，详见 [`docs/adapters.md`](docs/adapters.md)。
+- Leader 加九类 Agent，Executor 负责受控写入，Verifier 独立复核；每个 Worker 只能调用被授权的 Skill。
+- 16 个版本化 Skill 都有 manifest、输入/输出、身份和失败处理约束，加载时校验摘要，调用时写入审计。
+- StageTask 绑定案件版本、Skill、Worker 身份和输入快照；状态变化、错 Worker、改动输入和任务重放都会被拒绝。
+- L0 只读，L1 只创建不生效的草稿，L2 经过真人审批后写入，L3 只给出方案；金额由 Decimal 确定性引擎计算。
+- 写入后由独立 Verifier 复核；结果错误时执行反向冲销，结果未知时冻结通道并按原操作 ID 对账。
+- PolarDB 使用 `NUMERIC(18,2)`、追加式审计哈希链、主节点写入和备节点读取/验证；复制延迟或主节点异常时按策略切回。
+- OpenTelemetry、Tempo、Prometheus、Loki、Grafana、Alertmanager 和 Evidence Pack 贯穿连接器、Agent、数据库和恢复流程。
+- CRM、合同和财务输入是合成业务数据；ERPNext 是已验证的只读企业 Provider；金蝶、用友和 SAP 的连接状态为“待验证”。
 
-最新可复现指标见 [`docs/evaluation-summary.json`](docs/evaluation-summary.json)。
-当前资金恢复合同与观测证据见 [`docs/evidence/finals-acceptance-20260912/`](docs/evidence/finals-acceptance-20260912/)，新 Case8 隔离参考链为 18 个任务；Grafana 真实 iframe 及部署数据保留证据见 [`docs/evidence/grafana-embed-20260912/`](docs/evidence/grafana-embed-20260912/)。历史 Matrix 录像与新隔离验证分别标记，不混用任务计数。
-录制服务器的 20/20 AgentTeams/Matrix 脱敏验收结果见
-[`docs/agentteams-matrix-acceptance-2026-08-29.md`](docs/agentteams-matrix-acceptance-2026-08-29.md)。
-评委意见的逐条实施状态见 [`docs/reviewer-remediation.md`](docs/reviewer-remediation.md)；
-合成价值数据只验证指标口径，文件内强制标记“不得作为企业真实收益”。驾驶舱新增
-可交互的“价值模拟”页签，可按月案件量和综合人工成本试算释放工时与人工经费空间；
-公式、默认假设和生产使用边界见 [`docs/value-simulation.md`](docs/value-simulation.md)。
-可直接审阅正常闭环报告 [`CASE-2026-0001.md`](docs/reports/CASE-2026-0001.md)
-与故障回滚报告 [`CASE-2026-0008.md`](docs/reports/CASE-2026-0008.md)；完整 Trace 可由
-`make demo-reset` 同步重建。
+数据来源边界见 [`docs/data-provenance.md`](docs/data-provenance.md)，适配器状态见 [`docs/adapters.md`](docs/adapters.md)，
+运行证据和安全边界见 [`docs/EVIDENCE_HONESTY.md`](docs/EVIDENCE_HONESTY.md)。
 
 ## 核心链路
 
@@ -122,134 +98,84 @@ callable 三级 SHA-256 摘要，基线固定在 `config/skill-integrity.json`�
 其中，Trace 是每一步处理的时间线记录，Audit 是面向审计的关键操作记录，Dataset 是可用于
 复盘和评测的案例数据；三者共同回答“系统做了什么、依据是什么、结果能否重放”。
 
-## 一键复现
+## 在企业内网生产环境运行
 
-所有构建、测试与服务均在 10.10.10.202 Docker 中执行，本地只编辑和同步。
-
-如果目标是直接打开可录制 WebUI，而不是搭建开发环境，使用部署总入口：
+所有构建、测试与服务均在 `10.10.10.202` 的 Docker 中执行，本地只编辑和同步文件。
+部署、迁移、播种和健康检查统一使用 [`scripts/deploy_demo.sh`](scripts/deploy_demo.sh)：
 
 ```bash
-# 202 Docker 环境中的最小拓扑：SQLite + 进程内 MCP Team
+# SQLite + WebUI，适合快速查看完整链路
 bash scripts/deploy_demo.sh --local
 
-# 已安装 AgentTeams v1.2.0 的宿主机：PolarDB + Matrix + 10 个 Agent 角色
+# AgentTeams + PolarDB + 可观测性
 bash scripts/deploy_demo.sh --full --model glm-5.3-flash
-```
 
-脚本会生成权限为 `0600` 的本地 `.env`，完成镜像构建、Schema、Golden Case、
-Worker Adapter、9 个精确授权的 Higress MCP Server、Matrix 房间和健康验收；不会输出或提交凭证。`--full` 建议为 Docker
-分配至少 6 GiB 内存。部署完成后访问 `http://<宿主机>:19000/demo/`。
-
-L2 审批现在要求登录白名单中的 AgentTeams Matrix 账号，不能使用旧 approver key。
-`--local` 不自带身份提供方，若未配置 Matrix，只能运行到人审暂停；完整自动化内核验证
-使用 `make verify-ci`。账号配置、录制边界见 [`docs/hitl-mcp-recording.md`](docs/hitl-mcp-recording.md)。
-
-发布验证入口会建立独立 Compose 项目和一次性 PostgreSQL，不挂载原演示数据库，结束后清理测试容器：
-
-```bash
-# 在 202 的项目目录执行
+# 隔离发布验证，不挂载生产卷
 bash scripts/verify_docker.sh
 ```
 
-其内部覆盖主套件、真实 PostgreSQL 迁移与资金恢复、覆盖率、105 场景评测、契约漂移、Python 安全检查、前端构建/测试及依赖审计。以下 Make 子命令仅供 **202 容器内部** 定向检查，宿主机直接调用会拒绝运行：
+`--local` 未配置 Matrix 身份时会停在人审节点；生产环境的 API key、签名密钥和 ERPNext 凭据只放在权限为 `0600` 的私有环境文件中。
+完整部署约束和故障恢复步骤见 [`docs/deployment.md`](docs/deployment.md)。
 
-```bash
-cd revguard
-make setup
-make verify-ci    # Ruff + 自动化测试（PG 条件项除外）+ 90% 覆盖率门禁 + 105 场景评测 + 生成物校验
-make verify-release REVGUARD_TEST_POSTGRES_DSN='...' # 必须提供一次性 PostgreSQL，不能跳过数据库门禁
-make value-evaluate # 运行五类业务价值指标口径（当前为明确标注的合成数据）
-make synthetic-validate # 校验合成数据血缘、引用、时序、币种和源文件哈希
-make evidence-bundle # 重放 MCP Team 并生成脱敏可审计证据包
-make capacity     # 本地合成容量回归，不冒充 PolarDB 生产 SLO
-make security     # pip-audit + Bandit；历史 Trivy 记录不替代当前镜像扫描
-make demo         # 干净重置并运行 8 个 Golden Case
-```
+运行产物主要包括：
 
-运行产物：
-
-- `docs/reports/CASE-*.md`：证据、政策、公式、审批、执行、回滚与审计报告；
-- `data/outputs/traces/CASE-*.json`：Agent / Skill / Tool / Approval / Execution Trace；
-- `data/outputs/case_memory/*.json`：Golden、Bad 与 Safe-Rollback 评测样本；
-- `data/outputs/evaluation_summary.json`：运行时评测产物（忽略目录）；
-- `docs/evaluation-summary.json`：含 UTC、环境、重复次数、中位数与样本的发布快照。
-- `docs/evidence/demo-rehearsal/`：MCP Task、人审暂停、Audit、Trace、报告与证据哈希清单。
-- [`docs/demo-script-current-data.md`](docs/demo-script-current-data.md)：当前环境优先使用的完整旁白，保留 0008 正常闭环与 0002 故障演练，不清库。
-- `docs/demo-script.md` / `docs/recording-shot-list.md`：单案重置版备选、镜头和组员分工。
-- `docs/runtime-acceptance-2026-08-31.md`：最新运行验收、CASE-0002 恢复结果与正式录制前提。
-- [`docs/ui-recording-audit-2026-08-31.md`](docs/ui-recording-audit-2026-08-31.md)：实际页面截图、脚本入口核对和未验收边界。
-
-金额计算采用标准库 Decimal；编排、MCP 与遥测使用锁定的运行时依赖，FastAPI/Uvicorn 用于 API 层。
-`requirements.lock` 固定完整运行时依赖，`requirements-dev.txt` 增加 API 测试依赖。
-90% 行覆盖率门禁覆盖默认可复现的内核与 SQLite/API 路径；
-`postgres_store.py` 需真实 PostgreSQL 事务/触发器，不纳入无 DB 的行覆盖率分母，改由
-`make postgres-integration REVGUARD_TEST_POSTGRES_DSN='...'` 在一次性数据库上单独门禁。
+- `docs/reports/CASE-*.md`：案件证据、审批、执行、回滚和审计报告；
+- `data/outputs/traces/CASE-*.json`：Agent、Skill、Tool、审批和执行 Trace；
+- `docs/evaluation-summary.json`：评测环境、指标和样本的发布快照。
 
 ## API 与身份边界
 
-安全默认值是 fail-closed：API 启动必须提供签名密钥和 Principal 配置。
-本地演示可显式启用 `config/demo_principals.json` 中的公开 Demo principals：
+API 默认 fail-closed：除健康检查外，端点都要求 Bearer 身份；角色、scope、案件状态和
+StageTask 绑定由服务端校验，请求体不能自行声明 actor 或权限。生产环境至少配置签名密钥、
+API key 到 Principal 的映射，并关闭不安全的演示身份。
+
+完整端点、请求示例、角色权限、环境变量和 OpenAPI 说明统一见 [`docs/api.md`](docs/api.md)。
+PolarDB 迁移与主备读写路由见 [`docs/polardb-production.md`](docs/polardb-production.md)，
+发布与运维见 [`docs/operations.md`](docs/operations.md)。
+
+## Docker Compose
+
+日常只需要四个入口。统一脚本会自动拼接底层 Compose 文件；以下命令均在企业内网生产环境（10.10.10.202）执行。
+
+| 场景 | 入口 | 适用范围 |
+|---|---|---|
+| 本地演示 | `local` | SQLite、MCP 参考链路和 WebUI |
+| 生产基础栈 | `production` | AgentTeams、PolarDB 和完整可观测性 |
+| 企业 ERP 接入 | `enterprise` | 生产基础栈加 ERPNext 只读适配器 |
+| 发布验证 | `verify` | 隔离 PostgreSQL、后端测试和前端门禁 |
+
+### 常用命令
 
 ```bash
-make run
+# 本地演示
+bash scripts/compose_profile.sh local up -d --build
+
+# 企业内网生产基础栈
+bash scripts/compose_profile.sh production up -d --build
+
+# 企业 ERPNext 只读接入（凭据只放在权限为 0600 的私有 env 文件）
+bash scripts/compose_profile.sh enterprise up -d --build
+
+# 查看生产基础栈
+bash scripts/compose_profile.sh production ps
+
+# 发布门禁（自动使用隔离 Compose 项目）
+bash scripts/verify_docker.sh
 ```
 
-生产环境复制 `.env.example`，配置：
+文件分组如下：
 
-- `REVGUARD_APPROVAL_SIGNING_KEY`：至少 32 字节；
-- `REVGUARD_API_KEYS_JSON`：API key 到可信 actor、roles、scopes 的服务端映射；
-- `REVGUARD_GATEWAY_STATE_PATH`：旧版 Mock 状态导入来源；当前资金分录、操作结果、execution 投影、必要审计及本地 outbox 已在同库事务持久化。
+- **基础服务**：`docker-compose.yml`；只定义 RevGuard API 和演示持久化卷。
+- **生产覆盖层**：`docker-compose.agentteams.yml`、`docker-compose.polardb.yml`、
+  `docker-compose.observability.yml`、`docker-compose.enterprise.yml`；分别接入 AgentTeams、PolarDB、
+  可观测性后端和 ERPNext 企业网络。
+- **发布门禁**：`docker-compose.verify.yml`；使用临时数据库和独立 Compose 项目，不挂载生产卷。
 
-请求使用 `Authorization: Bearer <api-key>`。请求体不能自报 `actor` 或 `scope`。
-
-```bash
-curl -H 'Authorization: Bearer rg-demo-viewer-key-1' \
-  http://127.0.0.1:9000/api/v1/skills
-```
-
-主要接口：
-
-- `POST /api/v1/cases/{id}/run`：运行确定性回放闭环；
-- `POST /api/v1/cases/{id}/team/run`：通过 scoped MCP 运行多 Worker 状态流，L2 停在人审；
-- `POST /api/v1/cases/{id}/team/resume`：审批人触发原操作对账与旧执行者隔离，确认结果后按原操作 ID 安全恢复；
-- `POST /api/v1/cases/{id}/approval`：可信 Approver 决策并自动续跑；
-- `POST /api/v1/cases/{id}/evidence/resume`：补证后重新进入状态机；
-- `POST /api/v1/cases/{id}/agent-tasks`：派发状态绑定的 Agent StageTask；
-- `POST /api/v1/skills/{skill}/invoke`：版本化 Skill 调用入口，必须提供 `X-RevGuard-Task-ID` 并匹配服务端派发快照；
-- `POST /api/v1/tools/call`：默认关闭的历史兼容入口；启用后也只允许 Evidence 身份调用只读工具；
-- `GET /api/v1/cases?limit=50&cursor=...`：稳定 keyset 分页；
-- `GET /api/v1/cases/{id}/trace`：Trace 回放；
-- `GET /api/v1/cases/{id}/report`：审计报告。
-- `GET /api/v1/agent-tasks/{task_id}/results`：查询每次 StageResult；
-- `POST /api/v1/agent-tasks/{task_id}/reassign`：受权调度员重派失败任务；
-- `GET /api/v1/ops/metrics[ /prometheus]`：可查询运营与审计链指标。
-- `GET /api/v1/ops/evidence`：录制 WebUI 使用的工程门禁、价值口径与外部验收状态。
-- `GET /api/v1/ops/observability`：只读 Grafana 的实时可用状态与同源嵌入地址。
-
-完整示例见 [`docs/api.md`](docs/api.md)。
-正式 PolarDB 迁移、主/只读路由、pgvector 决策门槛和 PITR 验收见
-[`docs/polardb-production.md`](docs/polardb-production.md)；发布与运维见
-[`docs/operations.md`](docs/operations.md)。
-
-安全门禁与 2026-08-12 实扫处置记录见
-[`docs/security-scan-2026-08-12.md`](docs/security-scan-2026-08-12.md)。
-机器契约见 [`docs/openapi.json`](docs/openapi.json)，其 OpenAPI 3.1
-`x-revguard-skill-registry` 与 16 个 Skill 注册表同源并受漂移校验。
-
-## Docker
-
-```bash
-docker compose up -d --build
-curl http://127.0.0.1:19000/api/v1/health
-```
-
-与 AgentTeams 同机时使用 `docker-compose.agentteams.yml` 把 API 接入 Worker 网络，详见
+需要单独启动 ERPNext 作为数据源时，使用 `docker-compose.erpnext.yml`，具体准备步骤见
 [`docs/deployment.md`](docs/deployment.md)。
 
-基础 Compose 默认使用 SQLite Demo Store；叠加 `docker-compose.polardb.yml` 后运行官方
-PolarDB-PG local_instance，并通过 `REVGUARD_DATABASE_URL` 切换为 PolarDB Store。容器使用
-非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
-设置 `REVGUARD_RESET_ON_START=true` 可在评审前原子清空全部 Demo 状态再 seed；默认保留状态。
+容器使用非 root 用户、只读根文件系统、无 Linux capabilities、资源限制和健康检查。
+`REVGUARD_RESET_ON_START=true` 只用于隔离演示重置；企业内网生产环境默认保留案件和审计状态。
 
 ## 目录结构
 
@@ -267,9 +193,8 @@ revguard/
 │   ├── orchestrator.py   # 阶段编排、审批、执行、验证与回滚
 │   ├── rule_engine.py    # Decimal 确定性规则引擎
 │   ├── policy_matcher.py # 严格日期解析与政策 Time Travel
-│   ├── mocks.py          # 最小权限 ToolGateway 与持久化 Mock
-  │   ├── store.py          # 本地 SQLite Store + 存储工厂
-  │   ├── postgres_store.py # PostgreSQL/PolarDB 主/只读连接池适配
+│   ├── store.py          # 本地 SQLite Store + 存储工厂
+│   ├── postgres_store.py # PostgreSQL/PolarDB 主/只读连接池适配
 │   ├── trace.py          # 可回放 Trace
 │   └── api.py            # FastAPI 服务
 ├── agentteams/           # Worker SOUL、MCP Host 示例与 REST 兼容 Adapter
@@ -277,7 +202,7 @@ revguard/
 ├── migrations/polardb/  # 核心 Schema 与可选 pgvector 迁移
 ├── docs/                 # API、Agent、PolarDB、运维、评测与报告
 ├── website/              # GitHub Pages 官网与运行回放页（纯静态）
-├── scripts/              # seed、demo、evaluation、回放导出、AgentTeams setup
+├── scripts/              # seed、demo、evaluation、回放导出、AgentTeams setup、Compose profile 入口
 └── tests/                # 自动化测试（含需一次性 PostgreSQL 的条件测试）
 ```
 
@@ -299,11 +224,3 @@ Docker 验证入口和发布材料均已纳入仓库。见 [`LICENSE`](LICENSE)�
 [`docs/dependencies.md`](docs/dependencies.md) 与 [`docs/adr/`](docs/adr/README.md)。
 
 公开地址：<https://github.com/ld0574/revguard>。
-
-第三方拿到仓库后可以先跑三条只读校验，不需要任何凭据：
-
-```bash
-python3 scripts/gen_skill_integrity.py --check   # Skill 三级摘要
-python3 scripts/gen_skill_docs.py --check        # Skill 清单文档与注册表一致
-python3 scripts/export_openapi.py --check        # OpenAPI 与实现一致
-```

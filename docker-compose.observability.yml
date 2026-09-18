@@ -1,4 +1,4 @@
-# Optional observation backend; start with scripts/deploy_observability.sh.
+# 企业内网生产环境可观测覆盖层；完整生命周期由 scripts/deploy_demo.sh 管理。
 services:
   revguard-api:
     environment:

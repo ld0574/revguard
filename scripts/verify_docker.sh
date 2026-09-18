@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run on 10.10.10.202; all checks execute inside this command's own Docker project.
+# Run in the enterprise intranet production environment (10.10.10.202); all checks execute inside this command's own Docker project.
 set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 if ! ip -4 addr show | grep -Eq 'inet 10[.]10[.]10[.]202/'; then

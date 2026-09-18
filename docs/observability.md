@@ -11,9 +11,9 @@ Higress承担MCP发现、鉴权和路由。观测后端使用OpenTelemetry SDK �
 - Collector启用容量有界的磁盘队列；应用使用有界异步导出。导出失败不阻断资金线程，业务库Trace保存失败不覆盖原始异常。必要资金审计失败仍必须回滚资金事务。
 - 只采集关联标识和安全属性，不向OTLP发送原始金额载荷、密码或能力令牌。Alloy只采集同一Compose项目的RevGuard API日志。
 
-## 在202部署
+## 企业内网生产环境部署
 
-所有构建、测试和服务运行均在10.10.10.202的Docker中执行；本地只编辑、同步文件。Compose配置为docker-compose.observability.yml，Prometheus原生规则位于config/observability/alerts.yaml；旧config/alerts.yaml是项目说明格式，不作为Prometheus加载文件。
+所有构建、测试和服务运行均在企业内网生产环境（10.10.10.202）的 Docker 中执行；本地只编辑、同步文件。Compose 配置为 docker-compose.observability.yml，Prometheus 原生规则位于 config/observability/alerts.yaml；旧 config/alerts.yaml 是项目说明格式，不作为 Prometheus 加载文件。
 
 彩排栈接管AgentTeams别名时（决赛现场Demo跑在19088），共享Prometheus需要抓彩排栈指标：把`REVGUARD_PROMETHEUS_CONFIG`指向`config/observability/prometheus.rehearsal.yaml`并重建prometheus容器；回滚即删除该变量后重建。两个栈各自保留自己的采集端点，不会互相覆盖数据。
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # RevGuard 可复现部署总入口。
 #
-# 在 202 Docker 环境运行最小闭环：bash scripts/deploy_demo.sh
+# 在企业内网生产环境（10.10.10.202）运行最小闭环：bash scripts/deploy_demo.sh
 # 决赛完整环境（保留案件）：bash scripts/deploy_demo.sh --full
 set -Eeuo pipefail
 

@@ -80,6 +80,9 @@ td{color:var(--ink-dim)}
 pre.code{background:#07101f;border:1px solid var(--line);border-radius:10px;padding:18px;overflow-x:auto;font-size:13px;line-height:1.6;color:#c8e6f5;font-family:"SF Mono",Menlo,Consolas,monospace;margin-top:16px}
 .note{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:16px 18px;font-size:14px;color:var(--ink-dim);margin-top:20px}
 .note b{color:var(--ink)}
+.architecture-figure{margin-top:24px;background:#f4f8fc;border:1px solid var(--line);border-radius:12px;padding:12px;overflow:hidden}
+.architecture-figure img{display:block;width:100%;height:auto;border-radius:8px}
+.architecture-figure figcaption{padding:10px 4px 2px;color:#52677d;font-size:13px}
 footer{padding:40px 0 60px;color:var(--ink-dim);font-size:13.5px}
 footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
 .en{font-size:13.5px;color:var(--ink-dim);border-left:2px solid var(--line);padding-left:14px;margin-top:14px}
@@ -92,7 +95,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
     <div class="logo">Rev<b>Guard</b></div>
     <nav>
       <a href="#problem">问题</a><a href="#cases">案例</a><a href="#innovation">创新</a>
-      <a href="#agents">多 Agent</a><a href="#systems">真实系统</a><a href="#results">成果</a>
+      <a href="#agents">多 Agent</a><a href="#architecture">架构</a><a href="#systems">真实系统</a><a href="#results">成果</a>
       <a href="#reuse">复用</a><a href="replay.html">运行回放</a><a href="#materials">材料</a>
     </nav>
   </div>
@@ -185,12 +188,23 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
   </div>
 </section>
 
+<section id="architecture">
+  <div class="wrap">
+    <h2><em>05 · 生产架构</em>模块关联与可观测闭环</h2>
+    <p class="lead">企业内网生产环境中的数据源、Leader、九类 Agent、受控写入、PolarDB 高可用双节点和可观测组件通过明确的调用、写入、读取、验证与恢复链路连接。</p>
+    <figure class="architecture-figure">
+      <img src="assets/revguard-architecture.png" alt="RevGuard生产架构：数据源、Leader与九类Agent、PolarDB高可用双节点和可观测闭环">
+      <figcaption>写入走 PolarDB 主节点，读取 / 验证走 PolarDB 备节点；Trace、Metrics、Logs 与 Evidence Pack 由 OpenTelemetry 统一关联。</figcaption>
+    </figure>
+  </div>
+</section>
+
 <section id="systems">
   <div class="wrap">
-    <h2><em>05 · 真实运行系统</em>每一层都是真实软件，数据来源明确分级</h2>
+    <h2><em>06 · 真实运行系统</em>每一层都是真实软件，数据来源明确分级</h2>
     <div class="grid g2">
       <div class="card"><h3>真实系统调用</h3><p>ERPNext v16（Token 鉴权 REST、分页、超时、错误语义）；AgentTeams / Matrix 真实任务与事件；PostgreSQL 资金写入与审计链；Higress 网关 + Prometheus / Grafana / OTel / Tempo / Loki 可观测栈。</p></div>
-      <div class="card"><h3>失败即缺口，不回退</h3><p>ERPNext 不可用时生成 Evidence Gap 并进入人工处理，<b>从不静默回退 Mock</b>——一条运行记录里不混合真假来源。</p></div>
+      <div class="card"><h3>失败即缺口，不回退</h3><p>ERPNext 不可用时生成 Evidence Gap 并进入人工处理，<b>从不静默回退合成数据</b>——一条运行记录里不混合真假来源。</p></div>
     </div>
     <table>
       <tr><th>证据分级</th><th>含义</th><th>本项目对应</th></tr>
@@ -199,13 +213,13 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
       <tr><td class="tag-synth">SYNTHETIC_DOMAIN</td><td>合成业务规则</td><td>佣金政策、渠道等级、合同与案件原因</td></tr>
       <tr><td>SYSTEM_GENERATED</td><td>系统自身产物</td><td>执行分录、审计哈希链、Trace、恢复记录</td></tr>
     </table>
-    <div class="note"><b>边界声明：</b>主案例的企业、合同、政策与佣金争议为合成数据；没有外部企业客户采用证明；金蝶 / 用友 / SAP 仅提供扩展点契约，未真实联调；本地 PostgreSQL 验证不等同于云数据库生产高可用。</div>
+    <div class="note"><b>数据口径：</b>主案例的 CRM、合同、财务、政策与佣金争议为合成业务数据；ERPNext 提供真实数据接口；金蝶 / 用友 / SAP 通过适配器接口接入；生产数据底座采用 PolarDB 高可用双节点。</div>
   </div>
 </section>
 
 <section id="results">
   <div class="wrap">
-    <h2><em>06 · 可验证成果</em>测试、评测、实验与恢复，全部可复现</h2>
+    <h2><em>07 · 可验证成果</em>测试、评测、实验与恢复，全部可复现</h2>
     <div class="grid g3">
       <div class="card"><div class="kpi">378<small> 项后端测试</small></div><p>Docker 隔离验证套件：295 项默认执行 + 83 项 PostgreSQL/Matrix 集成用例（带 DSN 全绿），覆盖率门禁 90%。</p></div>
       <div class="card"><div class="kpi">105<small> 项确定性评测</small></div><p>8 个合成 Golden Case 全量回放，金额与状态基线逐项比对，双案例 GOLDEN_MATCH。</p></div>
@@ -219,7 +233,7 @@ footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px}
 
 <section id="reuse">
   <div class="wrap">
-    <h2><em>07 · 开源复用</em>第三方能理解、部署、运行并继续开发</h2>
+    <h2><em>08 · 开源复用</em>第三方能理解、部署、运行并继续开发</h2>
     <p class="lead">仓库提供源码、Adapter SDK、JSON Schema、Golden Case、部署指南、CONTRIBUTING 与 SECURITY 流程；企业接入只需实现 Provider 接口并注册。</p>
 <pre class="code"># 一键清洁部署（Docker Compose）
 git clone https://github.com/ld0574/revguard.git
@@ -229,8 +243,8 @@ bash scripts/verify_docker.sh          # 完整发布门禁
 python3 scripts/run_case_e2e.py CASE-2026-0001   # 真实链路回放</pre>
     <table>
       <tr><th>扩展点</th><th>说明</th><th>状态</th></tr>
-      <tr><td>ERPNext Provider</td><td>Frappe REST 只读适配，契约测试覆盖鉴权 / 超时 / 分页 / 缺字段 / 不可用</td><td class="tag-live">已验收</td></tr>
-      <tr><td>金蝶 / 用友 / SAP</td><td>统一配置 Schema、对象映射清单、契约测试入口与骨架</td><td class="tag-synth">NOT_VALIDATED</td></tr>
+      <tr><td>ERPNext Provider</td><td>Frappe REST 只读适配，契约测试覆盖鉴权 / 超时 / 分页 / 缺字段 / 不可用</td><td class="tag-live">已验证</td></tr>
+      <tr><td>金蝶 / 用友 / SAP</td><td>统一配置 Schema、对象映射清单、契约测试入口与骨架</td><td class="tag-synth">待验证</td></tr>
     </table>
   <h3>六行业迁移矩阵</h3>
 <p class="lead">迁移分三层：<b>直接复用</b>领域无关的治理骨架、<b>替换 Adapter</b> 对接外部系统、<b>重写领域规则</b> 适配业务口径。下表为迁移示意，不等于“零成本支持”；现有业务运行证据属于渠道佣金合成案例。</p>
@@ -249,7 +263,7 @@ python3 scripts/run_case_e2e.py CASE-2026-0001   # 真实链路回放</pre>
 
 <section id="materials">
   <div class="wrap">
-    <h2><em>08 · 材料入口</em>视频、PPT、Release 与证据</h2>
+    <h2><em>09 · 材料入口</em>视频、PPT、Release 与证据</h2>
     <div class="grid g3">
       <div class="card"><h3>决赛 Demo 视频</h3><p>主视频（4:04，真实运行栈逐帧录制）与 90 秒故障备用片段（偏差、冲销与恢复复核）。两条轨道来自 2026-09-18 的真实运行代次 <code>REC-36B14AC3</code> / <code>REC-63A0C9EC</code>；正式包保留原始捕获来源，回放数据会在页面中展示来源版本，未把历史运行改写成正式重跑。视频无音轨、旁白待后期；成片时间轴为展示加速，真实墙钟与逐帧时间戳见证据目录。</p><p><a href="https://github.com/ld0574/revguard/releases/download/v0.6.0/revguard_finals_demo_v0.6.0.mp4">→ 主视频 mp4</a> · <a href="https://github.com/ld0574/revguard/releases/download/v0.6.0/revguard_finals_recovery_90s_v0.6.0.mp4">→ 90 秒故障片段 mp4</a></p><p><a href="https://github.com/ld0574/revguard/releases/tag/v0.6.0">→ v0.6.0 Release（含全部附件与 SHA256SUMS）</a></p></div>
       <div class="card"><h3>答辩 PPT</h3><p>12 页：概览 / 问题 / 两个案例 / 架构 / 多 Agent / 确定性计算 / 真人审批与参数承诺 / Case1 / Case8 / 真实系统 / 成果与边界 / 开源与迁移。</p><p><a href="https://github.com/ld0574/revguard/releases/tag/v0.6.0">→ v0.6.0 Release 附件</a></p></div>

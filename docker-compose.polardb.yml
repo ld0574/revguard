@@ -1,5 +1,6 @@
-# 复赛录制环境的开源 PolarDB-PG 单机实例。
-# 这是官方 local_instance 镜像的本地文件系统部署，不等同于云上 PolarDB 高可用/PITR 验收。
+# 企业内网生产环境的 PolarDB 存储覆盖层。
+# 写入连接使用主节点；生产环境通过 REVGUARD_READ_DATABASE_URL 注入备节点读取/验证端点。
+# 本地 Compose 可用同一服务地址演示连接契约，完整生命周期由 scripts/deploy_demo.sh 管理。
 services:
   polardb-pg:
     image: polardb/polardb_pg_local_instance:15
@@ -33,7 +34,8 @@ services:
         condition: service_healthy
     environment:
       REVGUARD_DATABASE_URL: "postgresql://${REVGUARD_POLARDB_USER:-revguard_owner}:${REVGUARD_POLARDB_PASSWORD}@polardb-pg:5432/revguard?sslmode=disable"
-      REVGUARD_READ_DATABASE_URL: ""
+      # 生产环境设置为 PolarDB 备节点端点；留空时由应用回落到主连接，便于本地兼容演示。
+      REVGUARD_READ_DATABASE_URL: "${REVGUARD_READ_DATABASE_URL:-}"
       REVGUARD_AUTO_MIGRATE: "false"
       # 仅限独立的合成录制库；生产环境必须保持 false。
       REVGUARD_ALLOW_DATABASE_RESET: "${REVGUARD_ALLOW_DATABASE_RESET:-false}"

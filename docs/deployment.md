@@ -2,7 +2,7 @@
 
 ## 0. 推荐的一键入口
 
-本项目统一在 10.10.10.202 的 Docker 环境执行构建、测试与服务。从服务器的 RevGuard 项目目录运行：
+本项目统一在企业内网生产环境（10.10.10.202）的 Docker 中执行构建、测试与服务。从服务器的 RevGuard 项目目录运行：
 
 ```bash
 # 最小可复现闭环，不要求已安装 AgentTeams
@@ -74,7 +74,7 @@ Higress 与 RevGuard 同一 Docker 网络时使用 `http://revguard-api.internal
 TLS Gateway 暴露，并配置限流、访问日志与网络白名单。SOUL 使用
 `{{REVGUARD_API_BASE_URL}}`，`agentteams_setup.sh` 在部署时渲染，不再硬编码 IP。
 
-## 2. 202 Docker（SQLite Demo）
+## 2. 企业内网生产环境（SQLite Demo）
 
 ```bash
 cd revguard
