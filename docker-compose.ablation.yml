@@ -1,0 +1,118 @@
+# Disposable ablation stack.  It never shares a database, volume, port or
+# Compose project with the 19000/19088 recording stacks.  The only intentional
+# connection to the existing environment is the AgentTeams network, and the
+# alias is leased by scripts/run_ablation_experiment.sh for Matrix samples.
+services:
+  ablation-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: revguard
+      POSTGRES_USER: revguard
+      POSTGRES_PASSWORD: ${REVGUARD_ABLATION_DB_PASSWORD:?set in the private 202 .env}
+    volumes:
+      - revguard-ablation-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U revguard -d revguard"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [ablation]
+
+  revguard-api-experiment:
+    container_name: revguard-api-experiment
+    build:
+      context: .
+      args:
+        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.1-dev}
+    environment:
+      REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.1-dev}
+      REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_ABLATION_DB_PASSWORD}@ablation-postgres:5432/revguard
+      REVGUARD_AUTO_MIGRATE: "false"
+      REVGUARD_APPROVAL_MODE: wait
+      REVGUARD_FINANCE_FAIL_TIMES: "1"
+      REVGUARD_POSTING_TAMPER_AMOUNT: "0"
+      REVGUARD_ALLOW_DATABASE_RESET: "true"
+      REVGUARD_ALLOW_INSECURE_DEMO_KEYS: ${REVGUARD_ALLOW_INSECURE_DEMO_KEYS:-false}
+      REVGUARD_APPROVAL_SIGNING_KEY: ${REVGUARD_APPROVAL_SIGNING_KEY:?set in the private 202 .env}
+      REVGUARD_API_KEYS_JSON: ${REVGUARD_API_KEYS_JSON:-}
+      REVGUARD_TEAM_TRANSPORT: matrix
+      REVGUARD_MATRIX_HOMESERVER_URL: ${REVGUARD_MATRIX_HOMESERVER_URL:-http://agentteams-controller:6167}
+      REVGUARD_MATRIX_ROOM_ID: ${REVGUARD_MATRIX_ROOM_ID:?set in the private 202 .env}
+      REVGUARD_MATRIX_WORKER_ROOMS_JSON: '${REVGUARD_MATRIX_WORKER_ROOMS_JSON:?set in the private 202 .env}'
+      REVGUARD_MATRIX_SERVER_NAME: ${REVGUARD_MATRIX_SERVER_NAME:-matrix-local.agentteams.io:8086}
+      REVGUARD_MATRIX_USERNAME: ${REVGUARD_MATRIX_USERNAME:-}
+      REVGUARD_MATRIX_PASSWORD: ${REVGUARD_MATRIX_PASSWORD:-}
+      REVGUARD_MATRIX_ACCESS_TOKEN: ${REVGUARD_MATRIX_ACCESS_TOKEN:-}
+      REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS:-240}
+      REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS:-90}
+      REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS:-120}
+      REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK: ${REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK:-true}
+      REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE: ${REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE:-2}
+      REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS: ${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-2048}
+      REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE: ${REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE:-}
+    volumes:
+      - revguard-ablation-runtime:/app/runtime
+      - revguard-ablation-outputs:/app/data/outputs
+      - revguard-ablation-reports:/app/docs/reports
+    depends_on:
+      ablation-postgres:
+        condition: service_healthy
+    networks:
+      ablation: {}
+      agentteams: {}
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 512m
+    cpus: 1.0
+
+  ablation-runner:
+    build:
+      context: .
+      args:
+        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.1-dev}
+    entrypoint: [python]
+    environment:
+      REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_ABLATION_DB_PASSWORD}@ablation-postgres:5432/revguard
+      REVGUARD_MIGRATION_DATABASE_URL: postgresql://revguard:${REVGUARD_ABLATION_DB_PASSWORD}@ablation-postgres:5432/revguard
+      REVGUARD_APPROVAL_MODE: wait
+      REVGUARD_APPROVAL_SIGNING_KEY: ${REVGUARD_APPROVAL_SIGNING_KEY:?set in the private 202 .env}
+      REVGUARD_ALLOW_INSECURE_DEMO_KEYS: ${REVGUARD_ALLOW_INSECURE_DEMO_KEYS:-false}
+      REVGUARD_TEAM_TRANSPORT: matrix
+      REVGUARD_MATRIX_HOMESERVER_URL: ${REVGUARD_MATRIX_HOMESERVER_URL:-http://agentteams-controller:6167}
+      REVGUARD_MATRIX_ROOM_ID: ${REVGUARD_MATRIX_ROOM_ID:?set in the private 202 .env}
+      REVGUARD_MATRIX_WORKER_ROOMS_JSON: '${REVGUARD_MATRIX_WORKER_ROOMS_JSON:?set in the private 202 .env}'
+      REVGUARD_MATRIX_SERVER_NAME: ${REVGUARD_MATRIX_SERVER_NAME:-matrix-local.agentteams.io:8086}
+      REVGUARD_MATRIX_USERNAME: ${REVGUARD_MATRIX_USERNAME:-}
+      REVGUARD_MATRIX_PASSWORD: ${REVGUARD_MATRIX_PASSWORD:-}
+      REVGUARD_MATRIX_ACCESS_TOKEN: ${REVGUARD_MATRIX_ACCESS_TOKEN:-}
+      REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS:-240}
+      REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS:-90}
+      REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS: ${REVGUARD_MATRIX_ORCHESTRATOR_TIMEOUT_SECONDS:-120}
+      REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK: ${REVGUARD_MATRIX_REQUIRE_ORCHESTRATOR_ACK:-true}
+      REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE: ${REVGUARD_AGENTTEAMS_MAX_MODEL_CALLS_PER_STAGE:-2}
+      REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS: ${REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS:-2048}
+      REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE: ${REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE:-}
+    networks:
+      ablation: {}
+      agentteams: {}
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  revguard-ablation-db:
+  revguard-ablation-runtime:
+  revguard-ablation-outputs:
+  revguard-ablation-reports:
+
+networks:
+  ablation:
+    name: revguard-ablation-net
+  agentteams:
+    external: true
+    name: agentteams-net

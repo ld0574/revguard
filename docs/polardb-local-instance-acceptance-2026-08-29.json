@@ -1,4 +1,8 @@
 {
+  "historical_snapshot": true,
+  "original_verification_date": "2026-08-29",
+  "original_scope": "single-container official open-source PolarDB-PG local instance; no HA or PITR acceptance",
+  "superseded_by": "docs/evidence/polardb-ha-pitr-<drill-id>/manifest.json after a PASSED isolated drill",
   "captured_on": "2026-08-29",
   "environment": "recording_server",
   "host": "10.10.10.202",

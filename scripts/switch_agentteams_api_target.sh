@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Point the AgentTeams MCP bridge (revguard-api.internal) at one RevGuard stack.
 #
-#   202 hosts two isolated RevGuard stacks that share the AgentTeams network:
+#   202 hosts three RevGuard stacks that can share the AgentTeams network:
 #     * prod : container revguard-api     (19000, 常驻演示栈)
 #     * dev  : container revguard-api-dev (19088, 0.6.0 研发/验收栈)
+#     * experiment : revguard-api-experiment (no host port, disposable ablation DB)
 #
 #   Docker DNS resolves one alias at a time, so exactly one stack may own
 #   `revguard-api.internal`.  Workers then call that stack's Skill API and the
@@ -12,6 +13,7 @@
 # 用法（在 202 上执行）：
 #   bash switch_agentteams_api_target.sh dev    # 决赛彩排/研发：19088 rc2
 #   bash switch_agentteams_api_target.sh prod   # 常驻演示：19000
+#   bash switch_agentteams_api_target.sh experiment # 只供隔离消融实验使用
 #   bash switch_agentteams_api_target.sh status
 set -Eeuo pipefail
 
@@ -19,10 +21,11 @@ NETWORK="${AGENTTEAMS_NETWORK:-agentteams-net}"
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
 DEV_CONTAINER="${DEV_CONTAINER:-revguard-api-dev}"
 PROD_CONTAINER="${PROD_CONTAINER:-revguard-api}"
+EXPERIMENT_CONTAINER="${EXPERIMENT_CONTAINER:-revguard-api-experiment}"
 ALIAS="revguard-api.internal"
 
 usage() {
-  echo "用法: $0 {dev|prod|status}" >&2
+  echo "用法: $0 {dev|prod|experiment|status}" >&2
   exit 2
 }
 
@@ -30,6 +33,7 @@ target_container() {
   case "$1" in
     dev) echo "$DEV_CONTAINER" ;;
     prod) echo "$PROD_CONTAINER" ;;
+    experiment) echo "$EXPERIMENT_CONTAINER" ;;
     *) usage ;;
   esac
 }
@@ -54,7 +58,7 @@ show_status() {
         | awk '{print $1}' | grep -E '^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)' | tr '\n' ' ' || true)
   echo "alias   : $ALIAS -> ${ips:-未解析（私网地址缺失）}"
   echo "release : $(resolved_release)"
-  for container in "$PROD_CONTAINER" "$DEV_CONTAINER"; do
+  for container in "$PROD_CONTAINER" "$DEV_CONTAINER" "$EXPERIMENT_CONTAINER"; do
     if has_alias "$container"; then echo "owner   : $container"; fi
   done
 }
@@ -63,11 +67,12 @@ if [ $# -ne 1 ]; then usage; fi
 if [ "$1" = "status" ]; then show_status; exit 0; fi
 
 TARGET=$(target_container "$1")
-OTHER="$DEV_CONTAINER"
-[ "$TARGET" = "$DEV_CONTAINER" ] && OTHER="$PROD_CONTAINER"
-
 docker inspect "$TARGET" >/dev/null
-docker inspect "$OTHER" >/dev/null
+
+others=()
+for container in "$PROD_CONTAINER" "$DEV_CONTAINER" "$EXPERIMENT_CONTAINER"; do
+  [ "$container" = "$TARGET" ] || others+=("$container")
+done
 
 if ! has_alias "$TARGET"; then
   echo "==> $TARGET 绑定 $ALIAS"
@@ -75,15 +80,17 @@ if ! has_alias "$TARGET"; then
   docker network connect --alias revguard-api --alias "$ALIAS" "$NETWORK" "$TARGET"
 fi
 
-if has_alias "$OTHER"; then
-  echo "==> $OTHER 释放 $ALIAS"
-  docker network disconnect "$NETWORK" "$OTHER"
-fi
+for other in "${others[@]}"; do
+  if has_alias "$other"; then
+    echo "==> $other 释放 $ALIAS"
+    docker network disconnect "$NETWORK" "$other"
+  fi
+done
 
 sleep 1
 show_status
 case "$1" in
-  dev) expected="0.6.0" ;;
+  dev|experiment) expected="0.6" ;;
   prod) expected="0.5" ;;
 esac
 release=$(resolved_release)

@@ -1,0 +1,136 @@
+# P0-only HA/PITR drill.  This compose project must use a distinct project name
+# (revguard-polardb-ha) and never adds host ports or existing RevGuard networks.
+services:
+  polardb-primary:
+    build:
+      context: .
+      dockerfile: ops/polardb-ha/Dockerfile
+    image: revguard-polardb-ha:local
+    environment:
+      POLARDB_PORT: "5432"
+      POLAR_PRIVATE_DIR: /var/polardb/private
+      POLAR_SHARED_DIR: /var/polardb/shared
+      POLAR_ARCHIVE_DIR: /var/polardb/wal-archive
+    command: [primary]
+    volumes:
+      - revguard-ha-primary-private:/var/polardb/private
+      # PolarDB-PG uses shared storage across independent compute nodes.  The
+      # private directories remain distinct; this is the sole shared volume.
+      - revguard-ha-shared-storage:/var/polardb/shared
+      - revguard-ha-wal-archive:/var/polardb/wal-archive
+    networks: [ha]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U postgres -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 90
+    shm_size: 512mb
+    mem_limit: 3g
+    cpus: 2.0
+
+  polardb-standby:
+    image: revguard-polardb-ha:local
+    environment:
+      POLARDB_PORT: "5432"
+      PRIMARY_HOST: polardb-primary
+      PRIMARY_PORT: "5432"
+      POLAR_PRIVATE_DIR: /var/polardb/private
+      POLAR_SHARED_DIR: /var/polardb/shared
+      POLAR_ARCHIVE_DIR: /var/polardb/wal-archive
+    command: [standby]
+    volumes:
+      - revguard-ha-standby-private:/var/polardb/private
+      - revguard-ha-shared-storage:/var/polardb/shared
+      # The standby inherits archive_command and must be able to archive WAL if
+      # the controller promotes it.  The volume remains isolated to this drill.
+      - revguard-ha-wal-archive:/var/polardb/wal-archive
+    depends_on:
+      polardb-primary:
+        condition: service_healthy
+    networks: [ha]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U postgres -d postgres && psql -h 127.0.0.1 -p 5432 -U postgres -d postgres -tAc 'SELECT pg_is_in_recovery()' | grep -qx t"]
+      interval: 2s
+      timeout: 3s
+      retries: 90
+    shm_size: 512mb
+    mem_limit: 3g
+    cpus: 2.0
+
+  ha-router:
+    image: haproxy:3.1-alpine
+    volumes:
+      - ./ops/polardb-ha/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      polardb-primary:
+        condition: service_healthy
+      polardb-standby:
+        condition: service_healthy
+    networks: [ha]
+
+  failover-controller:
+    image: postgres:15-alpine
+    entrypoint: ["/bin/sh", "/controller/failover-controller.sh"]
+    volumes:
+      - ./ops/polardb-ha/failover-controller.sh:/controller/failover-controller.sh:ro
+    depends_on:
+      polardb-primary:
+        condition: service_healthy
+      polardb-standby:
+        condition: service_healthy
+    networks: [ha]
+
+  pitr-basebackup:
+    image: revguard-polardb-ha:local
+    environment:
+      POLARDB_PORT: "5432"
+      PRIMARY_HOST: ha-router
+      PRIMARY_PORT: "5432"
+      POLAR_PRIVATE_DIR: /var/polardb/private
+      POLAR_SHARED_DIR: /var/polardb/shared
+      POLAR_SOURCE_SHARED_DIR: /var/polardb/source-shared
+      POLAR_ARCHIVE_DIR: /var/polardb/wal-archive
+    command: [basebackup]
+    volumes:
+      - revguard-ha-recovery-private:/var/polardb/private
+      - revguard-ha-recovery-shared:/var/polardb/shared
+      - revguard-ha-shared-storage:/var/polardb/source-shared:ro
+      - revguard-ha-wal-archive:/var/polardb/wal-archive:ro
+    networks: [ha]
+
+  pitr-recovery:
+    image: revguard-polardb-ha:local
+    environment:
+      POLARDB_PORT: "5432"
+      POLAR_PRIVATE_DIR: /var/polardb/private
+      POLAR_SHARED_DIR: /var/polardb/shared
+      POLAR_ARCHIVE_DIR: /var/polardb/wal-archive
+      PITR_TARGET_TIME: ${PITR_TARGET_TIME:-}
+    command: [recovery]
+    volumes:
+      - revguard-ha-recovery-private:/var/polardb/private
+      - revguard-ha-recovery-shared:/var/polardb/shared
+      - revguard-ha-wal-archive:/var/polardb/wal-archive:ro
+    networks: [ha]
+
+  revguard-tools:
+    build:
+      context: .
+    entrypoint: [python]
+    environment:
+      REVGUARD_DATABASE_URL: postgresql://postgres@ha-router:5432/revguard
+      REVGUARD_MIGRATION_DATABASE_URL: postgresql://postgres@ha-router:5432/revguard
+      REVGUARD_RECOVERY_DATABASE_URL: postgresql://postgres@ha-router:5432/revguard
+    networks: [ha]
+
+volumes:
+  revguard-ha-primary-private:
+  revguard-ha-standby-private:
+  revguard-ha-shared-storage:
+  revguard-ha-wal-archive:
+  revguard-ha-recovery-private:
+  revguard-ha-recovery-shared:
+
+networks:
+  ha:
+    name: revguard-polardb-ha-net
