@@ -19,6 +19,12 @@
 | Lint / 生成物 / 版本 | Ruff、Skill 三级摘要、OpenAPI、CHANGELOG、官网回放索引均通过 |
 | 静态安全 | Bandit 无失败项；仅保留既有 `nosec` 提示 |
 
+正式镜像由同一份 `v0.6.0` 源码在 202 Docker 构建，镜像摘要为
+`sha256:ae303afa7ba66be32a11538dd8ed3074caea2769c228c847b2d880854e2b6c1b`。
+Trivy 0.69.3 的完整扫描随 Release 附件提供：`CRITICAL=0`、`HIGH=44`、`MEDIUM=52`、
+`LOW=58`、`UNKNOWN=3`；这 44 个 HIGH 在当前 Debian 13.7 数据库中都没有 `FixedVersion`，
+因此没有把“扫描完成”包装成“镜像无漏洞”。Python 依赖的可修复项由 `pip-audit` 单独门禁，结果为无已知漏洞。
+
 ## 官网与前端
 
 - `revguard-final-replay-gate`：回放索引校验 + 11 项回放/可观测回归测试，退出码 `0`。
