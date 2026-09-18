@@ -73,6 +73,22 @@ class TestFinalsObservabilityContract(unittest.TestCase):
         openapi = json.loads((ROOT / "docs/openapi.json").read_text())
         self.assertEqual(openapi["info"]["version"], "0.6.0-rc3")
 
+    def test_rehearsal_stack_accounts_model_usage_and_owns_scrape_source(self):
+        """彩排栈接管 AgentTeams 别名：模型用量要能记账，看板数据源要能切到彩排栈。"""
+        finals = (ROOT / "docker-compose.finals.yml").read_text()
+        self.assertIn("REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE", finals)
+        self.assertIn("agentteams-worker-{actor}:8088/api/token-usage", finals)
+        observability = (ROOT / "docker-compose.observability.yml").read_text()
+        self.assertIn(
+            "${REVGUARD_PROMETHEUS_CONFIG:-./config/observability/prometheus.yaml}",
+            observability,
+        )
+        rehearsal = (ROOT / "config/observability/prometheus.rehearsal.yaml").read_text()
+        self.assertIn("targets: [revguard-api-dev:9000]", rehearsal)
+        self.assertIn("http://revguard-api-dev:9000/api/v1/health/ready", rehearsal)
+        default = (ROOT / "config/observability/prometheus.yaml").read_text()
+        self.assertIn("targets: [revguard-api:9000]", default)
+
     def test_public_data_summary_keeps_real_and_synthetic_layers_separate(self):
         summary = json.loads((
             ROOT / "docs/public-data-experiment-summary.json"

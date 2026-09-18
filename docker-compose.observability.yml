@@ -34,7 +34,9 @@ services:
     user: "0:0"
     command: ["--config.file=/etc/prometheus/prometheus.yaml", "--storage.tsdb.retention.time=7d"]
     volumes:
-      - ./config/observability/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      # 彩排栈接管 AgentTeams 别名时，同一个 Prometheus 需要抓彩排栈指标；
+      # 通过 REVGUARD_PROMETHEUS_CONFIG 指向覆盖配置，避免运行态与仓库长期漂移。
+      - ${REVGUARD_PROMETHEUS_CONFIG:-./config/observability/prometheus.yaml}:/etc/prometheus/prometheus.yaml:ro
       - ./config/observability/alerts.yaml:/etc/prometheus/alerts.yaml:ro
       - ./.runtime/observability/metrics-token:/run/secrets/metrics-token:ro
       - prometheus-data:/prometheus

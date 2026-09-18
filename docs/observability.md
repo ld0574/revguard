@@ -15,6 +15,8 @@ Higress承担MCP发现、鉴权和路由。观测后端使用OpenTelemetry SDK �
 
 所有构建、测试和服务运行均在10.10.10.202的Docker中执行；本地只编辑、同步文件。Compose配置为docker-compose.observability.yml，Prometheus原生规则位于config/observability/alerts.yaml；旧config/alerts.yaml是项目说明格式，不作为Prometheus加载文件。
 
+彩排栈接管AgentTeams别名时（决赛现场Demo跑在19088），共享Prometheus需要抓彩排栈指标：把`REVGUARD_PROMETHEUS_CONFIG`指向`config/observability/prometheus.rehearsal.yaml`并重建prometheus容器；回滚即删除该变量后重建。两个栈各自保留自己的采集端点，不会互相覆盖数据。
+
 运行scripts/prepare_observability.py会保留现有身份，新增只读metrics凭证，并把凭证及Grafana密码保存到忽略版本控制的.runtime/observability/。Grafana默认只监听202的127.0.0.1:13001。不要在仓库、日志或答辩截图中展示密码。
 
 部署入口scripts/deploy_observability.sh --full组合PolarDB、AgentTeams和观测配置；升级资金Schema前先备份并运行独立迁移。**不要带reset参数，也不要在原演示环境注入故障。** 告警当前只保留在本地Alertmanager，未配置邮件或即时消息通知。

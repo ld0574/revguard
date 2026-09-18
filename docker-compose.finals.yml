@@ -14,6 +14,9 @@ services:
       # 不复制管理员凭据，也不引入第二套看板。
       REVGUARD_GRAFANA_UPSTREAM: ${REVGUARD_GRAFANA_UPSTREAM:-http://grafana:3000}
       REVGUARD_GRAFANA_PUBLIC_TOKEN_FILE: /run/secrets/grafana-public-token
+      # 彩排栈与常驻栈共用同一批 AgentTeams Worker，模型用量必须按 Stage 记账，
+      # 否则 Grafana「Agent 模型调用与 Token」在彩排栈上恒为 0。
+      REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE: ${REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE:-http://agentteams-worker-{actor}:8088/api/token-usage}
     volumes:
       - ${REVGUARD_GRAFANA_TOKEN_FILE:-/root/revguard/.runtime/observability/grafana-public-token}:/run/secrets/grafana-public-token:ro
     networks:
