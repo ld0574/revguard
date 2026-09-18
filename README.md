@@ -4,7 +4,7 @@
 
 复赛演示视频已上传 B 站：[RevGuard 面向企业渠道佣金结算异常的多智能体治理平台](https://www.bilibili.com/video/BV1fhtS6GE2y/)。
 
-决赛视频（2026-09-18 录制，1920×1080，无音轨）：[主视频 4:04](https://github.com/ld0574/revguard/releases/download/v0.6.0-rc3/revguard_finals_demo_v0.6.0-rc3.mp4) · [90 秒故障备用片段](https://github.com/ld0574/revguard/releases/download/v0.6.0-rc3/revguard_finals_recovery_90s_v0.6.0-rc3.mp4)。录制方式与逐帧证据见 `docs/evidence/finals-media-20260918/`。
+决赛视频（2026-09-18 录制，1920×1080，无音轨）：[主视频 4:04](https://github.com/ld0574/revguard/releases/download/v0.6.0/revguard_finals_demo_v0.6.0.mp4) · [90 秒故障备用片段](https://github.com/ld0574/revguard/releases/download/v0.6.0/revguard_finals_recovery_90s_v0.6.0.mp4)。录制方式与逐帧证据见 `docs/evidence/finals-media-20260918/`。
 
 项目官网与运行回放：[ld0574.github.io/revguard](https://ld0574.github.io/revguard/) · [两条案件的逐步回放](https://ld0574.github.io/revguard/replay.html)。回放数据由 `scripts/export_case_replay.py` 从真实运行记录导出，评委不必等待模型调用时间。
 

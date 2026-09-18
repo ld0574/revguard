@@ -1,7 +1,7 @@
 {
   "schema": "revguard.replay/v1",
   "generated_at": "2026-09-17T20:54:26.730267Z",
-  "release": "0.6.0-rc3",
+  "release": "0.6.0",
   "case": {
     "case_id": "CASE-2026-0008",
     "type": "COMMISSION_UNDERPAYMENT",
@@ -1187,7 +1187,9 @@
     "snapshot_sha256": "sha256:9c317ab987ceeef92f90b1a5f5df471f2bed2033b2518e56c8fb3e81643140e1",
     "health_release": "0.6.0-rc3",
     "read_replica": true,
-    "backend": "postgresql-polardb"
+    "backend": "postgresql-polardb",
+    "source_release": "0.6.0-rc3",
+    "capture_kind": "CAPTURED_FROM_RUNTIME"
   },
   "disclosure": {
     "business_data": "synthetic",

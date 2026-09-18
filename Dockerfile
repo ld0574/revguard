@@ -16,13 +16,13 @@ FROM ${PYTHON_IMAGE}
 USER root
 
 # 基础镜像安全更新：Debian 可修复的 HIGH/CRITICAL 必须在发布镜像中归零。
-# 证据见 docs/evidence/finals-0.6.0-rc2-20260917/image-scan-0.6.0-rc2.json。
+# 发布镜像扫描结果随正式发行包保存在 docs/evidence/ 与 Release 附件中。
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 ARG PIP_INDEX_URL=https://pypi.org/simple
 
-ARG REVGUARD_VERSION=0.6.0-rc3
+ARG REVGUARD_VERSION=0.6.0
 LABEL org.opencontainers.image.title="RevGuard" \
       org.opencontainers.image.version="$REVGUARD_VERSION"
 

@@ -222,6 +222,13 @@
     state.index = 0;
     renderTabs(state.bundle.case.case_id);
     text(el("release-label"), state.bundle.release || "v0.6.0");
+    const sourceRelease = state.bundle.provenance?.source_release;
+    const publishedRelease = state.bundle.release;
+    if (sourceRelease && publishedRelease && sourceRelease !== publishedRelease) {
+      showNote(`本页属于 ${publishedRelease} 静态发行包；案件数据捕获自真实运行版本 ${sourceRelease}，运行记录未被改写。`);
+    } else if (state.bundle.provenance?.capture_kind === "CAPTURED_FROM_RUNTIME") {
+      showNote("本页数据由真实运行栈导出后静态发布；播放不会再次调用模型或后端接口。");
+    }
     document.title = `RevGuard 运行回放 — ${state.bundle.case.case_id} ${state.bundle.case.status}`;
     facts();
     renderStep();

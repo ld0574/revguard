@@ -57,9 +57,9 @@ class TestFinalsObservabilityContract(unittest.TestCase):
             self.assertTrue(any(fragment in title for title in titles), fragment)
         self.assertGreaterEqual(len(dashboard["panels"]), 20)
 
-    def test_candidate_version_is_consistent_in_active_artifacts(self):
+    def test_release_version_is_consistent_in_active_artifacts(self):
         metadata = tomllib.loads((ROOT / "pyproject.toml").read_text())
-        self.assertEqual(metadata["project"]["version"], "0.6.0rc3")
+        self.assertEqual(metadata["project"]["version"], "0.6.0")
         for path in (
             ROOT / "Dockerfile",
             ROOT / "docker-compose.yml",
@@ -67,11 +67,13 @@ class TestFinalsObservabilityContract(unittest.TestCase):
             ROOT / "revguard/api.py",
             ROOT / "website/index.html",
         ):
-            self.assertIn("0.6.0-rc3", path.read_text(), str(path))
-        # 发布门禁：候选版本必须在 CHANGELOG 与导出的 OpenAPI 文档里同时出现。
-        self.assertIn("## 0.6.0-rc3", (ROOT / "CHANGELOG.md").read_text())
+            text = path.read_text()
+            self.assertIn("0.6.0", text, str(path))
+            self.assertNotIn("0.6.0-rc", text, str(path))
+        # 发布门禁：封版版本必须在 CHANGELOG 与导出的 OpenAPI 文档里同时出现。
+        self.assertIn("## 0.6.0 — ", (ROOT / "CHANGELOG.md").read_text())
         openapi = json.loads((ROOT / "docs/openapi.json").read_text())
-        self.assertEqual(openapi["info"]["version"], "0.6.0-rc3")
+        self.assertEqual(openapi["info"]["version"], "0.6.0")
 
     def test_rehearsal_stack_accounts_model_usage_and_owns_scrape_source(self):
         """彩排栈接管 AgentTeams 别名：模型用量要能记账，看板数据源要能切到彩排栈。"""

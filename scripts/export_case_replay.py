@@ -588,6 +588,8 @@ def build_bundle(case_id: str, payload: dict[str, Any], health: dict[str, Any]) 
         },
         "provenance": {
             "snapshot_sha256": digest(payload),
+            "source_release": health.get("release"),
+            "capture_kind": "CAPTURED_FROM_RUNTIME",
             "health_release": health.get("release"),
             "read_replica": health.get("read_replica"),
             "backend": health.get("backend"),
@@ -649,8 +651,16 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     written.sort(key=lambda item: 0 if item.get("status") == "CLOSED" else 1)
     index = args.output_dir / "index.json"
-    index.write_text(json.dumps({"schema": SCHEMA, "release": health.get("release"),
-                                 "cases": written}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    index.write_text(json.dumps({
+        "schema": SCHEMA,
+        "release": health.get("release"),
+        "capture": {
+            "kind": "CAPTURED_FROM_RUNTIME",
+            "source_release": health.get("release"),
+            "exported_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        },
+        "cases": written,
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 

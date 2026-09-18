@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 SCHEMA = "revguard.replay/v1"
@@ -28,6 +29,21 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def package_release(root: Path) -> str:
+    """Read the release version from the same source used by the package build."""
+    pyproject = root / "pyproject.toml"
+    try:
+        document = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        return str(document["project"]["version"])
+    except (OSError, KeyError, TypeError, tomllib.TOMLDecodeError) as exc:
+        fail(f"无法读取 pyproject.toml 的 project.version: {exc}")
+
+
+def normalized_release(value: object) -> str:
+    """Compare package, tag and replay versions without rc punctuation differences."""
+    return re.sub(r"[^0-9a-z]", "", str(value or "").lower().removeprefix("v"))
+
+
 def check(root: Path) -> list[str]:
     website = root / "website"
     data_dir = website / "data"
@@ -40,6 +56,19 @@ def check(root: Path) -> list[str]:
     cases = index.get("cases") or []
     if not cases:
         fail("index.json 没有声明任何案件")
+
+    expected_release = package_release(root)
+    published_release = str(index.get("release") or "")
+    if normalized_release(published_release) != normalized_release(expected_release):
+        fail(
+            "index.json 的 release 与 pyproject.toml 不一致: "
+            f"{published_release!r} != {expected_release!r}"
+        )
+    capture = index.get("capture") or {}
+    if not isinstance(capture, dict) or not capture.get("kind"):
+        fail("index.json 缺少 capture.kind（必须标明回放数据来自真实运行导出）")
+    if not capture.get("source_release"):
+        fail("index.json 缺少 capture.source_release（必须区分捕获运行版本与发布版本）")
 
     case_ids: list[str] = []
     for entry in cases:
@@ -55,6 +84,19 @@ def check(root: Path) -> list[str]:
         bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
         if bundle.get("schema") != SCHEMA:
             fail(f"{entry['file']} 的 schema 不是 {SCHEMA}")
+        if normalized_release(bundle.get("release")) != normalized_release(published_release):
+            fail(f"{entry['file']} 的 release 与 index.json 不一致")
+        provenance = bundle.get("provenance") or {}
+        if not provenance.get("source_release"):
+            fail(f"{entry['file']} 缺少 provenance.source_release")
+        if provenance.get("health_release") and normalized_release(
+            provenance.get("source_release")
+        ) != normalized_release(provenance.get("health_release")):
+            fail(f"{entry['file']} 的 source_release 与 health_release 不一致")
+        if normalized_release(provenance.get("source_release")) != normalized_release(
+            capture.get("source_release")
+        ):
+            fail(f"{entry['file']} 的 source_release 与 index.json 不一致")
         case = bundle.get("case") or {}
         if case.get("case_id") != entry["case_id"]:
             fail(f"{entry['file']} 的 case_id 与索引不一致")

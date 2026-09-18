@@ -8,8 +8,8 @@
 | 项 | 状态 | 证据 |
 |---|---|---|
 | `EVIDENCE_HONESTY.md` 证据分层 + 禁止/正确表述对照表 | ✅ | `docs/EVIDENCE_HONESTY.md`（四层标签、A/B/C 证据分级、10 组表述对照、运行通道表、"界面显示 X 后端是否有 X" 自查表） |
-| 公开仓库同步到最新 | ✅ | GitHub `ld0574/revguard` 的 `main` 与 tag 指向同一提交（子树同步自 Gitee 根仓库）；当前对外候选版为 `v0.6.0-rc3`，具体提交与哈希见 `submission/README.md` 的版本行 |
-| 发布 Release | ✅ | `v0.6.0-rc1` / `rc2` / `rc3`（rc3 = 当前对外候选，含源码归档、SBOM、镜像扫描、两个成片与 `SHA256SUMS.txt`）；正式 `v0.6.0` 计划 9/20 从最终封板提交发布 |
+| 公开仓库同步到最新 | ✅ | GitHub `ld0574/revguard` 的 `main` 与正式 tag `v0.6.0` 指向同一提交（子树同步自 Gitee 根仓库）；提交与哈希见正式 Release 的 `SHA256SUMS.txt` |
+| 发布 Release | ✅ | 正式 `v0.6.0` Release 含源码归档、SBOM、镜像扫描、两个成片与 `SHA256SUMS.txt`；两支成片和 Case1/Case8 回放明确标注 `source_release=0.6.0-rc3`，不把候选运行改写成正式重跑 |
 | GitHub Pages 官网 | ✅ | <https://ld0574.github.io/revguard/>（Pages workflow 每次推送自动部署，最近一次 18 秒成功） |
 | GitHub Actions 真跑校验 | ✅ | `.github/workflows/checks.yml`；run [35262130888](https://github.com/ld0574/revguard/actions/runs/35262130888) 全部步骤 success：Skill 三级摘要 / Skill 清单一致 / OpenAPI 一致 / Lint / 后端单测 |
 | 仓库 Topics | ✅ | `agent` `fintech` `platform` `multi-agent` `ai-agents` `human-in-the-loop` `audit-trail` `erpnext` `fastapi` `postgresql` |
