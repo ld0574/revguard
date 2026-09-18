@@ -1,0 +1,18 @@
+== 全库：链接 + 行哈希
+ total | broken 
+-------+--------
+  1093 |      0
+(1 row)
+
+== 单案：canonical row digest 复算 + 链接 + 行哈希
+ rows | digest_mismatch | link_mismatch | hash_mismatch 
+------+-----------------+---------------+---------------
+  335 |               0 |             0 |             0
+(1 row)
+
+== 单案：链头与行数（与导出 JSON 的 summary 对比）
+ rows | first_seq | last_seq |                            head_hash                             
+------+-----------+----------+------------------------------------------------------------------
+  335 |        15 |      924 | 6608c015372b9a34c44595e7aae7cf79fa72ad18cb35ec22dd920dfe778ca95a
+(1 row)
+
