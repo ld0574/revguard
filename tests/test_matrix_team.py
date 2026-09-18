@@ -55,6 +55,12 @@ class FakeMatrixClient:
                     "room_id": room_id or self.settings.room_id,
                     "content": {"body": f"RUN_ACCEPTED {run_id}"},
                 })
+            elif "/clear" in body:
+                self.events.append({
+                    "event_id": f"$reply-{self.counter}", "sender": target,
+                    "room_id": room_id or self.settings.room_id,
+                    "content": {"body": "**History Cleared!**"},
+                })
             else:
                 fields = dict(
                     line.split("=", 1) for line in body.splitlines()
@@ -118,13 +124,22 @@ class NoCompletionMatrixClient:
         return "cursor"
 
     async def send_text(self, body, *, mentions=None, room_id=None):
-        del mentions, room_id
         self.bodies.append(body)
         self.counter += 1
+        if mentions and "/clear" in body:
+            target = mentions[0]
+            self.reset_event = {
+                "event_id": f"$reply-{self.counter}", "sender": target,
+                "room_id": room_id or self.settings.room_id,
+                "content": {"body": "**History Cleared!**"},
+            }
         return f"$event-{self.counter}"
 
     async def wait_for_event(self, **kwargs):
-        del kwargs
+        event = getattr(self, "reset_event", None)
+        if event and kwargs["predicate"](event):
+            self.reset_event = None
+            return event
         return None
 
 

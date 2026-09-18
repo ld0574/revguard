@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-09-18T13:24:31.426384Z",
+  "database_version": "PostgreSQL 15.19 (PolarDB 15.19.5.0 build unknown) on x86_64-linux-gnu",
+  "in_recovery": false,
+  "markers": [
+    {
+      "marker": "committed_before_failover",
+      "value": "sync-commit",
+      "created_at": "2026-09-18 13:24:01.115464+00"
+    },
+    {
+      "marker": "written_after_failover",
+      "value": "stable-endpoint",
+      "created_at": "2026-09-18 13:24:28.218422+00"
+    }
+  ]
+}

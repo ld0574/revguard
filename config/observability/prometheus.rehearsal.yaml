@@ -1,7 +1,7 @@
-# 决赛彩排覆盖配置：Prometheus 抓 19088 彩排栈（revguard-api-dev）指标。
+# 决赛演示覆盖配置：Prometheus 抓 19088 演示栈（revguard-api-dev）指标。
 #
-# 用途：决赛现场 Demo 跑在彩排栈上，而 ERPNext 调用、资金操作状态、PostgreSQL 复制
-# 延迟与模型用量这些面板指标只有彩排栈（0.6.0 构建）才产出。常驻栈 19000 仍保留
+# 用途：决赛现场 Demo 跑在演示栈上，而 ERPNext 调用、资金操作状态、PostgreSQL 复制
+# 延迟与模型用量这些面板指标只有演示栈（0.6.0 构建）才产出。常驻栈 19000 仍保留
 # 自己的 `/api/v1/ops/metrics/prometheus`，两条数据源互不影响。
 #
 # 启用方式（只影响 observability 项目，不动应用数据）：

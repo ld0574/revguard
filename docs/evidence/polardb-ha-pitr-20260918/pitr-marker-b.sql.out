@@ -1,0 +1,7 @@
+INSERT 0 1
+CHECKPOINT
+ pg_switch_wal 
+---------------
+ 0/5000000
+(1 row)
+

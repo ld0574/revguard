@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Read-only probes used by the isolated PolarDB HA/PITR drill."""
 from __future__ import annotations
 

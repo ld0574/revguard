@@ -951,7 +951,7 @@ class TestApiSmoke(unittest.TestCase):
     def test_15z_reprepare_rearms_scoped_posting_fault_for_next_generation(self):
         """单案重新准备必须为下一录制代次重新武装注入的写后偏差。
 
-        2026-09-18 在 202 彩排栈复现：``posting_tamper_used`` 曾是全局一次性
+        2026-09-18 在 202 演示栈复现：``posting_tamper_used`` 曾是全局一次性
         开关，而"重新准备当前案件"不清它，于是第二次录制拿到 variance=0.00、
         直接 CLOSED，冲销与恢复演示静默消失。修复后按案件记录消费状态，
         重新准备只重新武装该案。

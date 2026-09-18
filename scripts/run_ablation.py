@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Run one isolated RevGuard ablation sample and write a machine-readable result.
 
 The Direct and MCP Team modes construct their own disposable Store under
@@ -23,11 +22,12 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib import error, request
+from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from revguard.mcp_team import McpTeamRunner
 from revguard.matrix_team import MatrixSettings, MatrixTeamRunner
+from revguard.mcp_team import McpTeamRunner
 from revguard.mocks import ToolGateway
 from revguard.orchestrator import Orchestrator
 from revguard.skill_runtime import SKILL_ACTORS
@@ -254,13 +254,15 @@ def local_run(mode: str, number: str, work_dir: Path) -> dict:
 
 
 def http_json(url: str, *, token: str, method: str = "GET", payload: dict | None = None) -> dict:
+    if urlsplit(url).scheme not in {"http", "https"}:
+        raise ValueError("only http and https URLs are supported")
     body = json.dumps(payload).encode("utf-8") if payload is not None else None
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     if body is not None:
         headers["Content-Type"] = "application/json"
     req = request.Request(url, data=body, method=method, headers=headers)
     try:
-        with request.urlopen(req, timeout=30) as response:
+        with request.build_opener().open(req, timeout=30) as response:
             return json.loads(response.read().decode("utf-8"))
     except error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")

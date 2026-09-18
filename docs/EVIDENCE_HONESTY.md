@@ -36,8 +36,8 @@
 
 | 级别 | 判据 | 例子 |
 |---|---|---|
-| **A 实测执行** | 有 202 Docker 内的执行日志、退出码、时间戳与产物哈希 | 378 项后端测试（295 项默认测试 + 83 项 PostgreSQL/Matrix 集成测试）；`verify_docker.sh` 发布门禁；Trivy 0 项可修复高危；两条案件运行记录与回放导出 |
-| **B 机制存在、本轮未执行** | 代码与测试存在，但没有本轮真实系统执行记录 | 金蝶 / 用友 / SAP Adapter（待验证）；外部 ERP 正式会计写入与跨系统补偿；PolarDB 双容器同步复制、自动故障切换与 PITR 演练 |
+| **A 实测执行** | 有 202 Docker 内的执行日志、退出码、时间戳与产物哈希 | 378 项后端测试（295 项默认测试 + 83 项 PostgreSQL/Matrix 集成测试）；`verify_docker.sh` 发布门禁；Trivy 0 项可修复高危；两条案件运行记录与回放导出；PolarDB 双容器同步复制、自动故障切换与 PITR 隔离演练 |
+| **B 机制存在、本轮未执行** | 代码与测试存在，但没有本轮真实系统执行记录 | 金蝶 / 用友 / SAP Adapter（待验证）；外部 ERP 正式会计写入与跨系统补偿 |
 | **C 规划** | 只有设计或路线，没有实现 | 多租户与水平扩展 |
 
 **只有 A 级证据可以写成“已验证”。** B 级写成“扩展点已提供、状态为待验证”，
@@ -70,7 +70,7 @@ C 级写成“规划”。
 | “所有业务数据和佣金规则均为真实生产数据” | “公开真实交易数据 + 真实佣金规则 + 合成佣金数据” | 用来源标签明确区分公开真实交易、真实佣金规则与合成佣金数据 |
 | “已接入金蝶 / 用友 / SAP” | “提供 Adapter 配置 Schema 与映射清单，状态为待验证” | 只有扩展点，没有租户与联调授权 |
 | “已完成外部 ERP 会计写入闭环” | “ERPNext 读取集成已验证；外部 ERP 正式会计写入与分布式补偿待验证” | 写入只落在 RevGuard 受控台账 |
-| “已完成 PolarDB 高可用与 PITR” | “官方开源 PolarDB-PG 单实例已验收；双容器 HA/PITR 仅在 `docs/evidence/polardb-ha-pitr-*/manifest.json` 同时为 PASSED 后才可写为已验证” | 机制、脚本和实测证据必须分开表述 |
+| “云 PolarDB 托管高可用与跨可用区 PITR 已验收” | “官方开源 PolarDB-PG 双容器 HA/PITR 已在主机隔离演练中验证，边界见 `docs/evidence/polardb-ha-pitr-20260918/`” | 实测通过不等于托管控制面、跨主机或跨可用区 SLA |
 | “客户处理时长下降 84.71%” | “8 个合成 Golden Case 的情景测算，指数口径” | 没有授权基线 |
 | “AI 自动审批资金” / “智能体自主决定金额” | “真人 Matrix 身份审批 + 确定性金额内核” | 金额、政策、权限、状态迁移由确定性代码决定 |
 | “1 KES 偏差事故” | “受控注入的偏差场景（`posting_tamper_amount=1`）” | 故障是刻意注入的演示条件 |
@@ -128,7 +128,7 @@ RevGuard 的运行通道有两种，界面与材料必须与该条记录一致�
 | 目标 | 命令 / 位置 |
 |---|---|
 | 发布门禁（含覆盖率、bandit、pip-audit、npm audit） | `scripts/verify_docker.sh` |
-| 彩排栈冒烟 | `bash scripts/rehearsal_smoke.sh http://10.10.10.202:19088` |
+| 演示栈冒烟 | `bash scripts/rehearsal_smoke.sh http://10.10.10.202:19088` |
 | 隔离 PolarDB HA/PITR 演练 | `bash scripts/run_polardb_ha_pitr_drill.sh`，仅 `ha-result.json` 与 `pitr-result.json` 均为 `PASSED` 才更新对外口径 |
 | 隔离 A/B/C 消融实验 | `bash scripts/run_ablation_experiment.sh`，Direct/MCP 每案 5 次，Matrix 每案 1 次 |
 | 案件回放导出 | `scripts/export_case_replay.py` → `website/data/case-*.json` |

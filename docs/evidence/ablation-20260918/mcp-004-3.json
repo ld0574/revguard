@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T08:48:19.989749Z",
+  "mode": "MCP_TEAM",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-004.json",
+    "case_id": "CASE-2026-0004",
+    "title": "申诉不成立：台账与政策复算完全一致，无需调整",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "37800.00",
+      "root_causes": [],
+      "risk_level": "L0",
+      "final_status": "CLOSED",
+      "no_adjustment": true,
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:60c00ce1073ec77e3603460cfee83696a261b3bb290927557e4f0e58fac216e4"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0004",
+    "final_status": "CLOSED",
+    "risk_level": "L0",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "37800.00",
+      "root_causes": [],
+      "risk_level": "L0",
+      "final_status": "CLOSED",
+      "no_adjustment": true,
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 8,
+    "stage_result_total": 8,
+    "stage_task_persistence_coverage": 1.0,
+    "actor_skill_server_binding_coverage": 1.0,
+    "input_output_handoff_hash_coverage": 1.0,
+    "input_output_handoff_hashes": {
+      "TASK-E8D8A554": {
+        "input": "sha256:ae0234f5b267a1c39f3dc494c2271675cd35f2f739f523c91db84b5b5bcf8363",
+        "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+      },
+      "TASK-BE4DE7EA": {
+        "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+        "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+      },
+      "TASK-99A6BE04": {
+        "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+        "output": "sha256:7e984048ac7b5609ea9424308e079ec1a2e48087702123d306f9e815417bc191"
+      },
+      "TASK-D3CA6299": {
+        "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+        "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+      },
+      "TASK-AACB8911": {
+        "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+        "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+      },
+      "TASK-A4843B53": {
+        "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+        "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+      },
+      "TASK-1F3BE106": {
+        "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+        "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+      },
+      "TASK-2988604B": {
+        "input": "sha256:1423a293ac9345ccf73a77f6796596139331bbe76db70fb5602e7c1b86d61761",
+        "output": "sha256:dd397fef879549d65846067dd571f0936455454b24c393eb73c1de0beaf717ab"
+      }
+    },
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 0,
+      "dispatch_event_coverage": null,
+      "response_event_coverage": null,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": "CaseToDatasetSkill",
+    "trace_span_count": 21,
+    "mode_has_persisted_stage_tasks": true,
+    "mode": "MCP_TEAM"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T08:48:19.622345Z",
+    "finished_at": "2026-09-18T08:48:19.991933Z",
+    "wall_clock_ms": 369,
+    "stage_task_count": 8,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_store",
+      "path": "/evidence/work-mcp-004-3/case.db"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": false,
+        "reason": "SQLite demo backend"
+      }
+    }
+  ],
+  "limitations": [
+    "Direct and MCP samples use a disposable local Store and fixture gateway.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

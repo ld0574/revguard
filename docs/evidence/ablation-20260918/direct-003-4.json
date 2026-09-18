@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T08:47:43.122810Z",
+  "mode": "DIRECT_ORCHESTRATOR",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-003.json",
+    "case_id": "CASE-2026-0003",
+    "title": "证据不足：工单只有代理商名称，存在多笔候选订单",
+    "expected": {
+      "final_status": "WAITING_FOR_EVIDENCE",
+      "escalated": true,
+      "no_fake_conclusion": true,
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:27f0a400c5ef2307629110dbac436190d0fa43a468ca417aebadf265b9aa6e6c"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0003",
+    "final_status": "WAITING_FOR_EVIDENCE",
+    "risk_level": null,
+    "expected": {
+      "final_status": "WAITING_FOR_EVIDENCE",
+      "escalated": true,
+      "no_fake_conclusion": true,
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 0,
+    "stage_result_total": 0,
+    "stage_task_persistence_coverage": null,
+    "actor_skill_server_binding_coverage": null,
+    "input_output_handoff_hash_coverage": null,
+    "input_output_handoff_hashes": {},
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 0,
+      "dispatch_event_coverage": null,
+      "response_event_coverage": null,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": null,
+    "trace_span_count": 7,
+    "mode_has_persisted_stage_tasks": false,
+    "mode": "DIRECT_ORCHESTRATOR"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T08:47:43.045300Z",
+    "finished_at": "2026-09-18T08:47:43.123015Z",
+    "wall_clock_ms": 77,
+    "stage_task_count": 0,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_store",
+      "path": "/evidence/work-direct-003-4/case.db"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": false,
+        "reason": "SQLite demo backend"
+      }
+    }
+  ],
+  "limitations": [
+    "Direct and MCP samples use a disposable local Store and fixture gateway.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

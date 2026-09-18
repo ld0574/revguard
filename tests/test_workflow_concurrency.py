@@ -220,6 +220,8 @@ class TestWorkflowConcurrency(unittest.IsolatedAsyncioTestCase):
         case = self.store.get_case(self.case_id)
         client = AsyncMock()
         async def send(body, **kwargs):
+            if "/clear" in body:
+                return "$session-reset"
             if "adapter_command=" in body:
                 task = self.store.list_agent_tasks(self.case_id)[-1]
                 self.store.transition_agent_task(task["task_id"], expected={"PENDING"}, status="RUNNING")
@@ -227,11 +229,16 @@ class TestWorkflowConcurrency(unittest.IsolatedAsyncioTestCase):
                                                error={"message": "original operation must be reconciled"})
             return "$fixture-event"
         client.send_text.side_effect = send
+        client.wait_for_event.return_value = {
+            "event_id": "$session-reset-response",
+            "sender": "@revguard-intake:matrix-local.agentteams.io:8086",
+            "content": {"body": "**History Cleared!**"},
+        }
         runner = MatrixTeamRunner(self.store, self.gateway, output_dir=self.temp.name,
                                   report_dir=self.temp.name, client=client)
         runner.settings = replace(runner.settings, stage_timeout_seconds=0.05, retry_nudge_seconds=(0,))
         with self.assertRaisesRegex(Exception, "RESULT_UNKNOWN"):
             await runner._invoke_transport(case, "CaseNormalizeSkill", {"raw_case": case})
-        # 派发链路发 3 条消息（交接 + 派发 + 触发）；任务在触发消息处即 RESULT_UNKNOWN，
-        # 因此不得出现第 4 条（重试 nudge）——nudge 必须立即停止。
-        self.assertEqual(client.send_text.await_count, 3)
+        # 派发链路发 4 条消息（交接 + 会话清理 + 派发 + 触发）；任务在触发消息处
+        # 即 RESULT_UNKNOWN，因此不得出现第 5 条（重试 nudge）。
+        self.assertEqual(client.send_text.await_count, 4)

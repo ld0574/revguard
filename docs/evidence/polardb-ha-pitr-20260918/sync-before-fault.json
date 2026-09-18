@@ -1,0 +1,14 @@
+{
+  "captured_at": "2026-09-18T13:22:40.595024Z",
+  "database_version": "PostgreSQL 15.19 (PolarDB 15.19.5.0 build unknown) on x86_64-linux-gnu",
+  "in_recovery": false,
+  "replication": {
+    "application_name": "standby1",
+    "state": "streaming",
+    "sync_state": "sync",
+    "sent_lsn": "0/1FE0C08",
+    "write_lsn": "0/1FE0C08",
+    "flush_lsn": "0/1FE0C08",
+    "replay_lsn": "0/1FE0C08"
+  }
+}

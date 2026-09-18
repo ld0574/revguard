@@ -1,0 +1,8 @@
+CREATE TABLE
+INSERT 0 1
+CHECKPOINT
+ pg_switch_wal 
+---------------
+ 0/2000000
+(1 row)
+

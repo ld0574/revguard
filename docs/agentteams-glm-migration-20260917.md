@@ -34,7 +34,7 @@ Worker 继续访问 AgentTeams 内部 Higress Gateway。外部模型凭据由 Co
 | 栈 | 容器 | 端口 | 用途 |
 |---|---|---|---|
 | prod | `revguard-api` | 19000 | 常驻演示栈 |
-| dev | `revguard-api-dev` | 19088 | 0.6.0 研发 / 验收 / 决赛彩排栈 |
+| dev | `revguard-api-dev` | 19088 | 0.6.0 研发 / 验收 / 决赛演示栈 |
 
 Higress 的 REST-to-MCP Server 全部指向 `revguard-api.internal:9000`，Docker DNS 同时只能解析到一个容器，因此**任一时刻只有一套栈能被 Worker 回调**。本轮遇到的两个失败都由这里产生：
 
@@ -43,7 +43,7 @@ Higress 的 REST-to-MCP Server 全部指向 `revguard-api.internal:9000`，Docke
 
 修复后的运维入口：`bash scripts/switch_agentteams_api_target.sh {dev|prod|status}`，脚本负责别名归属、解析校验与 release 断言（dev=0.6.0*、prod=0.5*）。每次切换都必须确认目标栈已持有当前 Higress 的 Worker Principal 密钥，否则 Worker 会以 401 结束 StageTask。
 
-边界与代价：prod 容器一旦被 `docker compose up` 重新创建，`docker-compose.agentteams.yml` 里的别名会回到 prod，需要重新执行一次切换脚本；本轮决赛彩排栈为 dev（19088），因此把别名留在 dev，prod 的既有案件与审计记录保持只读不变。
+边界与代价：prod 容器一旦被 `docker compose up` 重新创建，`docker-compose.agentteams.yml` 里的别名会回到 prod，需要重新执行一次切换脚本；本轮决赛演示栈为 dev（19088），因此把别名留在 dev，prod 的既有案件与审计记录保持只读不变。
 
 ## reasoning_effort 整改与复验（2026-09-17 21:40 起，202）
 
@@ -77,7 +77,7 @@ Higress 的 REST-to-MCP Server 全部指向 `revguard-api.internal:9000`，Docke
 
 ## dev 栈 Matrix 路径的实测结果与整改项
 
-把别名与 Worker 凭据都对齐之后，19088 彩排栈用 `REVGUARD_TEAM_TRANSPORT=matrix` 真实跑了一次 CASE-2026-0001：
+把别名与 Worker 凭据都对齐之后，19088 演示栈用 `REVGUARD_TEAM_TRANSPORT=matrix` 真实跑了一次 CASE-2026-0001：
 
 - OrchestratorHandshake 与 CaseNormalizeSkill 两个 StageTask 由真实 Worker 完成，任务账本推进到 3/8；
 - 第三个阶段 `PolicyVersionMatchSkill` 在 240 秒 Stage 超时后以 `MatrixTransportError` 结束；
@@ -91,7 +91,7 @@ Higress 的 REST-to-MCP Server 全部指向 `revguard-api.internal:9000`，Docke
 2. Adapter 改为向 RevGuard 取该 StageTask 已绑定的输入（新增一个 Worker 可读、按 actor 与 task 绑定的只读接口，或复用 `GET /api/v1/cases/{case_id}/agent-tasks`）；
 3. 或者保留内联输入但改为 base64 传递（`--input-b64`），彻底消除引号转义。
 
-在整改完成前，19088 彩排栈的双案记录使用 `REVGUARD_TEAM_TRANSPORT=mcp` 参考执行器产生（同一 StageTask / Skill 契约 / 真实 ERPNext / 真实 Matrix 真人审批 / 真实 PostgreSQL 资金写入与冲销），现场只展示已存档记录；Element 里的真实 AgentTeams 多 Agent 交接仍以 19000 常驻栈的运行与决赛视频为准。
+在整改完成前，19088 演示栈的双案记录使用 `REVGUARD_TEAM_TRANSPORT=mcp` 参考执行器产生（同一 StageTask / Skill 契约 / 真实 ERPNext / 真实 Matrix 真人审批 / 真实 PostgreSQL 资金写入与冲销），现场只展示已存档记录；Element 里的真实 AgentTeams 多 Agent 交接仍以 19000 常驻栈的运行与决赛视频为准。
 
 ## 2026-09-18 复验：Controller 注册表覆盖与官方模型配置 API 纠正
 

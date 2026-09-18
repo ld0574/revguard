@@ -1,6 +1,6 @@
 # 发布门禁复跑（2026-09-18，master 树）
 
-**目的**：9/18 改了 `docker-compose.finals.yml`（彩排栈模型用量记账）、`docker-compose.observability.yml`
+**目的**：9/18 改了 `docker-compose.finals.yml`（演示栈模型用量记账）、`docker-compose.observability.yml`
 （Prometheus 配置开关）、新增 `config/observability/prometheus.rehearsal.yaml` 与 1 项回归用例后，
 在当前 master 树上把完整发布门禁再跑一遍，作为封版前的"当前树可发布"证据。
 
@@ -34,5 +34,5 @@ bash scripts/verify_docker.sh
 - 本文件记录的是 **9/18 master 树**的结果；9/20 正式封版时，`v0.6.0` 必须在**最终提交**上重跑
   `bash scripts/verify_docker.sh`，并用那次输出刷新官网 / 讲稿 / PPT 里的测试与覆盖率数字（见 runbook §6.6）。
 - 本轮改动只涉及 compose 挂载开关、观测配置与文档，未触碰金额内核、审批、执行与恢复路径；
-  彩排栈与常驻栈的运行态验证见 runbook §9.3 / §9.4 与
+  演示栈与常驻栈的运行态验证见 runbook §9.3 / §9.4 与
   `docs/evidence/agentteams-glm-recheck-20260918/`、`docs/evidence/agentteams-handoff-20260918/`。

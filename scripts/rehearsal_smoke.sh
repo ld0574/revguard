@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# RevGuard 决赛彩排/现场冒烟测试
+# RevGuard 决赛演示/现场冒烟测试
 # 用法：bash rehearsal_smoke.sh <演示栈基础地址>
 #   例：bash rehearsal_smoke.sh http://10.10.10.202:19088
 #   例：bash rehearsal_smoke.sh https://demo.example.com

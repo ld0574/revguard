@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T13:26:39.656772Z",
+  "environment": "10.10.10.202 Docker isolated single-host drill",
+  "ha_verdict": "PASSED",
+  "pitr_verdict": "PASSED",
+  "members": [
+    {
+      "path": "build.log",
+      "sha256": "6b14136167ffc9b12aede908b4d043b2ed44155439efa531bc61076e0bfd1df1"
+    },
+    {
+      "path": "cleanup.log",
+      "sha256": "bd5016560cec1009e2406aea22da4e8009182f9129ed23e140c4912d77f4776f"
+    },
+    {
+      "path": "config-summary.txt",
+      "sha256": "aab89ff77b5f85175e0f154ea362639ccb7209481fdf2c00c9855b45b8da9d10"
+    },
+    {
+      "path": "controller-autofailover.log",
+      "sha256": "4e92bbdaf5cafc9de687849298d0e1e63f5715ce827583b63d5652c9ff3370a6"
+    },
+    {
+      "path": "failover-controller.log",
+      "sha256": "4e92bbdaf5cafc9de687849298d0e1e63f5715ce827583b63d5652c9ff3370a6"
+    },
+    {
+      "path": "ha-after-failover.json",
+      "sha256": "d4f5f12a9f8f3e8ebf0050d6900ab844a9db56d8fde21cae0a9c6256de10f752"
+    },
+    {
+      "path": "ha-before-fault.sql.out",
+      "sha256": "eb3311c0cbc42f7b8476f60032ae6e8f71b1bb33e5d448eaa0c79fb8d41dfd41"
+    },
+    {
+      "path": "ha-result.json",
+      "sha256": "bce9ccbbe406f15c16e22c653373d8d60c93d7cc4edcc890e0a35918c5e07fc0"
+    },
+    {
+      "path": "ha-router.log",
+      "sha256": "7c37e3b86fe0d7409f56411f836e8ce7507f4ac6a20a996d8518b7feddad9cef"
+    },
+    {
+      "path": "image-inspect.json",
+      "sha256": "944867ffe704b78444f1c4a8012d349334e711d464a4f0cd45d1ea6a890c14ed"
+    },
+    {
+      "path": "migration.log",
+      "sha256": "74f196a31b2926607c32787bc94297fe2c4de2a215a368aebc26b14116ccfd5c"
+    },
+    {
+      "path": "pitr-actual.json",
+      "sha256": "7a1f2aee0a0d628a64bc99a018b5dd8ffefb26932e9d38a8dbaa03759797351f"
+    },
+    {
+      "path": "pitr-backup-started-at.txt",
+      "sha256": "853c6e39c878a89b2275a49d87e6b3baed9ab32c15d1a85b9bd99e0d878f0fa4"
+    },
+    {
+      "path": "pitr-basebackup.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "pitr-expected.json",
+      "sha256": "506a23f9f1ce8b3d58e017733cf527bc2f85dad7109a04f927048a74f35b2d1f"
+    },
+    {
+      "path": "pitr-marker-a.sql.out",
+      "sha256": "e5df7b54f0138470d90738ad7d504801146d726d69b6e99d1e557d6b3c0b96ed"
+    },
+    {
+      "path": "pitr-marker-b.sql.out",
+      "sha256": "6b4736b1ac72a3e31702c8931936ae3769c1e066c4847347fde5e466d910ad14"
+    },
+    {
+      "path": "pitr-marker-check.json",
+      "sha256": "a7b015b64c0126e98bab84f4052b75558389df750c06d2454ef171c7b58856f3"
+    },
+    {
+      "path": "pitr-recovery.log",
+      "sha256": "1569b091d89d15c54694de391641a9054e14559baf10594b8b8b4da95eef94ba"
+    },
+    {
+      "path": "pitr-result.json",
+      "sha256": "6ef994a0db1f77963f2ec44cb3c30b8c6d22e08e72c002ed4d75481fd4580b2a"
+    },
+    {
+      "path": "pitr-snapshot.log",
+      "sha256": "7756359be329afb48bb7f33ea9722905b8d7f502a658435ee9d9579a4d39e073"
+    },
+    {
+      "path": "pitr-target-time.txt",
+      "sha256": "377832c4a4bad12a9a04d8e7704a4642f6517b53355f7d436a1be2113293bf1a"
+    },
+    {
+      "path": "polardb-primary.log",
+      "sha256": "6745b1b81035989d962bc56ef8a85d99370651dbb01fd8a4636161e30a42dfca"
+    },
+    {
+      "path": "polardb-standby.log",
+      "sha256": "38a6d52d5ea7d1bae56bc6d150bffcceaa4ba06b8cf483fb1de30bbb1c7b0497"
+    },
+    {
+      "path": "primary-stop.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "seed.log",
+      "sha256": "9b1a00e56ee3129a33f79275d4651bbfaa7b33cc02e3de810ae5fc7d01c6fc42"
+    },
+    {
+      "path": "sync-before-fault.json",
+      "sha256": "751e97c8cf0ea5b3ae57a6c4785e8745034eb581ba08cc1788fd837a01735a49"
+    },
+    {
+      "path": "verdict.log",
+      "sha256": "57039bb53baa8a05f08b90fed457df28fdb72218c37d784372c547f5c80f4865"
+    }
+  ]
+}

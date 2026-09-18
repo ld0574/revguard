@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T13:26:39.656344Z",
+  "verdict": "PASSED",
+  "target_time": "2026-09-18T13:23:32.573833Z",
+  "started_at": "2026-09-18T13:23:07.133Z",
+  "writable_at": "2026-09-18T13:23:53.373Z",
+  "duration_seconds": 46.24,
+  "marker_A_present": true,
+  "marker_B_absent": true,
+  "money_fingerprint_matches": true,
+  "audit_chain_valid": true,
+  "basebackup_method": "official_pg_basebackup_private_plus_polardata_shared",
+  "limitations": [
+    "Recovery writes to independent named volumes and does not replace the source nodes.",
+    "The target reflects a synthetic RevGuard dataset in a single-host drill."
+  ]
+}

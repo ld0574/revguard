@@ -103,7 +103,7 @@ async def build(output: Path) -> dict:
             waiting = store.get_case(CASE_ID)
             transition_case(
                 store, waiting, CaseStatus.READY_TO_EXECUTE,
-                "自动化证据排练批准；正式录屏必须由组员点击",
+                "自动化证据脚本批准；正式录屏必须由组员点击",
                 actor="evidence-rehearsal",
             )
             final_state = await runner.execute_after_approval(waiting)

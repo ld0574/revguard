@@ -12,11 +12,15 @@ promoted=false
 stamp() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 log() { printf '%s %s\n' "$(stamp)" "$*"; }
 primary_writable() {
-  result=$(psql -h "$PRIMARY_HOST" -p "$PORT" -U postgres -d postgres -tAc 'SELECT NOT pg_is_in_recovery()' 2>/dev/null || true)
+  result=$(psql -w -h "$PRIMARY_HOST" -p "$PORT" -U postgres -d postgres -tAc 'SELECT NOT pg_is_in_recovery()' 2>/dev/null || true)
   [ "$result" = "t" ]
 }
 standby_recovering() {
-  result=$(psql -h "$STANDBY_HOST" -p "$PORT" -U postgres -d postgres -tAc 'SELECT pg_is_in_recovery()' 2>/dev/null || true)
+  result=$(psql -w -h "$STANDBY_HOST" -p "$PORT" -U postgres -d postgres -tAc 'SELECT pg_is_in_recovery()' 2>/dev/null || true)
+  [ "$result" = "t" ]
+}
+standby_promoted() {
+  result=$(psql -w -h "$STANDBY_HOST" -p "$PORT" -U postgres -d postgres -tAc 'SELECT NOT pg_is_in_recovery()' 2>/dev/null || true)
   [ "$result" = "t" ]
 }
 
@@ -32,10 +36,17 @@ while [ "$promoted" = false ]; do
   fi
   if standby_recovering; then
     log "PRIMARY_UNAVAILABLE promoting standby"
-    psql -h "$STANDBY_HOST" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 \
-      -tAc 'SELECT pg_promote(true, 30)' | sed 's/^/PROMOTE_RESULT /'
-    log "STANDBY_PROMOTED"
-    promoted=true
+    result=$(psql -w -h "$STANDBY_HOST" -p "$PORT" -U postgres -d postgres \
+      -tAc 'SELECT pg_promote(false, 60)' 2>/dev/null || true)
+    log "PROMOTE_RESULT ${result:-connection_lost}"
+    for _ in $(seq 1 45); do
+      if standby_promoted; then
+        log "STANDBY_PROMOTED"
+        promoted=true
+        break
+      fi
+      sleep 1
+    done
     continue
   fi
   sleep 1

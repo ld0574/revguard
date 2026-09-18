@@ -1,0 +1,96 @@
+polardb-primary-1  | 2026-09-18T13:22:24Z initializing primary private and shared storage
+polardb-primary-1  | PolarDB no use deploy mode
+polardb-primary-1  | The files belonging to this database system will be owned by user "postgres".
+polardb-primary-1  | This user must also own the server process.
+polardb-primary-1  | 
+polardb-primary-1  | The database cluster will be initialized with locale "en_US.UTF-8".
+polardb-primary-1  | The default database encoding has accordingly been set to "UTF8".
+polardb-primary-1  | The default text search configuration will be set to "english".
+polardb-primary-1  | 
+polardb-primary-1  | Data page checksums are enabled.
+polardb-primary-1  | 
+polardb-primary-1  | fixing permissions on existing directory /var/polardb/private ... ok
+polardb-primary-1  | creating subdirectories ... ok
+polardb-primary-1  | selecting dynamic shared memory implementation ... posix
+polardb-primary-1  | selecting default max_connections ... 100
+polardb-primary-1  | selecting default shared_buffers ... 128MB
+polardb-primary-1  | selecting default time zone ... Asia/Shanghai
+polardb-primary-1  | creating configuration files ... ok
+polardb-primary-1  | 2026-09-18 21:22:24.513 CST [25] LOG:  polar_vfs loaded in postmaster 25
+polardb-primary-1  | 2026-09-18 21:22:24.514 CST [25] LOG:  polar_vfs init done
+polardb-primary-1  | 2026-09-18 21:22:24.514 CST [25] LOG:  "polar_settings.conf" is in non-sharedstorage mode, additional load it.
+polardb-primary-1  | 2026-09-18 21:22:24.514 CST [25] LOG:  skipping missing configuration file "/var/polardb/private/polar_settings.conf"
+polardb-primary-1  | 2026-09-18 21:22:24.598 CST [25] WARNING:  could not open directory "polar_cache_trash": No such file or directory
+polardb-primary-1  | 2026-09-18 21:22:24.598 CST [25] WARNING:  Failed to empty trash dir for local cache
+polardb-primary-1  | running bootstrap script ... ok
+polardb-primary-1  | 2026-09-18 21:22:24.613 CST [27] LOG:  polar_vfs loaded in postmaster 27
+polardb-primary-1  | 2026-09-18 21:22:24.613 CST [27] LOG:  polar_vfs init done
+polardb-primary-1  | 2026-09-18 21:22:24.613 CST [27] LOG:  "polar_settings.conf" is in non-sharedstorage mode, additional load it.
+polardb-primary-1  | 2026-09-18 21:22:24.613 CST [27] LOG:  skipping missing configuration file "/var/polardb/private/polar_settings.conf"
+polardb-primary-1  | 2026-09-18 21:22:24.614 CST [27] LOG:  PolarDB load controlfile in single user postmaster
+polardb-primary-1  | 2026-09-18 21:22:24.626 CST [27] LOG:  PolarIOStatArray share memory total size is 707664
+polardb-primary-1  | 2026-09-18 21:22:24.836 CST [27] WARNING:  could not open directory "polar_cache_trash": No such file or directory
+polardb-primary-1  | 2026-09-18 21:22:24.836 CST [27] WARNING:  Failed to empty trash dir for local cache
+polardb-primary-1  | 2026-09-18 21:22:24.848 CST [27] WARNING:  could not open directory "polar_cache_trash": No such file or directory
+polardb-primary-1  | 2026-09-18 21:22:24.848 CST [27] WARNING:  Failed to empty trash dir for local cache
+polardb-primary-1  | 2026-09-18 21:22:24.848 CST [27] WARNING:  could not open directory "polar_cache_trash": No such file or directory
+polardb-primary-1  | 2026-09-18 21:22:24.849 CST [27] WARNING:  Failed to empty trash dir for local cache
+polardb-primary-1  | 2026-09-18 21:22:24.859 CST [27] WARNING:  could not open directory "polar_cache_trash": No such file or directory
+polardb-primary-1  | 2026-09-18 21:22:24.859 CST [27] WARNING:  Failed to empty trash dir for local cache
+polardb-primary-1  | 2026-09-18 21:22:24.887 CST [27] WARNING:  could not open directory "polar_cache_trash": No such file or directory
+polardb-primary-1  | 2026-09-18 21:22:24.887 CST [27] WARNING:  Failed to empty trash dir for local cache
+polardb-primary-1  | performing post-bootstrap initialization ... creating polar_settings configuration file ... ok
+polardb-primary-1  | ok
+polardb-primary-1  | syncing data to disk ... ok
+polardb-primary-1  | 
+polardb-primary-1  | Success. You can now start the database server using:
+polardb-primary-1  | 
+polardb-primary-1  |     pg_ctl -D /var/polardb/private -l logfile start
+polardb-primary-1  | 
+polardb-primary-1  | init primary
+polardb-primary-1  | use localfs mode
+polardb-primary-1  | list base dir file 1
+polardb-primary-1  | 13572
+polardb-primary-1  | 4
+polardb-primary-1  | 5
+polardb-primary-1  | delete /var/polardb/private/base/1/*
+polardb-primary-1  | delete /var/polardb/private/base/13572/*
+polardb-primary-1  | delete /var/polardb/private/base/4/*
+polardb-primary-1  | delete /var/polardb/private/base/5/*
+polardb-primary-1  | delete /var/polardb/private/global/*
+polardb-primary-1  | delete /var/polardb/private/pg_wal
+polardb-primary-1  | delete /var/polardb/private/pg_logindex
+polardb-primary-1  | delete /var/polardb/private/pg_twophase
+polardb-primary-1  | delete /var/polardb/private/pg_xact
+polardb-primary-1  | delete /var/polardb/private/pg_commit_ts
+polardb-primary-1  | delete /var/polardb/private/pg_multixact
+polardb-primary-1  | init PolarDB data dir success
+polardb-primary-1  | waiting for server to start....2026-09-18 21:22:25.326 CST [69] LOG:  polar_vfs loaded in postmaster 69
+polardb-primary-1  | 2026-09-18 21:22:25.326 CST [69] LOG:  Database will be in readwrite mode
+polardb-primary-1  | 2026-09-18 21:22:25.326 CST [69] LOG:  pfs in localfs mode
+polardb-primary-1  | 2026-09-18 21:22:25.326 CST [69] LOG:  polar_vfs init done
+polardb-primary-1  | 2026-09-18 21:22:25.331 CST [69] LOG:  "polar_settings.conf" is copied from sharedstorage success, additional load it.
+polardb-primary-1  | 2026-09-18 21:22:25.333 CST [69] LOG:  polardb read control file "file-dio:///var/polardb/shared/global/pg_control" success
+polardb-primary-1  | 2026-09-18 21:22:25.333 CST [69] LOG:  PolarDB load controlfile in postmaster
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  clog buffer max slot size is 512, and it will be set to 512
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  commit timestamp buffer max slot size is 1024, and it will set to 256
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  The total log index memory table size is 50315976
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  The total log index memory table size is 16678008
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  clog buffer max slot size is 512, and it will be set to 512
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  commit timestamp buffer max slot size is 1024, and it will set to 256
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  The total log index memory table size is 50315976
+polardb-primary-1  | 2026-09-18 21:22:25.335 CST [69] LOG:  The total log index memory table size is 16678008
+polardb-primary-1  | 2026-09-18 21:22:25.343 CST [69] LOG:  clog buffer max slot size is 512, and it will be set to 512
+polardb-primary-1  | 2026-09-18 21:22:25.343 CST [69] LOG:  commit timestamp buffer max slot size is 1024, and it will set to 256
+polardb-primary-1  | 2026-09-18 21:22:25.350 CST [69] LOG:  The total log index memory table size is 50315976
+polardb-primary-1  | 2026-09-18 21:22:25.350 CST [69] LOG:  creating missing directory "/var/polardb/private/polar_rel_size_cache"
+polardb-primary-1  | 2026-09-18 21:22:25.396 CST [69] LOG:  rename pg_logindex to local cache trash polar_cache_trash/pg_logindex_0000, errno=2
+polardb-primary-1  | 2026-09-18 21:22:25.396 CST [69] LOG:  The total log index memory table size is 16678008
+polardb-primary-1  | 2026-09-18 21:22:25.396 CST [69] LOG:  creating missing directory "file-dio:///var/polardb/shared/polar_fullpage"
+polardb-primary-1  | 2026-09-18 21:22:25.396 CST [69] LOG:  rename polar_fullpage to local cache trash polar_cache_trash/polar_fullpage_0000, errno=2
+polardb-primary-1  | 2026-09-18 21:22:25.420 CST [69] LOG:  PolarIOStatArray share memory total size is 5897200
+polardb-primary-1  | 2026-09-18 21:22:25.425 CST [69] LOG:  redirecting log output to logging collector process
+polardb-primary-1  | 2026-09-18 21:22:25.425 CST [69] HINT:  Future log output will appear in directory "log".
+polardb-primary-1  |  done
+polardb-primary-1  | server started
+polardb-primary-1  | 2026-09-18T13:22:26Z PRIMARY_READY port=5432

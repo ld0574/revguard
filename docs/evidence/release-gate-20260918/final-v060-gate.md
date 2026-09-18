@@ -35,3 +35,12 @@ Trivy 0.69.3 的完整扫描随 Release 附件提供：`CRITICAL=0`、`HIGH=44`�
 
 这份证据只证明最终发布树的可重复门禁，不把候选运行记录改写成一次不存在的正式运行；真实 ERPNext、
 AgentTeams/Matrix、真人审批、PostgreSQL 写入/恢复和观测证据仍以 `docs/evidence/` 下对应的运行记录为准。
+
+## 2026-09-18 正式包复验
+
+同一冻结 `v0.6.0` 工作区 `/root/rgops/gate-v060/revguard` 在 2026-09-18 15:07–15:10 UTC
+重新执行 `bash scripts/verify_docker.sh`，结果仍为：默认测试 `Ran 378 tests`、
+`OK (skipped=83)`；PostgreSQL/Matrix 集成 `Ran 83 tests`、`OK`；覆盖率
+`TOTAL 5554 567 90%`；确定性评测 `105/105`；`pip-audit` 无已知漏洞；Bandit 无失败项；
+前端 9 项 UI 测试、4 项 Sites 测试与 production build 通过。证据目录：
+`/root/rgops/gate-v060/revguard/.runtime/verification/revguard-verify-1789744050-1315947/`。

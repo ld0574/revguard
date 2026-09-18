@@ -1,0 +1,1 @@
+{"status":"ok","release":"0.6.0-rc3","cases":11,"ready":true,"backend":"postgresql-polardb","read_replica":true,"read_replica_healthy":true,"read_replica_fallback":false,"read_replica_reason":"HEALTHY","maintenance":false}

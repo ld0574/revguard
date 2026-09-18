@@ -4,7 +4,7 @@
 
 ## 1. 现象
 
-彩排栈（19088，`REVGUARD_TEAM_TRANSPORT=matrix`）启动一个案件后：
+演示栈（19088，`REVGUARD_TEAM_TRANSPORT=matrix`）启动一个案件后：
 
 - 前两个 StageTask（`CaseNormalizeSkill`、`EntityResolveSkill`）由真实
   `revguard-intake` Worker 在 Matrix 房间中完成并形成服务端 StageResult；
@@ -40,7 +40,7 @@ Worker 在房间里返回：
 - `BoundStageTask` 调用落到 19000 prod API（返回 401 `API key 无效`）。
 
 原因是 `docker-compose.agentteams.yml`（19000 常驻栈）与
-`docker-compose.finals.yml`（19088 彩排栈）**都**声明了别名
+`docker-compose.finals.yml`（19088 演示栈）**都**声明了别名
 `revguard-api.internal`，Docker DNS 在两个容器之间轮询解析。这会让一次运行的技能
 调用在两条栈之间随机分流，属于会污染运行记录的错误配置。
 

@@ -26,7 +26,7 @@ docker exec revguard-api-dev python /app/data/outputs/export_case_replay.py \
 | CASE-2026-0001 | CLOSED | EZ202608001 | 53 | 109（序号 585–693） | 10 |
 | CASE-2026-0008 | ROLLED_BACK | EZ202608008 | 60 | 120（序号 805–924） | 11 |
 
-导出脚本以本次运行 Trace 的最早跨度作为时间线下界，只保留该时刻之后的审计事件，避免把同一案件不同排练代次拼成一条时间线。每个数据包都带 `provenance.snapshot_sha256`（原始快照摘要）与 `audit.chain_ok`（哈希链连续性校验）。
+导出脚本以本次运行 Trace 的最早跨度作为时间线下界，只保留该时刻之后的审计事件，避免把同一案件不同运行代次拼成一条时间线。每个数据包都带 `provenance.snapshot_sha256`（原始快照摘要）与 `audit.chain_ok`（哈希链连续性校验）。
 
 导出可复现：对同一运行重复导出，除 `generated_at` 外与已发布数据包逐字节一致（2026-09-18 对两条 rc3 运行各复导一次，`case-2026-0001.json`、`case-2026-0008.json` 与 `index.json` 均为 True）。
 

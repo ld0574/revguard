@@ -1,0 +1,2396 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "file": "direct-001-1.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 201,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 28,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-001-2.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 10209,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 28,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-001-3.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 262,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 28,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-001-4.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 198,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 28,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-001-5.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 272,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 28,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-003-1.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 76,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 7,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-003-2.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 77,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 7,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-003-3.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 77,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 7,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-003-4.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 77,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 7,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-003-5.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 74,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 7,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-004-1.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 218,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-004-2.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 214,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-004-3.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 213,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-004-4.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 210,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-004-5.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 212,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-007-1.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 222,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-007-2.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 213,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-007-3.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 270,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-007-4.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 211,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "direct-007-5.json",
+      "mode": "DIRECT_ORCHESTRATOR",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 261,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 0,
+        "stage_result_total": 0,
+        "stage_task_persistence_coverage": null,
+        "actor_skill_server_binding_coverage": null,
+        "input_output_handoff_hash_coverage": null,
+        "input_output_handoff_hashes": {},
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": null,
+        "trace_span_count": 30,
+        "mode_has_persisted_stage_tasks": false,
+        "mode": "DIRECT_ORCHESTRATOR"
+      }
+    },
+    {
+      "file": "mcp-001-1.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 388,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-A1C433DF": {
+            "input": "sha256:c4265c1597b045a249b3e14253ace15121c2cf5e992d5adf19cefc032dad73cb",
+            "output": "sha256:01953135f1467569a3227ce487d14b9dd548c7f0494d82ea8db20109089fbcf0"
+          },
+          "TASK-A94FE027": {
+            "input": "sha256:5805b83b51e30238e4845b5d6a2a2410af4512172acfb50072033257808f8e99",
+            "output": "sha256:1a41458f25b3fef8a64d9a044a6ab04a5644e444a77ac1c432e1ff8665642e71"
+          },
+          "TASK-0022FF81": {
+            "input": "sha256:4ac1be351b1ad30b7cd93f6e5aa80324e84814f2c7ff31590cd1b0923d6ccd3e",
+            "output": "sha256:c96db167c3971db3eeb725d82fd6cea533f3c3520933e027f9c285de403ffd12"
+          },
+          "TASK-A3E7C53C": {
+            "input": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+            "output": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db"
+          },
+          "TASK-D4C81BA2": {
+            "input": "sha256:7b0dc3f6bf4cfee1c170b7987cc72449c847ffd1799f3c55b5cafaf529d7f347",
+            "output": "sha256:96444f03af18217d54d8b6844170277051e7f9b4b616c498f4d4edb69139cfe3"
+          },
+          "TASK-5A9BA675": {
+            "input": "sha256:11065b06a385a09bc6218bc211e877632082fbc52692a6bca4d57bf3b0ec1f83",
+            "output": "sha256:6961cffbc5f879f64e825a53765c9695373d866b54486ccaa5db89ce82216cca"
+          },
+          "TASK-F7114359": {
+            "input": "sha256:311965482003cd0a01dbd57aba7aaf03599d99457cf2333d7992d2e56c82b74c",
+            "output": "sha256:54a2620a250e597176c8803480b1b0176f388f1a1f622c2e06fff9224b002d9b"
+          },
+          "TASK-E1452735": {
+            "input": "sha256:b2c386e1351a79881de08b1c573fdc5e7989bfd33ba961ef615b1b986574d545",
+            "output": "sha256:5db611f3c46da5489d8198913a5af7c1bfb3b76f3f7bf4570dfc68f92c37d3a2"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "ApprovalRouteSkill",
+        "trace_span_count": 20,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-001-2.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 373,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-C161E07C": {
+            "input": "sha256:774a373a96292612c6b078154c86a1ec0bdff9b122c7faf88540ee0f5cde2df7",
+            "output": "sha256:01953135f1467569a3227ce487d14b9dd548c7f0494d82ea8db20109089fbcf0"
+          },
+          "TASK-9C50C2E5": {
+            "input": "sha256:5805b83b51e30238e4845b5d6a2a2410af4512172acfb50072033257808f8e99",
+            "output": "sha256:1a41458f25b3fef8a64d9a044a6ab04a5644e444a77ac1c432e1ff8665642e71"
+          },
+          "TASK-CEB05251": {
+            "input": "sha256:4ac1be351b1ad30b7cd93f6e5aa80324e84814f2c7ff31590cd1b0923d6ccd3e",
+            "output": "sha256:c8b39a056a9fa481eb8273633d2d4b116ac3a875013de85a60bd13b694f281d1"
+          },
+          "TASK-8FBAB371": {
+            "input": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+            "output": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db"
+          },
+          "TASK-0515AF11": {
+            "input": "sha256:7b0dc3f6bf4cfee1c170b7987cc72449c847ffd1799f3c55b5cafaf529d7f347",
+            "output": "sha256:96444f03af18217d54d8b6844170277051e7f9b4b616c498f4d4edb69139cfe3"
+          },
+          "TASK-87C87680": {
+            "input": "sha256:11065b06a385a09bc6218bc211e877632082fbc52692a6bca4d57bf3b0ec1f83",
+            "output": "sha256:6961cffbc5f879f64e825a53765c9695373d866b54486ccaa5db89ce82216cca"
+          },
+          "TASK-30B9F31E": {
+            "input": "sha256:311965482003cd0a01dbd57aba7aaf03599d99457cf2333d7992d2e56c82b74c",
+            "output": "sha256:54a2620a250e597176c8803480b1b0176f388f1a1f622c2e06fff9224b002d9b"
+          },
+          "TASK-3AFEEE0F": {
+            "input": "sha256:b2c386e1351a79881de08b1c573fdc5e7989bfd33ba961ef615b1b986574d545",
+            "output": "sha256:ef46f95176da55be784486c6b9caadd306440d5311b3332017fa796d6f4c94ac"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "ApprovalRouteSkill",
+        "trace_span_count": 20,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-001-3.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 431,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-F5EC7AC7": {
+            "input": "sha256:e3b8538fa1d7307ed983d2fa056b991bd17cc0d6cd952d417519b242189ffada",
+            "output": "sha256:01953135f1467569a3227ce487d14b9dd548c7f0494d82ea8db20109089fbcf0"
+          },
+          "TASK-1B05FA3D": {
+            "input": "sha256:5805b83b51e30238e4845b5d6a2a2410af4512172acfb50072033257808f8e99",
+            "output": "sha256:1a41458f25b3fef8a64d9a044a6ab04a5644e444a77ac1c432e1ff8665642e71"
+          },
+          "TASK-6765F455": {
+            "input": "sha256:4ac1be351b1ad30b7cd93f6e5aa80324e84814f2c7ff31590cd1b0923d6ccd3e",
+            "output": "sha256:6048d6c42b66fc1bdc5f359a3d003097524b8d2eca784adbf58c5044b98c6d55"
+          },
+          "TASK-F1B2F3C3": {
+            "input": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+            "output": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db"
+          },
+          "TASK-237AED88": {
+            "input": "sha256:7b0dc3f6bf4cfee1c170b7987cc72449c847ffd1799f3c55b5cafaf529d7f347",
+            "output": "sha256:96444f03af18217d54d8b6844170277051e7f9b4b616c498f4d4edb69139cfe3"
+          },
+          "TASK-4FE2740C": {
+            "input": "sha256:11065b06a385a09bc6218bc211e877632082fbc52692a6bca4d57bf3b0ec1f83",
+            "output": "sha256:6961cffbc5f879f64e825a53765c9695373d866b54486ccaa5db89ce82216cca"
+          },
+          "TASK-2BA9E6D1": {
+            "input": "sha256:311965482003cd0a01dbd57aba7aaf03599d99457cf2333d7992d2e56c82b74c",
+            "output": "sha256:54a2620a250e597176c8803480b1b0176f388f1a1f622c2e06fff9224b002d9b"
+          },
+          "TASK-D67B701E": {
+            "input": "sha256:b2c386e1351a79881de08b1c573fdc5e7989bfd33ba961ef615b1b986574d545",
+            "output": "sha256:accf98b53584929c4f26a5c69174c611083826217aac7036d7d24e6ee1c6157b"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "ApprovalRouteSkill",
+        "trace_span_count": 20,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-001-4.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 397,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-09E469E2": {
+            "input": "sha256:bd84607bca53e92bf9d728c9154f9c6f54f9b70fe6573b4e73414f58dda2a324",
+            "output": "sha256:01953135f1467569a3227ce487d14b9dd548c7f0494d82ea8db20109089fbcf0"
+          },
+          "TASK-C79DEBE1": {
+            "input": "sha256:5805b83b51e30238e4845b5d6a2a2410af4512172acfb50072033257808f8e99",
+            "output": "sha256:1a41458f25b3fef8a64d9a044a6ab04a5644e444a77ac1c432e1ff8665642e71"
+          },
+          "TASK-2F543D7D": {
+            "input": "sha256:4ac1be351b1ad30b7cd93f6e5aa80324e84814f2c7ff31590cd1b0923d6ccd3e",
+            "output": "sha256:8ca76f5c28d164d0e91c716d476c47a3a1a749ce10fef8034d0493a207fb4630"
+          },
+          "TASK-9BC57B97": {
+            "input": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+            "output": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db"
+          },
+          "TASK-2EBD0A13": {
+            "input": "sha256:7b0dc3f6bf4cfee1c170b7987cc72449c847ffd1799f3c55b5cafaf529d7f347",
+            "output": "sha256:96444f03af18217d54d8b6844170277051e7f9b4b616c498f4d4edb69139cfe3"
+          },
+          "TASK-31CA3396": {
+            "input": "sha256:11065b06a385a09bc6218bc211e877632082fbc52692a6bca4d57bf3b0ec1f83",
+            "output": "sha256:6961cffbc5f879f64e825a53765c9695373d866b54486ccaa5db89ce82216cca"
+          },
+          "TASK-A1A28724": {
+            "input": "sha256:311965482003cd0a01dbd57aba7aaf03599d99457cf2333d7992d2e56c82b74c",
+            "output": "sha256:54a2620a250e597176c8803480b1b0176f388f1a1f622c2e06fff9224b002d9b"
+          },
+          "TASK-51074F14": {
+            "input": "sha256:b2c386e1351a79881de08b1c573fdc5e7989bfd33ba961ef615b1b986574d545",
+            "output": "sha256:430003691b842843f871b37c14ef3d2fa03366015a60b3136418cea77f68af15"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "ApprovalRouteSkill",
+        "trace_span_count": 20,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-001-5.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 368,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-0F8F109F": {
+            "input": "sha256:f8720a6563831bfbb3e92a604d1e44ef17194dcf6e5340ed8cc7502030194c7d",
+            "output": "sha256:01953135f1467569a3227ce487d14b9dd548c7f0494d82ea8db20109089fbcf0"
+          },
+          "TASK-5AFB8BF0": {
+            "input": "sha256:5805b83b51e30238e4845b5d6a2a2410af4512172acfb50072033257808f8e99",
+            "output": "sha256:1a41458f25b3fef8a64d9a044a6ab04a5644e444a77ac1c432e1ff8665642e71"
+          },
+          "TASK-5A7311EC": {
+            "input": "sha256:4ac1be351b1ad30b7cd93f6e5aa80324e84814f2c7ff31590cd1b0923d6ccd3e",
+            "output": "sha256:0c257c2da6c148d3cc87af9bacd09c525391354305382e5f925a885f07cc8f4c"
+          },
+          "TASK-23C1C3EC": {
+            "input": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+            "output": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db"
+          },
+          "TASK-29665BE0": {
+            "input": "sha256:7b0dc3f6bf4cfee1c170b7987cc72449c847ffd1799f3c55b5cafaf529d7f347",
+            "output": "sha256:96444f03af18217d54d8b6844170277051e7f9b4b616c498f4d4edb69139cfe3"
+          },
+          "TASK-FF78ADB1": {
+            "input": "sha256:11065b06a385a09bc6218bc211e877632082fbc52692a6bca4d57bf3b0ec1f83",
+            "output": "sha256:6961cffbc5f879f64e825a53765c9695373d866b54486ccaa5db89ce82216cca"
+          },
+          "TASK-E251AB37": {
+            "input": "sha256:311965482003cd0a01dbd57aba7aaf03599d99457cf2333d7992d2e56c82b74c",
+            "output": "sha256:54a2620a250e597176c8803480b1b0176f388f1a1f622c2e06fff9224b002d9b"
+          },
+          "TASK-E99D28CA": {
+            "input": "sha256:b2c386e1351a79881de08b1c573fdc5e7989bfd33ba961ef615b1b986574d545",
+            "output": "sha256:4068076ec76181dbd08cfdce7ff9e8cddfec4eee762525abb5b542e920cff816"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "ApprovalRouteSkill",
+        "trace_span_count": 20,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-003-1.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 137,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 2,
+        "stage_result_total": 2,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-33180DDE": {
+            "input": "sha256:237d1948920af8a099948b6f876084c73273595602bd93f669859aae61bcc465",
+            "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+          },
+          "TASK-4B442FB2": {
+            "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+            "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "EntityResolveSkill",
+        "trace_span_count": 4,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-003-2.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 140,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 2,
+        "stage_result_total": 2,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-6195690C": {
+            "input": "sha256:c7519f396d36d4ec13f158c900db737b12876e1fd8db165525b10c6f7254820e",
+            "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+          },
+          "TASK-08F90DF8": {
+            "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+            "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "EntityResolveSkill",
+        "trace_span_count": 4,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-003-3.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 212,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 2,
+        "stage_result_total": 2,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-6360BADC": {
+            "input": "sha256:2ad5939481c2b0fbfab987ffb5e46b401228c0126cbbf7de23800405017035ff",
+            "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+          },
+          "TASK-8BC403DF": {
+            "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+            "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "EntityResolveSkill",
+        "trace_span_count": 4,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-003-4.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 146,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 2,
+        "stage_result_total": 2,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-7C2A8897": {
+            "input": "sha256:7ad3e4ca1e66367f2d8b25c39321042bceae5673680f78ab41503028a92d2237",
+            "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+          },
+          "TASK-779B7310": {
+            "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+            "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "EntityResolveSkill",
+        "trace_span_count": 4,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-003-5.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 137,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 2,
+        "stage_result_total": 2,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-1387666F": {
+            "input": "sha256:eb19e840e52656be7ad86a3562ebf4315ddef6740cde69414e86440657c1680f",
+            "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+          },
+          "TASK-54CDBFB6": {
+            "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+            "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "EntityResolveSkill",
+        "trace_span_count": 4,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-004-1.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 379,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-9CD9C0DF": {
+            "input": "sha256:06f6e21a5fb309d038e9786b99dad730aa59c652c7686bad8de01be280d95ed5",
+            "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+          },
+          "TASK-23B7C779": {
+            "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-B970713A": {
+            "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+            "output": "sha256:40bedc49f00c26d720992b2af5ffc0d12402d9a1c9ceaaf826378a7f4fa26004"
+          },
+          "TASK-2104158F": {
+            "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+            "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+          },
+          "TASK-98111CDC": {
+            "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+            "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+          },
+          "TASK-AA5882ED": {
+            "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+            "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+          },
+          "TASK-E107D791": {
+            "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+            "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+          },
+          "TASK-41777E87": {
+            "input": "sha256:1423a293ac9345ccf73a77f6796596139331bbe76db70fb5602e7c1b86d61761",
+            "output": "sha256:c91118a617c09047baf9fbaf0cb5f2b9b731b4c7781fb8c46a6045925be89ea1"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-004-2.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 690,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-3C56D702": {
+            "input": "sha256:3010ce7b1a11150acacc0b2eb0cc4b1fb37af618219cd67b618634f31b4c8cf4",
+            "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+          },
+          "TASK-15F3CE8A": {
+            "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-6FA08C2C": {
+            "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+            "output": "sha256:aae2219c22f3ea878cd9a03712dfec6702db761559f46c6290b90e0b6d82ac6b"
+          },
+          "TASK-4FED3B53": {
+            "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+            "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+          },
+          "TASK-BFC93B11": {
+            "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+            "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+          },
+          "TASK-60854F44": {
+            "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+            "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+          },
+          "TASK-5AE89BE4": {
+            "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+            "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+          },
+          "TASK-C954970B": {
+            "input": "sha256:1423a293ac9345ccf73a77f6796596139331bbe76db70fb5602e7c1b86d61761",
+            "output": "sha256:6155f6254c58ca5245954ab197d2f4c0bd69b9667358b9bcfa8bed5373b86552"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-004-3.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 369,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-E8D8A554": {
+            "input": "sha256:ae0234f5b267a1c39f3dc494c2271675cd35f2f739f523c91db84b5b5bcf8363",
+            "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+          },
+          "TASK-BE4DE7EA": {
+            "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-99A6BE04": {
+            "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+            "output": "sha256:7e984048ac7b5609ea9424308e079ec1a2e48087702123d306f9e815417bc191"
+          },
+          "TASK-D3CA6299": {
+            "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+            "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+          },
+          "TASK-AACB8911": {
+            "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+            "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+          },
+          "TASK-A4843B53": {
+            "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+            "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+          },
+          "TASK-1F3BE106": {
+            "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+            "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+          },
+          "TASK-2988604B": {
+            "input": "sha256:1423a293ac9345ccf73a77f6796596139331bbe76db70fb5602e7c1b86d61761",
+            "output": "sha256:dd397fef879549d65846067dd571f0936455454b24c393eb73c1de0beaf717ab"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-004-4.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 378,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-9BAF8143": {
+            "input": "sha256:0da5ad89884450254e6313293ae43ae2c1bfcca0e203125908311cbf3a04ec65",
+            "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+          },
+          "TASK-C6905D08": {
+            "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-85DAC8C6": {
+            "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+            "output": "sha256:4b8ed97269ef0d25371088a78382dae5b5ebf218afcdcc896d1b007084f51dac"
+          },
+          "TASK-F5D19BF3": {
+            "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+            "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+          },
+          "TASK-D52D19B5": {
+            "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+            "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+          },
+          "TASK-62A8EE92": {
+            "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+            "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+          },
+          "TASK-6EBB6108": {
+            "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+            "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+          },
+          "TASK-3EA7A7BB": {
+            "input": "sha256:1423a293ac9345ccf73a77f6796596139331bbe76db70fb5602e7c1b86d61761",
+            "output": "sha256:8af13aab79eb13b2d579edfc60338c008809e83314ea76e12158966267f40dc5"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-004-5.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 448,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-7A3251C9": {
+            "input": "sha256:9318280810283cbd36a24e40d4b7aaf86a077c9a23154cc517564bd61a15b7e7",
+            "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+          },
+          "TASK-F11AE626": {
+            "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-848F0C30": {
+            "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+            "output": "sha256:b4c73ce34689a5a414df43a1a0cc919a41f9b507b1e8ed06898db4ace5692e9c"
+          },
+          "TASK-677FDC1B": {
+            "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+            "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+          },
+          "TASK-2E3EF2D1": {
+            "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+            "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+          },
+          "TASK-858B9EEE": {
+            "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+            "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+          },
+          "TASK-DF74FA11": {
+            "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+            "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+          },
+          "TASK-13F07933": {
+            "input": "sha256:1423a293ac9345ccf73a77f6796596139331bbe76db70fb5602e7c1b86d61761",
+            "output": "sha256:00a78eb1c93493c86cc0c751ecac44119549a12be84067b8e00537a65645fc52"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-007-1.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 372,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-1D37BE01": {
+            "input": "sha256:88f21549316b56769aa11a6846d1ea45453b7d7cd71e55d4fdc424f283faaefc",
+            "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+          },
+          "TASK-D5EB4763": {
+            "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-602332E4": {
+            "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+            "output": "sha256:c8f7ae4884ecc855c448b82301b31668254b29229cea255675cdb193fa442121"
+          },
+          "TASK-C604AB88": {
+            "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+            "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+          },
+          "TASK-BA19AB2E": {
+            "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+            "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+          },
+          "TASK-7FAFC440": {
+            "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+            "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+          },
+          "TASK-A0EFFFB8": {
+            "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+            "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+          },
+          "TASK-FC4D5BFD": {
+            "input": "sha256:c56ff29311c745a9c07de3cc6097d21492e243b17f209e89346e0a81563bcfab",
+            "output": "sha256:12d89304a550e125a83fb5017e47aa2d6957d4351ba9fecc0b11a43ee32682c5"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-007-2.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 422,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-C278B9B9": {
+            "input": "sha256:f08e714ce275ae98e6f9b809c78010c42b89fa65bdd70ae8a2f60bd9c6a6235e",
+            "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+          },
+          "TASK-DFE00ABE": {
+            "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-C8F175C1": {
+            "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+            "output": "sha256:376d73f9a0dae2ec0306c65090c341764dad7f652671056bda6c6e9f16703bfc"
+          },
+          "TASK-D5A8CA33": {
+            "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+            "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+          },
+          "TASK-1F70F364": {
+            "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+            "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+          },
+          "TASK-6658635E": {
+            "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+            "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+          },
+          "TASK-CB85BAB4": {
+            "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+            "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+          },
+          "TASK-2C34CEA7": {
+            "input": "sha256:c56ff29311c745a9c07de3cc6097d21492e243b17f209e89346e0a81563bcfab",
+            "output": "sha256:e258d779834762219eb6267e2162ec51d2da7b52a9b6d39780774f0883a70394"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-007-3.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 392,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-298728EE": {
+            "input": "sha256:2de01f38b5a748ae4dfb40797773fa0b7b83b9e09a480fb296773f50cbf36662",
+            "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+          },
+          "TASK-F9FCD1D6": {
+            "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-AF87FCB7": {
+            "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+            "output": "sha256:42c4cd7a0e7b8cf9d74c0081f4d2550b0f7152639f9d986d20f365950b2da8a9"
+          },
+          "TASK-BFF06FB1": {
+            "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+            "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+          },
+          "TASK-573063C2": {
+            "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+            "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+          },
+          "TASK-4154B9D7": {
+            "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+            "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+          },
+          "TASK-D0625ADB": {
+            "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+            "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+          },
+          "TASK-79BE4BB6": {
+            "input": "sha256:c56ff29311c745a9c07de3cc6097d21492e243b17f209e89346e0a81563bcfab",
+            "output": "sha256:019b749c5be7fc6b6f7f761bddcebdaa3743f8395b4a9e52e2439f3d0518240d"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-007-4.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 373,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-4065675E": {
+            "input": "sha256:86719a94d262f6ef5f3e1dc3389d2658cfc311262dc6e7f8bafe947cab79a5da",
+            "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+          },
+          "TASK-40563DBC": {
+            "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-CC89DB39": {
+            "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+            "output": "sha256:c144e423a64c8d9d7c365cd1bc42d94a121aadab9747ed851e3b66e5213b9d10"
+          },
+          "TASK-0D8A3055": {
+            "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+            "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+          },
+          "TASK-69CFDE58": {
+            "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+            "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+          },
+          "TASK-04CB0459": {
+            "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+            "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+          },
+          "TASK-37CE0C26": {
+            "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+            "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+          },
+          "TASK-1030F1BD": {
+            "input": "sha256:c56ff29311c745a9c07de3cc6097d21492e243b17f209e89346e0a81563bcfab",
+            "output": "sha256:8efc10ded6db9c40e1dde79583f0519ff40d2b564fb43a1a63ab2012a57bc723"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "mcp-007-5.json",
+      "mode": "MCP_TEAM",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 384,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-DD572248": {
+            "input": "sha256:308cb29dad1e937b7111f57ec3011ce80c4d2ab461cf42dd36b9952a8864161e",
+            "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+          },
+          "TASK-C4BCB1E9": {
+            "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-E198071C": {
+            "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+            "output": "sha256:44ef3999d39679b7ae2beecbd8a24e5fcc5c0fab4be10db0cce99dc6751ab2ee"
+          },
+          "TASK-62549FD7": {
+            "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+            "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+          },
+          "TASK-9349C479": {
+            "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+            "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+          },
+          "TASK-9DBFCCEB": {
+            "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+            "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+          },
+          "TASK-53D5C7BD": {
+            "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+            "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+          },
+          "TASK-EF99ED24": {
+            "input": "sha256:c56ff29311c745a9c07de3cc6097d21492e243b17f209e89346e0a81563bcfab",
+            "output": "sha256:a484eb626c81d3ec62bab90974cd4107576f077ec44b4042acda1425adb369f6"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 0,
+          "dispatch_event_coverage": null,
+          "response_event_coverage": null,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 21,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "MCP_TEAM"
+      }
+    },
+    {
+      "file": "matrix-001.json",
+      "mode": "AGENTTEAMS_MATRIX",
+      "case_id": "CASE-2026-0001",
+      "passed": true,
+      "wall_clock_ms": 750883,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-BFB06F93": {
+            "input": "sha256:b230bc696a8053cee18f7c2831841de8129c41b6f1fb87d4feb985698b868d8b",
+            "output": "sha256:01953135f1467569a3227ce487d14b9dd548c7f0494d82ea8db20109089fbcf0"
+          },
+          "TASK-D2C1047D": {
+            "input": "sha256:5805b83b51e30238e4845b5d6a2a2410af4512172acfb50072033257808f8e99",
+            "output": "sha256:1a41458f25b3fef8a64d9a044a6ab04a5644e444a77ac1c432e1ff8665642e71"
+          },
+          "TASK-6CDD765D": {
+            "input": "sha256:4ac1be351b1ad30b7cd93f6e5aa80324e84814f2c7ff31590cd1b0923d6ccd3e",
+            "output": "sha256:deac71ce6e66a4955332205e6b459d335904225ca0297698645d79f678913c16"
+          },
+          "TASK-D0A88373": {
+            "input": "sha256:df451916079afb46bb95cd83005e663c92bf96d1f04ad8f85086fc42ab1a421c",
+            "output": "sha256:1223589311d58894b884d7f1ecb33771c3fff50c1a4195a3c5aa677e40e8a0db"
+          },
+          "TASK-1FBDA3D8": {
+            "input": "sha256:7b0dc3f6bf4cfee1c170b7987cc72449c847ffd1799f3c55b5cafaf529d7f347",
+            "output": "sha256:96444f03af18217d54d8b6844170277051e7f9b4b616c498f4d4edb69139cfe3"
+          },
+          "TASK-F548CF72": {
+            "input": "sha256:11065b06a385a09bc6218bc211e877632082fbc52692a6bca4d57bf3b0ec1f83",
+            "output": "sha256:6961cffbc5f879f64e825a53765c9695373d866b54486ccaa5db89ce82216cca"
+          },
+          "TASK-F8E366F8": {
+            "input": "sha256:311965482003cd0a01dbd57aba7aaf03599d99457cf2333d7992d2e56c82b74c",
+            "output": "sha256:54a2620a250e597176c8803480b1b0176f388f1a1f622c2e06fff9224b002d9b"
+          },
+          "TASK-35C76714": {
+            "input": "sha256:b2c386e1351a79881de08b1c573fdc5e7989bfd33ba961ef615b1b986574d545",
+            "output": "sha256:fcba134d703f89559c197b65483f6f4b863e68f6eb3306c69b8308534c7e35f9"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 8,
+          "dispatch_event_coverage": 1.0,
+          "response_event_coverage": 1.0,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "ApprovalRouteSkill",
+        "trace_span_count": 29,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "AGENTTEAMS_MATRIX"
+      }
+    },
+    {
+      "file": "matrix-003.json",
+      "mode": "AGENTTEAMS_MATRIX",
+      "case_id": "CASE-2026-0003",
+      "passed": true,
+      "wall_clock_ms": 208423,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 2,
+        "stage_result_total": 2,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-E11548FC": {
+            "input": "sha256:b89bbb17bd34af9c31973cc9695b64c07e04375d5e7c9435197af3cfcdc878f8",
+            "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+          },
+          "TASK-DE2E0E67": {
+            "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+            "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 2,
+          "dispatch_event_coverage": 1.0,
+          "response_event_coverage": 1.0,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "EntityResolveSkill",
+        "trace_span_count": 7,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "AGENTTEAMS_MATRIX"
+      }
+    },
+    {
+      "file": "matrix-004.json",
+      "mode": "AGENTTEAMS_MATRIX",
+      "case_id": "CASE-2026-0004",
+      "passed": true,
+      "wall_clock_ms": 939436,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-AF670FAD": {
+            "input": "sha256:a56795daece7966c51bb17ff55492d9a89c0379309e240cd0eab03fa6f7b23ac",
+            "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+          },
+          "TASK-13ECDEF6": {
+            "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-A57EAA72": {
+            "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+            "output": "sha256:e0ce950e060c8472856827b5e99787f92accf3e520e286cced498d81cd628d6f"
+          },
+          "TASK-962C9DCD": {
+            "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+            "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+          },
+          "TASK-7996DF86": {
+            "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+            "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+          },
+          "TASK-CD814970": {
+            "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+            "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+          },
+          "TASK-4A04805B": {
+            "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+            "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+          },
+          "TASK-38A95D4B": {
+            "input": "sha256:ee98b4167409ecb6d1ee5f7761349e4a77b4884f301c62e0640ab9f8a148cd7d",
+            "output": "sha256:28655ee326538385818356837dfb6bca90b4fec2ec8b5351ad184af7e0c6b215"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 8,
+          "dispatch_event_coverage": 1.0,
+          "response_event_coverage": 1.0,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 29,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "AGENTTEAMS_MATRIX"
+      }
+    },
+    {
+      "file": "matrix-007.json",
+      "mode": "AGENTTEAMS_MATRIX",
+      "case_id": "CASE-2026-0007",
+      "passed": true,
+      "wall_clock_ms": 708912,
+      "tokens": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "model_call_count": 0,
+        "collection_status": "UNAVAILABLE"
+      },
+      "governance": {
+        "stage_task_total": 8,
+        "stage_result_total": 8,
+        "stage_task_persistence_coverage": 1.0,
+        "actor_skill_server_binding_coverage": 1.0,
+        "input_output_handoff_hash_coverage": 1.0,
+        "input_output_handoff_hashes": {
+          "TASK-79B2A059": {
+            "input": "sha256:4dfcd63514acd10f421a2e57416d314ab01518637e28928885cf2792f25d132c",
+            "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+          },
+          "TASK-7A57FDE4": {
+            "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+            "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+          },
+          "TASK-955CFAA2": {
+            "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+            "output": "sha256:30e03c201a5161c334ad54d59ab8f630b5c15dd5621ec4aff00cb9063747b74c"
+          },
+          "TASK-884953C3": {
+            "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+            "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+          },
+          "TASK-4280B5BA": {
+            "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+            "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+          },
+          "TASK-E5BB1F7E": {
+            "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+            "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+          },
+          "TASK-3AE1CEF3": {
+            "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+            "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+          },
+          "TASK-70735F71": {
+            "input": "sha256:09ea77bcaeee51ee272a7ad6cd4dcf1b4a1663cc9b7c9cb6bbfa7c2dbb60e450",
+            "output": "sha256:a656266702d32fa8cea97dd3efe4178b5c8070be71525d212ca84e7076ed6456"
+          }
+        },
+        "executor_verifier_separation": {
+          "executor_write_tasks": 0,
+          "verifier_read_tasks": 0,
+          "separated": true,
+          "applicable": false
+        },
+        "matrix": {
+          "stage_tasks": 8,
+          "dispatch_event_coverage": 1.0,
+          "response_event_coverage": 1.0,
+          "model_usage_task_count": 0
+        },
+        "earliest_stop_stage": "CaseToDatasetSkill",
+        "trace_span_count": 29,
+        "mode_has_persisted_stage_tasks": true,
+        "mode": "AGENTTEAMS_MATRIX"
+      }
+    }
+  ],
+  "sample_counts": {
+    "DIRECT_ORCHESTRATOR": 20,
+    "MCP_TEAM": 20,
+    "AGENTTEAMS_MATRIX": 4
+  },
+  "latency_ms": {
+    "DIRECT_ORCHESTRATOR": {
+      "median": 212.5,
+      "observations": [
+        201,
+        10209,
+        262,
+        198,
+        272,
+        76,
+        77,
+        77,
+        77,
+        74,
+        218,
+        214,
+        213,
+        210,
+        212,
+        222,
+        213,
+        270,
+        211,
+        261
+      ]
+    },
+    "MCP_TEAM": {
+      "median": 375.5,
+      "observations": [
+        388,
+        373,
+        431,
+        397,
+        368,
+        137,
+        140,
+        212,
+        146,
+        137,
+        379,
+        690,
+        369,
+        378,
+        448,
+        372,
+        422,
+        392,
+        373,
+        384
+      ]
+    },
+    "AGENTTEAMS_MATRIX": {
+      "median": 729897.5,
+      "observations": [
+        750883,
+        208423,
+        939436,
+        708912
+      ]
+    }
+  },
+  "all_passed": true,
+  "limitations": [
+    "Direct and MCP Team use five repetitions per Golden Case.",
+    "AgentTeams Matrix uses one real observation per Golden Case and is not a statistical sample."
+  ]
+}

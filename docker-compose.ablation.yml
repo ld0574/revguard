@@ -20,12 +20,12 @@ services:
 
   revguard-api-experiment:
     container_name: revguard-api-experiment
-    build:
-      context: .
-      args:
-        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.1-dev}
+      build:
+        context: .
+        args:
+          REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0}
     environment:
-      REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.1-dev}
+      REVGUARD_RELEASE_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0}
       REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_ABLATION_DB_PASSWORD}@ablation-postgres:5432/revguard
       REVGUARD_AUTO_MIGRATE: "false"
       REVGUARD_APPROVAL_MODE: wait
@@ -71,7 +71,7 @@ services:
     build:
       context: .
       args:
-        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.1-dev}
+        REVGUARD_VERSION: ${REVGUARD_RELEASE_VERSION:-0.6.0}
     entrypoint: [python]
     environment:
       REVGUARD_DATABASE_URL: postgresql://revguard:${REVGUARD_ABLATION_DB_PASSWORD}@ablation-postgres:5432/revguard

@@ -4,7 +4,7 @@
 在 room 发一条消息，下一个 Agent 利用这条消息继续做下一步任务，也就是任务交接的过程"；
 以及"决赛应补充同一案件的真人批准、后续任务继续执行和最终状态"。
 
-**结论**：彩排栈（19088，`0.6.0-rc3`）的真实 Matrix 通道中，每推进一个 Stage 都会在编排房间
+**结论**：演示栈（19088，`0.6.0-rc3`）的真实 Matrix 通道中，每推进一个 Stage 都会在编排房间
 （orchestration room `!NCserup…:8086`）发布一条 `REVGUARD_STAGE_HANDOFF` 消息，字段包括：
 
 | 字段 | 含义 |
@@ -57,9 +57,9 @@ Token、Cookie、密码或内部管理接口。
 
 ## 边界
 
-- 截图来自 10.10.10.202 上真实运行的 AgentTeams（Matrix/Element）与 RevGuard 彩排栈；
+- 截图来自 10.10.10.202 上真实运行的 AgentTeams（Matrix/Element）与 RevGuard 演示栈；
 - 案件业务数据（渠道、合同、政策、佣金争议）为**合成**，工作流为真实可执行；
-- 这不是"排练画面拼接"：同一个 run 的 StageTask、Matrix 事件、审批记录、审计链都可在
+- 这不是"画面拼接"：同一个 run 的 StageTask、Matrix 事件、审批记录、审计链都可在
   案件详情与数据库中按 `run_id` 复核；
 - 真人批准 → 后续任务继续执行 → 终态，见 `CASE-2026-0001`（`CLOSED`）与
   `CASE-2026-0008`（`ROLLED_BACK`）的归档运行记录。

@@ -125,7 +125,7 @@ try:
     hold(driver, 5)
 
     # 2. 现场栈：CASE-2026-0001 概览（30s）
-    note("demo-case1", "彩排栈案件概览")
+    note("demo-case1", "演示栈案件概览")
     open_page(driver, f"{DEMO}?case={CASE1}", wait=6)
     select_case(driver, CASE1)
     hold(driver, 9)

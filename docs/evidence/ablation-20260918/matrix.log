@@ -1,0 +1,12 @@
+ Container revguard-ablation-ablation-runner-run-8bc79b422050 Creating 
+ Container revguard-ablation-ablation-runner-run-8bc79b422050 Created 
+{"mode": "AGENTTEAMS_MATRIX", "case_id": "CASE-2026-0001", "passed": true, "output": "/evidence/matrix-001.json"}
+ Container revguard-ablation-ablation-runner-run-ecf52c9cc382 Creating 
+ Container revguard-ablation-ablation-runner-run-ecf52c9cc382 Created 
+{"mode": "AGENTTEAMS_MATRIX", "case_id": "CASE-2026-0003", "passed": true, "output": "/evidence/matrix-003.json"}
+ Container revguard-ablation-ablation-runner-run-dcb10984609d Creating 
+ Container revguard-ablation-ablation-runner-run-dcb10984609d Created 
+{"mode": "AGENTTEAMS_MATRIX", "case_id": "CASE-2026-0004", "passed": true, "output": "/evidence/matrix-004.json"}
+ Container revguard-ablation-ablation-runner-run-e0ae5ae41f07 Creating 
+ Container revguard-ablation-ablation-runner-run-e0ae5ae41f07 Created 
+{"mode": "AGENTTEAMS_MATRIX", "case_id": "CASE-2026-0007", "passed": true, "output": "/evidence/matrix-007.json"}

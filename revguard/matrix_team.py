@@ -692,6 +692,25 @@ class MatrixTeamRunner(McpTeamRunner):
         worker_room_id = self.settings.worker_rooms.get(
             actor, self.settings.room_id,
         )
+        reset_cursor = await self.client.cursor()
+        session_reset_event_id = await self.client.send_text(
+            f"{worker_mxid} /clear",
+            mentions=[worker_mxid], room_id=worker_room_id,
+        )
+        session_reset_response = await self.client.wait_for_event(
+            since=reset_cursor,
+            timeout_seconds=self.settings.response_timeout_seconds,
+            room_id=worker_room_id,
+            predicate=lambda item: (
+                item.get("sender") == worker_mxid
+                and "History Cleared" in str(item.get("content", {}).get("body", ""))
+            ),
+        )
+        if not session_reset_response:
+            raise MatrixTransportError(
+                f"AgentTeams Worker {actor} 未确认会话清理；task_id={task['task_id']}"
+            )
+        cursor = await self.client.cursor()
         envelope = {
             "run_id": self.run_id,
             "case_id": case["case_id"],
@@ -699,9 +718,13 @@ class MatrixTeamRunner(McpTeamRunner):
             "skill_name": skill_name,
             "assigned_actor": actor,
             "request_id": request_id,
-            "handoff": handoff,
+            "handoff_event_id": handoff_event_id,
+            "handoff_hash": "sha256:" + hashlib.sha256(json.dumps(
+                handoff, ensure_ascii=False, sort_keys=True,
+                separators=(",", ":"), default=str,
+            ).encode()).hexdigest(),
             "model_limits": task["model_limits"],
-            "input": skill_input,
+            "input_hash": handoff["next_input_hash"],
         }
         dispatch_event_id = await self.client.send_text(
             "REVGUARD_STAGE_INPUT\n" + json.dumps(
@@ -714,6 +737,8 @@ class MatrixTeamRunner(McpTeamRunner):
             "agentteams_message_id": dispatch_event_id,
             "matrix_dispatch_event_id": dispatch_event_id,
             "matrix_handoff_event_id": handoff_event_id,
+            "matrix_session_reset_event_id": session_reset_event_id,
+            "matrix_session_reset_response_event_id": session_reset_response.get("event_id"),
             "matrix_room_id": worker_room_id,
             "transport": self.transport,
             "run_id": self.run_id,
@@ -727,23 +752,11 @@ class MatrixTeamRunner(McpTeamRunner):
         ])
         trigger_body = (
             f"{worker_mxid}\n"
-            "执行一个已由 RevGuard 服务端绑定的 StageTask。不要创建 taskflow，不要查看 "
-            "shared/tasks，不要读取 Secret，不要向其他 Agent 发消息，也不要只用聊天文字声称完成。"
-            "只执行下方 adapter_command 一次；随后原样返回命令输出，并附 task_id。"
-            "成功时保留 success、request_id、skill_receipt；失败时保留 error.type 和 "
-            "error.message，不要把失败说成成功。\n"
-            f"case_id={case['case_id']}\n"
+            "只执行这一条 shell 命令一次，不要解释、规划、读其他文件或创建 taskflow；"
+            "完成后原样返回 JSON 并附 task_id。\n"
             f"task_id={task['task_id']}\n"
-            f"skill_name={skill_name}\n"
             f"request_id={request_id}\n"
             f"message_id={dispatch_event_id}\n"
-            "model_limits=" + json.dumps(task["model_limits"], separators=(",", ":")) + "\n"
-            "handoff=" + json.dumps(
-                handoff, ensure_ascii=False, separators=(",", ":"), default=str,
-            ) + "\n"
-            "input=" + json.dumps(
-                skill_input, ensure_ascii=False, separators=(",", ":"), default=str,
-            ) + "\n"
             "adapter_command=" + adapter_command
         )
         trigger_event_id = await self.client.send_text(
@@ -766,6 +779,8 @@ class MatrixTeamRunner(McpTeamRunner):
                              "matrix_dispatch_event_id": dispatch_event_id,
                              "matrix_handoff_event_id": handoff_event_id,
                              "matrix_trigger_event_id": trigger_event_id,
+                             "matrix_session_reset_event_id": session_reset_event_id,
+                             "matrix_session_reset_response_event_id": session_reset_response.get("event_id"),
                              "matrix_room_id": worker_room_id,
                              "transport": self.transport,
                              "runner": self.runner_name,

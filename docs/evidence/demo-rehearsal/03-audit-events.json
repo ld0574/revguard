@@ -685,7 +685,7 @@
     "detail": {
       "from": "WAITING_FOR_APPROVAL",
       "to": "READY_TO_EXECUTE",
-      "reason": "自动化证据排练批准；正式录屏必须由组员点击"
+      "reason": "自动化证据脚本批准；正式录屏必须由组员点击"
     },
     "created_at": "2026-08-28T10:07:13.679426Z"
   },

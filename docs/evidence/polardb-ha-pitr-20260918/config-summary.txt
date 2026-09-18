@@ -1,0 +1,4 @@
+/var/polardb/private/postgresql.conf
+FIRST 1 (standby1)
+on
+test ! -f /var/polardb/wal-archive/%f && cp %p /var/polardb/wal-archive/%f

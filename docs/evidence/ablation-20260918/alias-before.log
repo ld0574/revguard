@@ -1,0 +1,4 @@
+bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+alias   : revguard-api.internal -> 172.29.0.4 
+release : 0.6.0-rc3
+owner   : revguard-api-dev

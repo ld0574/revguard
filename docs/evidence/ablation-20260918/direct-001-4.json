@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T08:47:36.082323Z",
+  "mode": "DIRECT_ORCHESTRATOR",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-001.json",
+    "case_id": "CASE-2026-0001",
+    "title": "佣金少算：误用旧政策版本 + 回款佣金漏算",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "32400.00",
+      "root_causes": [
+        "MISSING_COMPONENT",
+        "WRONG_POLICY_VERSION"
+      ],
+      "risk_level": "L2",
+      "final_status": "WAITING_FOR_APPROVAL",
+      "verification_status": "PASSED",
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:b3c65f3076b8a13ed1659e43c3b3ff071f6b7a71316845e0899c6613d09c89ac"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0001",
+    "final_status": "WAITING_FOR_APPROVAL",
+    "risk_level": "L2",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "32400.00",
+      "root_causes": [
+        "MISSING_COMPONENT",
+        "WRONG_POLICY_VERSION"
+      ],
+      "risk_level": "L2",
+      "final_status": "WAITING_FOR_APPROVAL",
+      "verification_status": "PASSED",
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 0,
+    "stage_result_total": 0,
+    "stage_task_persistence_coverage": null,
+    "actor_skill_server_binding_coverage": null,
+    "input_output_handoff_hash_coverage": null,
+    "input_output_handoff_hashes": {},
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 0,
+      "dispatch_event_coverage": null,
+      "response_event_coverage": null,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": null,
+    "trace_span_count": 28,
+    "mode_has_persisted_stage_tasks": false,
+    "mode": "DIRECT_ORCHESTRATOR"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T08:47:35.884041Z",
+    "finished_at": "2026-09-18T08:47:36.082677Z",
+    "wall_clock_ms": 198,
+    "stage_task_count": 0,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_store",
+      "path": "/evidence/work-direct-001-4/case.db"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": false,
+        "reason": "SQLite demo backend"
+      }
+    }
+  ],
+  "limitations": [
+    "Direct and MCP samples use a disposable local Store and fixture gateway.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

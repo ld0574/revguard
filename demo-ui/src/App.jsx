@@ -600,7 +600,7 @@ function EngineeringEvidence({ evidence }) {
     ["审计链", runtime.audit_chain?.enforced ? (runtime.audit_chain.valid ? "VALID" : "BROKEN") : "DEMO ONLY", runtime.audit_chain?.enforced ? `${runtime.audit_chain.rows_checked || 0} 条已校验` : "PolarDB 模式由 DB trigger 强制"],
     ["Trace 错误", String(runtime.trace_error_spans_total ?? 0), `${runtime.trace_spans_total || 0} spans 已持久化`],
     ["StageResult", String(runtime.agent_task_attempts_total ?? 0), "Task 终态与 Result 同事务"],
-    ["本地 stdio 排练", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} 个执行者 · 存档快照，非本次 AgentTeams 运行`],
+    ["本地 stdio 回归", `${rehearsal.outcome?.succeeded_tasks || 0}/${rehearsal.outcome?.task_count || 0}`, `${rehearsal.outcome?.worker_count || 0} 个执行者 · 存档快照，非本次 AgentTeams 运行`],
     ["合成数据校验", synthetic.validation_status || "等待生成", `${synthetic.record_counts?.orders || 0} orders · ${synthetic.record_counts?.golden_cases || 0} cases`],
     ["本地 PostgreSQL", postgres.checks?.audit_chain_valid ? "PASSED" : "PENDING", postgres.classification ? "PG 18.6 兼容验证；非云验收" : "等待本地验证"],
     ["确定性评测", `${evaluation.passed || 0}/${evaluation.total_scenarios || 0}`, `通过率 ${Number(evaluation.pass_rate || 0) * 100}%`],

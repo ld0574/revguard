@@ -50,7 +50,7 @@ GitHub Release [`v0.6.0-rc3`](https://github.com/ld0574/revguard/releases/tag/v0
 | 逐帧时间戳 | `frame-times.json`（在 202 帧目录内） | 同左 |
 | 场景日志 | `record-log.json` | `recovery-record-log.json` |
 
-录制栈：彩排栈 `http://10.10.10.202:19088/demo/`（`REVGUARD_RELEASE_VERSION=0.6.0-rc3`）
+录制栈：演示栈 `http://10.10.10.202:19088/demo/`（`REVGUARD_RELEASE_VERSION=0.6.0-rc3`）
 与公网 `https://ld0574.github.io/revguard/`；画面中的案件为
 `CASE-2026-0001`（`REC-36B14AC3`，`CLOSED`）与 `CASE-2026-0008`
 （`REC-63A0C9EC`，`ROLLED_BACK`），与 `docs/evidence/finals-recording-20260918/`
@@ -58,11 +58,11 @@ GitHub Release [`v0.6.0-rc3`](https://github.com/ld0574/revguard/releases/tag/v0
 
 ## 4. 这一版修掉的录制缺陷
 
-上一版录制里「执行与审计」页签渲染的是**整条累积审计链**，会把上一代排练的
+上一版录制里「执行与审计」页签渲染的是**整条累积审计链**，会把上一运行代次的
 `REQ-MCP-*` 行和本次 Run 的 `REQ-AGT-*` 行混在一屏，破坏"同一条 Run 的证据链"口径
 （`CASE-2026-0001` 历史 435 行、`CASE-2026-0008` 335 行）。本次先修读模型
 （`revguard/demo_dashboard.py`：按 `recording_id` 收口到当前代次，并返回
-`audit_generation`），彩排栈实测降为 110 / 121 行，再重新录制，因此本目录的抽帧里
+`audit_generation`），演示栈实测降为 110 / 121 行，再重新录制，因此本目录的抽帧里
 只剩当前代次的 `REQ-AGT-*` / `TASK-*` 事件。完整历史链仍由案件接口返回，未被删除。
 
 ## 5. 抽帧

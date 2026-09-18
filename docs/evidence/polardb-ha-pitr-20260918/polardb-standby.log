@@ -1,0 +1,46 @@
+polardb-standby-1  | 2026-09-18T13:22:27Z creating isolated standby private data with polar-initdb replica
+polardb-standby-1  | init replica
+polardb-standby-1  | use localfs mode
+polardb-standby-1  | list base dir file 
+polardb-standby-1  | init PolarDB replica mode dir success
+polardb-standby-1  | waiting for server to start....2026-09-18 13:22:27.142 GMT [59] LOG:  skipping missing configuration file "/var/polardb/private/postgresql.auto.conf"
+polardb-standby-1  | 2026-09-18 13:22:27.143 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.143 GMT [59] LOG:  polar_vfs loaded in postmaster 59
+polardb-standby-1  | 2026-09-18 13:22:27.143 GMT [59] LOG:  Database will be in readonly mode
+polardb-standby-1  | 2026-09-18 13:22:27.143 GMT [59] LOG:  pfs in localfs mode
+polardb-standby-1  | 2026-09-18 13:22:27.143 GMT [59] LOG:  polar_vfs init done
+polardb-standby-1  | 2026-09-18 13:22:27.145 GMT [59] LOG:  "polar_settings.conf" is copied from sharedstorage success, additional load it.
+polardb-standby-1  | 2026-09-18 13:22:27.145 GMT [59] LOG:  skipping missing configuration file "/var/polardb/private/postgresql.auto.conf"
+polardb-standby-1  | 2026-09-18 13:22:27.147 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.147 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.147 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.147 GMT [59] LOG:  copy pg_control file from shared storage to local
+polardb-standby-1  | 2026-09-18 13:22:27.147 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.149 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.149 GMT [59] LOG:  polardb read control file "global/pg_control" success
+polardb-standby-1  | 2026-09-18 13:22:27.149 GMT [59] LOG:  PolarDB load controlfile in postmaster
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  clog buffer max slot size is 512, and it will be set to 512
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  commit timestamp buffer max slot size is 1024, and it will set to 256
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  The total log index memory table size is 50315976
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  The total log index memory table size is 16678008
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  clog buffer max slot size is 512, and it will be set to 512
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  commit timestamp buffer max slot size is 1024, and it will set to 256
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  The total log index memory table size is 50315976
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  The total log index memory table size is 16678008
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.151 GMT [59] LOG:  found replica.signal, PolarDB in replica mode, use readonly mode mount pfs
+polardb-standby-1  | 2026-09-18 13:22:27.161 GMT [59] LOG:  clog buffer max slot size is 512, and it will be set to 512
+polardb-standby-1  | 2026-09-18 13:22:27.161 GMT [59] LOG:  commit timestamp buffer max slot size is 1024, and it will set to 256
+polardb-standby-1  | 2026-09-18 13:22:27.169 GMT [59] LOG:  The total log index memory table size is 50315976
+polardb-standby-1  | 2026-09-18 13:22:27.169 GMT [59] LOG:  creating missing directory "/var/polardb/private/polar_rel_size_cache"
+polardb-standby-1  | 2026-09-18 13:22:27.218 GMT [59] LOG:  rename pg_logindex to local cache trash polar_cache_trash/pg_logindex_0000, errno=2
+polardb-standby-1  | 2026-09-18 13:22:27.218 GMT [59] LOG:  The total log index memory table size is 16678008
+polardb-standby-1  | 2026-09-18 13:22:27.218 GMT [59] LOG:  rename polar_fullpage to local cache trash polar_cache_trash/polar_fullpage_0000, errno=2
+polardb-standby-1  | 2026-09-18 13:22:27.259 GMT [59] LOG:  PolarIOStatArray share memory total size is 5897200
+polardb-standby-1  | 2026-09-18 13:22:27.264 GMT [59] LOG:  redirecting log output to logging collector process
+polardb-standby-1  | 2026-09-18 13:22:27.264 GMT [59] HINT:  Future log output will appear in directory "log".
+polardb-standby-1  |  done
+polardb-standby-1  | server started
+polardb-standby-1  | 2026-09-18T13:22:27Z STANDBY_READY port=5432

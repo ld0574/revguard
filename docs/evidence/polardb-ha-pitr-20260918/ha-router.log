@@ -1,0 +1,3 @@
+ha-router-1  | [NOTICE]   (1) : Initializing new worker (8)
+ha-router-1  | [NOTICE]   (1) : Loading success.
+ha-router-1  | [WARNING]  (8) : Server revguard_polar_nodes/primary is DOWN, reason: Layer4 timeout, info: " at initial connection step of tcp-check", check duration: 1001ms. 0 active and 1 backup servers left. Running on backup. 1 sessions active, 0 requeued, 0 remaining in queue.

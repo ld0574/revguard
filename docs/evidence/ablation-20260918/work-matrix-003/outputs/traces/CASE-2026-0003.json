@@ -1,0 +1,355 @@
+{
+  "trace_id": "CASE-2026-0003",
+  "semantic_conventions": {
+    "name": "OpenTelemetry GenAI semantic conventions",
+    "version": "1.43.0",
+    "status": "development",
+    "reference": "https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/"
+  },
+  "span_count": 7,
+  "wall_duration_ms": 208313,
+  "span_duration_sum_ms": 208317,
+  "total_duration_ms": 208313,
+  "error_spans": [],
+  "spans": [
+    {
+      "span_id": "SPAN-0E41735A",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": null,
+      "kind": "AGENT",
+      "name": "AgentTeams.OrchestratorHandshake",
+      "actor": "revguard-orchestrator",
+      "status": "OK",
+      "trace_sequence": 1,
+      "sequence": 1,
+      "started_at": "2026-09-18 14:16:14.983494+00",
+      "ended_at": "2026-09-18 14:16:20.213536+00",
+      "duration_ms": 5230,
+      "inputs": {
+        "run_id": "RUN-AGT-66227CBA",
+        "room_id": "!NCserupQgE5k9AW8rP:matrix-local.agentteams.io:8086",
+        "transport": "agentteams-matrix"
+      },
+      "outputs": {
+        "status": "ACKNOWLEDGED",
+        "token_usage": null,
+        "response_event_id": "$N1iCUW-oBFhMsrjIcwbqo7jx_fhMa-Qjv71QQRuwxbk"
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "AGENT",
+        "gen_ai.agent.name": "revguard-orchestrator",
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.workflow.name": "revguard"
+      }
+    },
+    {
+      "span_id": "SPAN-CA11D927",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": null,
+      "kind": "SKILL",
+      "name": "CaseNormalizeSkill",
+      "actor": "revguard-intake",
+      "status": "OK",
+      "trace_sequence": 2,
+      "sequence": 2,
+      "started_at": "2026-09-18 14:18:05.9632+00",
+      "ended_at": "2026-09-18 14:18:05.963295+00",
+      "duration_ms": 0,
+      "inputs": {
+        "input": {
+          "raw_case": {
+            "claim": {
+              "currency": "KES",
+              "actual_amount": null,
+              "expected_amount": null
+            },
+            "source": "TICKET",
+            "status": "CREATED",
+            "case_id": "CASE-2026-0003",
+            "entities": {
+              "order_id": null,
+              "partner_id": null,
+              "contract_id": null,
+              "partner_name": "Kisumu EcoPower Ltd"
+            },
+            "order_id": null,
+            "priority": "P1",
+            "team_run": {
+              "error": null,
+              "phase": "INVESTIGATION",
+              "run_id": "RUN-AGT-66227CBA",
+              "status": "RUNNING",
+              "room_id": "!NCserupQgE5k9AW8rP:matrix-local.agentteams.io:8086",
+              "started_at": "2026-09-18T14:16:14.981233Z",
+              "updated_at": "2026-09-18T14:16:20.215707Z",
+              "total_tasks": 8,
+              "orchestrator": {
+                "actor": "revguard-orchestrator",
+                "input": {
+                  "goal": "execute state-bound RevGuard StageTasks through assigned Workers",
+                  "run_id": "RUN-AGT-66227CBA",
+                  "case_id": "CASE-2026-0003",
+                  "authority": "state-machine",
+                  "traceparent": null
+                },
+                "output": {
+                  "run_id": "RUN-AGT-66227CBA",
+                  "decision": "RUN_ACCEPTED"
+                },
+                "status": "ACKNOWLEDGED",
+                "trigger_event_id": "$EKHAO8csy6NSUt-ir2IYSFhf1z-WrYXA1Hm7CsuZAi0",
+                "dispatch_event_id": "$3tkKDhubtjIp4Gnafax3teTj7v1gKRqTlKkU9d8UhzU",
+                "response_event_id": "$N1iCUW-oBFhMsrjIcwbqo7jx_fhMa-Qjv71QQRuwxbk"
+              },
+              "current_stage": "OrchestratorHandshake",
+              "completed_tasks": 0
+            },
+            "case_type": "COMMISSION_UNDERPAYMENT",
+            "created_at": "2026-09-18T14:03:27.093482Z",
+            "partner_id": null,
+            "risk_level": null,
+            "updated_at": "2026-09-18T14:03:27.093488Z",
+            "contract_id": null,
+            "description": "代理商来电说 7 月佣金好像少了，请帮忙看看。",
+            "partner_name": "Kisumu EcoPower Ltd",
+            "_case_revision": 7,
+            "evidence_score": 0,
+            "execution_mode": "AGENTTEAMS_MATRIX",
+            "telemetry_context": {
+              "traceparent": "00-0139b09d83c91587a15194f224ebf1c0-c38265d3114a1b9c-03"
+            },
+            "workflow_provenance": {
+              "workflow": "real_executable",
+              "transport": "agentteams-matrix",
+              "business_data": "synthetic",
+              "orchestration": "state-driven",
+              "agentteams_room_evidence": "CAPTURED_FROM_RUNTIME"
+            }
+          }
+        },
+        "correlation": {
+          "transport": "higress-mcp",
+          "request_id": "REQ-AGT-BA992F72",
+          "traceparent": "",
+          "agent_task_id": "TASK-E11548FC",
+          "agentteams_message_id": "$2YGZoedCjU_j4b_1HlQoCia8XPrlcjfJuuJbVIWmbAI"
+        }
+      },
+      "outputs": {
+        "claim": {
+          "currency": "KES",
+          "actual_amount": null,
+          "expected_amount": null
+        },
+        "entities": {
+          "order_id": null,
+          "partner_id": null,
+          "contract_id": null,
+          "partner_name": "Kisumu EcoPower Ltd"
+        },
+        "missing_fields": []
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "SKILL",
+        "gen_ai.agent.name": "revguard-intake",
+        "gen_ai.operation.name": "execute_tool",
+        "gen_ai.tool.name": "CaseNormalizeSkill",
+        "gen_ai.tool.type": "function"
+      }
+    },
+    {
+      "span_id": "SPAN-71194B52",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": null,
+      "kind": "AGENT",
+      "name": "AgentTeams.CaseNormalizeSkill",
+      "actor": "revguard-intake",
+      "status": "OK",
+      "trace_sequence": 3,
+      "sequence": 3,
+      "started_at": "2026-09-18 14:16:20.221017+00",
+      "ended_at": "2026-09-18 14:18:26.192651+00",
+      "duration_ms": 125971,
+      "inputs": {
+        "run_id": "RUN-AGT-66227CBA",
+        "transport": "agentteams-matrix",
+        "skill_name": "CaseNormalizeSkill"
+      },
+      "outputs": {
+        "status": "SUCCEEDED",
+        "worker_room": "!txgu7rmzfQvuMNTPOD:matrix-local.agentteams.io:8086"
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "AGENT",
+        "gen_ai.agent.name": "revguard-intake",
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.workflow.name": "revguard"
+      }
+    },
+    {
+      "span_id": "SPAN-51EA432C",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": null,
+      "kind": "SKILL",
+      "name": "EntityResolveSkill",
+      "actor": "revguard-intake",
+      "status": "OK",
+      "trace_sequence": 4,
+      "sequence": 4,
+      "started_at": "2026-09-18 14:19:36.452001+00",
+      "ended_at": "2026-09-18 14:19:36.45797+00",
+      "duration_ms": 5,
+      "inputs": {
+        "input": {
+          "entities": {
+            "order_id": null,
+            "partner_id": null,
+            "contract_id": null,
+            "partner_name": "Kisumu EcoPower Ltd"
+          }
+        },
+        "correlation": {
+          "transport": "higress-mcp",
+          "request_id": "REQ-AGT-4D0175EB",
+          "traceparent": "",
+          "agent_task_id": "TASK-DE2E0E67",
+          "agentteams_message_id": "$oX1v0HMwVRpVC2Qp5cz8hj2doI26UtPajiKRRzeimM4"
+        }
+      },
+      "outputs": {
+        "partner": {
+          "name": "Kisumu EcoPower Ltd",
+          "region": "KE-KISUMU",
+          "partner_id": "AGT-10003",
+          "tier_history": [
+            {
+              "tier": "BRONZE",
+              "effective_from": "2025-03-01"
+            },
+            {
+              "tier": "SILVER",
+              "effective_from": "2026-05-20"
+            }
+          ]
+        },
+        "resolved_by": "partner_name"
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "SKILL",
+        "gen_ai.agent.name": "revguard-intake",
+        "gen_ai.operation.name": "execute_tool",
+        "gen_ai.tool.name": "EntityResolveSkill",
+        "gen_ai.tool.type": "function"
+      }
+    },
+    {
+      "span_id": "SPAN-96D25D90",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": "SPAN-51EA432C",
+      "kind": "TOOL",
+      "name": "crm.get_partner",
+      "actor": "revguard-intake",
+      "status": "OK",
+      "trace_sequence": 5,
+      "sequence": 5,
+      "started_at": "2026-09-18 14:19:36.452094+00",
+      "ended_at": "2026-09-18 14:19:36.456682+00",
+      "duration_ms": 4,
+      "inputs": {
+        "attempt": 1,
+        "parameters": {
+          "partner_name": "Kisumu EcoPower Ltd"
+        },
+        "operation_id": null
+      },
+      "outputs": {
+        "error": null,
+        "success": true,
+        "tool_receipt": "RCPT-979CF017"
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "TOOL",
+        "gen_ai.agent.name": "revguard-intake",
+        "gen_ai.operation.name": "execute_tool",
+        "gen_ai.tool.name": "crm.get_partner",
+        "gen_ai.tool.type": "function"
+      }
+    },
+    {
+      "span_id": "SPAN-839A19D6",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": null,
+      "kind": "AGENT",
+      "name": "AgentTeams.EntityResolveSkill",
+      "actor": "revguard-intake",
+      "status": "OK",
+      "trace_sequence": 6,
+      "sequence": 6,
+      "started_at": "2026-09-18 14:18:26.196914+00",
+      "ended_at": "2026-09-18 14:19:43.302482+00",
+      "duration_ms": 77105,
+      "inputs": {
+        "run_id": "RUN-AGT-66227CBA",
+        "transport": "agentteams-matrix",
+        "skill_name": "EntityResolveSkill"
+      },
+      "outputs": {
+        "status": "SUCCEEDED",
+        "worker_room": "!txgu7rmzfQvuMNTPOD:matrix-local.agentteams.io:8086"
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "AGENT",
+        "gen_ai.agent.name": "revguard-intake",
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.workflow.name": "revguard"
+      }
+    },
+    {
+      "span_id": "SPAN-7EDF50ED",
+      "case_id": "CASE-2026-0003",
+      "parent_span_id": null,
+      "kind": "TOOL",
+      "name": "crm.list_orders_by_partner",
+      "actor": "revguard-intake",
+      "status": "OK",
+      "trace_sequence": 7,
+      "sequence": 7,
+      "started_at": "2026-09-18 14:19:43.304486+00",
+      "ended_at": "2026-09-18 14:19:43.307514+00",
+      "duration_ms": 2,
+      "inputs": {
+        "attempt": 1,
+        "parameters": {
+          "partner_id": "AGT-10003"
+        },
+        "operation_id": null
+      },
+      "outputs": {
+        "error": null,
+        "success": true,
+        "tool_receipt": "RCPT-830B77D6"
+      },
+      "error": null,
+      "attributes": {
+        "revguard.case.id": "CASE-2026-0003",
+        "revguard.span.kind": "TOOL",
+        "gen_ai.agent.name": "revguard-intake",
+        "gen_ai.operation.name": "execute_tool",
+        "gen_ai.tool.name": "crm.list_orders_by_partner",
+        "gen_ai.tool.type": "function"
+      }
+    }
+  ]
+}

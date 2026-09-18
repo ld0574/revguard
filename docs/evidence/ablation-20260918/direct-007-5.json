@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T08:47:59.283078Z",
+  "mode": "DIRECT_ORCHESTRATOR",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-007.json",
+    "case_id": "CASE-2026-0007",
+    "title": "L3 超额强制人工：差额 >50000 只出方案不执行",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "72000.00",
+      "root_causes": [
+        "MISSING_COMPONENT"
+      ],
+      "risk_level": "L3",
+      "final_status": "CLOSED",
+      "no_execution": true,
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:f7d7c7d14aa7ca7bab2f391fb107fd37d62068f6b4c7af4319a42578b7e83d8f"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0007",
+    "final_status": "CLOSED",
+    "risk_level": "L3",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "72000.00",
+      "root_causes": [
+        "MISSING_COMPONENT"
+      ],
+      "risk_level": "L3",
+      "final_status": "CLOSED",
+      "no_execution": true,
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 0,
+    "stage_result_total": 0,
+    "stage_task_persistence_coverage": null,
+    "actor_skill_server_binding_coverage": null,
+    "input_output_handoff_hash_coverage": null,
+    "input_output_handoff_hashes": {},
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 0,
+      "dispatch_event_coverage": null,
+      "response_event_coverage": null,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": null,
+    "trace_span_count": 30,
+    "mode_has_persisted_stage_tasks": false,
+    "mode": "DIRECT_ORCHESTRATOR"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T08:47:59.022566Z",
+    "finished_at": "2026-09-18T08:47:59.283637Z",
+    "wall_clock_ms": 261,
+    "stage_task_count": 0,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_store",
+      "path": "/evidence/work-direct-007-5/case.db"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": false,
+        "reason": "SQLite demo backend"
+      }
+    }
+  ],
+  "limitations": [
+    "Direct and MCP samples use a disposable local Store and fixture gateway.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Execute the isolated P0 PolarDB HA + PITR drill on 10.10.10.202.
+# Execute the isolated PolarDB HA + PITR drill on 10.10.10.202.
 #
 # The command owns only project revguard-polardb-ha and its explicitly named
 # volumes.  It never touches revguard-polardb, revguard-dev, ports 19000/19088,
@@ -91,23 +91,31 @@ finally:
 print("isolated synthetic RevGuard dataset seeded")
 ' | tee "$OUTPUT_DIR/seed.log"
 
-log "prove synchronous state and make a recovery-only localfs physical snapshot"
+log "prove synchronous state before the PITR and failover exercises"
 "${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" revguard-tools \
   scripts/probe_polardb_drill.py --kind sync --output /evidence/sync-before-fault.json
-"${COMPOSE[@]}" run --rm --no-deps pitr-basebackup | tee "$OUTPUT_DIR/pitr-snapshot.log"
 
 log "create A, record the recovery target, then create B"
 "${COMPOSE[@]}" exec -T polardb-primary psql -h 127.0.0.1 -p 5432 -U postgres -d revguard -v ON_ERROR_STOP=1 -c \
   "CREATE TABLE IF NOT EXISTS revguard_pitr_markers (marker text PRIMARY KEY, value text NOT NULL, created_at timestamptz NOT NULL DEFAULT clock_timestamp()); INSERT INTO revguard_pitr_markers(marker, value) VALUES ('A', 'before-target') ON CONFLICT (marker) DO NOTHING; CHECKPOINT; SELECT pg_switch_wal();" \
   >"$OUTPUT_DIR/pitr-marker-a.sql.out"
 sleep 2
-PITR_TARGET_TIME=$("${COMPOSE[@]}" exec -T polardb-primary psql -h 127.0.0.1 -p 5432 -U postgres -d revguard -Atc \
+
+log "create the formal private/shared PITR base backup after marker A"
+PITR_BACKUP_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)
+"${COMPOSE[@]}" run --rm --no-deps \
+  -e POLAR_BACKUP_LABEL="revguard-p0-$(date -u +%Y%m%dT%H%M%SZ)-formal" \
+  pitr-basebackup | tee "$OUTPUT_DIR/pitr-snapshot.log"
+sleep 1
+PITR_TARGET_TIME=$("${COMPOSE[@]}" exec -T polardb-primary psql -h 127.0.0.1 -p 5432 -U postgres -d revguard -v ON_ERROR_STOP=1 -Atc \
   "SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')")
 sleep 1
 "${COMPOSE[@]}" exec -T polardb-primary psql -h 127.0.0.1 -p 5432 -U postgres -d revguard -v ON_ERROR_STOP=1 -c \
   "INSERT INTO revguard_pitr_markers(marker, value) VALUES ('B', 'after-target') ON CONFLICT (marker) DO NOTHING; CHECKPOINT; SELECT pg_switch_wal();" \
   >"$OUTPUT_DIR/pitr-marker-b.sql.out"
 sleep 5
+printf '%s\n' "$PITR_BACKUP_STARTED_AT" >"$OUTPUT_DIR/pitr-backup-started-at.txt"
+printf '%s\n' "$PITR_TARGET_TIME" >"$OUTPUT_DIR/pitr-target-time.txt"
 "${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" revguard-tools \
   scripts/capture_recovery_evidence.py --output /evidence/pitr-expected.json
 
@@ -119,6 +127,7 @@ for _ in $(seq 1 120); do
 done
 "${COMPOSE[@]}" exec -T pitr-recovery sh -c "psql -h 127.0.0.1 -p 5432 -U postgres -d revguard -tAc 'SELECT NOT pg_is_in_recovery()' | grep -qx t" >/dev/null \
   || fail "PITR recovery did not promote a readable recovery node"
+PITR_WRITABLE_AT=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)
 "${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" \
   -e REVGUARD_RECOVERY_DATABASE_URL=postgresql://postgres@pitr-recovery:5432/revguard \
   revguard-tools scripts/capture_recovery_evidence.py --expected /evidence/pitr-expected.json --output /evidence/pitr-actual.json
@@ -135,19 +144,32 @@ FAILURE_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)
 WRITE_RESTORED_AT=""
 for _ in $(seq 1 60); do
   WRITE_RESTORED_AT=$("${COMPOSE[@]}" exec -T failover-controller sh -c \
-    "psql -h ha-router -p 5432 -U postgres -d revguard -tAc \"INSERT INTO revguard_ha_markers(marker, value) VALUES ('written_after_failover', 'stable-endpoint') ON CONFLICT (marker) DO NOTHING RETURNING to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM-DD\\\"T\\\"HH24:MI:SS.US\\\"Z\\\"');\"" 2>/dev/null || true)
+    "psql -h ha-router -p 5432 -U postgres -d revguard -qAtc \"INSERT INTO revguard_ha_markers(marker, value) VALUES ('written_after_failover', 'stable-endpoint') ON CONFLICT (marker) DO NOTHING RETURNING to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM-DD\\\"T\\\"HH24:MI:SS.US\\\"Z\\\"');\"" 2>/dev/null | head -n 1 || true)
   [[ "$WRITE_RESTORED_AT" == *T*Z* ]] && break
   sleep 1
 done
 [[ "$WRITE_RESTORED_AT" == *T*Z* ]] || fail "stable endpoint was not writable within 60 seconds"
 "${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" revguard-tools \
   scripts/probe_polardb_drill.py --kind ha --output /evidence/ha-after-failover.json
+"${COMPOSE[@]}" logs --no-color failover-controller >"$OUTPUT_DIR/controller-autofailover.log"
 
 log "assemble evidence, verify package hashes, and record the single-host boundary"
 "${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" revguard-tools \
   scripts/build_polardb_drill_evidence.py --evidence-dir /evidence \
-  --pitr-target-time "$PITR_TARGET_TIME" --failure-started-at "$FAILURE_STARTED_AT" \
+  --pitr-target-time "$PITR_TARGET_TIME" --pitr-started-at "$PITR_BACKUP_STARTED_AT" \
+  --pitr-writable-at "$PITR_WRITABLE_AT" --failure-started-at "$FAILURE_STARTED_AT" \
   --write-restored-at "$WRITE_RESTORED_AT" | tee "$OUTPUT_DIR/verdict.log"
+"${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" revguard-tools -c '
+import hashlib
+from pathlib import Path
+root = Path("/evidence")
+members = sorted(path for path in root.iterdir() if path.is_file() and path.name != "SHA256SUMS.txt")
+(root / "SHA256SUMS.txt").write_text(
+    "".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n" for path in members),
+    encoding="utf-8",
+)
+print("SHA256SUMS written")
+'
 "${COMPOSE[@]}" run --rm --no-deps -v "$OUTPUT_DIR:/evidence" revguard-tools -c '
 import hashlib
 from pathlib import Path

@@ -1,6 +1,6 @@
 # 决赛录制代次重跑：两条真实 AgentTeams Matrix 完整运行（2026-09-18）
 
-全部操作在 `10.10.10.202` Docker 彩排栈（`http://10.10.10.202:19088`，release
+全部操作在 `10.10.10.202` Docker 演示栈（`http://10.10.10.202:19088`，release
 `0.6.0-rc3`）内完成。本目录是这一次"录制用运行记录"的可核验事实快照。
 
 ## 1. 为什么要重跑
@@ -49,7 +49,7 @@ Web 端完成 **AgentTeams Matrix 身份验证（`matrix-password`）→ 批准*
 
 - 第一次录制：偏差注入成功，Verifier 报 `variance 1.00`，走冲销 → `ROLLED_BACK`；
 - 第二次录制：偏差不再注入，Verifier 报 `variance 0.00` → 直接 `CLOSED`，
-  **冲销与恢复演示静默消失**（本轮在 202 彩排栈实测复现：20:38 的 `CASE-2026-0008`
+  **冲销与恢复演示静默消失**（本轮在 202 演示栈实测复现：20:38 的 `CASE-2026-0008`
   即为该退化记录）。
 
 修复：把消费状态改为按案件记录（`posting_tamper_used_cases`），
@@ -61,7 +61,7 @@ Web 端完成 **AgentTeams Matrix 身份验证（`matrix-password`）→ 批准*
 ## 4. 复现方式
 
 ```bash
-# 在 10.10.10.202 Docker 内（彩排栈，release 0.6.0-rc3）
+# 在 10.10.10.202 Docker 内（演示栈，release 0.6.0-rc3）
 # 1) 单案重新准备：只清本案的派生台账与网关副作用，台账回到 18,000 基线
 curl -s -X POST -H "Authorization: Bearer <operator-key>" \
   http://127.0.0.1:19088/api/v1/cases/CASE-2026-0001/reprepare

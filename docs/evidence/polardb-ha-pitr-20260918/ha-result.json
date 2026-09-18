@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T13:26:39.656334Z",
+  "verdict": "PASSED",
+  "synchronous_replication": {
+    "sync_state_before_fault": "sync"
+  },
+  "failure_started_at": "2026-09-18T13:24:01.129Z",
+  "stable_endpoint_writable_at": "2026-09-18T13:24:28.218672Z",
+  "rto_seconds": 27.09,
+  "rpo": 0,
+  "promoted_node_in_recovery": false,
+  "automatic_promotion_log_verified": true,
+  "committed_marker_survived": true,
+  "stable_endpoint_write_verified": true,
+  "limitations": [
+    "Two containers and all volumes ran on one 10.10.10.202 host.",
+    "This drill does not prove managed control-plane, cross-host, or cross-AZ SLA."
+  ]
+}

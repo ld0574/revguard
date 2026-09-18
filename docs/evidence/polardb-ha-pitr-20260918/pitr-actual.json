@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T13:24:00.359139Z",
+  "database_identity": {
+    "database": "revguard",
+    "user": "postgres",
+    "database_time": "2026-09-18 21:24:00.301595+08"
+  },
+  "table_counts": {
+    "cases": 8,
+    "evidence": 0,
+    "approvals": 0,
+    "executions": 0,
+    "verifications": 0,
+    "agent_tasks": 0,
+    "agent_task_results": 0,
+    "audit_events": 8,
+    "trace_spans": 0
+  },
+  "audit_chain": {
+    "rows_checked": 8,
+    "broken_links": 0,
+    "valid": true,
+    "heads_fingerprint": "sha256:0bfa140c32987acf3fe7dd4e0a18dfb2c76ac90a88ace7939533479c160f1314"
+  },
+  "money_fingerprint": "sha256:462b22586e1207ee6eafa063ca08dead00249f3594869ecac59fdaa73ef969b9",
+  "numeric_columns": [
+    {
+      "table_name": "cases",
+      "column_name": "claim_actual_amount",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "cases",
+      "column_name": "claim_expected_amount",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "executions",
+      "column_name": "amount",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "money_ledger",
+      "column_name": "amount",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "verifications",
+      "column_name": "actual_amount",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "verifications",
+      "column_name": "expected_amount",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "verifications",
+      "column_name": "variance",
+      "numeric_precision": 18,
+      "numeric_scale": 2
+    }
+  ],
+  "verification": {
+    "expected_file": "/evidence/pitr-expected.json",
+    "matches_expected_restore_point": true,
+    "verdict": "PASSED"
+  }
+}

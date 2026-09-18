@@ -1,0 +1,8 @@
+==> revguard-api-dev 绑定 revguard-api.internal
+==> revguard-api-experiment 释放 revguard-api.internal
+==> 刷新 Higress 数据面 DNS（172.29.0.16 -> 172.29.0.4）
+alias   : revguard-api.internal -> 172.29.0.4 
+release : 0.6.0-rc3
+owner   : revguard-api-dev
+gateway : MCP read probe reached revguard-api-dev
+OK: AgentTeams MCP 后端为 dev 栈（0.6.0-rc3）

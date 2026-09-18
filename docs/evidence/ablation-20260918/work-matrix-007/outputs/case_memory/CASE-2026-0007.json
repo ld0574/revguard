@@ -1,0 +1,25 @@
+{
+  "input": {
+    "claim": {
+      "currency": "KES",
+      "actual_amount": 0,
+      "expected_amount": null
+    },
+    "entities": {
+      "order_id": "EZ202607501",
+      "partner_id": "AGT-10005",
+      "contract_id": null,
+      "partner_name": null
+    }
+  },
+  "label": "BAD",
+  "case_id": "CASE-2026-0007",
+  "case_type": "COMMISSION_UNDERPAYMENT",
+  "archived_at": "2026-09-18T14:47:06.831666Z",
+  "root_causes": [
+    "MISSING_COMPONENT"
+  ],
+  "verification": {},
+  "expected_amount": "72000.00",
+  "expected_policy_version": "2026-Q3"
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T08:48:13.265489Z",
+  "mode": "MCP_TEAM",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-003.json",
+    "case_id": "CASE-2026-0003",
+    "title": "证据不足：工单只有代理商名称，存在多笔候选订单",
+    "expected": {
+      "final_status": "WAITING_FOR_EVIDENCE",
+      "escalated": true,
+      "no_fake_conclusion": true,
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:27f0a400c5ef2307629110dbac436190d0fa43a468ca417aebadf265b9aa6e6c"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0003",
+    "final_status": "WAITING_FOR_EVIDENCE",
+    "risk_level": null,
+    "expected": {
+      "final_status": "WAITING_FOR_EVIDENCE",
+      "escalated": true,
+      "no_fake_conclusion": true,
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 2,
+    "stage_result_total": 2,
+    "stage_task_persistence_coverage": 1.0,
+    "actor_skill_server_binding_coverage": 1.0,
+    "input_output_handoff_hash_coverage": 1.0,
+    "input_output_handoff_hashes": {
+      "TASK-7C2A8897": {
+        "input": "sha256:7ad3e4ca1e66367f2d8b25c39321042bceae5673680f78ab41503028a92d2237",
+        "output": "sha256:ac473f60ec92cc0087fbd80e122ea710b0e9cd88733e71753ef137554fd2b7bf"
+      },
+      "TASK-779B7310": {
+        "input": "sha256:83f1bf95da375d9066749fdfe14b697347082e7235d1ff353de15715ffc75dad",
+        "output": "sha256:03a4147ce73e3c9d33258118276a65f7d1c33945b722daabcb429c70eeac0e36"
+      }
+    },
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 0,
+      "dispatch_event_coverage": null,
+      "response_event_coverage": null,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": "EntityResolveSkill",
+    "trace_span_count": 4,
+    "mode_has_persisted_stage_tasks": true,
+    "mode": "MCP_TEAM"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T08:48:13.118993Z",
+    "finished_at": "2026-09-18T08:48:13.265934Z",
+    "wall_clock_ms": 146,
+    "stage_task_count": 2,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_store",
+      "path": "/evidence/work-mcp-003-4/case.db"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": false,
+        "reason": "SQLite demo backend"
+      }
+    }
+  ],
+  "limitations": [
+    "Direct and MCP samples use a disposable local Store and fixture gateway.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

@@ -468,8 +468,8 @@ def build_steps(payload: dict[str, Any], window: dict[str, Any]) -> list[dict[st
 def build_window(payload: dict[str, Any], case_id: str) -> dict[str, Any]:
     """把回放范围收敛到「最后一次真实运行」。
 
-    审计链是跨排练累积的：同一案件可能保留多代事件。这里以本次运行 Trace 的最早
-    Span 作为下界，只保留该时刻之后的事件，避免把不同排练的画面拼成一条时间线。
+    审计链会跨运行代次累积：同一案件可能保留多代事件。这里以本次运行 Trace 的最早
+    Span 作为下界，只保留该时刻之后的事件，避免把不同运行代次的画面拼成一条时间线。
     """
     trace = payload.get("trace") or {}
     spans = trace.get("spans") or []

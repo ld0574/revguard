@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T08:48:31.756711Z",
+  "mode": "MCP_TEAM",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-007.json",
+    "case_id": "CASE-2026-0007",
+    "title": "L3 超额强制人工：差额 >50000 只出方案不执行",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "72000.00",
+      "root_causes": [
+        "MISSING_COMPONENT"
+      ],
+      "risk_level": "L3",
+      "final_status": "CLOSED",
+      "no_execution": true,
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:f7d7c7d14aa7ca7bab2f391fb107fd37d62068f6b4c7af4319a42578b7e83d8f"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0007",
+    "final_status": "CLOSED",
+    "risk_level": "L3",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "72000.00",
+      "root_causes": [
+        "MISSING_COMPONENT"
+      ],
+      "risk_level": "L3",
+      "final_status": "CLOSED",
+      "no_execution": true,
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 8,
+    "stage_result_total": 8,
+    "stage_task_persistence_coverage": 1.0,
+    "actor_skill_server_binding_coverage": 1.0,
+    "input_output_handoff_hash_coverage": 1.0,
+    "input_output_handoff_hashes": {
+      "TASK-DD572248": {
+        "input": "sha256:308cb29dad1e937b7111f57ec3011ce80c4d2ab461cf42dd36b9952a8864161e",
+        "output": "sha256:3f83f5e43df3512e8aa9ed123bee81b71118d7852db10931165f0ba1abadb786"
+      },
+      "TASK-C4BCB1E9": {
+        "input": "sha256:c974fafa00fab9676d576c07ecf2262294fca3ca19d5e36462b0d82b76eff91b",
+        "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+      },
+      "TASK-E198071C": {
+        "input": "sha256:e7661d221c761e015679be27613f58479f5bee6173414b92be3f775c9c363cf2",
+        "output": "sha256:44ef3999d39679b7ae2beecbd8a24e5fcc5c0fab4be10db0cce99dc6751ab2ee"
+      },
+      "TASK-62549FD7": {
+        "input": "sha256:bc654eaa4ea8a0bfdd40ac94821d54ece120c3a966c60a4127bfdc4176faebd2",
+        "output": "sha256:08134e51d2af0e8adc70325bbb2ddff9939e90d200076775d107f13f2ee88ee8"
+      },
+      "TASK-9349C479": {
+        "input": "sha256:d3593b821749521e528520d648b1b5c1c5fe7edaffca88a9d797ac683d21f3bc",
+        "output": "sha256:ea1b03959694e6f3f4bed65e22ac4156c6abb2eb00617af9d75ca20369cc2142"
+      },
+      "TASK-9DBFCCEB": {
+        "input": "sha256:a8b44fb8100280b2ca07d7aff2694e489e57e9998d3952e02fc6a50cfdb7725f",
+        "output": "sha256:df40c1c712261105662da6fd04fb24c45d6a248f5a8b93b57457a38777210952"
+      },
+      "TASK-53D5C7BD": {
+        "input": "sha256:fabdd574d5607172ee197304c6177f5058ca1c47b95711655ae7a6dd86edcbe9",
+        "output": "sha256:48de96438cbc2e9f4d55a5a9851fab977dadae837c22add8a5eadf3ff8269f64"
+      },
+      "TASK-EF99ED24": {
+        "input": "sha256:c56ff29311c745a9c07de3cc6097d21492e243b17f209e89346e0a81563bcfab",
+        "output": "sha256:a484eb626c81d3ec62bab90974cd4107576f077ec44b4042acda1425adb369f6"
+      }
+    },
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 0,
+      "dispatch_event_coverage": null,
+      "response_event_coverage": null,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": "CaseToDatasetSkill",
+    "trace_span_count": 21,
+    "mode_has_persisted_stage_tasks": true,
+    "mode": "MCP_TEAM"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T08:48:31.374583Z",
+    "finished_at": "2026-09-18T08:48:31.758765Z",
+    "wall_clock_ms": 384,
+    "stage_task_count": 8,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_store",
+      "path": "/evidence/work-mcp-007-5/case.db"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": false,
+        "reason": "SQLite demo backend"
+      }
+    }
+  ],
+  "limitations": [
+    "Direct and MCP samples use a disposable local Store and fixture gateway.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

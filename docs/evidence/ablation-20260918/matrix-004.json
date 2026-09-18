@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-09-18T14:35:24.052134Z",
+  "mode": "AGENTTEAMS_MATRIX",
+  "case_spec": {
+    "golden_file": "data/golden_cases/GOLDEN-004.json",
+    "case_id": "CASE-2026-0004",
+    "title": "申诉不成立：台账与政策复算完全一致，无需调整",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "37800.00",
+      "root_causes": [],
+      "risk_level": "L0",
+      "final_status": "CLOSED",
+      "no_adjustment": true,
+      "max_actions": 0
+    },
+    "fixture_hash": "sha256:60c00ce1073ec77e3603460cfee83696a261b3bb290927557e4f0e58fac216e4"
+  },
+  "outcome": {
+    "case_id": "CASE-2026-0004",
+    "final_status": "CLOSED",
+    "risk_level": "L0",
+    "expected": {
+      "policy_version": "2026-Q3",
+      "total_commission": "37800.00",
+      "root_causes": [],
+      "risk_level": "L0",
+      "final_status": "CLOSED",
+      "no_adjustment": true,
+      "max_actions": 0
+    },
+    "business_terminal_match": true,
+    "checks": {
+      "final_status": true,
+      "risk_level": true,
+      "no_unexpected_money_action": true
+    },
+    "financial_action_count": 0,
+    "unexpected_money_action_count": 0,
+    "execution_statuses": []
+  },
+  "governance_metrics": {
+    "stage_task_total": 8,
+    "stage_result_total": 8,
+    "stage_task_persistence_coverage": 1.0,
+    "actor_skill_server_binding_coverage": 1.0,
+    "input_output_handoff_hash_coverage": 1.0,
+    "input_output_handoff_hashes": {
+      "TASK-AF670FAD": {
+        "input": "sha256:a56795daece7966c51bb17ff55492d9a89c0379309e240cd0eab03fa6f7b23ac",
+        "output": "sha256:67e1a1b95f1e1c6fcbb3a87b9b4b0873b7f28efc33dc6bd57cb607573a3d233b"
+      },
+      "TASK-13ECDEF6": {
+        "input": "sha256:1f4de1e9babcaf5e989af1c3c6a036e95268e34eae26f7b0a668961c96ce702f",
+        "output": "sha256:76148c59500357ec12a4745cc0f54ae420d37616b91873ebc84597abc1fd6758"
+      },
+      "TASK-A57EAA72": {
+        "input": "sha256:f96667ee1338eb658546e497c032c6873cbe1dbdfa0faa4811823f9ad1d998de",
+        "output": "sha256:e0ce950e060c8472856827b5e99787f92accf3e520e286cced498d81cd628d6f"
+      },
+      "TASK-962C9DCD": {
+        "input": "sha256:1faee2008739713880385b01a99ba20632e6258a059a015981bfa329a6a27948",
+        "output": "sha256:c75087d8160f4356732281fbee7a3cfe5a9b0610de4ef631b68b2ca25be077b9"
+      },
+      "TASK-7996DF86": {
+        "input": "sha256:8a878c4bb656644fa003605f2b84b5b4dd430e4a5b21eac8a241d2e76ac13858",
+        "output": "sha256:7b32a8768970f375946f5abaa256749f0b97a06b5c8c3fabd4e4cbd0a4a4a77a"
+      },
+      "TASK-CD814970": {
+        "input": "sha256:47507cbe7724e4723343d17cbbe0093a6a5ca4f1e12ed4dacbcabf1f26f8bca8",
+        "output": "sha256:fab53e729ac15925a0d30a25a035ab678518bc86572803bea1f4297154a5bc58"
+      },
+      "TASK-4A04805B": {
+        "input": "sha256:258ded069eed861b8147a41afae2310953017a320bfc4447c53d3f664066a039",
+        "output": "sha256:e0d9d0cd349ccf64cd75d21b935c8790e23571e7d05c39239f1e1598dad5553e"
+      },
+      "TASK-38A95D4B": {
+        "input": "sha256:ee98b4167409ecb6d1ee5f7761349e4a77b4884f301c62e0640ab9f8a148cd7d",
+        "output": "sha256:28655ee326538385818356837dfb6bca90b4fec2ec8b5351ad184af7e0c6b215"
+      }
+    },
+    "executor_verifier_separation": {
+      "executor_write_tasks": 0,
+      "verifier_read_tasks": 0,
+      "separated": true,
+      "applicable": false
+    },
+    "matrix": {
+      "stage_tasks": 8,
+      "dispatch_event_coverage": 1.0,
+      "response_event_coverage": 1.0,
+      "model_usage_task_count": 0
+    },
+    "earliest_stop_stage": "CaseToDatasetSkill",
+    "trace_span_count": 29,
+    "mode_has_persisted_stage_tasks": true,
+    "mode": "AGENTTEAMS_MATRIX"
+  },
+  "runtime_metrics": {
+    "started_at": "2026-09-18T14:19:44.628618Z",
+    "finished_at": "2026-09-18T14:35:24.064981Z",
+    "wall_clock_ms": 939436,
+    "stage_task_count": 8,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "model_call_count": 0,
+      "collection_status": "UNAVAILABLE"
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "isolated_postgresql_store",
+      "case_id": "CASE-2026-0004"
+    },
+    {
+      "kind": "matrix_team_run",
+      "run_id": "RUN-AGT-597AC03D"
+    },
+    {
+      "kind": "audit_chain",
+      "value": {
+        "enforced": true,
+        "valid": true,
+        "rows_checked": 153,
+        "broken_links": 0
+      }
+    }
+  ],
+  "limitations": [
+    "One real AgentTeams / Matrix observation per Golden Case; this is not a statistical sample.",
+    "No money action is approved in this experiment; GOLDEN-001 stops at the human gate."
+  ]
+}

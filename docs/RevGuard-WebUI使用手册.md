@@ -450,7 +450,7 @@ WebUI 中的“模拟记账（入账）”表示写入演示用佣金台账；�
 | 审计链 | 审计记录是否经过数据库级校验 |
 | Trace 错误 | 已持久化的追踪错误数量 |
 | StageResult | 阶段任务结果和任务终态是否一并持久化 |
-| 本地 stdio 排练 | 本地执行器的存档排练结果，不是本次 AgentTeams 运行 |
+| 本地 stdio 回归 | 本地执行器的存档回归结果，不是本次 AgentTeams 运行 |
 | 合成数据校验 | Fixture、订单和 Golden Case 的校验结果 |
 | 本地 PostgreSQL | 本地 PostgreSQL/PolarDB 兼容性检查结果，不代表云端验收 |
 | 确定性评测 | Golden Case 和风险边界场景的通过数 |
