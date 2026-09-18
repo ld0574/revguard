@@ -35,6 +35,7 @@
   （10 个 Worker + Manager 共 11/11 生效 `max_tokens=2048 + reasoning_effort=low`，4/4 真实工具调用探针 `MODEL_READY`）。
 - 官网运行回放页验收：`docs/evidence/website-replay-20260918/`（CASE-0001/CASE-0008 浏览器回放、移动端、子路径资源）。
 - 审批参数承诺对抗验证：`docs/evidence/approval-commitment-20260918/`（5 场景探针 + JSON 机器可读结果）。
+- Element 多 Agent 任务交接证据（对应复赛答辩第 2 问）：`docs/evidence/agentteams-handoff-20260918/`，编排房间逐条 `REVGUARD_STAGE_HANDOFF`（上一步 StageTask/产物哈希 → 下一个 StageTask/输入哈希/案件版本），承接方 Worker 房间回 `skill_receipt`；截图 + 机读清单 + 抓取脚本。
 - 执行引用监视器对抗验证：`docs/evidence/execution-reference-20260918/`（5 场景探针 + JSON 机器可读结果）。
 
 ## P2（竞品分析里“投产出比高但工作量大”的两项）

@@ -1,0 +1,831 @@
+{
+ "total": 47,
+ "rows": [
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "RiskClassifySkill",
+   "next_skill": "CaseToDatasetSkill",
+   "prev_task": "TASK-4F20BA6A",
+   "next_task": "TASK-822D13FA",
+   "prev_hash": "e0d9d0cd349ccf64",
+   "prev_event": "$8wHZDGPVvU5QhLviBY-",
+   "case_version": "8367a53bf9e23e5e",
+   "ts": 1789690147929,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "approval_required",
+    "collection_sizes",
+    "result_keys",
+    "risk_level"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "DifferenceExplainSkill",
+   "next_skill": "RiskClassifySkill",
+   "prev_task": "TASK-4EDA8828",
+   "next_task": "TASK-4F20BA6A",
+   "prev_hash": "fab53e729ac15925",
+   "prev_event": "$tEBD3aV4apsTqBfUCsd",
+   "case_version": "4605c204dbdc2c78",
+   "ts": 1789690134354,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "CommissionCalculateSkill",
+   "next_skill": "DifferenceExplainSkill",
+   "prev_task": "TASK-C20F6C7C",
+   "next_task": "TASK-4EDA8828",
+   "prev_hash": "a341d644e8aa81f0",
+   "prev_event": "$2t1iRQUodN2g3t7kK1z",
+   "case_version": "d92a23efc570429c",
+   "ts": 1789690098809,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "eligible",
+    "policy_version",
+    "result_keys",
+    "total_commission"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "PolicyVersionMatchSkill",
+   "next_skill": "CommissionCalculateSkill",
+   "prev_task": "TASK-AE54609B",
+   "next_task": "TASK-C20F6C7C",
+   "prev_hash": "c75087d8160f4356",
+   "prev_event": "$AdTESl_QZO_p1X3LyIR",
+   "case_version": "8d99a25a6eb37149",
+   "ts": 1789690062701,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "policy_version",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "EvidenceCollectSkill",
+   "next_skill": "PolicyVersionMatchSkill",
+   "prev_task": "TASK-B5814EA8",
+   "next_task": "TASK-AE54609B",
+   "prev_hash": "6afc8d0338a6b603",
+   "prev_event": "$qEi5u7XmeQ1Dd9l_AYw",
+   "case_version": "06db8b79ea002782",
+   "ts": 1789690035713,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "evidence_score",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "EntityResolveSkill",
+   "next_skill": "EvidenceCollectSkill",
+   "prev_task": "TASK-5A7E4F7B",
+   "next_task": "TASK-B5814EA8",
+   "prev_hash": "1f960d62db79e91d",
+   "prev_event": "$YZfn6JdeCEkXtsLPN_R",
+   "case_version": "66b6d5ffc56bb914",
+   "ts": 1789690011875,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": "CaseNormalizeSkill",
+   "next_skill": "EntityResolveSkill",
+   "prev_task": "TASK-EFF07109",
+   "next_task": "TASK-5A7E4F7B",
+   "prev_hash": "67e1a1b95f1e1c6f",
+   "prev_event": "$zrFb7UgTK8SHDv4NTUk",
+   "case_version": "9ad12259e4f8ab4e",
+   "ts": 1789689981210,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0004",
+   "run": "RUN-AGT-D54CEA9D",
+   "prev_skill": null,
+   "next_skill": "CaseNormalizeSkill",
+   "prev_task": null,
+   "next_task": "TASK-EFF07109",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "",
+   "case_version": "a5eb70d66002b3c7",
+   "ts": 1789689949825,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "RiskClassifySkill",
+   "next_skill": "ApprovalRouteSkill",
+   "prev_task": "TASK-EEB19020",
+   "next_task": "TASK-80B78419",
+   "prev_hash": "74f25ad33db2c5b9",
+   "prev_event": "$yHiiCiJBY3KlG6Whiwi",
+   "case_version": "69214ce3c26fa369",
+   "ts": 1789689328477,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "approval_required",
+    "collection_sizes",
+    "result_keys",
+    "risk_level"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "DifferenceExplainSkill",
+   "next_skill": "RiskClassifySkill",
+   "prev_task": "TASK-E6060591",
+   "next_task": "TASK-EEB19020",
+   "prev_hash": "077502a6c2550877",
+   "prev_event": "$PHvMuNWrs2T6srQU8eM",
+   "case_version": "04febee7170e21cd",
+   "ts": 1789689315747,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "CommissionCalculateSkill",
+   "next_skill": "DifferenceExplainSkill",
+   "prev_task": "TASK-A63E707C",
+   "next_task": "TASK-E6060591",
+   "prev_hash": "ce4fee61bd24ff1e",
+   "prev_event": "$-vcUeLUcFUkFIOnkzVe",
+   "case_version": "8cac95a96c1138fd",
+   "ts": 1789689296586,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "eligible",
+    "policy_version",
+    "result_keys",
+    "total_commission"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "PolicyVersionMatchSkill",
+   "next_skill": "CommissionCalculateSkill",
+   "prev_task": "TASK-1C07E7F9",
+   "next_task": "TASK-A63E707C",
+   "prev_hash": "1223589311d58894",
+   "prev_event": "$eAifCxX_CNiOX1XRXo7",
+   "case_version": "f5d228898459b7b8",
+   "ts": 1789689278531,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "policy_version",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "EvidenceCollectSkill",
+   "next_skill": "PolicyVersionMatchSkill",
+   "prev_task": "TASK-133C4870",
+   "next_task": "TASK-1C07E7F9",
+   "prev_hash": "555f1d5c32e1a919",
+   "prev_event": "$CjAcCSklkV3d4XaPajn",
+   "case_version": "cd82d09dcc58e007",
+   "ts": 1789689251982,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "evidence_score",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "EntityResolveSkill",
+   "next_skill": "EvidenceCollectSkill",
+   "prev_task": "TASK-485EBE5B",
+   "next_task": "TASK-133C4870",
+   "prev_hash": "7a7d91ad646c4287",
+   "prev_event": "$F6WLX3ZyWaj25hjcrOW",
+   "case_version": "d80c88ac69851500",
+   "ts": 1789689210814,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": "CaseNormalizeSkill",
+   "next_skill": "EntityResolveSkill",
+   "prev_task": "TASK-15BB7325",
+   "next_task": "TASK-485EBE5B",
+   "prev_hash": "9fe97dc45ef059d1",
+   "prev_event": "$elwlofLpNsgboL5nmKH",
+   "case_version": "c7e3cf7777c0d284",
+   "ts": 1789689190634,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0002",
+   "run": "RUN-AGT-D9B94E40",
+   "prev_skill": null,
+   "next_skill": "CaseNormalizeSkill",
+   "prev_task": null,
+   "next_task": "TASK-15BB7325",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "",
+   "case_version": "8f6f19fa98c1dfee",
+   "ts": 1789689165722,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "RiskClassifySkill",
+   "next_skill": "CaseToDatasetSkill",
+   "prev_task": "TASK-2E7917BF",
+   "next_task": "TASK-AAB3E070",
+   "prev_hash": "48de96438cbc2e9f",
+   "prev_event": "$7k2OHuBYRC9JQ3pr9dM",
+   "case_version": "f142bf55d12d9170",
+   "ts": 1789689021820,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "approval_required",
+    "collection_sizes",
+    "result_keys",
+    "risk_level"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "DifferenceExplainSkill",
+   "next_skill": "RiskClassifySkill",
+   "prev_task": "TASK-79A5EBC0",
+   "next_task": "TASK-2E7917BF",
+   "prev_hash": "85233f2d2a2e08e5",
+   "prev_event": "$ZcalaOVc4eX245NEedS",
+   "case_version": "f004ad39978cd2c8",
+   "ts": 1789689007261,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "CommissionCalculateSkill",
+   "next_skill": "DifferenceExplainSkill",
+   "prev_task": "TASK-3C9DAEF2",
+   "next_task": "TASK-79A5EBC0",
+   "prev_hash": "949cf53d4a2a4f8b",
+   "prev_event": "$L2BHNGosSKOUd4p721Y",
+   "case_version": "ebe0702559fc9c14",
+   "ts": 1789688979663,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "eligible",
+    "policy_version",
+    "result_keys",
+    "total_commission"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "PolicyVersionMatchSkill",
+   "next_skill": "CommissionCalculateSkill",
+   "prev_task": "TASK-8943F071",
+   "next_task": "TASK-3C9DAEF2",
+   "prev_hash": "08134e51d2af0e8a",
+   "prev_event": "$xuxegNOTc9w11hiuQjV",
+   "case_version": "1ab3dca10b9adb04",
+   "ts": 1789688946291,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "policy_version",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "EvidenceCollectSkill",
+   "next_skill": "PolicyVersionMatchSkill",
+   "prev_task": "TASK-8FEBE6AB",
+   "next_task": "TASK-8943F071",
+   "prev_hash": "2c6f3e46c5118294",
+   "prev_event": "$Yd0AXBgXbgPDpok6ZZx",
+   "case_version": "d7a5e3e3153652af",
+   "ts": 1789688913954,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "evidence_score",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "EntityResolveSkill",
+   "next_skill": "EvidenceCollectSkill",
+   "prev_task": "TASK-74422BAD",
+   "next_task": "TASK-8FEBE6AB",
+   "prev_hash": "1f960d62db79e91d",
+   "prev_event": "$Y735UFGnDPBc_XyTV07",
+   "case_version": "f392d5f0af98a033",
+   "ts": 1789688884323,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": "CaseNormalizeSkill",
+   "next_skill": "EntityResolveSkill",
+   "prev_task": "TASK-6CD05FE6",
+   "next_task": "TASK-74422BAD",
+   "prev_hash": "3f83f5e43df3512e",
+   "prev_event": "$Lqvhp6QI8pLETZziTk1",
+   "case_version": "eeb1efcb4e16a8a9",
+   "ts": 1789688853995,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0007",
+   "run": "RUN-AGT-219FA68F",
+   "prev_skill": null,
+   "next_skill": "CaseNormalizeSkill",
+   "prev_task": null,
+   "next_task": "TASK-6CD05FE6",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "",
+   "case_version": "2b4dc7bd9fb713a4",
+   "ts": 1789688808901,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "PostRollbackVerifySkill",
+   "next_skill": "CaseToDatasetSkill",
+   "prev_task": "TASK-6546DE3C",
+   "next_task": "TASK-6B0FDAAF",
+   "prev_hash": "d22900105350330f",
+   "prev_event": "$TmvQKJcQIACJ2ZDgkuP",
+   "case_version": "b92eba10a685de78",
+   "ts": 1789678369065,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys",
+    "verification_status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "LedgerReverseSkill",
+   "next_skill": "PostRollbackVerifySkill",
+   "prev_task": "TASK-F9291A86",
+   "next_task": "TASK-6546DE3C",
+   "prev_hash": "7712a37ca90b1c18",
+   "prev_event": "$2l4XxKRS2v9iKRpC6bo",
+   "case_version": "19f53bad10b8efe4",
+   "ts": 1789678350158,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "PostActionVerifySkill",
+   "next_skill": "LedgerReverseSkill",
+   "prev_task": "TASK-2E833791",
+   "next_task": "TASK-F9291A86",
+   "prev_hash": "249899a5e823519d",
+   "prev_event": "$y6Gx9D24LNKDRiBTIgn",
+   "case_version": "19f53bad10b8efe4",
+   "ts": 1789678337686,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys",
+    "verification_status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "LedgerAdjustSkill",
+   "next_skill": "PostActionVerifySkill",
+   "prev_task": "TASK-E9D7CDEC",
+   "next_task": "TASK-2E833791",
+   "prev_hash": "4ab476364443ebc6",
+   "prev_event": "$_W2NUKJ91Y3w8210y1s",
+   "case_version": "ebbf6864b450727a",
+   "ts": 1789678319425,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys",
+    "status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "AdjustmentDraftSkill",
+   "next_skill": "LedgerAdjustSkill",
+   "prev_task": "TASK-DC92ECBE",
+   "next_task": "TASK-E9D7CDEC",
+   "prev_hash": "4447c678c22bf7cd",
+   "prev_event": "$Iaffr6C00AUQ01Y40vs",
+   "case_version": "22d9be0c4b4241ee",
+   "ts": 1789678306027,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "result_keys",
+    "status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "IdempotencyGuardSkill",
+   "next_skill": "AdjustmentDraftSkill",
+   "prev_task": "TASK-0A177EBF",
+   "next_task": "TASK-DC92ECBE",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "$z-cN6Vw5yjHMXd5570O",
+   "case_version": "22d9be0c4b4241ee",
+   "ts": 1789678291973,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "AdjustmentDraftSkill",
+   "next_skill": "IdempotencyGuardSkill",
+   "prev_task": "TASK-D6008D82",
+   "next_task": "TASK-0A177EBF",
+   "prev_hash": "c221695ede7b8a9c",
+   "prev_event": "$xb3AilDSajhOS4KfhfF",
+   "case_version": "22d9be0c4b4241ee",
+   "ts": 1789678282380,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "result_keys",
+    "status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "IdempotencyGuardSkill",
+   "next_skill": "AdjustmentDraftSkill",
+   "prev_task": "TASK-25A30385",
+   "next_task": "TASK-D6008D82",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "$iY3wjgQdoNhVfm6kUIT",
+   "case_version": "22d9be0c4b4241ee",
+   "ts": 1789678268457,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "PermissionCheckSkill",
+   "next_skill": "IdempotencyGuardSkill",
+   "prev_task": "TASK-3FA3F78E",
+   "next_task": "TASK-25A30385",
+   "prev_hash": "0b3443a9377c829f",
+   "prev_event": "$AKxFT44Cgt_w7On9uMD",
+   "case_version": "22d9be0c4b4241ee",
+   "ts": 1789678255963,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "ApprovalRouteSkill",
+   "next_skill": "PermissionCheckSkill",
+   "prev_task": "TASK-6FB643D7",
+   "next_task": "TASK-3FA3F78E",
+   "prev_hash": "48bea2a99048a55d",
+   "prev_event": "$nF17FqL-6VEXSEgy7v7",
+   "case_version": "7847649d74d01825",
+   "ts": 1789678244822,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "result_keys",
+    "risk_level",
+    "status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "RiskClassifySkill",
+   "next_skill": "ApprovalRouteSkill",
+   "prev_task": "TASK-BA095DD1",
+   "next_task": "TASK-6FB643D7",
+   "prev_hash": "54a2620a250e5971",
+   "prev_event": "$JS5EkVhrKS9FicDs0zj",
+   "case_version": "9456494dcb078549",
+   "ts": 1789678099149,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "approval_required",
+    "collection_sizes",
+    "result_keys",
+    "risk_level"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "DifferenceExplainSkill",
+   "next_skill": "RiskClassifySkill",
+   "prev_task": "TASK-D1F36F2C",
+   "next_task": "TASK-BA095DD1",
+   "prev_hash": "14d7683fd1a4c384",
+   "prev_event": "$ReQL00KEMF5RF22kk4A",
+   "case_version": "871648644be5b415",
+   "ts": 1789678087529,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "CommissionCalculateSkill",
+   "next_skill": "DifferenceExplainSkill",
+   "prev_task": "TASK-E3459578",
+   "next_task": "TASK-D1F36F2C",
+   "prev_hash": "4e23d7e686cd9c0e",
+   "prev_event": "$ZYLLFCrlwli003PJgOM",
+   "case_version": "4e2e28071ee07c1f",
+   "ts": 1789678073297,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "eligible",
+    "policy_version",
+    "result_keys",
+    "total_commission"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "PolicyVersionMatchSkill",
+   "next_skill": "CommissionCalculateSkill",
+   "prev_task": "TASK-B529CCDD",
+   "next_task": "TASK-E3459578",
+   "prev_hash": "f8d94168987eaaaa",
+   "prev_event": "$ROgf-mXDVmiE-_MHDtO",
+   "case_version": "55dbfa7439aab1d2",
+   "ts": 1789678058217,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "policy_version",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "EvidenceCollectSkill",
+   "next_skill": "PolicyVersionMatchSkill",
+   "prev_task": "TASK-83FF1318",
+   "next_task": "TASK-B529CCDD",
+   "prev_hash": "2c433daf3a2377cc",
+   "prev_event": "$fh9_5e8Wi6Pb1fqjCgX",
+   "case_version": "d8c89d30c62e38d8",
+   "ts": 1789678030239,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "evidence_score",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "EntityResolveSkill",
+   "next_skill": "EvidenceCollectSkill",
+   "prev_task": "TASK-DC2E012A",
+   "next_task": "TASK-83FF1318",
+   "prev_hash": "0c0e383d16224e44",
+   "prev_event": "$1rgBGjnS0kyNJDbANRJ",
+   "case_version": "11afb0d5b2520efa",
+   "ts": 1789678013689,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": "CaseNormalizeSkill",
+   "next_skill": "EntityResolveSkill",
+   "prev_task": "TASK-3B9F5AE6",
+   "next_task": "TASK-DC2E012A",
+   "prev_hash": "313a672ed3a55519",
+   "prev_event": "$nti3gfcVdHqBQ06x5vj",
+   "case_version": "71b9dbabb192ec4c",
+   "ts": 1789677998046,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-4A1C0DE2",
+   "prev_skill": null,
+   "next_skill": "CaseNormalizeSkill",
+   "prev_task": null,
+   "next_task": "TASK-3B9F5AE6",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "",
+   "case_version": "0eb77b9d5deee508",
+   "ts": 1789677973291,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-0815E733",
+   "prev_skill": "PostActionVerifySkill",
+   "next_skill": "CaseToDatasetSkill",
+   "prev_task": "TASK-92CB1C06",
+   "next_task": "TASK-A11B94D5",
+   "prev_hash": "d3c8c696ff76202d",
+   "prev_event": "$PGho5rNXO8N7BXVtiYP",
+   "case_version": "e4dcb634023bee0c",
+   "ts": 1789677514256,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys",
+    "verification_status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-0815E733",
+   "prev_skill": "LedgerAdjustSkill",
+   "next_skill": "PostActionVerifySkill",
+   "prev_task": "TASK-4921C574",
+   "next_task": "TASK-92CB1C06",
+   "prev_hash": "82bd2dac189cf464",
+   "prev_event": "$cS6fbi0L_rQqlr_uiGP",
+   "case_version": "444ecf5cc236a9f7",
+   "ts": 1789677491983,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "result_keys",
+    "status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-0815E733",
+   "prev_skill": "AdjustmentDraftSkill",
+   "next_skill": "LedgerAdjustSkill",
+   "prev_task": "TASK-71FBDA0C",
+   "next_task": "TASK-4921C574",
+   "prev_hash": "48bf9573f104aa10",
+   "prev_event": "$dbHZHDr9U2a3KfOxgf0",
+   "case_version": "30b38b448c7ee31f",
+   "ts": 1789677478581,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "result_keys",
+    "status"
+   ]
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-0815E733",
+   "prev_skill": "IdempotencyGuardSkill",
+   "next_skill": "AdjustmentDraftSkill",
+   "prev_task": "TASK-A841E841",
+   "next_task": "TASK-71FBDA0C",
+   "prev_hash": "74234e98afe7498f",
+   "prev_event": "$YyJxz4_vPz7ePLNU2DK",
+   "case_version": "30b38b448c7ee31f",
+   "ts": 1789677465195,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": []
+  },
+  {
+   "case": "CASE-2026-0008",
+   "run": "RUN-AGT-0815E733",
+   "prev_skill": "AdjustmentDraftSkill",
+   "next_skill": "IdempotencyGuardSkill",
+   "prev_task": "TASK-32CDFE28",
+   "next_task": "TASK-A841E841",
+   "prev_hash": "eec067fca802251f",
+   "prev_event": "$6t3jXXxPw_Uem_a9LXP",
+   "case_version": "30b38b448c7ee31f",
+   "ts": 1789677452747,
+   "sender": "@admin:matrix-local.agentteams.io:8086",
+   "summary_keys": [
+    "collection_sizes",
+    "currency",
+    "result_keys",
+    "status"
+   ]
+  }
+ ]
+}
