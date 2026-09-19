@@ -59,7 +59,11 @@ class TestMatrixRuntimeConfig(unittest.TestCase):
         def fake_team_resource(controller: str, team_name: str) -> dict:
             self.assertEqual(controller, "agentteams-controller")
             self.assertEqual(team_name, "revguard-team")
-            return {"name": team_name, "teamRoomID": "!team:matrix.test"}
+            return {
+                "name": team_name,
+                "teamRoomID": "!team:matrix.test",
+                "leaderDMRoomID": "!leader:matrix.test",
+            }
 
         with (
             patch.object(runtime, "container_environment", fake_environment),
@@ -78,10 +82,18 @@ class TestMatrixRuntimeConfig(unittest.TestCase):
             values["REVGUARD_MATRIX_ROOM_ID"],
             "!team:matrix.test",
         )
+        self.assertEqual(
+            values["REVGUARD_MATRIX_ORCHESTRATOR_ROOM_ID"],
+            "!leader:matrix.test",
+        )
         self.assertIn('"revguard-executor":"!revguard-executor:matrix.test"',
                       values["REVGUARD_MATRIX_WORKER_ROOMS_JSON"])
         self.assertEqual(
             values["REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN"],
+            "orchestrator-token",
+        )
+        self.assertEqual(
+            values["REVGUARD_MATRIX_ACCESS_TOKEN"],
             "orchestrator-token",
         )
 

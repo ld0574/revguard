@@ -40,6 +40,7 @@ class MatrixSettings:
     homeserver_url: str
     room_id: str
     server_name: str
+    orchestrator_room_id: str = ""
     username: str = ""
     password: str = ""
     access_token: str = ""
@@ -83,6 +84,9 @@ class MatrixSettings:
                 "REVGUARD_MATRIX_SERVER_NAME",
                 "matrix-local.agentteams.io:8086",
             ),
+            orchestrator_room_id=os.getenv(
+                "REVGUARD_MATRIX_ORCHESTRATOR_ROOM_ID", "",
+            ),
             username=os.getenv("REVGUARD_MATRIX_USERNAME", ""),
             password=os.getenv("REVGUARD_MATRIX_PASSWORD", ""),
             access_token=os.getenv("REVGUARD_MATRIX_ACCESS_TOKEN", ""),
@@ -125,11 +129,8 @@ class MatrixSettings:
     def for_approval(self) -> MatrixSettings:
         """Return settings for the human-facing approval service identity.
 
-        The AgentTeams transport account may be the recording admin because it
-        must deliver StageTasks to all Worker rooms.  The approval request is
-        instead sent by the already joined orchestrator service account when a
-        dedicated token is configured, so Element visibly distinguishes the
-        service request from the human approver's reply.
+        The approval request/result must use the orchestrator service identity,
+        never the human admin account.
         """
         if not self.approval_access_token:
             return self
@@ -138,6 +139,20 @@ class MatrixSettings:
             username="",
             password="",
             access_token=self.approval_access_token,
+            approval_access_token="",
+        )
+
+    def for_admin_transport(self) -> MatrixSettings:
+        """Use the configured human/admin login only for private leader wake-up.
+
+        Domain dispatch and room-visible control messages use ``access_token``,
+        which is required to belong to ``revguard-orchestrator``.  The admin
+        login is retained solely to wake the leader Worker in its private DM;
+        it never represents the orchestrator in the Team room.
+        """
+        return replace(
+            self,
+            access_token="",
             approval_access_token="",
         )
 
@@ -194,6 +209,26 @@ class MatrixClient:
         """Return the Matrix subject authenticated by the current access token."""
         return await self._request(
             "GET", "/_matrix/client/v3/account/whoami", None,
+        )
+
+    async def joined_room_ids(self) -> set[str]:
+        response = await self._request(
+            "GET", "/_matrix/client/v3/joined_rooms", None,
+        )
+        rooms = response.get("joined_rooms") or []
+        return {str(room_id) for room_id in rooms if room_id}
+
+    async def invite_user(self, room_id: str, user_id: str) -> None:
+        room = parse.quote(room_id, safe="")
+        await self._request(
+            "POST", f"/_matrix/client/v3/rooms/{room}/invite",
+            {"user_id": user_id},
+        )
+
+    async def join_room(self, room_id: str) -> None:
+        room = parse.quote(room_id, safe="")
+        await self._request(
+            "POST", f"/_matrix/client/v3/join/{room}", {},
         )
 
     async def send_text(
@@ -306,12 +341,17 @@ class MatrixTeamRunner(McpTeamRunner):
 
     def __init__(self, store, gateway, *, output_dir, report_dir,
                  settings: MatrixSettings | None = None,
-                 client: MatrixClient | None = None):
+                 client: MatrixClient | None = None,
+                 admin_client: MatrixClient | None = None):
         super().__init__(
             store, gateway, output_dir=output_dir, report_dir=report_dir,
         )
         self.settings = settings or MatrixSettings.from_env()
         self.client = client or MatrixClient(self.settings)
+        self.admin_client = admin_client or (
+            client if client is not None
+            else MatrixClient(self.settings.for_admin_transport())
+        )
         self.approval_client = (
             MatrixClient(self.settings.for_approval())
             if self.settings.approval_access_token
@@ -657,8 +697,12 @@ class MatrixTeamRunner(McpTeamRunner):
 
     async def _orchestrator_handshake_transport(self, case: dict) -> None:
         await self.client.authenticate()
-        cursor = await self.client.cursor()
         orchestrator = self._mxid("revguard-orchestrator")
+        subject = str((await self.client.whoami()).get("user_id") or "")
+        if subject != orchestrator:
+            raise MatrixTransportError(
+                "Matrix 控制身份必须是 revguard-orchestrator，禁止使用人工 admin 代发"
+            )
         input_summary = {
             "run_id": self.run_id,
             "traceparent": otel.carrier().get("traceparent"),
@@ -667,17 +711,21 @@ class MatrixTeamRunner(McpTeamRunner):
             "authority": "state-machine",
         }
         header_id = await self.client.send_text(
-            "REVGUARD_CONTROL_INPUT\n" + json.dumps(
-                input_summary, ensure_ascii=False, separators=(",", ":"),
-            )
+            "【编排开始】revguard-orchestrator 已接管案件调度\n"
+            f"案件：{case['case_id']}\n"
+            f"运行：{self.run_id}\n"
+            "后续任务将由编排智能体分派给各专业 Worker。"
         )
-        trigger_id = await self.client.send_text(
+        await self.admin_client.authenticate()
+        cursor = await self.admin_client.cursor()
+        leader_room_id = self.settings.orchestrator_room_id or self.settings.room_id
+        trigger_id = await self.admin_client.send_text(
             f"{orchestrator}\n"
             f"RevGuard 控制面握手。run_id={self.run_id} case_id={case['case_id']}。"
             "请不要执行领域 Skill；仅确认你理解：案件状态只能由服务端状态机推进，"
             "Worker 必须使用绑定 task_id 的 Adapter。"
             f"只回复：RUN_ACCEPTED {self.run_id}",
-            mentions=[orchestrator],
+            mentions=[orchestrator], room_id=leader_room_id,
         )
         self._update_run(case, orchestrator={
             "actor": "revguard-orchestrator",
@@ -687,9 +735,10 @@ class MatrixTeamRunner(McpTeamRunner):
             "status": "WAITING",
             "output": None,
         })
-        event = await self.client.wait_for_event(
+        event = await self.admin_client.wait_for_event(
             since=cursor,
             timeout_seconds=self.settings.orchestrator_timeout_seconds,
+            room_id=leader_room_id,
             predicate=lambda item: (
                 item.get("sender") == orchestrator
                 and self.run_id in str(item.get("content", {}).get("body", ""))

@@ -235,6 +235,10 @@ if [ "$PROFILE" = "full" ]; then
   AGENTTEAMS_LLM_API_KEY_OVERRIDE="$gateway_key" \
   bash scripts/agentteams_setup.sh
 
+  log "授权 revguard-orchestrator 进入全部 Worker 房间"
+  "${compose[@]}" run --rm -T --no-deps --entrypoint python \
+    revguard-api -m scripts.ensure_matrix_orchestrator_memberships
+
   log "重新加载自动发现的 Matrix 配置"
   "${compose[@]}" up -d --force-recreate --no-deps revguard-api
 fi

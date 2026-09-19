@@ -101,6 +101,10 @@ def collect_runtime(
         "AGENTTEAMS_ADMIN_USER": controller_env.get("AGENTTEAMS_ADMIN_USER"),
         "AGENTTEAMS_ADMIN_PASSWORD": controller_env.get("AGENTTEAMS_ADMIN_PASSWORD"),
         "AGENTTEAMS_TEAM_ROOM_ID": team.get("teamRoomID"),
+        "AGENTTEAMS_LEADER_DM_ROOM_ID": team.get("leaderDMRoomID"),
+        "AGENTTEAMS_ORCHESTRATOR_TOKEN": orchestrator_env.get(
+            "AGENTTEAMS_WORKER_MATRIX_TOKEN"
+        ),
     }
     missing = [key for key, value in required.items() if not value]
     if missing:
@@ -126,21 +130,24 @@ def collect_runtime(
         # The Team room is the human-visible collaboration room.  The
         # orchestrator Worker room is only for leader/worker protocol traffic.
         "REVGUARD_MATRIX_ROOM_ID": required["AGENTTEAMS_TEAM_ROOM_ID"],
+        "REVGUARD_MATRIX_ORCHESTRATOR_ROOM_ID": required[
+            "AGENTTEAMS_LEADER_DM_ROOM_ID"
+        ],
         "REVGUARD_MATRIX_WORKER_ROOMS_JSON": json.dumps(
             rooms, ensure_ascii=False, separators=(",", ":"),
         ),
         "REVGUARD_MATRIX_SERVER_NAME": required["AGENTTEAMS_MATRIX_DOMAIN"],
         "REVGUARD_MATRIX_USERNAME": required["AGENTTEAMS_ADMIN_USER"],
         "REVGUARD_MATRIX_PASSWORD": required["AGENTTEAMS_ADMIN_PASSWORD"],
-        # clears cached credential so configured login is used
-        "REVGUARD_MATRIX_ACCESS_TOKEN": "",  # nosec B105
-        # The orchestrator Worker is already a member of the Team room.  Its
-        # token is used only for the human-facing approval request/result;
-        # StageTask delivery keeps the admin transport account because it must
-        # be a member of every Worker room.
-        "REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN": orchestrator_env.get(
-            "AGENTTEAMS_WORKER_MATRIX_TOKEN", ""
-        ),  # nosec B105
+        # All room-visible control and StageTask dispatches use the
+        # orchestrator service identity.  The admin login remains available
+        # only for private leader wake-up and human WebUI authentication.
+        "REVGUARD_MATRIX_ACCESS_TOKEN": required[
+            "AGENTTEAMS_ORCHESTRATOR_TOKEN"
+        ],  # nosec B105
+        "REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN": required[
+            "AGENTTEAMS_ORCHESTRATOR_TOKEN"
+        ],  # nosec B105
         "REVGUARD_MATRIX_APPROVAL_ALLOW_UNTHREADED_REPLY": "true",
         "REVGUARD_HITL_MATRIX_HOMESERVER_URL": homeserver_url,
         "REVGUARD_HITL_MATRIX_USERS_JSON": json.dumps({
@@ -184,7 +191,7 @@ def main() -> None:
     args = parser.parse_args()
     runtime = collect_runtime(args.container_prefix, args.controller, args.team_name)
     update_env(args.env, runtime)
-    print("已配置 Matrix 登录、控制房间与 9 个 Worker 独立房间；.env 权限已设为 0600。")
+    print("已配置 orchestrator 控制身份、Team/Leader 房间与 9 个 Worker 独立房间；.env 权限已设为 0600。")
 
 
 if __name__ == "__main__":

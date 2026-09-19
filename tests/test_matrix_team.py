@@ -40,6 +40,9 @@ class FakeMatrixClient:
     async def authenticate(self):
         return None
 
+    async def whoami(self):
+        return {"user_id": f"@revguard-orchestrator:{self.settings.server_name}"}
+
     async def cursor(self):
         return f"s{self.counter}"
 
@@ -121,6 +124,9 @@ class NoCompletionMatrixClient:
     async def authenticate(self):
         return None
 
+    async def whoami(self):
+        return {"user_id": f"@revguard-orchestrator:{self.settings.server_name}"}
+
     async def cursor(self):
         return "cursor"
 
@@ -158,6 +164,7 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
         values = {
             "REVGUARD_MATRIX_HOMESERVER_URL": "http://matrix.test/",
             "REVGUARD_MATRIX_ROOM_ID": "!team:test",
+            "REVGUARD_MATRIX_ORCHESTRATOR_ROOM_ID": "!leader:test",
             "REVGUARD_MATRIX_SERVER_NAME": "test",
             "REVGUARD_MATRIX_ACCESS_TOKEN": "token",
             "REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN": "approval-token",
@@ -172,6 +179,7 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
             settings = MatrixSettings.from_env()
         self.assertEqual(settings.homeserver_url, "http://matrix.test")
         self.assertEqual(settings.worker_rooms["revguard-intake"], "!dm:test")
+        self.assertEqual(settings.orchestrator_room_id, "!leader:test")
         self.assertFalse(settings.require_orchestrator_ack)
         self.assertEqual(
             settings.token_usage_url_template,
@@ -181,6 +189,11 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(approval_settings.access_token, "approval-token")
         self.assertEqual(approval_settings.username, "")
         self.assertEqual(approval_settings.password, "")
+        admin_settings = settings.for_admin_transport()
+        self.assertEqual(admin_settings.access_token, "")
+        self.assertEqual(admin_settings.approval_access_token, "")
+        self.assertEqual(admin_settings.username, settings.username)
+        self.assertEqual(admin_settings.password, settings.password)
         settings.validate()
 
         with patch.dict(
@@ -230,6 +243,34 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(event["event_id"], "$reply")
         self.assertIn("m.mentions", client.calls[1][2])
+
+        membership = ScriptedMatrixClient(
+            MatrixSettings(
+                "http://matrix.test", "!team:test", "test", access_token="token",
+            ),
+            [
+                {"user_id": "@revguard-orchestrator:test"},
+                {"joined_rooms": ["!team:test"]},
+                {},
+                {},
+            ],
+        )
+        self.assertEqual(
+            (await membership.whoami())["user_id"],
+            "@revguard-orchestrator:test",
+        )
+        self.assertEqual(await membership.joined_room_ids(), {"!team:test"})
+        await membership.invite_user("!worker:test", "@revguard-orchestrator:test")
+        await membership.join_room("!worker:test")
+        self.assertEqual(
+            [call[1] for call in membership.calls],
+            [
+                "/_matrix/client/v3/account/whoami",
+                "/_matrix/client/v3/joined_rooms",
+                "/_matrix/client/v3/rooms/%21worker%3Atest/invite",
+                "/_matrix/client/v3/join/%21worker%3Atest",
+            ],
+        )
 
         missing = ScriptedMatrixClient(settings, [{}])
         with self.assertRaisesRegex(MatrixTransportError, "access_token"):
@@ -322,6 +363,19 @@ class TestMatrixTeamRunner(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.store.close()
         self.temp.cleanup()
+
+    async def test_orchestrator_handshake_rejects_admin_control_identity(self):
+        client = NoCompletionMatrixClient(self.settings)
+        client.whoami = AsyncMock(return_value={"user_id": "@admin:test"})
+        runner = MatrixTeamRunner(
+            self.store, self.gateway,
+            output_dir=Path(self.temp.name) / "identity-out",
+            report_dir=Path(self.temp.name) / "identity-report",
+            settings=self.settings, client=client,
+        )
+        with self.assertRaisesRegex(MatrixTransportError, "禁止使用人工 admin"):
+            await runner._orchestrator_handshake_transport(self.case)
+        self.assertEqual(client.counter, 0)
 
     async def test_real_transport_contract_persists_input_output_and_correlations(self):
         await self.runner.run_to_human_gate(self.case)
