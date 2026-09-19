@@ -37,12 +37,18 @@ async def main():
             raise RuntimeError("Persisted max_completion_tokens is not 512")
         request_limit = {"max_completion_tokens": 128}
         bounded_field = "max_completion_tokens"
-    else:
+    elif expected in {"glm-5.3-flash", "deepseek-flash"}:
         expected_max_tokens = int(os.environ.get("REVGUARD_EXPECTED_MAX_TOKENS", "2048"))
         if effective.get("max_tokens") != expected_max_tokens:
             raise RuntimeError(f"Persisted max_tokens is not {expected_max_tokens}")
         if effective.get("reasoning_effort") != "low":
-            raise RuntimeError("Persisted glm-5.3-flash reasoning_effort is not low")
+            raise RuntimeError(f"Persisted {expected} reasoning_effort is not low")
+        request_limit = {"max_tokens": 128}
+        bounded_field = "max_tokens"
+    else:
+        expected_max_tokens = int(os.environ.get("REVGUARD_EXPECTED_MAX_TOKENS", "2048"))
+        if effective.get("max_tokens") != expected_max_tokens:
+            raise RuntimeError(f"Persisted {expected} max_tokens is not {expected_max_tokens}")
         request_limit = {"max_tokens": 128}
         bounded_field = "max_tokens"
     model = provider.get_chat_model_instance(active["model"])

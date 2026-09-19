@@ -391,6 +391,9 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect, onReprepare }) 
   const currency = c.calculation_result?.currency || c.claim?.currency || "KES";
   const selectedPolicy = c.policy_decision?.policy_version;
   const excludedPolicies = (c.policy_decision?.excluded_versions || []).map((item) => item.version);
+  const roomApprovalRequestPublished = c.execution_mode === "AGENTTEAMS_MATRIX"
+    && c.status === "WAITING_FOR_APPROVAL"
+    && Boolean(run.approval_request_event_id);
   const draftOnly = verification.verification_status === "NOT_APPLICABLE_DRAFT_ONLY";
   const closedWithoutWrite = c.status === "CLOSED" && postings.length === 0;
   const verifiedClosure = isVerifiedClosure(snapshot);
@@ -414,7 +417,7 @@ function Pipeline({ snapshot, busy, onRun, onApprove, onInspect, onReprepare }) 
       </div>
       <div className="pipeline-details">
         <div className="pipeline-note calculation-note"><span>政策选择</span>{calculated ? <><strong>{excludedPolicies.length ? `${excludedPolicies.join(" / ")}：已排除` : "无冲突版本"}</strong><strong>{selectedPolicy || "规则集已选定"}：已采用</strong></> : <strong>等待政策匹配与确定性复算</strong>}</div>
-        <div className="pipeline-note capability-note"><span>能力边界</span><div>总额度上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /><small>{approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : draftOnly ? "低风险案件仅生成草稿" : closedWithoutWrite ? "风险策略禁止自动写入" : snapshot?.approval?.status === "REJECTED" ? "人工驳回已留痕，可重新准备本案" : "审批后签发短时能力"}</small></div>
+        <div className="pipeline-note capability-note"><span>能力边界</span><div>总额度上限：{money(approval.amount, currency)}</div><div>本次金额：{money(approvalAmount(snapshot), currency)}</div><PrimaryAction snapshot={snapshot} busy={busy} onRun={onRun} onApprove={onApprove} onInspect={onInspect} onReprepare={onReprepare} /><small>{roomApprovalRequestPublished ? "Element 主房间已发布审批请求，可回复批准/驳回；也可使用 WebUI 验证" : approval.amount !== undefined && approval.amount !== null ? "授权有效期：15 分钟" : draftOnly ? "低风险案件仅生成草稿" : closedWithoutWrite ? "风险策略禁止自动写入" : snapshot?.approval?.status === "REJECTED" ? "人工驳回已留痕，可重新准备本案" : "审批后签发短时能力"}</small></div>
         <div className="pipeline-note execution-note"><span>{draftOnly ? "佣金调整草稿" : "模拟记账（入账）"}</span>{postings.length ? <>{postings.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{signedMoney(item.amount, currency)}</strong>)}<div>合计：{signedMoney(postedTotal, currency)}</div></> : drafts.length ? <>{drafts.map((item) => <strong key={item.action_id || item.component}>{componentLabel(item.component)}：{signedMoney(item.amount, currency)}</strong>)}<div>共 {drafts.length} 份，未写入台账</div></> : <strong>{closedWithoutWrite ? "风险边界拦截，未发生写入" : "等待受限执行器写入"}</strong>}</div>
         <div className={`pipeline-note verify-note ${verification.verification_status === "FAILED" ? "is-failed" : ""}`}><span>验证结果</span>{draftOnly ? <><div>草稿未写入财务台账</div><div>实际写入：0.00 {currency}</div><strong>无需执行写后验证</strong></> : <><div>实际读取：{money(verification.actual_amount, currency)}</div><div>差异：{money(verification.variance, currency)}</div><strong>{verification.verification_status === "FAILED" ? "不匹配" : verification.verification_status === "PASSED" ? "验证通过" : closedWithoutWrite ? "无需写后验证" : "等待独立验证"}</strong></>}</div>
         <div className="pipeline-note rollback-note"><span>自动回滚执行</span>{reversals.length ? <>{reversals.map((item) => <strong key={item.action_id}>{componentLabel(item.component)}：{signedMoney(item.reversal.amount, currency)}</strong>)}<div>合计：{signedMoney(reversedTotal, currency)}</div></> : <strong>{verifiedClosure ? "独立验证通过，无需回滚" : draftOnly ? "无需回滚（草稿未入账）" : closedWithoutWrite ? "未触发（没有财务写入）" : "验证失败时由策略自动触发"}</strong>}</div>
@@ -859,6 +862,10 @@ export function App() {
   const terminalCase = new Set(["REJECTED", "CLOSED", "ROLLED_BACK", "FAILED"]).has(snapshot?.case?.status);
   const teamStale = !terminalCase && isStaleTeamRun(teamRun);
   const teamRunning = !terminalCase && ACTIVE_RUN_STATUSES.has(teamRun.status) && !teamStale;
+  const roomApprovalWaiting = snapshot?.case?.execution_mode === "AGENTTEAMS_MATRIX"
+    && snapshot?.case?.status === "WAITING_FOR_APPROVAL"
+    && Boolean(teamRun.approval_request_event_id);
+  const teamPolling = teamRunning || roomApprovalWaiting;
   const teamFailure = snapshot?.case?.team_run?.status === "FAILED" ? snapshot.case.team_run : null;
   const recoveryRequired = snapshot?.case?.status === "RECOVERY_REQUIRED";
   const executionStartRecoverable = snapshot?.case?.status === "READY_TO_EXECUTE" && Boolean(teamFailure);
@@ -895,10 +902,10 @@ export function App() {
     return () => { dashboardRequest.current += 1; };
   }, [load]);
   useEffect(() => {
-    if (!teamRunning) return undefined;
+    if (!teamPolling) return undefined;
     const timer = window.setInterval(load, 1400);
     return () => window.clearInterval(timer);
-  }, [load, teamRunning]);
+  }, [load, teamPolling]);
   useEffect(() => {
     const timer = window.setInterval(() => setBeijingNow(new Date()), 1000);
     return () => window.clearInterval(timer);

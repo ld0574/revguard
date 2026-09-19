@@ -10,7 +10,11 @@ ENV_FILE="$ROOT_DIR/.env"
 PROFILE="local"
 RESET="false"
 OBSERVABILITY="false"
-MODEL="${AGENTTEAMS_DEFAULT_MODEL:-glm-5.3-flash}"
+MODEL="${AGENTTEAMS_DEFAULT_MODEL:-}"
+if [ -z "$MODEL" ] && [ -f "$ENV_FILE" ]; then
+  MODEL=$(sed -n 's/^AGENTTEAMS_DEFAULT_MODEL=//p' "$ENV_FILE" | tail -n 1)
+fi
+MODEL="${MODEL:-glm-5.3-flash}"
 
 usage() {
   cat <<'EOF'
@@ -222,9 +226,13 @@ wait_api || fail "RevGuard API 进程未就绪；维护标记保留"
 
 if [ "$PROFILE" = "full" ]; then
   log "创建/更新 AgentTeams 角色、Team、Adapter 与 Matrix 房间"
+  gateway_base=$(env_get AGENTTEAMS_OPENAI_BASE_URL)
+  gateway_key=$(env_get AGENTTEAMS_LLM_API_KEY)
   REVGUARD_HOME="$ROOT_DIR" \
   REVGUARD_API_BASE_URL=http://revguard-api:9000 \
   MODEL="$MODEL" \
+  AGENTTEAMS_OPENAI_BASE_URL_OVERRIDE="$gateway_base" \
+  AGENTTEAMS_LLM_API_KEY_OVERRIDE="$gateway_key" \
   bash scripts/agentteams_setup.sh
 
   log "重新加载自动发现的 Matrix 配置"

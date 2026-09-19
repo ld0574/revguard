@@ -74,7 +74,7 @@ def update_provider(
             max_completion_tokens=max_tokens,
         )
         kwargs.pop("max_tokens", None)
-    else:
+    elif model == "glm-5.3-flash":
         # glm-5.3-flash 是思考模型：缺少 reasoning_effort 时会按默认长思考把
         # max_tokens 全部烧在 reasoning_content 上，最终 content 为空，
         # Worker 表现为"没有产生命令"。上游探针确认 low 能降低思考量，
@@ -82,6 +82,15 @@ def update_provider(
         # thinking.type=enabled 会进一步增加思考量，所以只下发 low。
         kwargs["max_tokens"] = max_tokens
         kwargs["reasoning_effort"] = "low"
+        kwargs.pop("max_completion_tokens", None)
+    elif model == "deepseek-flash":
+        # DeepSeek V4.1 Flash defaults to high thinking.  Keep tool calls
+        # enabled but bound the reasoning budget for the live demo.
+        kwargs["max_tokens"] = max_tokens
+        kwargs["reasoning_effort"] = "low"
+        kwargs.pop("max_completion_tokens", None)
+    else:
+        kwargs["max_tokens"] = max_tokens
         kwargs.pop("max_completion_tokens", None)
     selected["generate_kwargs"] = kwargs
 
@@ -92,8 +101,10 @@ def main() -> None:
     parser.add_argument("--model", default="glm-5.3-flash")
     parser.add_argument("--max-completion-tokens", type=int, default=2048)
     args = parser.parse_args()
-    if args.model not in {"glm-5.3-flash", "gpt-5.6-luna", "gpt-5.6-sol"}:
-        raise SystemExit("只允许持久化已验收的 glm-5.3-flash / Luna / Sol")
+    if args.model not in {
+        "glm-5.3-flash", "gpt-5.6-luna", "gpt-5.6-sol", "deepseek-flash",
+    }:
+        raise SystemExit("只允许持久化已验收的 glm-5.3-flash / Luna / Sol / deepseek-flash")
     if not 64 <= args.max_completion_tokens <= 4096:
         raise SystemExit("max-completion-tokens 必须在 64..4096")
 

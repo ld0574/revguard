@@ -127,6 +127,18 @@ class TestHumanActionProof(unittest.TestCase):
         client.authenticate.assert_awaited_once()
         client.whoami.assert_awaited_once()
 
+    def test_matrix_room_sender_uses_the_same_allow_list(self):
+        from revguard.hitl import MatrixHumanIdentityProvider
+
+        provider = MatrixHumanIdentityProvider("http://matrix.test", self.approvers)
+        identity = provider.identity_for_subject(
+            "@finance:test", auth_method="matrix-room-reply", auth_time=self.now,
+        )
+        self.assertEqual(identity.actor, "finance.lead")
+        self.assertEqual(identity.auth_method, "matrix-room-reply")
+        with self.assertRaises(SecurityError):
+            provider.identity_for_subject("@unknown:test")
+
     def test_matrix_provider_fails_closed(self):
         from revguard.hitl import MatrixHumanIdentityProvider
 

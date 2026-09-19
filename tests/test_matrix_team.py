@@ -43,7 +43,8 @@ class FakeMatrixClient:
     async def cursor(self):
         return f"s{self.counter}"
 
-    async def send_text(self, body, *, mentions=None, room_id=None):
+    async def send_text(self, body, *, mentions=None, room_id=None, txn_id=None):
+        del txn_id
         self.counter += 1
         event_id = f"$event-{self.counter}"
         if mentions:
@@ -123,7 +124,8 @@ class NoCompletionMatrixClient:
     async def cursor(self):
         return "cursor"
 
-    async def send_text(self, body, *, mentions=None, room_id=None):
+    async def send_text(self, body, *, mentions=None, room_id=None, txn_id=None):
+        del txn_id
         self.bodies.append(body)
         self.counter += 1
         if mentions and "/clear" in body:
@@ -158,6 +160,7 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
             "REVGUARD_MATRIX_ROOM_ID": "!team:test",
             "REVGUARD_MATRIX_SERVER_NAME": "test",
             "REVGUARD_MATRIX_ACCESS_TOKEN": "token",
+            "REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN": "approval-token",
             "REVGUARD_MATRIX_WORKER_ROOMS_JSON": '{"revguard-intake":"!dm:test"}',
             "REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS": "3",
             "REVGUARD_MATRIX_RESPONSE_TIMEOUT_SECONDS": "4",
@@ -174,6 +177,10 @@ class TestMatrixSettingsAndClient(unittest.IsolatedAsyncioTestCase):
             settings.token_usage_url_template,
             "http://worker-{actor}/usage",
         )
+        approval_settings = settings.for_approval()
+        self.assertEqual(approval_settings.access_token, "approval-token")
+        self.assertEqual(approval_settings.username, "")
+        self.assertEqual(approval_settings.password, "")
         settings.validate()
 
         with patch.dict(

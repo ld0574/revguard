@@ -43,6 +43,12 @@ from .matrix_team import (
     MatrixTeamRunner,
     MatrixTransportError,
 )
+from .matrix_approval import (
+    MatrixApprovalBridge,
+    MatrixApprovalReply,
+    PendingApprovalRequest,
+    build_approval_result_message,
+)
 from .mcp_server import SERVER_INJECTION_REF, hydrate_server_secrets
 from .mcp_team import McpTeamRunner
 from .mocks import ToolError, ToolGateway
@@ -54,6 +60,7 @@ from .runtime_barrier import (
     CURRENT_LEASE,
     RuntimeBarrierMiddleware,
     RuntimeBusy,
+    acquire_runtime_lease,
     assert_recording_quiescent,
 )
 from .security import (
@@ -403,8 +410,15 @@ def _spawn_team_background(case_id: str, phase: str) -> None:
         raise RuntimeError(f"案件 {case_id} 已有本机 AgentTeams 运行")
     parent_lease = CURRENT_LEASE.get()
     if parent_lease is None:
-        raise RuntimeError("后台任务必须由受运行保护的请求启动")
-    lease = parent_lease.fork()
+        # Matrix approval callbacks are long-lived application tasks rather
+        # than HTTP requests, so the ASGI barrier cannot provide their lease.
+        # Acquire an independent shared lease before dispatching execution;
+        # the task's done callback releases it just like a request-forked
+        # lease.  Reset/reprepare remains exclusive and therefore waits/fails
+        # safely while this background run is active.
+        lease = acquire_runtime_lease(store)
+    else:
+        lease = parent_lease.fork()
     coroutine = _run_team_background(case_id, phase)
     try:
         task = asyncio.create_task(coroutine)
@@ -957,11 +971,16 @@ async def resume_interrupted_team_run(
     }
 
 
-@app.post("/api/v1/cases/{case_id}/approval")
-async def decide_approval(case_id: str, payload: ApprovalDecision,
-                          response: Response,
-                          authorization: str | None = Header(default=None)):
-    """人工审批节点：审批通过后自动续跑执行与独立验证。"""
+async def _commit_approval_decision(
+    case_id: str,
+    payload: ApprovalDecision,
+    proof: HumanActionProof,
+    *,
+    matrix_event_id: str | None = None,
+) -> tuple[dict, int]:
+    """Commit one verified decision, shared by WebUI and Matrix replies."""
+    if proof.case_id != case_id or proof.action != payload.decision:
+        raise HTTPException(401, "人工审批证明与本次案件或动作不匹配")
     case = store.get_case(case_id)
     if not case:
         raise HTTPException(404, f"案件不存在: {case_id}")
@@ -971,16 +990,11 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
     if not approval:
         raise HTTPException(409, "未找到审批单")
 
-    proof = require_human_action(
-        authorization,
-        case_id=case_id,
-        approval_id=str(approval["approval_id"]),
-        action=payload.decision,
-    )
     human = proof.identity
-    matrix_event_id = await _publish_human_decision_intent(
-        case, approval, payload.decision, human,
-    )
+    if matrix_event_id is None:
+        matrix_event_id = await _publish_human_decision_intent(
+            case, approval, payload.decision, human,
+        )
 
     with Tracer(store, case_id).span(
         "APPROVAL",
@@ -1035,22 +1049,247 @@ async def decide_approval(case_id: str, payload: ApprovalDecision,
             state = orch._rebuild_state(case)
             state["approval"] = decided
             orch._finalize(case, state, Tracer(store, case_id), archived=True)
-        return {"case": store.get_case(case_id), "approval": public_approval,
-                "verification": None}
+        return {
+            "case": store.get_case(case_id),
+            "approval": public_approval,
+            "verification": None,
+        }, 200
 
     if case.get("execution_mode") == "AGENTTEAMS_MATRIX":
         _dispatch_team_or_report_failure(case, "EXECUTION")
-        response.status_code = 202
-        return {"case": store.get_case(case_id), "approval": public_approval,
-                "verification": None}
+        return {
+            "case": store.get_case(case_id),
+            "approval": public_approval,
+            "verification": None,
+        }, 202
     if case.get("execution_mode") == "MCP_TEAM":
         state = await _mcp_team().execute_after_approval(case)
     else:
         orch = _orchestrator()
         state = orch.execute_and_verify(case)
         orch._finalize(case, state, Tracer(store, case_id), archived=True)
-    return {"case": store.get_case(case_id), "approval": public_approval,
-            "verification": state.get("verification")}
+    return {
+        "case": store.get_case(case_id),
+        "approval": public_approval,
+        "verification": state.get("verification"),
+    }, 200
+
+
+@app.post("/api/v1/cases/{case_id}/approval")
+async def decide_approval(case_id: str, payload: ApprovalDecision,
+                          response: Response,
+                          authorization: str | None = Header(default=None)):
+    """人工审批节点：审批通过后自动续跑执行与独立验证。"""
+    case = store.get_case(case_id)
+    if not case:
+        raise HTTPException(404, f"案件不存在: {case_id}")
+    approval = store.get_approval(case_id)
+    if not approval:
+        raise HTTPException(409, "未找到审批单")
+    proof = require_human_action(
+        authorization,
+        case_id=case_id,
+        approval_id=str(approval["approval_id"]),
+        action=payload.decision,
+    )
+    body, status_code = await _commit_approval_decision(case_id, payload, proof)
+    response.status_code = status_code
+    return body
+
+
+MATRIX_APPROVAL_BRIDGE_TASK: asyncio.Task | None = None
+MATRIX_APPROVAL_BRIDGE: MatrixApprovalBridge | None = None
+
+
+def _pending_matrix_approvals() -> dict[str, PendingApprovalRequest]:
+    """Return only waiting approvals with a published room request."""
+    pending: dict[str, PendingApprovalRequest] = {}
+    for case in store.list_cases():
+        if case.get("status") != CaseStatus.WAITING_FOR_APPROVAL.value:
+            continue
+        run = case.get("team_run") or {}
+        request_event_id = str(run.get("approval_request_event_id") or "")
+        if not request_event_id:
+            continue
+        approval = store.get_approval(case["case_id"]) or {}
+        if approval.get("status") != "PENDING":
+            continue
+        try:
+            expires_at = int(run.get("approval_request_expires_at") or 0)
+        except (TypeError, ValueError):
+            continue
+        if expires_at <= int(time.time()):
+            continue
+        pending[request_event_id] = PendingApprovalRequest(
+            case_id=case["case_id"],
+            approval_id=str(approval.get("approval_id") or ""),
+            request_event_id=request_event_id,
+            expires_at=expires_at,
+        )
+    return pending
+
+
+def _room_approval_failure_message(
+    reply: MatrixApprovalReply,
+    *,
+    case_status: str,
+    status_code: int,
+) -> str:
+    if status_code == 409:
+        detail = "案件或审批单已变化，未重复提交"
+    elif status_code == 401:
+        detail = "审批身份验证失败，未提交"
+    elif status_code == 503:
+        detail = "审批结果未确认，请回 WebUI 核对案件状态"
+    else:
+        detail = "审批提交失败，未执行资金动作"
+    return build_approval_result_message(
+        case_id=reply.case_id,
+        approval_id=reply.approval_id,
+        decision=reply.decision,
+        case_status=case_status,
+        state_status="NOT_COMMITTED",
+        detail=detail,
+    )
+
+
+async def _handle_matrix_approval_reply(reply: MatrixApprovalReply) -> str:
+    """Turn one authenticated room reply into the shared approval transaction."""
+    case = store.get_case(reply.case_id)
+    approval = store.get_approval(reply.case_id) or {}
+    if not case or str(approval.get("approval_id") or "") != reply.approval_id:
+        return _room_approval_failure_message(
+            reply, case_status=(case or {}).get("status", "UNKNOWN"), status_code=409,
+        )
+
+    try:
+        human = HITL_IDENTITY_PROVIDER.identity_for_subject(
+            reply.sender, auth_method="matrix-room-reply",
+        )
+        assertion = issue_human_action_assertion(
+            HITL_SIGNER,
+            human,
+            case_id=reply.case_id,
+            approval_id=reply.approval_id,
+            action=reply.decision,
+            ttl_seconds=HITL_ASSERTION_TTL_SECONDS,
+        )
+        proof = verify_human_action_assertion(
+            HITL_SIGNER,
+            assertion,
+            HITL_APPROVERS,
+            case_id=reply.case_id,
+            approval_id=reply.approval_id,
+            action=reply.decision,
+            max_auth_age_seconds=HITL_MAX_AUTH_AGE_SECONDS,
+        )
+    except SecurityError:
+        store.audit(reply.case_id, "matrix-approval-bridge",
+                    "MATRIX_APPROVAL_REPLY_REJECTED", {
+                        "approval_id": reply.approval_id,
+                        "matrix_reply_event_id": reply.event_id,
+                        "matrix_request_event_id": reply.request_event_id,
+                        "reason": "identity_not_verified",
+                    })
+        return _room_approval_failure_message(
+            reply, case_status=case.get("status", "UNKNOWN"), status_code=401,
+        )
+
+    store.audit(reply.case_id, human.actor, "MATRIX_APPROVAL_REPLY_RECEIVED", {
+        "approval_id": reply.approval_id,
+        "matrix_reply_event_id": reply.event_id,
+        "matrix_request_event_id": reply.request_event_id,
+        "binding_mode": reply.binding_mode,
+        "human_subject": human.sub,
+        "human_display_name": human.display_name,
+        "human_auth_method": human.auth_method,
+        "decision": reply.decision,
+    })
+
+    try:
+        body, status_code = await _commit_approval_decision(
+            reply.case_id,
+            ApprovalDecision(decision=reply.decision, comment=reply.comment),
+            proof,
+            matrix_event_id=reply.event_id,
+        )
+    except HTTPException as exc:
+        current = store.get_case(reply.case_id) or case
+        return _room_approval_failure_message(
+            reply,
+            case_status=current.get("status", "UNKNOWN"),
+            status_code=exc.status_code,
+        )
+    except Exception:
+        LOGGER.exception("matrix_approval_commit_failed", extra={
+            "revguard_fields": {
+                "case_id": reply.case_id,
+                "approval_id": reply.approval_id,
+                "matrix_reply_event_id": reply.event_id,
+            },
+        })
+        current = store.get_case(reply.case_id) or case
+        return _room_approval_failure_message(
+            reply, case_status=current.get("status", "UNKNOWN"), status_code=503,
+        )
+
+    committed_case = body.get("case") or {}
+    state_status = "QUEUED" if status_code == 202 else "COMMITTED"
+    return build_approval_result_message(
+        case_id=reply.case_id,
+        approval_id=reply.approval_id,
+        decision=reply.decision,
+        case_status=str(committed_case.get("status") or "UNKNOWN"),
+        state_status=state_status,
+        detail=(
+            "审批通过，已排队继续执行"
+            if reply.decision == "APPROVED"
+            else "审批驳回，后续执行已停止"
+        ),
+    )
+
+
+@app.on_event("startup")
+async def _start_matrix_approval_bridge() -> None:
+    global MATRIX_APPROVAL_BRIDGE_TASK, MATRIX_APPROVAL_BRIDGE
+    if TEAM_TRANSPORT != "matrix":
+        return
+    try:
+        settings = MatrixSettings.from_env()
+        if not settings.approval_bridge_enabled:
+            return
+        settings.validate()
+        bridge = MatrixApprovalBridge(
+            settings.for_approval(),
+            pending_requests=_pending_matrix_approvals,
+            on_reply=_handle_matrix_approval_reply,
+            allowed_senders=HITL_APPROVERS,
+        )
+        MATRIX_APPROVAL_BRIDGE = bridge
+        MATRIX_APPROVAL_BRIDGE_TASK = asyncio.create_task(
+            bridge.run(), name="revguard-matrix-approval-bridge",
+        )
+        LOGGER.info("matrix_approval_bridge_enabled")
+    except (MatrixTransportError, OSError, ValueError):
+        # The API remains available for WebUI approvals; room approval is
+        # fail-closed until its Matrix configuration is corrected.
+        LOGGER.exception("matrix_approval_bridge_start_failed")
+
+
+@app.on_event("shutdown")
+async def _stop_matrix_approval_bridge() -> None:
+    global MATRIX_APPROVAL_BRIDGE_TASK, MATRIX_APPROVAL_BRIDGE
+    bridge = MATRIX_APPROVAL_BRIDGE
+    task = MATRIX_APPROVAL_BRIDGE_TASK
+    MATRIX_APPROVAL_BRIDGE = None
+    MATRIX_APPROVAL_BRIDGE_TASK = None
+    if bridge is not None:
+        bridge.stop()
+    if task is not None:
+        try:
+            await asyncio.wait_for(task, timeout=8.0)
+        except (asyncio.CancelledError, asyncio.TimeoutError):
+            task.cancel()
 
 
 @app.post("/api/v1/cases/{case_id}/evidence/resume")

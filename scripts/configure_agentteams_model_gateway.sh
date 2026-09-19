@@ -7,7 +7,19 @@ set -Eeuo pipefail
 CONTROLLER="${CONTROLLER:-agentteams-controller}"
 docker inspect "$CONTROLLER" >/dev/null
 
-docker exec -i "$CONTROLLER" bash <<'INNER'
+# The controller's original environment is immutable until the separately
+# installed AgentTeams container is recreated.  Allow a deployment to stage
+# a new OpenAI-compatible endpoint for this one gateway reconciliation without
+# printing or persisting the upstream credential in shell output.
+gateway_env_args=()
+if [ -n "${AGENTTEAMS_OPENAI_BASE_URL_OVERRIDE:-}" ]; then
+  gateway_env_args+=(-e "AGENTTEAMS_OPENAI_BASE_URL=$AGENTTEAMS_OPENAI_BASE_URL_OVERRIDE")
+fi
+if [ -n "${AGENTTEAMS_LLM_API_KEY_OVERRIDE:-}" ]; then
+  gateway_env_args+=(-e "AGENTTEAMS_LLM_API_KEY=$AGENTTEAMS_LLM_API_KEY_OVERRIDE")
+fi
+
+docker exec -i "${gateway_env_args[@]}" "$CONTROLLER" bash <<'INNER'
 set -Eeuo pipefail
 source /opt/agentteams/scripts/lib/gateway-api.sh
 gateway_ensure_session

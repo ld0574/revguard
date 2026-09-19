@@ -20,6 +20,8 @@ ACTORS = (
     "revguard-knowledge",
 )
 
+TEAM_NAME = "revguard-team"
+
 
 def container_environment(container: str) -> dict[str, str]:
     # Fixed Docker command, operator-supplied container, no shell expansion.
@@ -53,6 +55,24 @@ def worker_resources(controller: str) -> dict[str, dict]:
     return resources
 
 
+def team_resource(controller: str, team_name: str = TEAM_NAME) -> dict:
+    """Read the actual Team room, separate from the orchestrator Worker room."""
+    output = subprocess.check_output(  # nosec B603, B607
+        ["docker", "exec", controller, "agt", "get", "teams", "-o", "json"],
+        text=True,
+    )
+    payload = json.loads(output)
+    teams = payload.get("teams", [])
+    for item in teams:
+        if str(item.get("name") or item.get("teamName") or "") != team_name:
+            continue
+        room_id = str(item.get("teamRoomID") or "")
+        if not room_id:
+            raise RuntimeError(f"AgentTeams Team {team_name} 房间缺失")
+        return item
+    raise RuntimeError(f"AgentTeams Team 不存在: {team_name}")
+
+
 def runtime_homeserver_url(value: str, controller: str) -> str:
     """Turn a controller-local Matrix URL into a Compose-network URL."""
     parsed = urlsplit(value)
@@ -64,15 +84,23 @@ def runtime_homeserver_url(value: str, controller: str) -> str:
     return urlunsplit((parsed.scheme or "http", host, parsed.path, "", "")).rstrip("/")
 
 
-def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
+def collect_runtime(
+    prefix: str,
+    controller: str,
+    team_name: str = TEAM_NAME,
+) -> dict[str, str]:
     controller_env = container_environment(controller)
+    orchestrator_env = container_environment(
+        f"{prefix}revguard-orchestrator"
+    )
     resources = worker_resources(controller)
+    team = team_resource(controller, team_name)
     required = {
         "AGENTTEAMS_MATRIX_URL": controller_env.get("AGENTTEAMS_MATRIX_URL"),
         "AGENTTEAMS_MATRIX_DOMAIN": controller_env.get("AGENTTEAMS_MATRIX_DOMAIN"),
         "AGENTTEAMS_ADMIN_USER": controller_env.get("AGENTTEAMS_ADMIN_USER"),
         "AGENTTEAMS_ADMIN_PASSWORD": controller_env.get("AGENTTEAMS_ADMIN_PASSWORD"),
-        "AGENTTEAMS_WORKER_ROOM_ID": resources["revguard-orchestrator"].get("roomID"),
+        "AGENTTEAMS_TEAM_ROOM_ID": team.get("teamRoomID"),
     }
     missing = [key for key, value in required.items() if not value]
     if missing:
@@ -95,7 +123,9 @@ def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
     return {
         "REVGUARD_TEAM_TRANSPORT": "matrix",
         "REVGUARD_MATRIX_HOMESERVER_URL": homeserver_url,
-        "REVGUARD_MATRIX_ROOM_ID": required["AGENTTEAMS_WORKER_ROOM_ID"],
+        # The Team room is the human-visible collaboration room.  The
+        # orchestrator Worker room is only for leader/worker protocol traffic.
+        "REVGUARD_MATRIX_ROOM_ID": required["AGENTTEAMS_TEAM_ROOM_ID"],
         "REVGUARD_MATRIX_WORKER_ROOMS_JSON": json.dumps(
             rooms, ensure_ascii=False, separators=(",", ":"),
         ),
@@ -104,6 +134,14 @@ def collect_runtime(prefix: str, controller: str) -> dict[str, str]:
         "REVGUARD_MATRIX_PASSWORD": required["AGENTTEAMS_ADMIN_PASSWORD"],
         # clears cached credential so configured login is used
         "REVGUARD_MATRIX_ACCESS_TOKEN": "",  # nosec B105
+        # The orchestrator Worker is already a member of the Team room.  Its
+        # token is used only for the human-facing approval request/result;
+        # StageTask delivery keeps the admin transport account because it must
+        # be a member of every Worker room.
+        "REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN": orchestrator_env.get(
+            "AGENTTEAMS_WORKER_MATRIX_TOKEN", ""
+        ),  # nosec B105
+        "REVGUARD_MATRIX_APPROVAL_ALLOW_UNTHREADED_REPLY": "true",
         "REVGUARD_HITL_MATRIX_HOMESERVER_URL": homeserver_url,
         "REVGUARD_HITL_MATRIX_USERS_JSON": json.dumps({
             matrix_subject: {
@@ -141,9 +179,10 @@ def main() -> None:
     parser.add_argument(
         "--container-prefix", default="agentteams-worker-",
     )
+    parser.add_argument("--team-name", default=TEAM_NAME)
     parser.add_argument("--controller", default="agentteams-controller")
     args = parser.parse_args()
-    runtime = collect_runtime(args.container_prefix, args.controller)
+    runtime = collect_runtime(args.container_prefix, args.controller, args.team_name)
     update_env(args.env, runtime)
     print("已配置 Matrix 登录、控制房间与 9 个 Worker 独立房间；.env 权限已设为 0600。")
 

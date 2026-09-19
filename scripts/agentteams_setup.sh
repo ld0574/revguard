@@ -53,7 +53,8 @@ docker cp "$TMP_SOUL_DIR/." "$CONTROLLER:/tmp/agentteams/workers/"
 echo "==> 2/6 创建/更新 1 Orchestrator + 9 Worker（model=$MODEL）"
 worker_image_args=()
 if [ "$MODEL" = "gpt-5.6-sol" ] || [ "$MODEL" = "gpt-5.6-luna" ] \
-  || [ "$MODEL" = "glm-5.3-flash" ]; then
+  || [ "$MODEL" = "glm-5.3-flash" ] \
+  || [ "$MODEL" = "deepseek-flash" ]; then
   # The base image drops per-model kwargs when it re-bridges on startup.
   runtime_image="${AGENTTEAMS_WORKER_IMAGE:-revguard-agentteams-worker:glm-20260918}"
   if ! docker image inspect "$runtime_image" >/dev/null 2>&1; then
@@ -146,6 +147,8 @@ fi
 
 echo "==> 对齐 AgentTeams 模型 Provider、Service Source 与默认 AI Route"
 CONTROLLER="$CONTROLLER" \
+  AGENTTEAMS_OPENAI_BASE_URL_OVERRIDE="${AGENTTEAMS_OPENAI_BASE_URL_OVERRIDE:-}" \
+  AGENTTEAMS_LLM_API_KEY_OVERRIDE="${AGENTTEAMS_LLM_API_KEY_OVERRIDE:-}" \
   bash "$REVGUARD_HOME/scripts/configure_agentteams_model_gateway.sh"
 
 echo "==> 5/6 同步 CoPaw 运行时激活模型"
@@ -207,6 +210,28 @@ elif target == "glm-5.3-flash":
     ), {})
     # glm-5.3-flash 是思考模型，必须显式 reasoning_effort=low；
     # 缺省长思考会把 max_tokens 全部用光并返回空 content。
+    model_config["reasoning_effort"] = "low"
+    model_config.pop("max_completion_tokens", None)
+    req = urllib.request.Request(
+        base + "/api/models/agentteams-gateway/models/" + target + "/config",
+        data=json.dumps({
+            "generate_kwargs": {
+                **model_config,
+                "max_tokens": max_completion_tokens,
+            },
+        }).encode(),
+        method="PUT", headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=10):
+        pass
+elif target == "deepseek-flash":
+    model_config = next((
+        item.get("generate_kwargs") or {}
+        for item in [*(provider.get("models") or []), *(provider.get("extra_models") or [])]
+        if item.get("id") == target
+    ), {})
+    # DeepSeek V4.1 Flash defaults to high thinking.  Low effort preserves
+    # tool-call support while avoiding the long default reasoning budget.
     model_config["reasoning_effort"] = "low"
     model_config.pop("max_completion_tokens", None)
     req = urllib.request.Request(
@@ -284,7 +309,7 @@ body = {
 }
 if body["model"] in {"gpt-5.6-sol", "gpt-5.6-luna"}:
     body["reasoning_effort"] = "none"
-elif body["model"] == "glm-5.3-flash":
+elif body["model"] in {"glm-5.3-flash", "deepseek-flash"}:
     body["reasoning_effort"] = "low"
 payload = json.dumps(body).encode()
 req = urllib.request.Request(

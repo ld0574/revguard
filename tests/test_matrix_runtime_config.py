@@ -37,6 +37,10 @@ class TestMatrixRuntimeConfig(unittest.TestCase):
                     "AGENTTEAMS_ADMIN_USER": "admin",
                     "AGENTTEAMS_ADMIN_PASSWORD": "secret",
                 }
+            if container == "agentteams-worker-revguard-orchestrator":
+                return {
+                    "AGENTTEAMS_WORKER_MATRIX_TOKEN": "orchestrator-token",
+                }
             actor = container.removeprefix("agentteams-worker-")
             return {"AGENTTEAMS_WORKER_ROOM_ID": f"!{actor}:matrix.test"}
 
@@ -52,9 +56,15 @@ class TestMatrixRuntimeConfig(unittest.TestCase):
                 for actor in (*runtime.ACTORS, "revguard-orchestrator")
             }
 
+        def fake_team_resource(controller: str, team_name: str) -> dict:
+            self.assertEqual(controller, "agentteams-controller")
+            self.assertEqual(team_name, "revguard-team")
+            return {"name": team_name, "teamRoomID": "!team:matrix.test"}
+
         with (
             patch.object(runtime, "container_environment", fake_environment),
             patch.object(runtime, "worker_resources", fake_resources),
+            patch.object(runtime, "team_resource", fake_team_resource),
         ):
             values = runtime.collect_runtime(
                 "agentteams-worker-", "agentteams-controller",
@@ -66,10 +76,14 @@ class TestMatrixRuntimeConfig(unittest.TestCase):
         )
         self.assertEqual(
             values["REVGUARD_MATRIX_ROOM_ID"],
-            "!revguard-orchestrator:matrix.test",
+            "!team:matrix.test",
         )
         self.assertIn('"revguard-executor":"!revguard-executor:matrix.test"',
                       values["REVGUARD_MATRIX_WORKER_ROOMS_JSON"])
+        self.assertEqual(
+            values["REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN"],
+            "orchestrator-token",
+        )
 
     def test_update_env_replaces_managed_values_and_uses_mode_0600(self):
         with tempfile.TemporaryDirectory() as tmp:

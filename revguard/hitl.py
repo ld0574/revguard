@@ -99,6 +99,28 @@ class MatrixHumanIdentityProvider:
         self.approvers = approvers
         self.server_name = server_name or "matrix"
 
+    def identity_for_subject(
+        self,
+        subject: str,
+        *,
+        auth_method: str = "matrix-room-reply",
+        auth_time: int | None = None,
+    ) -> HumanIdentity:
+        """Map an already authenticated Matrix event sender to an approver."""
+        normalized = subject.strip()
+        mapped = self.approvers.get(normalized)
+        if not mapped:
+            raise SecurityError(
+                f"Matrix 用户 {normalized or '<unknown>'} 不在审批白名单"
+            )
+        return HumanIdentity(
+            sub=normalized,
+            actor=mapped["actor"],
+            display_name=mapped["display_name"],
+            auth_time=int(time.time() if auth_time is None else auth_time),
+            auth_method=auth_method,
+        )
+
     async def authenticate(self, username: str, password: str) -> HumanIdentity:
         if not self.homeserver_url or not self.approvers:
             raise SecurityError("HITL Matrix 身份提供方未配置")
@@ -118,15 +140,7 @@ class MatrixHumanIdentityProvider:
         except MatrixTransportError as exc:
             raise SecurityError("AgentTeams 审批人身份验证失败") from exc
         subject = str(whoami.get("user_id") or "")
-        mapped = self.approvers.get(subject)
-        if not mapped:
-            raise SecurityError(f"Matrix 用户 {subject or '<unknown>'} 不在审批白名单")
-        return HumanIdentity(
-            sub=subject,
-            actor=mapped["actor"],
-            display_name=mapped["display_name"],
-            auth_time=int(time.time()),
-        )
+        return self.identity_for_subject(subject, auth_method="matrix-password")
 
 
 def issue_human_action_assertion(

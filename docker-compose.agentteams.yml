@@ -3,6 +3,7 @@ services:
   revguard-api:
     environment:
       REVGUARD_AGENTTEAMS_TOKEN_USAGE_URL_TEMPLATE: "http://agentteams-worker-{actor}:8088/api/token-usage"
+      REVGUARD_MATRIX_APPROVAL_BRIDGE_ENABLED: "${REVGUARD_MATRIX_APPROVAL_BRIDGE_ENABLED:-true}"
     networks:
       default: {}
       agentteams:

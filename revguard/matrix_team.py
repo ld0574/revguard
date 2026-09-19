@@ -11,12 +11,13 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import shlex
 import time
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from urllib import error, parse, request
 
 from . import telemetry as otel
@@ -26,6 +27,8 @@ from .models import TaskStatus, new_id, utc_now
 from .security import redact_secrets
 from .skill_runtime import SKILL_ACTORS
 from .trace import Tracer
+
+LOGGER = logging.getLogger("revguard.matrix_team")
 
 
 class MatrixTransportError(RuntimeError):
@@ -40,6 +43,7 @@ class MatrixSettings:
     username: str = ""
     password: str = ""
     access_token: str = ""
+    approval_access_token: str = ""
     worker_rooms: dict[str, str] = field(default_factory=dict)
     stage_timeout_seconds: float = 240.0
     response_timeout_seconds: float = 90.0
@@ -49,6 +53,9 @@ class MatrixSettings:
     token_usage_url_template: str = ""
     max_model_calls_per_stage: int = 2
     max_completion_tokens: int = 512
+    approval_bridge_enabled: bool = False
+    approval_reply_timeout_seconds: int = 300
+    approval_allow_unthreaded_reply: bool = True
 
     @classmethod
     def from_env(cls) -> MatrixSettings:
@@ -79,6 +86,9 @@ class MatrixSettings:
             username=os.getenv("REVGUARD_MATRIX_USERNAME", ""),
             password=os.getenv("REVGUARD_MATRIX_PASSWORD", ""),
             access_token=os.getenv("REVGUARD_MATRIX_ACCESS_TOKEN", ""),
+            approval_access_token=os.getenv(
+                "REVGUARD_MATRIX_APPROVAL_ACCESS_TOKEN", ""
+            ),
             worker_rooms=worker_rooms,
             stage_timeout_seconds=float(
                 os.getenv("REVGUARD_MATRIX_STAGE_TIMEOUT_SECONDS", "240")
@@ -101,6 +111,34 @@ class MatrixSettings:
             max_completion_tokens=int(os.getenv(
                 "REVGUARD_AGENTTEAMS_MAX_COMPLETION_TOKENS", "512"
             )),
+            approval_bridge_enabled=os.getenv(
+                "REVGUARD_MATRIX_APPROVAL_BRIDGE_ENABLED", "false"
+            ).lower() == "true",
+            approval_reply_timeout_seconds=int(os.getenv(
+                "REVGUARD_MATRIX_APPROVAL_REPLY_TIMEOUT_SECONDS", "300"
+            )),
+            approval_allow_unthreaded_reply=os.getenv(
+                "REVGUARD_MATRIX_APPROVAL_ALLOW_UNTHREADED_REPLY", "true"
+            ).lower() == "true",
+        )
+
+    def for_approval(self) -> MatrixSettings:
+        """Return settings for the human-facing approval service identity.
+
+        The AgentTeams transport account may be the recording admin because it
+        must deliver StageTasks to all Worker rooms.  The approval request is
+        instead sent by the already joined orchestrator service account when a
+        dedicated token is configured, so Element visibly distinguishes the
+        service request from the human approver's reply.
+        """
+        if not self.approval_access_token:
+            return self
+        return replace(
+            self,
+            username="",
+            password="",
+            access_token=self.approval_access_token,
+            approval_access_token="",
         )
 
     def validate(self) -> None:
@@ -121,6 +159,8 @@ class MatrixSettings:
             raise MatrixTransportError("每阶段模型调用上限必须在 1 到 3 之间")
         if not 64 <= self.max_completion_tokens <= 4096:
             raise MatrixTransportError("单次模型输出 Token 上限必须在 64 到 4096 之间")
+        if not 30 <= self.approval_reply_timeout_seconds <= 3600:
+            raise MatrixTransportError("Element 审批回复有效期必须在 30 到 3600 秒之间")
 
 
 class MatrixClient:
@@ -162,15 +202,16 @@ class MatrixClient:
         *,
         mentions: list[str] | None = None,
         room_id: str | None = None,
+        txn_id: str | None = None,
     ) -> str:
-        txn_id = uuid.uuid4().hex
+        transaction_id = txn_id or uuid.uuid4().hex
         room = parse.quote(room_id or self.settings.room_id, safe="")
         payload: dict = {"msgtype": "m.text", "body": body}
         if mentions:
             payload["m.mentions"] = {"user_ids": mentions}
         response = await self._request(
             "PUT",
-            f"/_matrix/client/v3/rooms/{room}/send/m.room.message/{txn_id}",
+            f"/_matrix/client/v3/rooms/{room}/send/m.room.message/{transaction_id}",
             payload,
         )
         event_id = str(response.get("event_id") or "")
@@ -271,6 +312,11 @@ class MatrixTeamRunner(McpTeamRunner):
         )
         self.settings = settings or MatrixSettings.from_env()
         self.client = client or MatrixClient(self.settings)
+        self.approval_client = (
+            MatrixClient(self.settings.for_approval())
+            if self.settings.approval_access_token
+            else self.client
+        )
         self.run_id = ""
         self._run_phase = "INVESTIGATION"
 
@@ -280,6 +326,63 @@ class MatrixTeamRunner(McpTeamRunner):
     def _update_run(self, case: dict, **updates) -> None:
         from .workflow_persistence import update_case_run
         update_case_run(self.store, case, updates)
+
+    async def _publish_approval_request(self, case: dict) -> None:
+        """Publish one reply-addressed approval request for the current run."""
+        run = case.get("team_run") or {}
+        if run.get("approval_request_event_id"):
+            return
+        approval = self.store.get_approval(case["case_id"])
+        if not approval or approval.get("status") != "PENDING":
+            return
+        from .matrix_approval import build_approval_request_message
+
+        expires_at = int(time.time()) + self.settings.approval_reply_timeout_seconds
+        try:
+            event_id = await self.approval_client.send_text(
+                build_approval_request_message(
+                    case, approval, expires_at=expires_at,
+                ),
+                room_id=self.settings.room_id,
+                txn_id=(
+                    "approval-request-"
+                    + hashlib.sha256(
+                        f"{case['case_id']}:{approval['approval_id']}".encode()
+                    ).hexdigest()[:32]
+                ),
+            )
+            self._update_run(
+                case,
+                approval_request_event_id=event_id,
+                approval_request_sent_at=utc_now(),
+                approval_request_expires_at=expires_at,
+                approval_request_status="PUBLISHED",
+            )
+            self.store.audit(case["case_id"], "revguard-orchestrator",
+                             "MATRIX_APPROVAL_REQUEST_PUBLISHED", {
+                                 "approval_id": approval["approval_id"],
+                                 "matrix_request_event_id": event_id,
+                                 "expires_at": expires_at,
+                                 "room_id": self.settings.room_id,
+                             })
+        except (MatrixTransportError, OSError, ValueError) as exc:
+            self._update_run(
+                case,
+                approval_request_status="FAILED",
+                approval_request_error_type=type(exc).__name__,
+            )
+            self.store.audit(case["case_id"], "revguard-orchestrator",
+                             "MATRIX_APPROVAL_REQUEST_FAILED", {
+                                 "approval_id": approval["approval_id"],
+                                 "error_type": type(exc).__name__,
+                             })
+            LOGGER.warning("matrix_approval_request_publish_failed", extra={
+                "revguard_fields": {
+                    "case_id": case["case_id"],
+                    "approval_id": approval["approval_id"],
+                    "error_type": type(exc).__name__,
+                },
+            })
 
     async def _worker_usage_snapshot(self, actor: str) -> dict | None:
         """Read a Worker's real cumulative CoPaw token counters when configured."""
@@ -398,6 +501,11 @@ class MatrixTeamRunner(McpTeamRunner):
                 if item.get("status") == TaskStatus.SUCCEEDED.value
             ]),
         )
+        if (
+            final_status == "WAITING_HUMAN"
+            and self.settings.approval_bridge_enabled
+        ):
+            await self._publish_approval_request(case)
         return state
 
     async def execute_after_approval(self, case: dict, *, state: dict | None = None) -> dict:
