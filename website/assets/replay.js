@@ -234,7 +234,7 @@
     return approval ? (total ? number(total) + " " + currency() : approval.subtitle || "—") : "待审批";
   };
   const createApprovalDemo = () => ({
-    username: "finance.lead",
+    username: "finance-lead",
     password: "demo-only-2026",
     comment: "证据完整，政策与金额复算一致，同意在当前风险边界内处理。",
     decision: "APPROVED",
@@ -781,7 +781,7 @@
     const recordedDecision = approval.subtitle || "APPROVED";
     const error = demo.message ? '<div class="human-dialog-error"><span aria-hidden="true">!</span>' + esc(demo.message) + "</div>" : "";
     const body = demo.committed
-      ? '<div class="human-proof-panel"><div class="human-proof-success"><span class="approval-proof-icon" aria-hidden="true">✓</span><div><strong>静态审批动作已记录</strong><small>' + esc(demo.username || "finance.lead") + ' · 本地回放身份验证通过</small></div><span>只读演示</span></div>' +
+        ? '<div class="human-proof-panel"><div class="human-proof-success"><span class="approval-proof-icon" aria-hidden="true">✓</span><div><strong>静态审批动作已记录</strong><small>' + esc(demo.username || "finance-lead") + ' · 本地回放身份验证通过</small></div><span>只读演示</span></div>' +
         '<div class="human-proof-binding"><div><span>绑定案件</span><code>' + esc(state.bundle.case?.case_id) + '</code></div><div><span>绑定审批单</span><code>' + esc(approvalId) + '</code></div><div><span>绑定动作</span><strong>' + esc(approvalActionLabel(demo.committed)) + '</strong></div></div>' +
         '<div class="approval-static-disclosure">本次选择不会调用 202 API，也不会改写正式运行记录；录制快照中的正式结果仍为 <strong>' + esc(recordedDecision) + ' · ' + esc(state.bundle.case?.status || "CLOSED") + '</strong>。</div>' +
         '<div class="human-modal-actions"><button type="button" class="human-secondary" data-reset-approval>重新选择</button><button type="button" class="human-secondary" data-close-approval>返回回放</button></div></div>'
