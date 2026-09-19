@@ -756,7 +756,7 @@
       chart("数据库连接与锁等待", '<i class="legend-dot green"></i>连接 <i class="legend-dot yellow"></i>锁等待', greenLow, greenLowFill, "green"),
       chart("审计事件增长 / Evidence Gap", '<i class="legend-dot green"></i>审计事件/s <i class="legend-dot yellow"></i>Evidence Gap/15m', greenLow, greenLowFill, "green"),
       chart("冲销与恢复", '<i class="legend-dot green"></i>恢复成功 <i class="legend-dot yellow"></i>冲销分录', yellowFlat, yellowFlat, "yellow"),
-    ].join("");
+    ];
     const statusPanels =
       '<div class="grafana-extra-grid">' +
         barPanel("全部案件 · 当前状态分布", "当前录制的全局状态快照", [["CLOSED", 30], ["CREATED", 30], ["FAILED", 10], ["ROLLED_BACK", 10], ["WAITING_FOR_APPROVAL", 30]], "orange") +
@@ -779,7 +779,7 @@
         chart("业务 API 响应延迟 · P95", '<i class="legend-dot green"></i>业务 API P95', flatPath, "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z", "green") +
         chart("资金结果恢复 · 待对账 / 冻结通道", '<i class="legend-dot yellow"></i>待对账资金操作', flatPath, "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z", "yellow") +
         chart("服务与数据库可用性", '<i class="legend-dot yellow"></i>服务与数据库', availabilityPath, availabilityFill, "yellow") +
-      '</div>' + statusPanels + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(0, 2) + '</div>' + databaseStats + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(2, 5) + '</div>' + moneyPanel + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(5) + '</div><div class="grafana-powered">Powered by <strong><span>◉</span> Grafana</strong></div></div></section>';
+      '</div>' + statusPanels + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(0, 2).join("") + '</div>' + databaseStats + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(2, 5).join("") + '</div>' + moneyPanel + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(5).join("") + '</div><div class="grafana-powered">Powered by <strong><span>◉</span> Grafana</strong></div></div></section>';
   }
 
   function renderContent() {

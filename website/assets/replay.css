@@ -511,14 +511,25 @@ footer span { display: flex; align-items: center; gap: 5px; }
 }
 
 @media (max-width: 760px) {
-  .topbar { height: auto; min-height: 58px; padding: 9px 12px; align-items: flex-start; }
-  .brand-group { flex-wrap: wrap; }
+  .topbar { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 58px; padding: 9px 12px; align-items: flex-start; gap: 6px; }
+  .topbar .brand-group { grid-column: 1; grid-row: auto; width: 100%; min-width: 0; flex-wrap: wrap; gap: 7px; }
+  .topbar .top-actions { grid-column: 1; grid-row: auto; width: 100%; min-width: 0; justify-self: stretch; }
+  .brand-name { font-size: 19px; }
+  .case-select { flex: 1 1 145px; min-width: 0; max-width: none; }
+  .brand-group > .mcp-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .approval-label, .status-mini, .health-pill { display: none; }
-  .top-actions { justify-self: end; }
+  .top-actions { justify-content: flex-start; flex-wrap: wrap; }
+  .top-actions .icon-button { display: none; }
   .global-mode .top-actions { display: none; }
   .icon-button span { display: none; }
+  main { padding: 8px 6px; }
   .summary-strip { grid-template-columns: repeat(2, 1fr); }
+  .summary-item { padding: 9px 8px; }
+  .summary-item strong, .summary-item small { white-space: normal; overflow-wrap: anywhere; }
+  .pipeline-panel { padding: 10px 7px 9px; }
+  .pipeline-stages { max-width: 100%; grid-template-columns: repeat(8, 132px); padding-bottom: 5px; }
   .pipeline-details, .safety-rail, .lower-pair, .trace-grid, .permissions-grid, .engineering-grid, .value-kpi-grid, .value-detail-grid, .public-data-hero, .public-kpi-grid, .public-detail-grid, .public-acceptance-grid, .grafana-stat-grid, .grafana-panel-grid { grid-template-columns: 1fr; }
+  .pipeline-note { min-height: 0; }
   .grafana-panel-wide { grid-column: auto; }
   .grafana-dashboard-bar code { margin-left: 0; }
   .grafana-trace-row { grid-template-columns: 112px minmax(60px, 1fr) 44px; }
@@ -532,13 +543,18 @@ footer span { display: flex; align-items: center; gap: 5px; }
   .sample-outcomes { grid-template-columns: 1fr; }
   .pending-section { grid-column: auto; }
   .pending-checks { grid-template-columns: 1fr; }
+  .control-group { width: 100%; flex-wrap: wrap; }
+  .control-group button { flex: 1 1 calc(50% - 7px); margin-top: 0; }
+  .control-group .text-action { flex-basis: 100%; }
   .tabs button { min-width: 96px; flex: 0 0 auto; }
   .tabs button svg { display: none; }
+  .tabs, .content-area, .workspace { max-width: 100%; min-width: 0; }
   .human-modal-backdrop { padding: 8px; }
   .human-proof-binding { grid-template-columns: 1fr; }
   .compact-row { grid-template-columns: 58px 1fr; }
   .compact-row span { display: none; }
   footer { flex-direction: column; align-items: flex-start; padding: 10px 14px; }
+  .site-footer .footer-links { flex-wrap: wrap; row-gap: 6px; }
 }
 
 
@@ -773,8 +789,32 @@ footer span { display: flex; align-items: center; gap: 5px; }
   .replay-controls { align-items: flex-start; flex-direction: column; }
   .control-meta { width: 100%; justify-content: space-between; }
   .site-footer { align-items: flex-start; }
+  .observability-screen { min-width: 0; }
+  .observability-toolbar { padding: 10px; }
+  .observability-heading, .observability-actions { min-width: 0; }
+  .observability-heading h2, .observability-heading p { overflow-wrap: anywhere; }
+  .grafana-live-dashboard { padding: 10px 0 0; }
   .grafana-live-stat-grid, .grafana-chart-grid, .grafana-extra-grid, .grafana-secondary-grid, .grafana-extra-stat-grid { grid-template-columns: 1fr; }
-  .grafana-live-header { align-items: flex-start; flex-direction: column; }
-  .grafana-live-stat strong { margin-top: 13px; }
-  .grafana-time-controls { flex-wrap: wrap; }
+  .grafana-live-header { width: 100%; min-width: 0; align-items: flex-start; flex-direction: column; padding: 0 10px 10px; }
+  .grafana-live-header strong { max-width: 100%; overflow-wrap: anywhere; }
+  .grafana-live-stat { min-width: 0; min-height: 88px; padding: 10px 11px; }
+  .grafana-live-stat span { font-size: 13px; overflow-wrap: anywhere; }
+  .grafana-live-stat strong { margin-top: 13px; font-size: 34px; overflow-wrap: anywhere; }
+  .grafana-chart-grid, .grafana-extra-grid, .grafana-extra-stat-grid { gap: 8px; margin-top: 8px; }
+  .grafana-chart-panel { min-width: 0; min-height: 250px; padding: 11px 9px 8px; }
+  .grafana-chart-panel h3 { font-size: 14px; overflow-wrap: anywhere; }
+  .grafana-chart { height: auto; min-height: 150px; aspect-ratio: 720 / 230; }
+  .chart-legend { flex-wrap: wrap; gap: 7px 12px; }
+  .grafana-extra-panel { min-width: 0; padding: 11px 9px; }
+  .grafana-extra-heading { align-items: flex-start; flex-wrap: wrap; }
+  .grafana-extra-heading strong { min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+  .grafana-extra-heading span { max-width: 100%; text-align: left; overflow-wrap: anywhere; }
+  .grafana-bars .grafana-bar-row { grid-template-columns: minmax(0, 1.2fr) minmax(55px, 1.4fr) 48px; min-width: 0; gap: 6px; font-size: 9px; }
+  .grafana-bars .grafana-bar-row > strong { font-size: 9px; }
+  .grafana-status-value { grid-template-columns: minmax(0, 1fr) minmax(56px, auto); gap: 12px 8px; padding: 22px 6px; }
+  .grafana-extra-stat { min-width: 0; min-height: 92px; padding: 11px; }
+  .grafana-extra-stat span { font-size: 13px; overflow-wrap: anywhere; }
+  .grafana-extra-stat strong { margin-top: 13px; font-size: 27px; overflow-wrap: anywhere; }
+  .grafana-disclosure-panel p { overflow-wrap: anywhere; }
+  .grafana-powered { justify-content: center; padding: 0 10px; }
 }
