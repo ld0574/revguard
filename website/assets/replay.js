@@ -675,7 +675,7 @@
       render();
       const notice = $("capture-notice");
       notice.hidden = false;
-      notice.textContent = "静态回放 · " + (bundle.provenance?.capture_kind || "CAPTURED_FROM_RUNTIME") + " · 来源版本 " + (bundle.provenance?.source_release || "—") + " · 业务样本为合成数据";
+      notice.textContent = "真实环境线上运行 AgentTeams、PolarDB、ERPNext、Grafana 等组件，配置 8 核 24G；GitHub Pages / ModelScope 达不到运行要求，所以 Demo 只能静态回放录制脚本了。";
     } catch (error) {
       $("tab-content").innerHTML = '<div class="capture-notice">静态记录读取失败：' + esc(error.message) + "</div>";
     } finally {
