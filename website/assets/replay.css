@@ -299,6 +299,7 @@ tbody tr:hover { background: #0a1e2f; }
 .rail-label { display: block; color: var(--muted); font-size: 9px; margin: 2px 0 6px; }
 .rail-state { display: block; margin-bottom: 10px; padding: 7px; color: var(--muted); border: 1px solid var(--line-bright); border-radius: 4px; background: var(--surface-2); font-size: 9px; overflow: hidden; text-overflow: ellipsis; }
 .rollback-state { color: var(--red); border-color: #70222b; background: var(--red-soft); }
+.approval-rejected-state { color: var(--red); border-color: #70222b; background: var(--red-soft); }
 .passed-state { color: var(--green); border-color: #155a3b; background: var(--green-soft); }
 .rail-section > b { display: block; color: var(--text); font-size: 14px; }
 .rail-section > small { color: var(--muted); font-size: 8px; }

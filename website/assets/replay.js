@@ -243,6 +243,9 @@
     message: "",
   });
   const approvalActionLabel = (decision) => decision === "REJECTED" ? "驳回" : "批准";
+  const approvalStageIndex = () => (state.bundle?.steps || []).findIndex((step) => step.stage === "approval");
+  const approvalAwaiting = () => currentStep()?.stage === "approval" && !state.approvalDemo?.committed;
+  const approvalRejected = () => currentStep()?.stage === "approval" && state.approvalDemo?.committed === "REJECTED";
   const table = (headers, rows) => {
     if (!rows.length) return '<div class="empty-state">暂无已记录数据。</div>';
     return '<div class="table-wrap"><table><thead><tr>' +
@@ -271,7 +274,7 @@
     const status = replayStatus();
     if (status === "WAITING_FOR_APPROVAL") return "等待人工审批动作";
     if (status === "APPROVED") return "本地审批动作已记录";
-    if (status === "REJECTED") return "本地驳回动作已记录";
+    if (status === "REJECTED") return "本地驳回动作已记录，回放已停止";
     if (status === "RUNNING") return "按当前步骤回放";
     if (status === "CLOSED") return "闭环完成";
     if (status === "ROLLED_BACK") return "已完成冲销恢复";
@@ -287,6 +290,7 @@
   };
   const stageState = (index) => {
     const current = currentStageIndex();
+    if (approvalRejected() && index === STAGE_INDEX.approval) return "error";
     if (isRollback() && index === 5 && current >= 5) return "error";
     if (index === 6) {
       if (isRollback()) return reached("recovery") ? "rollback" : current >= 6 ? "active" : "pending";
@@ -389,7 +393,9 @@
     const execution = latest("execution");
     const verification = latest("verification");
     const recovery = latest("recovery");
-    const finalOk = state.bundle.case.status === "CLOSED" ? "正常闭环" : state.bundle.case.status === "ROLLED_BACK" ? "已恢复至安全基线" : "等待终态";
+    const rejected = approvalRejected();
+    const finalStatus = rejected ? "REJECTED" : state.bundle.case.status;
+    const finalOk = rejected ? "后续执行已阻断" : state.bundle.case.status === "CLOSED" ? "正常闭环" : state.bundle.case.status === "ROLLED_BACK" ? "已恢复至安全基线" : "等待终态";
     const verifiedAmount = verification?.checks?.reduce((sum, item) => sum + num(item.actual), 0);
     const approvalInteraction = current?.stage === "approval"
       ? '<button type="button" class="primary-action evidence-action approval-demo-trigger" data-open-approval>演示人工审批 · ' + esc(approvalAmount()) + '</button>' +
@@ -414,9 +420,9 @@
         "<strong>" + esc(verification?.subtitle === "FAILED" ? "不匹配" : verification?.subtitle === "PASSED" ? "验证通过" : "等待独立验证") + "</strong></div>" +
       '<div class="pipeline-note rollback-note"><span>自动回滚执行</span>' +
         (recovery?.executions?.length ? recovery.executions.map((item) => "<strong>" + esc(item.component || "组件") + "：" + esc(item.amount || "冲销") + "</strong>").join("") : "<strong>" + (isRollback() ? "按原操作关联冲销" : "验证失败时由策略自动触发") + "</strong>") + "</div>" +
-      '<div class="pipeline-note result-note ' + (state.bundle.case.status === "FAILED" ? "is-failed" : "") + '"><span>最终结果</span><strong>' +
-        esc(state.bundle.case.status || "等待终态") + "</strong><b>" + esc(finalOk) + "</b><small>" +
-        esc(recovery ? "冲销后独立复核通过" : verification?.subtitle === "PASSED" ? "独立验证通过，调整已完成" : current ? current.title : "尚未生成终态结论") + "</small></div>";
+      '<div class="pipeline-note result-note ' + (rejected || state.bundle.case.status === "FAILED" ? "is-failed" : "") + '"><span>最终结果</span><strong>' +
+        esc(finalStatus || "等待终态") + "</strong><b>" + esc(finalOk) + "</b><small>" +
+        esc(rejected ? "人工审批驳回，未进入执行、验证或回滚" : recovery ? "冲销后独立复核通过" : verification?.subtitle === "PASSED" ? "独立验证通过，调整已完成" : current ? current.title : "尚未生成终态结论") + "</small></div>";
 
     const total = state.bundle.steps.length || 1;
     const percent = Math.round(((state.stepIndex + 1) / total) * 100);
@@ -425,10 +431,11 @@
     $("progress-bar").style.width = percent + "%";
     document.querySelector(".progress").setAttribute("aria-valuenow", String(percent));
     $("replay-step-note").textContent = "当前记录步骤：" + (current ? current.title : "—") + " · " + (current?.subtitle || "静态快照");
-    $("btn-play").textContent = state.playing ? "暂停回放" : (state.stepIndex >= total - 1 ? "从头播放" : "播放回放");
+    $("btn-play").textContent = rejected ? "审批已驳回" : state.playing ? "暂停回放" : (state.stepIndex >= total - 1 ? "从头播放" : "播放回放");
     $("btn-play").setAttribute("aria-pressed", String(state.playing));
+    $("btn-play").disabled = approvalAwaiting() || rejected;
     $("btn-prev").disabled = state.stepIndex <= 0;
-    $("btn-next").disabled = state.stepIndex >= total - 1;
+    $("btn-next").disabled = approvalAwaiting() || rejected || state.stepIndex >= total - 1;
   }
 
   function renderTabs() {
@@ -827,9 +834,9 @@
     const verification = verificationStep();
     const passed = verification?.subtitle === "PASSED" || Boolean(recoveryStep());
     const safetyStatus = replayStatus();
-    const note = isRollback() ? "已执行冲销并完成恢复复核" : passed ? "独立验证通过，未触发冲销" : "等待独立验证";
+    const note = approvalRejected() ? "审批驳回，后续执行已阻断" : isRollback() ? "已执行冲销并完成恢复复核" : passed ? "独立验证通过，未触发冲销" : "等待独立验证";
     $("safety-rail").innerHTML =
-      '<section class="rail-section"><span class="rail-label">当前安全状态</span><strong class="rail-state ' + (isRollback() ? "rollback-state" : "") + '">' + esc(safetyStatus) + '</strong><span class="rail-label">独立复核</span><strong class="rail-state ' + (passed ? "passed-state" : "") + '">' + (passed ? "PASSED" : "PENDING") + '</strong><span class="rail-label">最终差额</span><b>' + money(state.bundle.headline?.variance || "—") + "</b><small>" + esc(note) + "</small></section>" +
+      '<section class="rail-section"><span class="rail-label">当前安全状态</span><strong class="rail-state ' + (isRollback() ? "rollback-state" : approvalRejected() ? "approval-rejected-state" : "") + '">' + esc(safetyStatus) + '</strong><span class="rail-label">独立复核</span><strong class="rail-state ' + (passed ? "passed-state" : "") + '">' + (passed ? "PASSED" : "PENDING") + '</strong><span class="rail-label">最终差额</span><b>' + money(state.bundle.headline?.variance || "—") + "</b><small>" + esc(note) + "</small></section>" +
       '<section class="rail-section"><span class="rail-label">案例与审批边界</span><div class="rail-kv"><span>案件</span><strong>' + esc(c.case_id) + '</strong></div><div class="rail-kv"><span>风险</span><strong>' + esc(latest("risk")?.subtitle || "L2") + '</strong></div><div class="rail-kv"><span>审批人</span><strong>' + esc(state.bundle.headline?.approved_by || "财务负责人（演示）") + '</strong></div><div class="rail-kv"><span>模式</span><strong>AgentTeams · Matrix</strong></div></section>' +
       '<section class="rail-section export-section"><span class="rail-label">导出证据包</span><button type="button" data-export-evidence>导出证据包</button><small>浏览器本地打包现有脱敏回放数据、Trace、任务账本、审计链摘要和校验清单。</small><code class="rail-code">' + shortId(state.bundle.provenance?.snapshot_sha256, 38) + "</code></section>";
   }
@@ -853,6 +860,11 @@
 
   function playTick() {
     if (!state.playing) return;
+    if (approvalAwaiting() || approvalRejected()) {
+      stopPlaying();
+      render();
+      return;
+    }
     if (state.stepIndex >= state.bundle.steps.length - 1) {
       stopPlaying();
       render();
@@ -872,6 +884,10 @@
       return;
     }
     if (state.stepIndex >= state.bundle.steps.length - 1) state.stepIndex = 0;
+    if (approvalAwaiting() || approvalRejected()) {
+      render();
+      return;
+    }
     state.playing = true;
     render();
     playTick();
@@ -879,7 +895,15 @@
 
   function changeStep(delta) {
     stopPlaying();
-    state.stepIndex = Math.max(0, Math.min(state.bundle.steps.length - 1, state.stepIndex + delta));
+    if (delta > 0 && approvalAwaiting()) {
+      state.approvalDialogOpen = true;
+      render();
+      return;
+    }
+    if (delta > 0 && approvalRejected()) return;
+    const nextIndex = Math.max(0, Math.min(state.bundle.steps.length - 1, state.stepIndex + delta));
+    if (delta < 0 && nextIndex < approvalStageIndex() && state.approvalDemo?.committed) state.approvalDemo = createApprovalDemo();
+    state.stepIndex = nextIndex;
     render();
   }
 
@@ -1175,11 +1199,14 @@
       state.approvalDemo = createApprovalDemo();
       state.approvalDialogOpen = false;
       const requestedStep = requestedStepParam == null || requestedStepParam === "" ? null : Number(requestedStepParam);
-      state.stepIndex = Number.isFinite(requestedStep) ? Math.max(0, Math.min(bundle.steps.length - 1, requestedStep)) : bundle.steps.length - 1;
+      const hasRequestedStep = Number.isFinite(requestedStep);
+      state.stepIndex = hasRequestedStep ? Math.max(0, Math.min(bundle.steps.length - 1, requestedStep)) : 0;
+      state.playing = !hasRequestedStep && state.tab === "decision";
       render();
       const notice = $("capture-notice");
       notice.hidden = ["public-data", "observability"].includes(state.tab);
       notice.textContent = "真实环境线上运行 AgentTeams、PolarDB、ERPNext、Grafana 等组件，配置 8 核 24G；GitHub Pages / ModelScope 达不到运行要求，所以 Demo 只能静态回放录制脚本了。";
+      if (state.playing) playTick();
     } catch (error) {
       $("tab-content").innerHTML = '<div class="capture-notice">静态记录读取失败：' + esc(error.message) + "</div>";
     } finally {
@@ -1223,6 +1250,9 @@
       demo.verified = true;
       demo.committed = decision;
       demo.message = "";
+      stopPlaying();
+      state.approvalDialogOpen = false;
+      if (decision === "APPROVED") state.stepIndex = Math.min(state.bundle.steps.length - 1, state.stepIndex + 1);
       render();
       return;
     }
@@ -1248,6 +1278,7 @@
       if (index >= 0) {
         stopPlaying();
         state.approvalDialogOpen = false;
+        if (jumpStage.dataset.jumpStage === "approval" || index < approvalStageIndex()) state.approvalDemo = createApprovalDemo();
         state.stepIndex = index;
         render();
       }
@@ -1264,6 +1295,8 @@
     if (event.target.closest("#btn-next")) return changeStep(1);
     if (event.target.closest("#btn-reset")) {
       stopPlaying();
+      state.approvalDemo = createApprovalDemo();
+      state.approvalDialogOpen = false;
       state.stepIndex = 0;
       render();
     }
