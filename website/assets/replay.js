@@ -754,7 +754,7 @@
     $("safety-rail").innerHTML =
       '<section class="rail-section"><span class="rail-label">当前安全状态</span><strong class="rail-state ' + (isRollback() ? "rollback-state" : "") + '">' + esc(safetyStatus) + '</strong><span class="rail-label">独立复核</span><strong class="rail-state ' + (passed ? "passed-state" : "") + '">' + (passed ? "PASSED" : "PENDING") + '</strong><span class="rail-label">最终差额</span><b>' + money(state.bundle.headline?.variance || "—") + "</b><small>" + esc(note) + "</small></section>" +
       '<section class="rail-section"><span class="rail-label">案例与审批边界</span><div class="rail-kv"><span>案件</span><strong>' + esc(c.case_id) + '</strong></div><div class="rail-kv"><span>风险</span><strong>' + esc(latest("risk")?.subtitle || "L2") + '</strong></div><div class="rail-kv"><span>审批人</span><strong>' + esc(state.bundle.headline?.approved_by || "财务负责人（演示）") + '</strong></div><div class="rail-kv"><span>模式</span><strong>AgentTeams · Matrix</strong></div></section>' +
-      '<section class="rail-section export-section"><span class="rail-label">导出证据包</span><button type="button" disabled>静态页不再导出</button><small>完整证据包已随 website/data/ 一起托管。</small><code class="rail-code">' + shortId(state.bundle.provenance?.snapshot_sha256, 38) + "</code></section>";
+      '<section class="rail-section export-section"><span class="rail-label">导出证据包</span><button type="button" data-export-evidence>导出证据包</button><small>浏览器本地打包现有脱敏回放数据、Trace、任务账本、审计链摘要和校验清单。</small><code class="rail-code">' + shortId(state.bundle.provenance?.snapshot_sha256, 38) + "</code></section>";
   }
 
   function render() {
@@ -803,6 +803,285 @@
     stopPlaying();
     state.stepIndex = Math.max(0, Math.min(state.bundle.steps.length - 1, state.stepIndex + delta));
     render();
+  }
+
+  const utf8 = (value) => new TextEncoder().encode(String(value));
+  const concatBytes = (chunks) => {
+    const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Uint8Array(total);
+    let offset = 0;
+    chunks.forEach((chunk) => {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    });
+    return result;
+  };
+  const littleEndian16 = (value) => {
+    const result = new Uint8Array(2);
+    new DataView(result.buffer).setUint16(0, value, true);
+    return result;
+  };
+  const littleEndian32 = (value) => {
+    const result = new Uint8Array(4);
+    new DataView(result.buffer).setUint32(0, value >>> 0, true);
+    return result;
+  };
+  const CRC32_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let index = 0; index < 256; index += 1) {
+      let value = index;
+      for (let bit = 0; bit < 8; bit += 1) value = (value & 1) ? (0xedb88320 ^ (value >>> 1)) : (value >>> 1);
+      table[index] = value >>> 0;
+    }
+    return table;
+  })();
+  const crc32 = (bytes) => {
+    let value = 0xffffffff;
+    bytes.forEach((byte) => { value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8); });
+    return (value ^ 0xffffffff) >>> 0;
+  };
+  const SHA256_K = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+  ];
+  const rotr = (value, bits) => (value >>> bits) | (value << (32 - bits));
+  const sha256Fallback = (bytes) => {
+    const bitLength = bytes.length * 8;
+    const paddedLength = Math.ceil((bytes.length + 9) / 64) * 64;
+    const padded = new Uint8Array(paddedLength);
+    padded.set(bytes);
+    padded[bytes.length] = 0x80;
+    const paddedView = new DataView(padded.buffer);
+    paddedView.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000), false);
+    paddedView.setUint32(paddedLength - 4, bitLength >>> 0, false);
+    let [h0, h1, h2, h3, h4, h5, h6, h7] = [
+      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+      0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    ];
+    const words = new Uint32Array(64);
+    for (let offset = 0; offset < paddedLength; offset += 64) {
+      for (let index = 0; index < 16; index += 1) words[index] = paddedView.getUint32(offset + index * 4, false);
+      for (let index = 16; index < 64; index += 1) {
+        const s0 = rotr(words[index - 15], 7) ^ rotr(words[index - 15], 18) ^ (words[index - 15] >>> 3);
+        const s1 = rotr(words[index - 2], 17) ^ rotr(words[index - 2], 19) ^ (words[index - 2] >>> 10);
+        words[index] = (words[index - 16] + s0 + words[index - 7] + s1) >>> 0;
+      }
+      let [a, b, c, d, e, f, g, h] = [h0, h1, h2, h3, h4, h5, h6, h7];
+      for (let index = 0; index < 64; index += 1) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+        const choose = (e & f) ^ (~e & g);
+        const temp1 = (h + S1 + choose + SHA256_K[index] + words[index]) >>> 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+        const majority = (a & b) ^ (a & c) ^ (b & c);
+        const temp2 = (S0 + majority) >>> 0;
+        [h, g, f, e, d, c, b, a] = [g, f, e, (d + temp1) >>> 0, c, b, a, (temp1 + temp2) >>> 0];
+      }
+      h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0;
+      h4 = (h4 + e) >>> 0; h5 = (h5 + f) >>> 0; h6 = (h6 + g) >>> 0; h7 = (h7 + h) >>> 0;
+    }
+    return [h0, h1, h2, h3, h4, h5, h6, h7].map((value) => value.toString(16).padStart(8, "0")).join("");
+  };
+  const sha256 = async (bytes) => {
+    try {
+      if (window.crypto?.subtle) {
+        const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest)).map((value) => value.toString(16).padStart(2, "0")).join("");
+      }
+    } catch (_error) {
+      // The 202 demo is served over HTTP, where Web Crypto may be unavailable.
+    }
+    return sha256Fallback(bytes);
+  };
+  const zipStore = (files) => {
+    const localParts = [];
+    const centralParts = [];
+    const entries = [];
+    let offset = 0;
+    files.forEach((file) => {
+      const name = utf8(file.name);
+      const data = file.data;
+      const checksum = crc32(data);
+      const local = concatBytes([
+        littleEndian32(0x04034b50), littleEndian16(20), littleEndian16(0), littleEndian16(0), littleEndian16(0), littleEndian16(0),
+        littleEndian32(checksum), littleEndian32(data.length), littleEndian32(data.length), littleEndian16(name.length), littleEndian16(0), name, data,
+      ]);
+      localParts.push(local);
+      entries.push({ name, checksum, size: data.length, offset });
+      offset += local.length;
+    });
+    const centralOffset = offset;
+    entries.forEach((entry) => {
+      centralParts.push(concatBytes([
+        littleEndian32(0x02014b50), littleEndian16(20), littleEndian16(20), littleEndian16(0), littleEndian16(0), littleEndian16(0), littleEndian16(0),
+        littleEndian32(entry.checksum), littleEndian32(entry.size), littleEndian32(entry.size), littleEndian16(entry.name.length), littleEndian16(0), littleEndian16(0),
+        littleEndian16(0), littleEndian16(0), littleEndian32(0), littleEndian32(entry.offset), entry.name,
+      ]));
+    });
+    const central = concatBytes(centralParts);
+    const end = concatBytes([
+      littleEndian32(0x06054b50), littleEndian16(0), littleEndian16(0), littleEndian16(entries.length), littleEndian16(entries.length),
+      littleEndian32(central.length), littleEndian32(centralOffset), littleEndian16(0),
+    ]);
+    return new Blob([...localParts, central, end], { type: "application/zip" });
+  };
+  const jsonText = (value) => JSON.stringify(value, null, 2) + "\n";
+  const markdownCell = (value) => String(value == null || value === "" ? "—" : value).replace(/\|/g, "\\|").replace(/[\r\n]+/g, " ");
+  const buildAuditReport = (bundle) => {
+    const c = bundle.case || {};
+    const h = bundle.headline || {};
+    const run = bundle.run || {};
+    const audit = bundle.audit || {};
+    const trace = bundle.trace || {};
+    const provenance = bundle.provenance || {};
+    const spanByTask = new Map((trace.spans || []).filter((span) => span.agent_task_id).map((span) => [span.agent_task_id, span]));
+    const taskRows = (bundle.agent_tasks || []).map((task, index) => {
+      const span = spanByTask.get(task.task_id) || {};
+      return `| ${index + 1} | ${markdownCell(task.skill_name)} | ${markdownCell(task.assigned_actor)} | ${markdownCell(TASK_STATUS_LABELS[task.status] || task.status)} | ${markdownCell(duration(span.duration_ms))} | ${markdownCell(tokens(task.token_usage?.total_tokens))} |`;
+    });
+    const stageRows = (bundle.steps || []).map((step, index) =>
+      `| ${index + 1} | ${markdownCell(step.stage)} | ${markdownCell(step.title)} | ${markdownCell(step.subtitle)} | ${markdownCell(step.at)} |`
+    );
+    return [
+      "# RevGuard 运行证据摘要",
+      "",
+      "> 本报告由静态回放页面在浏览器本地生成，仅整理已托管的脱敏运行记录，不连接后端、不重新执行任务。",
+      "",
+      "## 案件与结论",
+      "",
+      `- 案件：${markdownCell(c.case_id)}`,
+      `- 状态：${markdownCell(c.status)}`,
+      `- 订单：${markdownCell(c.order_id)} · ${markdownCell(c.partner_name)}`,
+      `- 预期佣金：${markdownCell(h.expected)}；已入账：${markdownCell(h.posted)}；独立验证：${markdownCell(h.verified)}`,
+      `- 最终差额：${markdownCell(h.variance)} · 验证状态：${markdownCell(h.verification_status)}`,
+      `- 审批：${markdownCell(h.approved_by)} · ${markdownCell(h.approval_status)}`,
+      "",
+      "## 运行来源",
+      "",
+      `- 回放包版本：${markdownCell(bundle.release)}`,
+      `- 真实运行来源版本：${markdownCell(provenance.source_release)}`,
+      `- 捕获类型：${markdownCell(provenance.capture_kind)}`,
+      `- 运行时间：${markdownCell(run.started_at)} → ${markdownCell(run.ended_at)}（${markdownCell(duration(run.wall_duration_ms))}）`,
+      `- Agent Trace：${markdownCell(trace.span_count)} 条；审计事件：${markdownCell(audit.count)} 条；审计链：${audit.chain_ok ? "通过" : "待校验"}`,
+      `- 来源快照：${markdownCell(provenance.snapshot_sha256)}`,
+      "",
+      "## 阶段记录",
+      "",
+      "| # | 阶段 | 标题 | 状态/摘要 | 时间 |",
+      "| ---: | --- | --- | --- | --- |",
+      ...stageRows,
+      "",
+      "## 多智能体任务账本",
+      "",
+      "| # | Skill | 执行者 | 状态 | 耗时 | Token |",
+      "| ---: | --- | --- | --- | ---: | ---: |",
+      ...(taskRows.length ? taskRows : ["| — | 暂无任务记录 | — | — | — | — |"]),
+      "",
+      "## 证据边界",
+      "",
+      "- 业务样本为合成数据；运行链路、任务输入输出、Trace 和审计链摘要来自真实运行导出。",
+      "- 包内数据已在运行导出阶段脱敏；静态回放不会写入 ERPNext、PolarDB 或其他系统。",
+      "- `SHA256SUMS` 用于校验本次浏览器导出的包内文件，不能替代生产付款凭证或原始数据库备份。",
+      "",
+    ].join("\n");
+  };
+  const buildEvidenceReadme = (bundle, fileNames) => {
+    const c = bundle.case || {};
+    const p = bundle.provenance || {};
+    return [
+      "# RevGuard 静态回放证据包",
+      "",
+      "本包由 RevGuard 静态回放页在浏览器本地生成，内容来自已托管的脱敏 JSON，不会调用后端、不重新运行 AgentTeams，也不会写入 ERPNext、PolarDB 或 Grafana。",
+      "",
+      `- 案件：${c.case_id || "—"}`,
+      `- 回放包版本：${bundle.release || "—"}`,
+      `- 真实运行来源：${p.source_release || "—"}`,
+      `- 捕获类型：${p.capture_kind || "CAPTURED_FROM_RUNTIME"}`,
+      `- 业务数据：${bundle.disclosure?.business_data || "synthetic"}`,
+      `- 运行组件：AgentTeams、PolarDB、ERPNext、Grafana · 8 核 24G 线上环境`,
+      "",
+      "## 文件说明",
+      "",
+      ...fileNames.map(([name, description]) => `- \`${name}\`：${description}`),
+      "",
+      "`manifest.json` 记录每个文件的 SHA-256；`SHA256SUMS` 可用于离线复核包内文件完整性。",
+      "",
+    ].join("\n");
+  };
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  };
+  async function exportEvidencePackage() {
+    const button = document.querySelector("[data-export-evidence]");
+    if (!button || !state.bundle || button.disabled) return;
+    button.disabled = true;
+    button.textContent = "正在打包…";
+    try {
+      const bundle = JSON.parse(JSON.stringify(state.bundle));
+      delete bundle.__file;
+      const caseId = bundle.case?.case_id || "revguard-case";
+      const fileDescriptions = [
+        ["case-replay.json", "完整的静态回放数据包（已脱敏）"],
+        ["agent-tasks.json", "AgentTeams 持久化任务账本及任务输入/输出"],
+        ["trace.json", "Agent / Skill / Tool Trace 跨度记录"],
+        ["audit-chain.json", "审计链计数、首尾序号、头哈希与校验结果"],
+        ["engineering-snapshot.json", "工程证据与公开数据实验快照"],
+        ["audit-report.md", "面向人审的案件摘要报告"],
+      ];
+      const dataFiles = [
+        { name: "case-replay.json", data: utf8(jsonText(bundle)) },
+        { name: "agent-tasks.json", data: utf8(jsonText({ schema: "revguard.agent-tasks/v1", case_id: caseId, tasks: bundle.agent_tasks || [] })) },
+        { name: "trace.json", data: utf8(jsonText({ schema: "revguard.trace/v1", case_id: caseId, trace: bundle.trace || {} })) },
+        { name: "audit-chain.json", data: utf8(jsonText({ schema: "revguard.audit-chain/v1", case_id: caseId, audit: bundle.audit || {} })) },
+        { name: "engineering-snapshot.json", data: utf8(jsonText(state.engineering || {})) },
+        { name: "audit-report.md", data: utf8(buildAuditReport(bundle)) },
+      ];
+      const readme = { name: "README.md", data: utf8(buildEvidenceReadme(bundle, fileDescriptions)) };
+      const contentFiles = [readme, ...dataFiles];
+      const fileMeta = [];
+      for (const file of contentFiles) {
+        fileMeta.push({ name: file.name, description: fileDescriptions.find(([name]) => name === file.name)?.[1] || "证据文件", bytes: file.data.length, sha256: await sha256(file.data) });
+      }
+      const manifest = {
+        schema: "revguard.evidence-pack/v1",
+        package_type: "STATIC_REPLAY_EXPORT",
+        generated_at: new Date().toISOString(),
+        case_id: caseId,
+        release: bundle.release || "0.6.0",
+        source_release: bundle.provenance?.source_release || null,
+        capture_kind: bundle.provenance?.capture_kind || "CAPTURED_FROM_RUNTIME",
+        source_snapshot_sha256: bundle.provenance?.snapshot_sha256 || null,
+        boundary: "本地浏览器导出；只读静态数据；不连接后端；业务样本为合成数据",
+        files: fileMeta,
+      };
+      const manifestFile = { name: "manifest.json", data: utf8(jsonText(manifest)) };
+      const manifestSha = await sha256(manifestFile.data);
+      const sums = [...fileMeta.map((file) => `${file.sha256}  ${file.name}`), `${manifestSha}  manifest.json`].join("\n") + "\n";
+      const sumsFile = { name: "SHA256SUMS", data: utf8(sums) };
+      const zip = zipStore([...contentFiles, manifestFile, sumsFile]);
+      downloadBlob(zip, `${caseId}-evidence-package.zip`);
+      button.textContent = "已下载证据包";
+      window.setTimeout(() => { if (button.isConnected) button.textContent = "导出证据包"; }, 1400);
+    } catch (error) {
+      console.error("静态证据包导出失败", error);
+      button.textContent = "导出失败，请重试";
+      window.setTimeout(() => { if (button.isConnected) button.textContent = "导出证据包"; }, 1800);
+    } finally {
+      window.setTimeout(() => { if (button.isConnected) button.disabled = false; }, 1200);
+    }
   }
 
   async function loadCase(file) {
@@ -854,6 +1133,7 @@
       state.stepIndex = 0;
       render();
     }
+    if (event.target.closest("[data-export-evidence]")) return exportEvidencePackage();
   });
   document.addEventListener("change", (event) => {
     if (event.target.id === "speed") {
