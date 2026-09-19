@@ -40,11 +40,12 @@
   const params = new URLSearchParams(window.location.search);
   const requestedCase = params.get("case");
   const requestedTab = params.get("tab");
+  const requestedStepParam = params.get("step");
 
   const state = {
     cases: [],
     bundle: null,
-    stepIndex: Number.isFinite(Number(params.get("step"))) ? Number(params.get("step")) : -1,
+    stepIndex: -1,
     tab: VALID_TABS.has(requestedTab) ? requestedTab : "decision",
     playing: false,
     speed: 1,
@@ -239,7 +240,7 @@
     $("step-index").textContent = String(state.stepIndex + 1);
     $("step-total").textContent = String(total);
     $("progress-bar").style.width = percent + "%";
-    $(".progress").setAttribute("aria-valuenow", String(percent));
+    document.querySelector(".progress").setAttribute("aria-valuenow", String(percent));
     $("replay-step-note").textContent = "当前记录步骤：" + (current ? current.title : "—") + " · " + (current?.subtitle || "静态快照");
     $("btn-play").textContent = state.playing ? "暂停回放" : (state.stepIndex >= total - 1 ? "从头播放" : "播放回放");
     $("btn-play").setAttribute("aria-pressed", String(state.playing));
@@ -508,7 +509,7 @@
       });
       bundle.__file = file;
       state.bundle = bundle;
-      const requestedStep = Number(params.get("step"));
+      const requestedStep = requestedStepParam == null || requestedStepParam === "" ? null : Number(requestedStepParam);
       state.stepIndex = Number.isFinite(requestedStep) ? Math.max(0, Math.min(bundle.steps.length - 1, requestedStep)) : bundle.steps.length - 1;
       render();
       const notice = $("capture-notice");

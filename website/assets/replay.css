@@ -643,6 +643,7 @@ footer span { display: flex; align-items: center; gap: 5px; }
 .site-footer { flex-wrap: wrap; height: auto; padding: 9px 18px; }
 .site-footer .footer-links { gap: 10px; }
 .site-footer a { color: #6e96ad; }
+.brand-mark { width: 28px; height: 28px; flex: 0 0 28px; }
 @media (max-width: 760px) {
   .replay-controls { align-items: flex-start; flex-direction: column; }
   .control-meta { width: 100%; justify-content: space-between; }
