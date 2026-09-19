@@ -69,6 +69,15 @@ def check(root: Path) -> list[str]:
         fail("index.json 缺少 capture.kind（必须标明回放数据来自真实运行导出）")
     if not capture.get("source_release"):
         fail("index.json 缺少 capture.source_release（必须区分捕获运行版本与发布版本）")
+    # A published static site may intentionally aggregate separately captured
+    # runtime generations; every bundle must still name its exact source release.
+    capture_releases = {
+        normalized_release(value)
+        for value in (capture.get("source_releases") or [capture.get("source_release")])
+        if value
+    }
+    if not capture_releases:
+        fail("index.json 的 capture.source_releases 为空")
 
     case_ids: list[str] = []
     for entry in cases:
@@ -89,14 +98,14 @@ def check(root: Path) -> list[str]:
         provenance = bundle.get("provenance") or {}
         if not provenance.get("source_release"):
             fail(f"{entry['file']} 缺少 provenance.source_release")
+        if entry.get("source_release") and normalized_release(entry["source_release"]) != normalized_release(provenance["source_release"]):
+            fail(f"{entry['file']} 的 source_release 与索引条目不一致")
         if provenance.get("health_release") and normalized_release(
             provenance.get("source_release")
         ) != normalized_release(provenance.get("health_release")):
             fail(f"{entry['file']} 的 source_release 与 health_release 不一致")
-        if normalized_release(provenance.get("source_release")) != normalized_release(
-            capture.get("source_release")
-        ):
-            fail(f"{entry['file']} 的 source_release 与 index.json 不一致")
+        if normalized_release(provenance.get("source_release")) not in capture_releases:
+            fail(f"{entry['file']} 的 source_release 不在 index.json 声明的捕获版本中")
         case = bundle.get("case") or {}
         if case.get("case_id") != entry["case_id"]:
             fail(f"{entry['file']} 的 case_id 与索引不一致")

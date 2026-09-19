@@ -697,8 +697,44 @@ footer span { display: flex; align-items: center; gap: 5px; }
 .site-footer .footer-links { gap: 10px; }
 .site-footer a { color: #6e96ad; }
 .brand-mark { width: 28px; height: 28px; flex: 0 0 28px; }
+#summary-strip[hidden], .pipeline-panel[hidden], #safety-rail[hidden], #capture-notice[hidden] { display: none !important; }
+.workspace.workspace-observability { grid-template-columns: minmax(0, 1fr); margin-top: 0; }
+.global-view .tabs { margin-top: 0; }
+
+/* The static dashboard mirrors the Grafana canvas used by the live observability view. */
+.grafana-live-dashboard { padding: 14px 4px 0; background: #111217; }
+.grafana-live-header { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px 10px; color: #cfd1d8; font-size: 12px; }
+.grafana-live-header strong { font-size: 16px; font-weight: 520; }
+.grafana-live-header span { color: #858995; font-size: 9px; }
+.grafana-live-stat-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.grafana-live-stat { min-height: 112px; padding: 12px 14px; border: 1px solid #2c2e38; border-radius: 2px; background: #181a21; }
+.grafana-live-stat span { display: block; color: #d9dbe2; font-size: 14px; font-weight: 650; }
+.grafana-live-stat strong { display: block; margin-top: 20px; color: #72c766; font-size: 42px; font-weight: 500; line-height: 1; }
+.grafana-live-stat.is-green { border-top: 2px solid #72c766; }
+.grafana-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.grafana-chart-panel { min-height: 286px; padding: 14px 14px 9px; border: 1px solid #2c2e38; border-radius: 2px; background: #181a21; }
+.grafana-chart-panel h3 { margin: 0 0 12px; color: #d9dbe2; font-size: 16px; font-weight: 650; }
+.grafana-chart { display: block; width: 100%; height: 205px; overflow: visible; }
+.chart-grid path { stroke: #2b2e36; stroke-width: 1; fill: none; }
+.chart-axis text { fill: #d2d4dc; font: 12px Inter, "PingFang SC", sans-serif; }
+.chart-area { opacity: .14; }
+.chart-area.green { fill: #72c766; }
+.chart-area.yellow { fill: #f2d21b; }
+.chart-line { fill: none; stroke-width: 2.5; }
+.chart-line.green { stroke: #72c766; }
+.chart-line.yellow { stroke: #f2d21b; }
+.chart-legend { display: flex; align-items: center; gap: 16px; color: #c8cad2; font-size: 12px; }
+.legend-dot { display: inline-block; width: 12px; height: 6px; margin-right: 6px; border-radius: 3px; vertical-align: middle; }
+.legend-dot.green { background: #72c766; }
+.legend-dot.yellow { background: #f2d21b; }
+.grafana-powered { min-height: 42px; display: flex; align-items: center; justify-content: flex-end; gap: 7px; color: #858995; font-size: 12px; }
+.grafana-powered strong { color: #e58c3b; font-weight: 600; font-size: 15px; }
+.grafana-powered strong span { color: #f39a41; }
 @media (max-width: 760px) {
   .replay-controls { align-items: flex-start; flex-direction: column; }
   .control-meta { width: 100%; justify-content: space-between; }
   .site-footer { align-items: flex-start; }
+  .grafana-live-stat-grid, .grafana-chart-grid { grid-template-columns: 1fr; }
+  .grafana-live-header { align-items: flex-start; flex-direction: column; }
+  .grafana-live-stat strong { margin-top: 13px; }
 }

@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "business_value": {
+    "schema_version": "1.0",
+    "case_count": 8,
+    "data_classifications": [
+      "synthetic_demonstration"
+    ],
+    "production_claim_allowed": false,
+    "methodology_only": true,
+    "metrics": {
+      "median_manual_processing_minutes": 127.5,
+      "median_revguard_processing_minutes": 19.5,
+      "median_minutes_saved_per_case": 108,
+      "median_processing_time_reduction_rate": 0.8471,
+      "throughput_capacity_multiplier": 6.5385,
+      "wrong_payment_rate_before": 0.75,
+      "wrong_payment_rate_after": 0,
+      "recovery_cost_before": "37200.00",
+      "recovery_cost_after": "1800.00",
+      "recovery_cost_avoided": "35400.00",
+      "recovery_cost_reduction_rate": 0.9516,
+      "manual_escalation_rate": 0.5,
+      "audit_exception_rate_before": 0.875,
+      "audit_exception_rate_after": 0
+    },
+    "simulation_contract": {
+      "default_assumptions": {
+        "monthly_case_volume": 500,
+        "loaded_hourly_labor_cost": 100,
+        "currency": "CNY",
+        "working_hours_per_fte_month": 160,
+        "months_per_year": 12
+      },
+      "claim_boundary": "用户输入情景 × 合成样本中位数，仅作预算讨论；不是现金节省承诺，也不得替代企业实测基线。"
+    },
+    "guardrail": "包含合成数据：只验证指标口径与计算链，不得宣称为企业真实收益。"
+  },
+  "public_data_experiment": {
+    "schema_version": "1.0",
+    "experiment_id": "revguard-olist-public-rates-20260916",
+    "title": "Olist 公开真实交易收入保障实验",
+    "data_boundary": {
+      "transaction": "PUBLIC_REAL",
+      "erp": "LIVE_SYSTEM",
+      "fee_rules": "PUBLIC_REAL",
+      "platform_mapping": "SYNTHETIC_DOMAIN",
+      "settlement": "SYNTHETIC_DOMAIN",
+      "exceptions": "SYNTHETIC_DOMAIN",
+      "historical_recalculation": false,
+      "statement": "三真一合成：真实公开交易、真实 ERP、真实公开费率；合成结算与异常。"
+    },
+    "source": {
+      "dataset": "Brazilian E-Commerce Public Dataset by Olist",
+      "random_seed": 202609
+    },
+    "metrics": {
+      "total_transactions": 10000,
+      "normal_transactions": 9200,
+      "risk_cases": 800,
+      "anomaly_rate": "0.08",
+      "total_revenue_audited_brl": "1584484.24",
+      "expected_commission_brl": "138298.34",
+      "actual_commission_brl": "141353.32",
+      "revenue_at_risk_brl": "41156.21"
+    },
+    "rules": {
+      "count": 6,
+      "assignments": {
+        "EBAY-GUITARS-BASSES-6_7": 1679,
+        "EBAY-MEDIA-CATEGORIES-15_3": 1722,
+        "EBAY-MOST-CATEGORIES-13_6": 1667,
+        "EBAY-SNEAKERS-OVER-150-8": 1645,
+        "ETSY-CURRENCY-CONVERSION-2_5": 1686,
+        "ETSY-TRANSACTION-6_5": 1601
+      },
+      "component_scope": "Percentage fee components only. The experiment does not claim to reproduce a platform's complete invoice; currency-specific payment fees, taxes, caps, thresholds and eBay per-order fixed fees are excluded unless a rule explicitly models them."
+    },
+    "anomaly_types": {
+      "CANCELLED_ORDER_SETTLED": 80,
+      "COMMISSION_RATE_MISMATCH": 80,
+      "DUPLICATE_COMMISSION": 80,
+      "DUPLICATE_SETTLEMENT": 80,
+      "INVALID_RULE_EFFECTIVE_DATE": 80,
+      "MISSING_COMMISSION": 80,
+      "MISSING_FEE": 80,
+      "SETTLEMENT_AMOUNT_MISMATCH": 80,
+      "UNEXPECTED_FEE": 80,
+      "WRONG_SELLER_TIER": 80
+    },
+    "erpnext": {
+      "version": "v16.34.2",
+      "document_state": "DRAFT_NO_GL_EFFECT",
+      "authenticated_rest_read_status": 200,
+      "read_only_write_rejection_status": 403,
+      "observed_counts": {
+        "Customer": 10000,
+        "Item": 6510,
+        "Sales Partner": 1664,
+        "Sales Order": 10000,
+        "Sales Invoice": 10000,
+        "Payment Entry": 10000
+      }
+    },
+    "validation_status": "PASSED"
+  }
+}

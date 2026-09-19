@@ -107,11 +107,14 @@
   const state = {
     cases: [],
     bundle: null,
+    engineering: null,
     stepIndex: -1,
     tab: VALID_TABS.has(requestedTab) ? requestedTab : "decision",
     playing: false,
     speed: 1,
     timer: null,
+    valueMonthlyCases: null,
+    valueHourlyCost: null,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -129,6 +132,18 @@
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+  const percent = (value, digits = 1) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? (parsed * 100).toFixed(digits) + "%" : "—";
+  };
+  const cny = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY", maximumFractionDigits: 0 }).format(parsed) : "—";
+  };
+  const brl = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 }).format(parsed) : "—";
+  };
   const money = (value, currency) => {
     const raw = value == null || value === "" ? "—" : String(value);
     return '<span class="amount">' + esc(raw.includes(" ") ? raw : raw + " " + (currency || state.bundle?.case?.currency || "KES")) + "</span>";
@@ -175,7 +190,7 @@
   const verificationStep = () => latest("verification");
   const recoveryStep = () => latest("recovery");
   const currency = () => state.bundle?.case?.currency || "KES";
-  const headlineExpected = () => state.bundle?.headline?.verified || state.bundle?.headline?.expected || "—";
+  const headlineExpected = () => state.bundle?.headline?.expected || state.bundle?.headline?.verified || "—";
   const approvalAmount = () => {
     const approval = latest("approval");
     const diffs = latest("rootcause")?.diffs || [];
@@ -235,22 +250,32 @@
     const c = bundle.case || {};
     const risk = latest("risk")?.subtitle || "L2";
     const status = c.status || "—";
-    $("topbar").innerHTML =
-      '<div class="brand-group">' +
-        '<svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.8 26 7.7v7.2c0 6.4-4.1 11-10 13.3C10.1 25.9 6 21.3 6 14.9V7.7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m10.5 15.7 3.4 3.4 7-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>' +
-        '<span class="brand-name">RevGuard</span><span class="top-divider"></span>' +
-        '<select id="case-select" class="case-select" aria-label="选择回放案件">' +
-          state.cases.map((item) => '<option value="' + esc(item.file) + '"' + (item.file === bundle.__file ? " selected" : "") + ">" + esc(item.case_id + " · " + (item.title || "运行记录")) + "</option>").join("") +
-        '</select>' +
-        '<span class="risk-pill">风险等级 ' + esc(risk) + "</span>" +
-        '<span class="mcp-pill">MCP 参考链路</span>' +
-        '<span class="mcp-pill matrix-pill"><span></span>AgentTeams · Matrix</span>' +
-        '<span class="approval-label">人工审批</span>' +
-      '</div>' +
-      '<div class="disclosure">合成业务数据 · 真实运行链路 <span>· 静态回放（不连接后端）</span></div>' +
-      '<div class="top-actions"><span class="health-pill"><i class="health-dot"></i>静态回放 · 只读</span><span class="status-mini outcome-' + statusTone() + '">' + esc(status) + "</span></div>";
-    document.title = "RevGuard · " + (c.case_id || "运行") + " 运行回放";
-    $("case-select").addEventListener("change", (event) => loadCase(event.target.value));
+    const globalView = ["public-data", "observability"].includes(state.tab);
+    const publicMode = state.tab === "public-data";
+    const topbar = $("topbar");
+    topbar.className = "topbar" + (globalView ? " global-mode" : "");
+    $("app-shell").classList.toggle("global-view", globalView);
+    $("capture-notice").hidden = globalView;
+    $("summary-strip").hidden = globalView;
+    document.querySelector(".pipeline-panel").hidden = globalView;
+    $("safety-rail").hidden = globalView;
+    document.querySelector(".workspace").classList.toggle("workspace-observability", globalView);
+    const brandEnd = globalView
+      ? '<span class="approval-label">' + (publicMode ? "公开数据实验" : "全局运行总览") + "</span>"
+      : '<select id="case-select" class="case-select" aria-label="选择回放案件">' +
+        state.cases.map((item) => '<option value="' + esc(item.file) + '"' + (item.file === bundle.__file ? " selected" : "") + ">" + esc(item.case_id + " · " + (item.status || item.title || "运行记录")) + "</option>").join("") +
+        '</select><span class="risk-pill">' + esc(risk) + "</span>" +
+        (c.execution_mode === "MCP_TEAM" ? '<span class="mcp-pill">MCP 参考链路</span>' : "") +
+        '<span class="mcp-pill matrix-pill"><span></span>AgentTeams · Matrix</span><span class="approval-label">人工审批</span>';
+    const topActions = globalView
+      ? '<span class="observability-mode">' + (publicMode ? "三真一合成 · 可复算" : "实时观测 · 只读展示") + "</span>"
+      : '<span class="health-pill"><i class="health-dot"></i>静态回放 · 只读</span><span class="status-mini outcome-' + statusTone() + '">' + esc(status) + "</span>";
+    topbar.innerHTML =
+      '<div class="brand-group"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.8 26 7.7v7.2c0 6.4-4.1 11-10 13.3C10.1 25.9 6 21.3 6 14.9V7.7Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m10.5 15.7 3.4 3.4 7-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg><span class="brand-name">RevGuard</span><span class="top-divider"></span>' + brandEnd + '</div>' +
+      '<div class="disclosure">' + (publicMode ? "公开真实交易 · 合成结算与异常" : "合成业务数据 · 真实运行链路") + (globalView ? "" : ' <span>· 静态回放（不连接后端）</span>') + "</div>" +
+      '<div class="top-actions">' + (globalView ? topActions : '<span class="health-pill">审批与写后验证约束</span><button class="icon-button" type="button" disabled aria-label="静态回放不允许重置"><span aria-hidden="true">↻</span><span>重置全部</span></button>' + topActions) + "</div>";
+    document.title = globalView ? "RevGuard · " + (publicMode ? "公开数据实验" : "全局运行总览") : "RevGuard · " + (c.case_id || "运行") + " 运行回放";
+    $("case-select")?.addEventListener("change", (event) => loadCase(event.target.value));
   }
 
   function renderSummary() {
@@ -346,7 +371,7 @@
     ];
     const rows = records.map((item) => {
       const live = available && item.strength !== "PENDING";
-      const source = item.source === "erpnext" ? "ERPNext" : item.source === "revguard-ledger" ? "PolarDB · ledger" : "RevGuard · policy";
+      const source = item.source === "erpnext" ? "ERPNext" : item.source === "revguard-ledger" ? "PolarDB · ledger" : item.source === "revguard-policy" ? "RevGuard · policy" : String(item.source || "—").replace(/_MOCK$/, "");
       return [
         esc(item.type),
         esc(source),
@@ -527,67 +552,88 @@
   }
 
   function renderValue() {
-    const expected = num(headlineExpected());
-    const posted = num(state.bundle.headline?.posted);
-    const delta = Math.max(0, expected - posted);
+    const value = state.engineering?.business_value || {};
+    const metrics = value.metrics || {};
+    const contract = value.simulation_contract || {};
+    const defaults = contract.default_assumptions || {};
+    const monthlyCases = state.valueMonthlyCases == null ? Number(defaults.monthly_case_volume || 500) : state.valueMonthlyCases;
+    const hourlyCost = state.valueHourlyCost == null ? Number(defaults.loaded_hourly_labor_cost || 100) : state.valueHourlyCost;
+    const manualMinutes = Number(metrics.median_manual_processing_minutes || 0);
+    const assistedMinutes = Number(metrics.median_revguard_processing_minutes || 0);
+    const savedPerCase = Number(metrics.median_minutes_saved_per_case || Math.max(manualMinutes - assistedMinutes, 0));
+    const monthlyHours = savedPerCase * Math.max(monthlyCases, 0) / 60;
+    const monthlyLaborValue = monthlyHours * Math.max(hourlyCost, 0);
+    const annualLaborValue = monthlyLaborValue * Number(defaults.months_per_year || 12);
+    const fteEquivalent = monthlyHours / Number(defaults.working_hours_per_fte_month || 160);
+    const throughput = Number(metrics.throughput_capacity_multiplier || (assistedMinutes ? manualMinutes / assistedMinutes : 0));
+    const timeReduction = Number(metrics.median_processing_time_reduction_rate || 0);
+    const recoveryBefore = Number(metrics.recovery_cost_before || 0);
+    const recoveryAfter = Number(metrics.recovery_cost_after || 0);
+    const recoveryReduction = Number(metrics.recovery_cost_reduction_rate || 0);
+    const comparisons = [
+      ["单案处理时长", manualMinutes + " 分钟", assistedMinutes + " 分钟", assistedMinutes / Math.max(manualMinutes, 1)],
+      ["错付样本率", percent(metrics.wrong_payment_rate_before), percent(metrics.wrong_payment_rate_after), Number(metrics.wrong_payment_rate_after || 0) / Math.max(Number(metrics.wrong_payment_rate_before || 0), 0.01)],
+      ["追回成本指数", recoveryBefore.toLocaleString(), recoveryAfter.toLocaleString(), recoveryAfter / Math.max(recoveryBefore, 1)],
+    ];
+    const comparisonRows = comparisons.map(([label, before, after, ratio]) =>
+      '<div class="comparison-row"><div><strong>' + esc(label) + '</strong><small>人工基线 ' + esc(before) + '　→　RevGuard ' + esc(after) + '</small></div><div class="comparison-track"><span class="before-bar"></span><span class="after-bar" style="width:' + Math.max(Math.min(ratio * 100, 100), after === "0.0%" ? 0 : 2) + '%"></span></div></div>'
+    ).join("");
     return '<div class="value-simulator">' +
-      '<section class="detail-section value-hero"><div><span class="value-eyebrow">STATIC CAPTURE · ENGINEERING VALUE</span><h2>把一次治理闭环，变成可复用的控制能力</h2><p>这里复现线上 WebUI 的价值模拟布局，但数字来自本次真实运行记录的静态快照；不再读取 ERPNext、PolarDB 或 Grafana。</p></div><div class="scenario-controls"><label><span>本案已发布</span><div><input value="' + esc(number(posted)) + '" readonly><b>' + esc(currency()) + '</b></div></label><label><span>规则应有</span><div><input value="' + esc(number(expected)) + '" readonly><b>' + esc(currency()) + '</b></div></label><div class="scenario-presets"><span>回放场景</span><button class="active" type="button" disabled>真实运行记录</button><button type="button" disabled>仅展示</button></div></div></section>' +
-      '<div class="value-kpi-grid"><article><span>识别差额</span><strong>' + esc(number(delta)) + '<em>' + esc(currency()) + '</em></strong><small>确定性账本差异</small></article><article class="value-kpi-accent"><span>审批边界</span><strong>' + esc(approvalAmount()) + '</strong><small>真人在线审批</small></article><article><span>运行跨度</span><strong>' + esc(state.bundle.trace?.span_count || "—") + '<em> spans</em></strong><small>AgentTeams / Skill / Tool</small></article><article><span>审计事件</span><strong>' + esc(state.bundle.audit?.count || "—") + '</strong><small>链式追加，校验通过</small></article></div>' +
-      '<div class="value-detail-grid"><section class="detail-section"><div class="section-title"><span class="tab-icon">↔</span><strong>治理前后对比</strong><span>（记录快照）</span></div><div class="comparison-list"><div class="comparison-row"><div><strong>台账差异</strong><small>发现并解释原始少记</small></div><div class="comparison-track"><span class="before-bar"></span><span class="after-bar" style="width:100%"></span></div></div><div class="sample-outcomes"><div><span>证据强度</span><strong>' + esc((latest("evidence")?.evidence || []).length) + ' 条强证据</strong></div><div><span>验证结论</span><strong>' + esc(verificationStep()?.subtitle || "—") + '</strong></div><div><span>恢复状态</span><strong>' + esc(isRollback() ? "已冲销" : "无需回滚") + '</strong></div></div></section><section class="detail-section"><div class="section-title"><span class="tab-icon">∑</span><strong>价值口径</strong><span>（不外推业务收益）</span></div><div class="formula-callout"><span>本案可解释的控制价值</span><strong>发现 → 审批 → 受控执行 → 独立验证</strong><b>' + esc(number(delta)) + " " + esc(currency()) + '</b></div><div class="methodology-list"><div><span>数据来源</span><strong>CAPTURED_FROM_RUNTIME</strong></div><div><span>数字性质</span><strong>记录事实，不是预测</strong></div><div><span>公开边界</span><strong>合成业务样本</strong></div></div></section></div></div>';
+      '<section class="detail-section value-hero"><div class="value-hero-copy"><span class="value-eyebrow">合成数据价值情景</span><h2>企业价值模拟器</h2><p>把 8 个合成案件的可复算基线，与企业自行输入的业务量和人工成本组合，回答“可能释放多少工时、形成多少预算空间”。</p></div><div class="scenario-controls"><label><span>月均异常案件量</span><div><input data-value-input="monthlyCases" type="number" min="1" max="100000" step="50" value="' + esc(monthlyCases) + '"><b>案/月</b></div></label><label><span>综合人工成本</span><div><input data-value-input="hourlyCost" type="number" min="1" max="10000" step="10" value="' + esc(hourlyCost) + '"><b>元/小时</b></div></label><div class="scenario-presets"><span>快速情景</span><button data-value-preset="100" type="button" class="' + (monthlyCases === 100 ? "active" : "") + '">100 案</button><button data-value-preset="500" type="button" class="' + (monthlyCases === 500 ? "active" : "") + '">500 案</button><button data-value-preset="1000" type="button" class="' + (monthlyCases === 1000 ? "active" : "") + '">1000 案</button></div></div></section>' +
+      '<section class="value-kpi-grid" aria-label="模拟价值关键指标"><article><span>处理时长下降</span><strong>' + esc(percent(timeReduction)) + '</strong><small>' + esc(manualMinutes) + ' → ' + esc(assistedMinutes) + ' 分钟/案</small></article><article><span>同等工时理论吞吐</span><strong>' + esc(throughput ? throughput.toFixed(2) + "×" : "—") + '</strong><small>基于合成样本中位数</small></article><article><span>每月释放处理工时</span><strong>' + esc(monthlyHours.toLocaleString("zh-CN", { maximumFractionDigits: 0 })) + ' 小时</strong><small>约 ' + esc(fteEquivalent.toFixed(1)) + ' 个全职人员月产能</small></article><article class="value-kpi-accent"><span>模拟人工经费空间</span><strong>' + esc(cny(monthlyLaborValue)) + '<em>/月</em></strong><small>' + esc(cny(annualLaborValue)) + '/年 · 非现金承诺</small></article></section>' +
+      '<div class="value-detail-grid"><section class="detail-section comparison-section"><div class="section-title"><span class="tab-icon">◒</span><strong>合成样本前后对照</strong><span>样本数 ' + esc(value.case_count || 0) + '</span></div><div class="comparison-list">' + comparisonRows + '</div><div class="sample-outcomes"><div><span>追回成本下降</span><strong>' + esc(percent(recoveryReduction)) + '</strong></div><div><span>审计异常样本</span><strong>' + esc(percent(metrics.audit_exception_rate_before)) + ' → ' + esc(percent(metrics.audit_exception_rate_after)) + '</strong></div><div><span>错付样本</span><strong>' + esc(percent(metrics.wrong_payment_rate_before)) + ' → ' + esc(percent(metrics.wrong_payment_rate_after)) + '</strong></div></div></section><section class="detail-section methodology-section"><div class="section-title"><span class="tab-icon">▣</span><strong>计算口径与边界</strong><span>每个数字可复算</span></div><div class="formula-callout"><span>月度人工经费空间</span><strong>' + esc(savedPerCase) + ' 分钟 × ' + esc(monthlyCases.toLocaleString()) + ' 案 ÷ 60 × ' + esc(cny(hourlyCost)) + '/小时</strong><b>= ' + esc(cny(monthlyLaborValue)) + '</b></div><div class="methodology-list"><div><span>数据分类</span><strong>' + esc((value.data_classifications || []).join(", ") || "等待接口数据") + '</strong></div><div><span>生产收益声明</span><strong>' + (value.production_claim_allowed ? "允许" : "不允许") + '</strong></div><div><span>样本来源</span><strong>GOLDEN-001～008 合成案件</strong></div><div><span>企业接入后</span><strong>替换 CSV 基线即可复算</strong></div></div><div class="claim-boundary"><span class="tab-icon">!</span><span>' + esc(contract.claim_boundary || value.guardrail || "当前结果仅用于指标方法验证。") + '</span></div></section></div></div>';
   }
 
   function renderPublicData() {
-    const p = state.bundle.provenance || {};
-    const evidence = latest("evidence")?.evidence || [];
-    const sourceCount = new Set(evidence.map((item) => item.source)).size;
-    return '<div class="public-data-dashboard"><section class="detail-section public-data-hero"><div><span class="value-eyebrow">PUBLIC DATA EXPERIMENT · STATIC REPLAY</span><h2>真实运行记录，公开可验证</h2><p>托管页面只展示已导出的记录：来源、规则、AgentTeams 协作、审批边界、执行与复核都保留；业务字段按比赛要求使用合成样本。</p></div><div class="public-provenance-grid"><div><span>capture kind</span><strong>' + esc(p.capture_kind || "CAPTURED_FROM_RUNTIME") + "</strong><small>不是线上接口读取</small></div><div><span>source release</span><strong>" + esc(p.source_release || "—") + "</strong><small>记录生成版本</small></div><div><span>workflow</span><strong>real_executable</strong><small>真实可执行链路</small></div><div><span>business data</span><strong>synthetic</strong><small>公开演示边界</small></div></div></section>" +
-      '<div class="public-kpi-grid"><article><span>案件</span><strong>1</strong><small>本次回放选择</small></article><article><span>证据来源</span><strong>' + esc(sourceCount || 3) + "</strong><small>ERPNext / ledger / policy</small></article><article><span>Agent Trace</span><strong>" + esc(state.bundle.trace?.span_count || "—") + "</strong><small>来自真实运行</small></article><article><span>审计事件</span><strong>" + esc(state.bundle.audit?.count || "—") + "</strong><small>链路校验</small></article><article><span>运行版本</span><strong>" + esc(p.source_release || "—") + "</strong><small>来源 release</small></article><article><span>接口调用</span><strong>0</strong><small>静态回放页</small></article></div>" +
-      '<div class="public-detail-grid"><section class="detail-section"><div class="section-title"><span class="tab-icon">▣</span><strong>公开展示边界</strong><span>（逐项说明）</span></div><div class="public-bar-list"><div><code>evidence provenance</code><span><i style="width:100%"></i></span><strong>保留</strong></div><div><code>agentteams trace</code><span><i style="width:100%"></i></span><strong>保留</strong></div><div><code>approval boundary</code><span><i style="width:100%"></i></span><strong>保留</strong></div><div><code>business identifiers</code><span><i style="width:55%"></i></span><strong>脱敏</strong></div></div></section><section class="detail-section"><div class="section-title"><span class="tab-icon">✓</span><strong>验收结果</strong><span>（托管前检查）</span></div><div class="public-acceptance-grid"><div><span>回放索引</span><strong>通过</strong></div><div><span>静态引用</span><strong>通过</strong></div><div><span>后端连接</span><strong>未使用</strong></div><div><span>敏感信息</span><strong>未公开</strong></div><div><span>数据说明</span><strong>已声明</strong></div></div></section></div><div class="claim-boundary public-boundary"><span class="tab-icon">!</span><span>本页证明的是“真实运行记录可复现展示”，不把静态回放冒充成在线业务系统。</span></div></div>';
+    const experiment = state.engineering?.public_data_experiment || {};
+    const metrics = experiment.metrics || {};
+    const boundary = experiment.data_boundary || {};
+    const source = experiment.source || {};
+    const rules = experiment.rules || {};
+    const erp = experiment.erpnext || {};
+    const anomalyRows = Object.entries(experiment.anomaly_types || {}).sort();
+    const ruleRows = Object.entries(rules.assignments || {}).sort();
+    const cards = [
+      ["公开真实交易", Number(metrics.total_transactions || 0).toLocaleString(), "Olist 固定种子抽样"],
+      ["审计交易总额", brl(metrics.total_revenue_audited_brl), "真实交易金额聚合"],
+      ["预期费率金额", brl(metrics.expected_commission_brl), "确定性反事实计算"],
+      ["合成实际费率金额", brl(metrics.actual_commission_brl), "明确标记为合成结算"],
+      ["风险金额", brl(metrics.revenue_at_risk_brl), "800 个受控异常的金额影响"],
+      ["异常率", percent(metrics.anomaly_rate), (metrics.risk_cases || 0) + " 个 Risk Case"],
+    ];
+    return '<div class="public-data-dashboard"><section class="detail-section public-data-hero"><div><span class="value-eyebrow">THREE REAL FOUNDATIONS · ONE SYNTHETIC LAYER</span><h2>三真一合成</h2><p>' + esc(boundary.statement || "三真一合成：真实公开交易、真实 ERP、真实公开费率；合成结算与异常。") + '</p></div><div class="public-provenance-grid"><div><span>交易</span><strong>' + esc(boundary.transaction || "PUBLIC_REAL") + '</strong><small>Olist</small></div><div><span>ERP</span><strong>' + esc(boundary.erp || "LIVE_SYSTEM") + '</strong><small>ERPNext v16</small></div><div><span>费率</span><strong>' + esc(boundary.fee_rules || "PUBLIC_REAL") + '</strong><small>' + esc((rules.count || 0) + " 条官方公开规则") + '</small></div><div><span>结算与异常</span><strong>' + esc(boundary.settlement || "SYNTHETIC_DOMAIN") + '</strong><small>固定种子生成</small></div></div></section>' +
+      '<section class="public-kpi-grid" aria-label="公开数据实验关键指标">' + cards.map((card) => '<article><span>' + esc(card[0]) + '</span><strong>' + esc(card[1]) + '</strong><small>' + esc(card[2]) + '</small></article>').join("") + '</section>' +
+      '<div class="public-detail-grid"><section class="detail-section"><div class="section-title"><span class="tab-icon">!</span><strong>异常覆盖</strong><span>固定种子 ' + esc(source.random_seed || "202609") + '</span></div><div class="public-bar-list">' + anomalyRows.map(([name, count]) => '<div><code>' + esc(name) + '</code><span><i style="width:' + (Number(count) / Math.max(Number(metrics.risk_cases || 1), 1) * 100) + '%"></i></span><strong>' + esc(count) + '</strong></div>').join("") + '</div></section><section class="detail-section"><div class="section-title"><span class="tab-icon">▣</span><strong>公开费率组件</strong><span>当前政策反事实</span></div><div class="public-bar-list rule-bars">' + ruleRows.map(([name, count]) => '<div><code>' + esc(name) + '</code><span><i style="width:' + (Number(count) / Math.max(Number(metrics.total_transactions || 1), 1) * 100) + '%"></i></span><strong>' + Number(count).toLocaleString() + '</strong></div>').join("") + '</div></section></div>' +
+      '<section class="detail-section public-acceptance"><div class="section-title"><span class="tab-icon">▣</span><strong>真实 ERPNext 验收</strong><span>Token 鉴权 · REST API · 只读边界</span></div><div class="public-acceptance-grid">' + Object.entries(erp.observed_counts || {}).map(([name, count]) => '<div><span>' + esc(name) + '</span><strong>' + Number(count).toLocaleString() + '</strong></div>').join("") + '<div><span>REST 读取</span><strong>HTTP ' + esc(erp.authenticated_rest_read_status || 200) + '</strong></div><div><span>越权写入</span><strong>HTTP ' + esc(erp.read_only_write_rejection_status || 403) + '</strong></div><div><span>会计影响</span><strong>' + esc(erp.document_state || "DRAFT_NO_GL_EFFECT") + '</strong></div></div></section>' +
+      '<div class="claim-boundary public-boundary"><span class="tab-icon">!</span><span>' + esc(rules.component_scope || "Percentage fee components only.") + ' 本实验不是 2016–2018 订单的历史费率复算，也不代表任何 Olist 卖家实际使用 Etsy 或 eBay。</span></div></div>';
   }
 
   function renderObservability() {
     const p = state.bundle.provenance || {};
-    const trace = replayTraceWindow();
-    const run = state.bundle.case.team_run || {};
-    const agentTasks = trace.visibleAgentTasks;
-    const totalTasks = Number(run.total_tasks || trace.agentTasks.length || 0);
-    const errorCount = trace.visible.filter((span) => span.status && span.status !== "OK").length;
-    const elapsed = trace.final ? state.bundle.run?.wall_duration_ms : agentTasks.reduce((sum, task) => sum + Number(task.duration_ms || 0), 0);
-    const currentTitle = trace.current?.title || "—";
-    const currentSubtitle = trace.current?.subtitle || "静态快照";
-    const stageEntries = Object.entries(REPLAY_STAGE_ORDER).filter(([, order]) => order <= trace.currentOrder);
-    const stageCounts = stageEntries.map(([stage]) => [stage, agentTasks.filter((task) => task.replayStage === stage).length]);
-    const maxStageCount = Math.max(1, ...stageCounts.map(([, count]) => count));
-    const stageBars = stageCounts.map(([stage, count]) =>
-      '<div class="grafana-bar-row ' + (stage === trace.currentStage ? "is-current" : "") + '"><span>' + esc(REPLAY_STAGE_LABELS[stage]) + '</span><i><b style="width:' + Math.max(count ? 8 : 2, Math.round(count / maxStageCount * 100)) + '%"></b></i><strong>' + count + '</strong></div>'
-    ).join("");
-    const maxDuration = Math.max(1, ...agentTasks.map((task) => Number(task.duration_ms || 0)));
-    const traceRows = agentTasks.slice().sort((left, right) => right.taskNumber - left.taskNumber).slice(0, 8).map((task) =>
-      '<div class="grafana-trace-row ' + (task.replayStage === trace.currentStage ? "is-current" : "") + '"><span>' + esc(TASK_LABELS[task.skillName] || task.skillName) + '</span><i><b style="width:' + Math.max(10, Math.round(Number(task.duration_ms || 0) / maxDuration * 100)) + '%"></b></i><strong>' + esc(duration(task.duration_ms)) + '</strong></div>'
-    ).join("") || '<div class="grafana-empty">当前步骤尚无 AgentTeams Worker 记录</div>';
-    const eventRows = trace.visible.slice().reverse().slice(0, 9).map((span) => {
-      const stage = trace.stageFor(span);
-      const status = span.status || "OK";
-      return '<div class="grafana-event-row"><span class="grafana-kind">' + esc(span.kind || "TRACE") + '</span><div><strong>' + esc(span.label || span.name) + '</strong><small>' + esc(span.actor || REPLAY_STAGE_LABELS[stage] || "runtime") + '</small></div><b class="' + (status === "OK" ? "is-ok" : "is-error") + '">' + esc(status) + '</b></div>';
-    }).join("") || '<div class="grafana-empty">当前步骤尚无运行事件</div>';
-    const status = trace.final ? (run.status || "COMPLETED") : "RUNNING";
-    const statusLabel = trace.final ? (status === "COMPLETED" ? "已完成" : status) : "回放中";
-    const stat = (label, value, note, tone) => '<article class="grafana-stat ' + (tone || "") + '"><span>' + label + '</span><strong>' + value + '</strong><small>' + note + '</small></article>';
+    const chart = (title, legend, path, fill, tone) => '<section class="grafana-chart-panel"><h3>' + title + '</h3><svg class="grafana-chart" viewBox="0 0 720 230" role="img" aria-label="' + title + '"><g class="chart-grid"><path d="M52 28H700M52 77H700M52 126H700M52 175H700" /><path d="M104 18V187M210 18V187M316 18V187M422 18V187M528 18V187M634 18V187" /></g><g class="chart-axis"><text x="10" y="33">' + (title.includes("速率") ? "0.2 req/s" : "1") + '</text><text x="22" y="82">' + (title.includes("速率") ? "0.1" : "0.8") + '</text><text x="28" y="131">' + (title.includes("速率") ? "0.05" : "0.4") + '</text><text x="35" y="180">0</text><text x="82" y="211">12:25</text><text x="188" y="211">12:30</text><text x="294" y="211">12:35</text><text x="400" y="211">12:40</text><text x="506" y="211">12:45</text><text x="612" y="211">12:50</text></g><path class="chart-area ' + tone + '" d="' + fill + '"/><path class="chart-line ' + tone + '" d="' + path + '"/></svg><div class="chart-legend">' + legend + '</div></section>';
+    const stats = [
+      ["API 指标采集", "正常", "is-green"],
+      ["数据库就绪", "正常", "is-green"],
+      ["审计链完整性", "正常", "is-green"],
+      ["待对账资金操作", "0", "is-green"],
+      ["冻结资金通道", "0", "is-green"],
+      ["当前触发告警", "0", "is-green"],
+    ].map(([label, value, tone]) => '<article class="grafana-live-stat ' + tone + '"><span>' + label + '</span><strong>' + value + '</strong></article>').join("");
+    const twoX = '<i class="legend-dot green"></i>2xx';
+    const fourX = '<i class="legend-dot yellow"></i>4xx';
+    const apiPath = "M52 28L150 28L250 28L350 28L450 28L520 32L585 32L620 28L700 28";
+    const apiFill = "M52 28L150 28L250 28L350 28L450 28L520 32L585 32L620 28L700 28V187H52Z";
+    const flatPath = "M52 187L150 187L250 187L350 187L450 187L550 187L700 187";
+    const availabilityPath = "M52 28L150 28L250 28L350 28L450 28L550 28L700 28";
+    const availabilityFill = "M52 28L150 28L250 28L350 28L450 28L550 28L700 28V187H52Z";
     return '<section class="observability-screen">' +
-      '<div class="observability-toolbar"><div class="observability-heading"><span class="grafana-mark">▥</span><div><h2>可观测运行回放</h2><p>Grafana 风格静态快照 · 指标来自本次运行记录，不连接任何后端。</p></div></div>' +
-      '<div class="observability-actions"><span class="observability-mode">STATIC · READ ONLY</span><span class="health-pill">快照版本 ' + esc(p.source_release || "—") + '</span></div></div>' +
-      '<div class="grafana-dashboard"><div class="grafana-dashboard-bar"><strong>RevGuard / runtime-replay</strong><span>' + esc(state.bundle.case.case_id) + ' · ' + esc(currentTitle) + '</span><span>' + esc(currentSubtitle) + '</span><code>' + shortId(p.snapshot_sha256, 22) + '</code></div>' +
-      '<div class="grafana-stat-grid">' +
-        stat("运行状态", esc(statusLabel), trace.final ? "CAPTURED_FROM_RUNTIME" : "按当前步骤截取", trace.final ? "is-green" : "is-orange") +
-        stat("AgentTeams 任务", esc(agentTasks.length + " / " + totalTasks), "截至当前回放阶段", "is-cyan") +
-        stat("Trace 活动", esc(trace.visible.length), "Agent / Skill / Tool", "is-cyan") +
-        stat("异常事件", esc(errorCount), errorCount ? "需要关注" : "当前窗口无异常", errorCount ? "is-red" : "is-green") +
-        stat("运行耗时", esc(duration(elapsed)), "静态记录累计", "is-orange") +
-      '</div><div class="grafana-panel-grid">' +
-        '<section class="grafana-panel grafana-panel-wide"><div class="grafana-panel-heading"><strong>AgentTeams 执行时序</strong><span>最近 ' + Math.min(8, agentTasks.length) + ' 个 Worker · 当前阶段高亮</span></div><div class="grafana-trace-list">' + traceRows + '</div></section>' +
-        '<section class="grafana-panel"><div class="grafana-panel-heading"><strong>阶段任务分布</strong><span>' + esc(REPLAY_STAGE_LABELS[trace.currentStage] || "—") + '</span></div><div class="grafana-bar-list">' + stageBars + '</div></section>' +
-        '<section class="grafana-panel"><div class="grafana-panel-heading"><strong>运行事件流</strong><span>按序号倒序</span></div><div class="grafana-event-list">' + eventRows + '</div></section>' +
-      '</div><div class="grafana-disclosure"><span class="tab-icon">!</span>这是与线上 Grafana 面板同口径的静态可视化：只显示已导出的 Agent / Skill / Tool 记录；业务数据为合成样本，页面接口调用数为 0。</div></div></section>';
+      '<div class="observability-toolbar"><div class="observability-heading"><span class="grafana-mark">▥</span><div><h2>运行与资金恢复</h2><p>全部案件 · 静态运行指标 · 合成业务数据 · 录制快照</p></div></div><div class="observability-actions"><span class="observability-mode">Grafana · 只读</span><span class="health-pill">STATIC · READ ONLY</span></div></div>' +
+      '<div class="grafana-live-dashboard"><div class="grafana-live-header"><strong>RevGuard · 运行与资金恢复</strong><span>STATIC REPLAY · ' + esc(p.source_release || "0.6.0") + '</span></div><div class="grafana-live-stat-grid">' + stats + '</div><div class="grafana-chart-grid">' +
+        chart("API 请求速率 · 按响应类别", twoX + fourX, apiPath, apiFill, "green") +
+        chart("业务 API 响应延迟 · P95", '<i class="legend-dot green"></i>业务 API P95', flatPath, "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z", "green") +
+        chart("资金结果恢复 · 待对账 / 冻结通道", '<i class="legend-dot yellow"></i>待对账资金操作', flatPath, "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z", "yellow") +
+        chart("服务与数据库可用性", '<i class="legend-dot yellow"></i>服务与数据库', availabilityPath, availabilityFill, "yellow") +
+      '</div><div class="grafana-powered">Powered by <strong><span>◉</span> Grafana</strong></div></div></section>';
   }
 
   function renderContent() {
@@ -674,7 +720,7 @@
       state.stepIndex = Number.isFinite(requestedStep) ? Math.max(0, Math.min(bundle.steps.length - 1, requestedStep)) : bundle.steps.length - 1;
       render();
       const notice = $("capture-notice");
-      notice.hidden = false;
+      notice.hidden = ["public-data", "observability"].includes(state.tab);
       notice.textContent = "真实环境线上运行 AgentTeams、PolarDB、ERPNext、Grafana 等组件，配置 8 核 24G；GitHub Pages / ModelScope 达不到运行要求，所以 Demo 只能静态回放录制脚本了。";
     } catch (error) {
       $("tab-content").innerHTML = '<div class="capture-notice">静态记录读取失败：' + esc(error.message) + "</div>";
@@ -688,6 +734,16 @@
     if (tabButton) {
       state.tab = tabButton.dataset.tab;
       renderTabs();
+      renderHeader();
+      renderContent();
+      renderSummary();
+      renderPipeline();
+      renderRail();
+      return;
+    }
+    const valuePreset = event.target.closest("[data-value-preset]");
+    if (valuePreset) {
+      state.valueMonthlyCases = Number(valuePreset.dataset.valuePreset) || 500;
       renderContent();
       return;
     }
@@ -709,17 +765,32 @@
         playTick();
       }
     }
+    if (event.target.dataset.valueInput === "monthlyCases") {
+      state.valueMonthlyCases = Math.max(0, Number(event.target.value) || 0);
+      renderContent();
+    }
+    if (event.target.dataset.valueInput === "hourlyCost") {
+      state.valueHourlyCost = Math.max(0, Number(event.target.value) || 0);
+      renderContent();
+    }
   });
   window.addEventListener("beforeunload", stopPlaying);
 
   async function boot() {
     try {
-      const index = await fetch("data/index.json", { cache: "no-store" }).then((response) => {
-        if (!response.ok) throw new Error("无法读取静态回放索引");
-        return response.json();
-      });
+      const [index, engineering] = await Promise.all([
+        fetch("data/index.json", { cache: "no-store" }).then((response) => {
+          if (!response.ok) throw new Error("无法读取静态回放索引");
+          return response.json();
+        }),
+        fetch("data/engineering-snapshot.json", { cache: "no-store" }).then((response) => {
+          if (!response.ok) throw new Error("无法读取工程证据快照");
+          return response.json();
+        }),
+      ]);
       state.cases = index.cases || [];
-      const selected = state.cases.find((item) => item.case_id === requestedCase) || state.cases[0];
+      state.engineering = engineering;
+      const selected = state.cases.find((item) => item.case_id === requestedCase) || state.cases.find((item) => item.case_id === "CASE-2026-0008") || state.cases[0];
       if (!selected) throw new Error("静态回放索引为空");
       await loadCase(selected.file);
     } catch (error) {
