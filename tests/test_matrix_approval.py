@@ -7,6 +7,7 @@ from revguard.matrix_approval import (
     MatrixApprovalBridge,
     PendingApprovalRequest,
     build_approval_request_message,
+    build_approval_result_message,
     parse_approval_reply,
 )
 from revguard.matrix_team import MatrixSettings
@@ -135,13 +136,35 @@ class TestMatrixApprovalProtocol(unittest.TestCase):
             },
             expires_at=2_000,
         )
-        self.assertIn("REVGUARD_HUMAN_APPROVAL_REQUEST", message)
+        self.assertIn("【待审批】佣金差额调整", message)
         self.assertIn("订单：EZ202608001", message)
-        self.assertIn("复算应付：32400.00 KES", message)
-        self.assertIn("WRONG_POLICY_VERSION", message)
-        self.assertIn("REVGUARD_APPROVAL_CONTEXT", message)
-        self.assertIn("请回复本消息或直接发送：批准", message)
+        self.assertIn("正确应付：32,400.00 KES", message)
+        self.assertIn("使用了错误的政策版本", message)
+        self.assertIn("编排与调度：revguard-orchestrator", message)
+        self.assertIn("人工审批：财务负责人（只作授权决定，不调度 Worker）", message)
+        self.assertIn("受控执行：revguard-executor", message)
+        self.assertIn("独立复核：revguard-verifier", message)
+        self.assertIn("批准：回复“批准”", message)
+        self.assertNotIn("REVGUARD_APPROVAL_CONTEXT", message)
+        self.assertNotIn("WRONG_POLICY_VERSION", message)
+        self.assertNotIn("{\"", message)
         self.assertNotIn("approval_token", message)
+
+    def test_result_message_explains_orchestrator_ownership(self):
+        message = build_approval_result_message(
+            case_id="CASE-2026-0008",
+            approval_id="APR-8",
+            decision="APPROVED",
+            case_status="READY_TO_EXECUTE",
+            state_status="QUEUED",
+            detail="审批通过，已排队继续执行",
+        )
+        self.assertIn("【审批结果】已受理", message)
+        self.assertIn("人工决定：批准", message)
+        self.assertIn("流程负责人：revguard-orchestrator", message)
+        self.assertIn("正在调度 revguard-executor", message)
+        self.assertIn("revguard-verifier 独立复核", message)
+        self.assertNotIn("{\"", message)
 
 
 class _FakeApprovalClient:

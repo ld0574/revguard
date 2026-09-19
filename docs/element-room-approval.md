@@ -2,7 +2,10 @@
 
 当 `REVGUARD_TEAM_TRANSPORT=matrix` 且启用
 `REVGUARD_MATRIX_APPROVAL_BRIDGE_ENABLED=true` 时，AgentTeams 主房间会在案件
-进入 `WAITING_FOR_APPROVAL` 后发布一条 `REVGUARD_HUMAN_APPROVAL_REQUEST`。
+进入 `WAITING_FOR_APPROVAL` 后，由 `revguard-orchestrator` 发布一条
+“【待审批】佣金差额调整”。正文只呈现审批人需要理解的业务摘要、金额核对、
+差异原因、执行边界和角色分工；机器使用的结构化上下文保留在后端审计记录中，
+不再把 JSON 直接展示给审批人。
 
 审批人可以在 Element 中直接回复该消息：
 
@@ -26,7 +29,9 @@
 - 案件仍为 `WAITING_FOR_APPROVAL`，审批单仍为 `PENDING`；
 - 回复在请求有效期内，且通过案件、审批单和动作绑定校验。
 
-有效回复会复用 WebUI 的审批事务。批准自动排队执行与独立验证，驳回进入终态。
-房间会收到 `REVGUARD_HUMAN_APPROVAL_RESULT`，WebUI 在待审批状态下会自动刷新。
+有效回复会复用 WebUI 的审批事务。`admin` 只提供人工授权，不负责调度 Worker；
+批准后仍由 `revguard-orchestrator` 继续调度 `revguard-executor`，随后交给
+`revguard-verifier` 独立复核。驳回时由编排智能体停止后续调度。房间会收到中文
+“【审批结果】”摘要，WebUI 在待审批状态下会自动刷新。
 
 录制环境建议使用独立案件和独立数据库；不要重置已经完成的正式 Case1/Case8。

@@ -10,19 +10,45 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import logging
 import re
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 
 from .matrix_team import MatrixClient, MatrixSettings, MatrixTransportError
 
 LOGGER = logging.getLogger("revguard.matrix_approval")
 
-APPROVAL_REQUEST_PREFIX = "REVGUARD_HUMAN_APPROVAL_REQUEST"
-APPROVAL_RESULT_PREFIX = "REVGUARD_HUMAN_APPROVAL_RESULT"
+APPROVAL_REQUEST_PREFIX = "【待审批】佣金差额调整"
+APPROVAL_RESULT_PREFIX = "【审批结果】"
+
+_COMPONENT_LABELS = {
+    "SALES_COMMISSION": "销售佣金",
+    "COLLECTION_COMMISSION": "回款佣金",
+    "MONTHLY_INCENTIVE": "月度激励",
+}
+_ROOT_CAUSE_LABELS = {
+    "WRONG_POLICY_VERSION": "使用了错误的政策版本",
+    "MISSING_COMPONENT": "漏算佣金项目",
+    "AMOUNT_MISMATCH": "入账金额与复算结果不一致",
+    "TIER_EFFECTIVE_DATE_CONFLICT": "代理等级生效日期不匹配",
+}
+_ROLE_LABELS = {
+    "FINANCE_LEAD": "财务负责人",
+    "RISK_OWNER": "风险负责人",
+}
+_CASE_STATUS_LABELS = {
+    "WAITING_FOR_APPROVAL": "等待审批",
+    "READY_TO_EXECUTE": "等待执行",
+    "EXECUTING": "正在执行",
+    "VERIFYING": "正在独立复核",
+    "REJECTED": "已驳回",
+    "CLOSED": "已完成",
+    "ROLLED_BACK": "已自动回滚",
+}
 
 _DECISION_RE = re.compile(
     r"^\s*(批准|同意|approve|approved|驳回|拒绝|reject|rejected)"
@@ -64,10 +90,9 @@ def build_approval_request_message(
 ) -> str:
     """Build a human-readable, reply-addressed approval request for Element.
 
-    The JSON block remains deliberately small and machine-stable for audit and
-    reply correlation.  The readable summary carries the business context a
-    finance approver needs without opening WebUI: order, partner, policy,
-    recomputed amount, delta, root causes, and execution constraints.
+    Correlation data remains in the durable case/audit records and is not
+    dumped into the room.  The room message carries only the business context
+    a finance approver needs to make a decision without opening WebUI.
     """
     def text(value: object, fallback: str = "未提供", limit: int = 240) -> str:
         rendered = " ".join(str(value or "").split())
@@ -76,7 +101,15 @@ def build_approval_request_message(
     def money(value: object, currency: object) -> str:
         if value in (None, ""):
             return "未提供"
-        return f"{value} {text(currency)}"
+        try:
+            rendered = f"{Decimal(str(value)):,.2f}"
+        except (InvalidOperation, ValueError):
+            rendered = text(value)
+        return f"{rendered} {text(currency)}"
+
+    def expiry(value: int) -> str:
+        beijing = timezone(timedelta(hours=8))
+        return datetime.fromtimestamp(value, tz=beijing).strftime("%Y-%m-%d %H:%M（北京时间）")
 
     claim = case.get("claim") if isinstance(case.get("claim"), Mapping) else {}
     facts = case.get("facts") if isinstance(case.get("facts"), Mapping) else {}
@@ -108,7 +141,9 @@ def build_approval_request_message(
     expected = root_cause.get("total_expected") or calculation.get("total_commission") or claim.get("expected_amount")
     delta = root_cause.get("total_delta") or approval.get("amount")
     causes = root_cause.get("root_causes") or []
-    cause_text = "、".join(text(item) for item in causes) if causes else "未提供"
+    cause_text = "；".join(
+        _ROOT_CAUSE_LABELS.get(str(item), text(item)) for item in causes
+    ) if causes else "未发现需要调整的差异"
     applied_components = []
     for component in calculation.get("components") or []:
         if not isinstance(component, Mapping) or not component.get("applied"):
@@ -116,49 +151,51 @@ def build_approval_request_message(
         amount = component.get("amount")
         if amount in (None, "", "0", "0.00"):
             continue
-        applied_components.append(f"{text(component.get('type'))} {amount}")
-    component_text = " + ".join(applied_components) if applied_components else "未提供"
+        component_name = _COMPONENT_LABELS.get(
+            str(component.get("type")), text(component.get("type")),
+        )
+        applied_components.append(f"• {component_name}：{money(amount, currency)}")
+    component_text = "\n".join(applied_components) if applied_components else "• 暂无分项明细"
     constraints = risk.get("execution_constraints")
     constraints = constraints if isinstance(constraints, Mapping) else {}
-    record = {
-        "case_id": text(case.get("case_id"), ""),
-        "approval_id": text(approval.get("approval_id"), ""),
-        "risk_level": text(approval.get("risk_level") or case.get("risk_level"), ""),
-        "approver_role": text(approval.get("approver_role"), ""),
-        "amount": text(approval.get("amount"), ""),
-        "currency": text(currency, ""),
-        "expires_at": expires_at,
-        "order_id": text(case.get("order_id"), ""),
-        "policy_version": text(policy.get("policy_version"), ""),
-        "total_expected": text(expected, ""),
-        "total_delta": text(delta, ""),
-        "root_causes": [text(item, "") for item in causes],
-    }
-    summary = [
-        "【RevGuard 人工审批】多智能体协同已完成调查，等待财务负责人决定",
-        f"案件：{text(case.get('case_id'))}  ·  录制：{text(case.get('recording_id'))}  ·  运行：{text(run.get('run_id'))}",
-        f"业务：{text(case.get('description'))}",
-        f"合作伙伴：{text(case.get('partner_name'))}（{text(case.get('partner_id'))}）",
-        f"订单：{text(case.get('order_id'))}  ·  申诉已记账：{money(actual, currency)}  ·  复算应付：{money(expected, currency)}",
-        f"本次拟调整：{money(delta or approval.get('amount'), currency)}  ·  风险：{text(approval.get('risk_level') or case.get('risk_level'))}  ·  审批角色：{text(approval.get('approver_role'))}",
-        f"核算依据：政策 {text(policy.get('policy_version'))}  ·  代理等级 {text(facts.get('agent_tier') or tier)}  ·  生效组件：{component_text}",
-        f"差异原因：{cause_text}",
-        f"执行边界：上限 {money(constraints.get('max_amount'), currency)}  ·  需要审批令牌：{text(constraints.get('requires_approval_token'))}  ·  可回滚：{text(risk.get('rollback_plan_required'))}",
-        f"审批单：{text(approval.get('approval_id'))}  ·  有效期至：{expires_at}",
-    ]
-    details = {
-        **record,
-        "expires_at": expires_at,
-    }
-    return (
-        f"{APPROVAL_REQUEST_PREFIX}\n"
-        + "\n".join(summary)
-        + "\n"
-        + "REVGUARD_APPROVAL_CONTEXT\n"
-        + json.dumps(details, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n请回复本消息或直接发送：批准"
-        + "\n或发送：驳回：原因"
+    role = _ROLE_LABELS.get(
+        str(approval.get("approver_role")), text(approval.get("approver_role")),
     )
+    risk_level = text(approval.get("risk_level") or case.get("risk_level"))
+    summary = [
+        f"多智能体已完成调查，请{role}决定是否调整 {money(delta or approval.get('amount'), currency)}。",
+        "",
+        f"案件：{text(case.get('case_id'))}",
+        f"订单：{text(case.get('order_id'))}",
+        f"合作伙伴：{text(case.get('partner_name'))}（{text(case.get('partner_id'))}）",
+        f"业务情况：{text(case.get('description'))}",
+        "",
+        "金额核对",
+        f"• 当前已记账：{money(actual, currency)}",
+        f"• 正确应付：{money(expected, currency)}",
+        f"• 本次拟调整：{money(delta or approval.get('amount'), currency)}",
+        "",
+        "调整构成",
+        component_text,
+        "",
+        f"判断依据：{text(policy.get('policy_version'))} 政策；代理等级 {text(facts.get('agent_tier') or tier)}",
+        f"发现问题：{cause_text}",
+        f"风险与权限：{risk_level}；单次调整上限 {money(constraints.get('max_amount'), currency)}",
+        "执行说明：批准后系统将受控执行并由另一智能体独立复核；复核不通过会自动冲销。",
+        "",
+        "角色分工",
+        "• 编排与调度：revguard-orchestrator",
+        f"• 人工审批：{role}（只作授权决定，不调度 Worker）",
+        "• 受控执行：revguard-executor",
+        "• 独立复核：revguard-verifier",
+        "",
+        f"请在 {expiry(expires_at)} 前决定：",
+        "• 批准：回复“批准”",
+        "• 驳回：回复“驳回：原因”",
+        "",
+        f"追溯号：{text(approval.get('approval_id'))} · {text(run.get('run_id'))}",
+    ]
+    return f"{APPROVAL_REQUEST_PREFIX}\n" + "\n".join(summary)
 
 
 def build_approval_result_message(
@@ -171,19 +208,32 @@ def build_approval_result_message(
     detail: str = "",
 ) -> str:
     """Build the room-visible result without exposing proof or capability data."""
-    payload = {
-        "case_id": case_id,
-        "approval_id": approval_id,
-        "decision": decision,
-        "case_status": case_status,
-        "state_status": state_status,
-    }
+    committed = state_status in {"QUEUED", "COMMITTED"}
+    decision_label = "批准" if decision == "APPROVED" else "驳回"
+    title = f"{APPROVAL_RESULT_PREFIX}{'已受理' if committed else '未生效'}"
+    if not committed:
+        progress = "本次决定未提交，请返回 WebUI 核对案件状态。"
+    elif decision == "REJECTED":
+        progress = "revguard-orchestrator 已停止后续 Worker 调度，不会执行资金调整。"
+    elif state_status == "QUEUED":
+        progress = (
+            "revguard-orchestrator 已收到人工授权，正在调度 revguard-executor；"
+            "完成后由 revguard-verifier 独立复核。WebUI 将自动更新进度。"
+        )
+    else:
+        progress = "人工决定已记录，后续流程仍由 revguard-orchestrator 编排。"
+    lines = [
+        title,
+        f"案件：{case_id}",
+        f"人工决定：{decision_label}",
+        "流程负责人：revguard-orchestrator",
+        f"当前状态：{_CASE_STATUS_LABELS.get(case_status, case_status)}",
+        f"后续处理：{progress}",
+    ]
     if detail:
-        payload["detail"] = detail[:240]
-    return (
-        f"{APPROVAL_RESULT_PREFIX}\n"
-        + json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    )
+        lines.append(f"说明：{' '.join(detail.split())[:240]}")
+    lines.append(f"追溯号：{approval_id}")
+    return "\n".join(lines)
 
 
 def _parse_decision(body: str) -> tuple[str, str] | None:
