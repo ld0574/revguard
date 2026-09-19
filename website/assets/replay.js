@@ -4,14 +4,14 @@
   "use strict";
 
   const STAGES = [
-    { id: "evidence", label: "证据包", glyph: "▣" },
-    { id: "policy", label: "政策", glyph: "◇" },
-    { id: "calculation", label: "计算预期佣金", glyph: "∑" },
-    { id: "approval", label: "人工审批边界", glyph: "♙" },
-    { id: "execution", label: "执行（组件）", glyph: "▤" },
-    { id: "verification", label: "独立验证（不同主体）", glyph: "✓" },
-    { id: "rollback", label: "自动回滚", glyph: "↶" },
-    { id: "postcheck", label: "回滚后状态", glyph: "✓" },
+    { id: "evidence", label: "证据包", icon: "evidence" },
+    { id: "policy", label: "政策", icon: "policy" },
+    { id: "calculation", label: "计算预期佣金", icon: "calculation" },
+    { id: "approval", label: "人工审批边界", icon: "approval" },
+    { id: "execution", label: "执行（组件）", icon: "execution" },
+    { id: "verification", label: "独立验证（不同主体）", icon: "verification" },
+    { id: "rollback", label: "自动回滚", icon: "rollback" },
+    { id: "postcheck", label: "回滚后状态", icon: "postcheck" },
   ];
   const STAGE_INDEX = {
     intake: -1,
@@ -25,6 +25,68 @@
     verification: 5,
     recovery: 6,
     closing: 7,
+  };
+  const REPLAY_STAGE_ORDER = {
+    intake: 0,
+    evidence: 1,
+    policy: 2,
+    calculation: 3,
+    rootcause: 4,
+    risk: 5,
+    approval: 6,
+    execution: 7,
+    verification: 8,
+    recovery: 9,
+    closing: 10,
+  };
+  const REPLAY_STAGE_LABELS = {
+    intake: "案件受理",
+    evidence: "跨系统取证",
+    policy: "政策匹配",
+    calculation: "确定性计算",
+    rootcause: "根因解释",
+    risk: "风险路由",
+    approval: "真人审批",
+    execution: "受控执行",
+    verification: "独立验证",
+    recovery: "冲销恢复",
+    closing: "审计结案",
+  };
+  const TASK_STAGE_BY_SKILL = {
+    CaseNormalizeSkill: "intake",
+    EntityResolveSkill: "intake",
+    EvidenceCollectSkill: "evidence",
+    PolicyVersionMatchSkill: "policy",
+    CommissionCalculateSkill: "calculation",
+    DifferenceExplainSkill: "rootcause",
+    RiskClassifySkill: "risk",
+    ApprovalRouteSkill: "risk",
+    PermissionCheckSkill: "execution",
+    IdempotencyGuardSkill: "execution",
+    AdjustmentDraftSkill: "execution",
+    LedgerAdjustSkill: "execution",
+    LedgerReverseSkill: "recovery",
+    PostActionVerifySkill: "verification",
+    PostRollbackVerifySkill: "recovery",
+    CaseToDatasetSkill: "closing",
+  };
+  const TASK_LABELS = {
+    CaseNormalizeSkill: "整理案件信息",
+    EntityResolveSkill: "匹配代理商与订单",
+    EvidenceCollectSkill: "收集跨系统证据",
+    PolicyVersionMatchSkill: "匹配业务时点政策",
+    CommissionCalculateSkill: "重新计算应付佣金",
+    DifferenceExplainSkill: "分析佣金差异原因",
+    RiskClassifySkill: "判断案件风险等级",
+    ApprovalRouteSkill: "确定审批流程",
+    PermissionCheckSkill: "检查执行权限",
+    IdempotencyGuardSkill: "防止重复执行",
+    AdjustmentDraftSkill: "生成佣金调整草稿",
+    LedgerAdjustSkill: "更新佣金台账",
+    LedgerReverseSkill: "冲销佣金调整",
+    PostActionVerifySkill: "独立核验调整结果",
+    PostRollbackVerifySkill: "复核回滚结果",
+    CaseToDatasetSkill: "归档案件经验",
   };
   const TABS = [
     ["decision", "◈", "决策依据"],
@@ -85,6 +147,20 @@
     if (!Number.isFinite(ms)) return "—";
     return ms < 1000 ? ms + " ms" : (ms / 1000).toFixed(2) + " s";
   };
+  const iconSvg = (name, className = "stage-icon") => {
+    const icons = {
+      evidence: '<path d="M216 208H40a16 16 0 0 1-16-16V64a16 16 0 0 1 16-16h56l16 16h104a16 16 0 0 1 16 16v112a16 16 0 0 1-16 16Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/><path d="M24 88h208" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="14"/>',
+      policy: '<path d="M128 224s88-40 88-104V48l-88-32-88 32v72c0 64 88 104 88 104Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/><path d="m88 120 24 24 56-56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>',
+      calculation: '<rect x="48" y="24" width="160" height="208" rx="16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/><path d="M80 64h96M80 112h16m32 0h16m-64 40h16m32 0h16m-64 40h16m32 0h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="14"/>',
+      approval: '<circle cx="128" cy="88" r="40" fill="none" stroke="currentColor" stroke-width="14"/><path d="M56 216c8-38 34-56 72-56s64 18 72 56M176 152l24 24 40-40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>',
+      execution: '<ellipse cx="128" cy="64" rx="80" ry="32" fill="none" stroke="currentColor" stroke-width="14"/><path d="M48 64v64c0 18 36 32 80 32s80-14 80-32V64M48 128v64c0 18 36 32 80 32s80-14 80-32v-64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>',
+      verification: '<path d="M128 32c-44 0-80 36-80 80v32m32 0v-32a48 48 0 0 1 96 0v32m-64 0v-32a16 16 0 0 1 32 0v32m-64 0v32a48 48 0 0 0 96 0v-32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/><path d="M80 176v16m96-16v16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="14"/>',
+      rollback: '<path d="M80 80H32l48-48M32 80a96 96 0 1 1 16 96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>',
+      postcheck: '<path d="M128 224s88-40 88-104V48l-88-32-88 32v72c0 64 88 104 88 104Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/><path d="m88 120 24 24 56-56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>',
+    };
+    return '<svg class="' + className + '" viewBox="0 0 256 256" aria-hidden="true">' + (icons[name] || icons.postcheck) + "</svg>";
+  };
+  const arrowSvg = () => '<svg class="stage-arrow" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d="M3 10h86m0 0-9-7m9 7-9 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/></svg>';
   const currentStep = () => state.bundle?.steps?.[state.stepIndex] || null;
   const latest = (stage) => {
     let result = null;
@@ -123,13 +199,14 @@
   };
   const stageState = (index) => {
     const current = currentStageIndex();
-    const status = state.bundle?.case?.status;
     if (isRollback() && index === 5 && current >= 5) return "error";
+    if (index === 6) {
+      if (isRollback()) return reached("recovery") ? "rollback" : current >= 6 ? "active" : "pending";
+      return reached("closing") ? "done" : "pending";
+    }
+    if (index === 7) return reached("closing") || reached("recovery") ? "done" : "pending";
     if (index < current) return "done";
     if (index === current) return index === 6 ? "rollback" : "active";
-    if (index === 6 && !isRollback() && current >= 5) return "done";
-    if (index === 6 && isRollback() && reached("recovery")) return "rollback";
-    if (index === 7 && (reached("closing") || status === "CLOSED" || status === "ROLLED_BACK")) return "done";
     return "pending";
   };
   const stageValue = (id) => {
@@ -148,7 +225,7 @@
       return execution?.executions?.length ? execution.executions.map((item) => (item.component || "组件") + " +" + item.amount).join("  ") : "待执行";
     }
     if (id === "verification") return verification ? "读取 " + (verification.subtitle === "FAILED" ? "偏差" : (verification.checks?.reduce((s, item) => s + num(item.actual), 0).toFixed(2) + " " + currency())) : "待复核";
-    if (id === "rollback") return isRollback() ? (recovery ? "2 笔冲销" : "待触发") : "无需回滚";
+    if (id === "rollback") return reached("recovery") ? "2 笔冲销" : isRollback() ? "待触发" : "无需回滚";
     if (id === "postcheck") return reached("closing") || reached("recovery") ? "已通过" : "待结案";
     return "—";
   };
@@ -203,10 +280,10 @@
     $("pipeline-stages").innerHTML = STAGES.map((stage, index) => {
       const stateClass = stageState(index);
       return '<div class="stage stage-' + stateClass + '">' +
-        '<div class="stage-heading"><span class="stage-index">' + (index + 1) + "</span>" + esc(stage.label) + "</div>" +
+        '<div class="stage-heading"><span class="stage-index">' + (index + 1) + '</span><span class="stage-label">' + esc(stage.label) + "</span></div>" +
         '<strong class="stage-value">' + esc(stageValue(stage.id)) + "</strong>" +
-        '<div class="stage-line"><span class="stage-node"><span class="stage-glyph">' + stage.glyph + "</span></span>" +
-        (index < STAGES.length - 1 ? '<span class="stage-arrow">➜</span>' : "") + "</div></div>";
+        '<div class="stage-line"><span class="stage-node">' + iconSvg(stage.icon) + "</span>" +
+        (index < STAGES.length - 1 ? arrowSvg() : "") + "</div></div>";
     }).join("");
 
     const policy = latest("policy");
@@ -325,25 +402,73 @@
     return section("政策时间线", timeline + selectedBox, "（排除 " + excluded + "，选择 " + esc(selected) + "）", "◇");
   }
 
+  function replayTraceWindow() {
+    const spans = (state.bundle.trace?.spans || []).slice().sort((left, right) => (left.sequence || 0) - (right.sequence || 0));
+    const skillMarkers = spans.filter((span) => span.kind === "SKILL");
+    const current = currentStep();
+    const currentStage = current?.stage || null;
+    const currentOrder = REPLAY_STAGE_ORDER[currentStage] == null ? -1 : REPLAY_STAGE_ORDER[currentStage];
+    const final = state.stepIndex >= (state.bundle.steps?.length || 1) - 1;
+    const stageFor = (span) => {
+      if (span.kind === "APPROVAL") return "approval";
+      if (span.kind === "AGENT") {
+        if (span.name === "AgentTeams.OrchestratorHandshake") return "intake";
+        const skillName = String(span.name || "").replace(/^AgentTeams\./, "");
+        return TASK_STAGE_BY_SKILL[skillName] || null;
+      }
+      if (span.stage) return span.stage;
+      let previous = null;
+      skillMarkers.forEach((marker) => {
+        if ((marker.sequence || 0) <= (span.sequence || 0)) previous = marker;
+      });
+      return previous?.stage || null;
+    };
+    const stageOrderFor = (stage) => REPLAY_STAGE_ORDER[stage] == null ? -1 : REPLAY_STAGE_ORDER[stage];
+    const visible = spans.filter((span) => {
+      const stage = stageFor(span);
+      return stageOrderFor(stage) >= 0 && stageOrderFor(stage) <= currentOrder;
+    });
+    const agentTasks = spans.filter((span) => span.kind === "AGENT" && span.name !== "AgentTeams.OrchestratorHandshake").map((span, index) => {
+      const skillName = String(span.name || "").replace(/^AgentTeams\./, "");
+      return { ...span, skillName, replayStage: stageFor(span), taskNumber: index + 1 };
+    });
+    const visibleAgentTasks = agentTasks.filter((task) => stageOrderFor(task.replayStage) <= currentOrder);
+    return { spans, visible, agentTasks, visibleAgentTasks, current, currentStage, currentOrder, final, stageFor };
+  }
+
   function renderAgentMatrix() {
-    const spans = (state.bundle.trace?.spans || []).filter((span) => span.kind === "AGENT" || span.kind === "SKILL").slice().reverse().slice(0, 16);
+    const trace = replayTraceWindow();
     const run = state.bundle.case.team_run || {};
-    const status = run.status || "COMPLETED";
-    const cards = spans.length ? spans.map((span, index) =>
-      '<details class="agent-task-card ' + (index === 0 ? "orchestrator-card" : "") + '"' + (index === 0 ? " open" : "") + "><summary>" +
-        '<span class="task-seq">' + esc(String(span.sequence || index + 1)) + "</span><div><strong title=\"" + esc(span.name) + "\">" + esc(span.label || span.name) + '</strong><code>' + esc(span.actor || "AgentTeams worker") + "</code></div>" +
-        '<span class="transport-cell">' + (span.kind === "AGENT" ? "Matrix" : "Skill") + "</span><span class=\"task-metric-cell\">" + esc(duration(span.duration_ms)) + '</span><span class="task-metric-cell metric-unavailable">—</span><span class="task-status task-succeeded">OK</span></summary>' +
-        '<div class="task-evidence-grid"><div><span>控制输入</span><pre>' + esc(JSON.stringify({ stage: span.stage || "orchestration", actor: span.actor || "—" }, null, 2)) + '</pre></div><div><span>控制输出</span><pre>' + esc(JSON.stringify({ status: span.status || "OK", label: span.label || span.name }, null, 2)) + "</pre></div></div>" +
-        '<div class="correlation-strip"><code>span ' + shortId(span.name, 28) + "</code><code>seq " + esc(span.sequence || index + 1) + "</code></div></details>"
-    ).join("") : '<div class="empty-state">暂无 AgentTeams 追踪记录。</div>';
-    const workerCount = new Set(spans.map((span) => span.actor).filter(Boolean)).size;
+    const totalTasks = Number(run.total_tasks || trace.agentTasks.length || 0);
+    const visibleTasks = trace.visibleAgentTasks.slice().sort((left, right) => right.taskNumber - left.taskNumber);
+    const focusTask = trace.visibleAgentTasks.slice().reverse().find((task) => task.replayStage === trace.currentStage);
+    const currentActor = focusTask?.actor || (trace.currentStage === "approval" ? "finance.lead" : "revguard-orchestrator");
+    const workerCount = new Set(trace.visibleAgentTasks.map((task) => task.actor).filter(Boolean)).size;
+    const status = trace.final ? (run.status || "COMPLETED") : "RUNNING";
+    const statusLabel = trace.final ? (status === "COMPLETED" ? "已完成" : status) : "回放中";
+    const cards = visibleTasks.length ? visibleTasks.map((task, index) => {
+      const focused = !trace.final && task.replayStage === trace.currentStage;
+      const displayStatus = focused ? "RUNNING" : task.status || "OK";
+      const statusClass = displayStatus === "RUNNING" ? "task-running" : displayStatus === "OK" ? "task-succeeded" : "task-failed_final";
+      const statusText = displayStatus === "RUNNING" ? "执行中" : displayStatus === "OK" ? "已成功" : "异常";
+      const label = TASK_LABELS[task.skillName] || task.label || task.skillName;
+      return '<details class="agent-task-card ' + (focused || index === 0 ? "orchestrator-card" : "") + '"' + (focused || index === 0 ? " open" : "") + "><summary>" +
+        '<span class="task-seq">' + esc(String(task.taskNumber).padStart(2, "0")) + "</span><div><strong title=\"" + esc(task.name) + "\">" + esc(label) + '</strong><code>' + esc(task.actor || "AgentTeams worker") + "</code></div>" +
+        '<span class="transport-cell">Matrix</span><span class="task-metric-cell">' + esc(duration(task.duration_ms)) + '</span><span class="task-metric-cell metric-unavailable">—</span><span class="task-status ' + statusClass + '">' + statusText + "</span></summary>" +
+        '<div class="task-evidence-grid"><div><span>控制输入</span><pre>' + esc(JSON.stringify({ stage: REPLAY_STAGE_LABELS[task.replayStage] || task.replayStage, actor: task.actor || "—", sequence: task.sequence }, null, 2)) + '</pre></div><div><span>控制输出</span><pre>' + esc(JSON.stringify({ status: displayStatus, label, duration: duration(task.duration_ms) }, null, 2)) + "</pre></div></div>" +
+        '<div class="correlation-strip"><code>span ' + shortId(task.name, 28) + "</code><code>seq " + esc(task.sequence) + "</code><code>阶段 " + esc(REPLAY_STAGE_LABELS[task.replayStage] || task.replayStage) + "</code></div></details>";
+    }).join("") : '<div class="empty-state">当前回放步骤尚未产生 AgentTeams 任务。</div>';
+    const currentTitle = trace.current?.title || "—";
+    const currentSubtitle = trace.current?.subtitle || "静态快照";
     const runtime = '<div class="team-runtime team-runtime-' + status.toLowerCase() + '">' +
-      '<div><span class="runtime-live-dot"></span><strong>' + esc(status) + '</strong><small>静态回放</small></div>' +
-      '<div><span>执行者</span><strong>revguard-orchestrator</strong></div>' +
-      '<div><span>阶段</span><strong>' + esc(run.phase || "EXECUTION") + '</strong></div>' +
-      '<div><span>任务</span><strong>' + esc((run.completed_tasks || spans.length) + " / " + (run.total_tasks || 16)) + "</strong></div></div>";
+      '<div><span class="runtime-live-dot"></span><strong>' + esc(statusLabel) + '</strong><small>' + (trace.final ? "运行已结束" : "按当前步骤回放") + '</small></div>' +
+      '<div><span>当前执行者</span><strong title="' + esc(currentActor) + '">' + esc(currentActor) + '</strong></div>' +
+      '<div><span>当前阶段</span><strong title="' + esc(currentTitle) + '">' + esc(REPLAY_STAGE_LABELS[trace.currentStage] || currentTitle) + '</strong><small>' + esc(currentSubtitle) + '</small></div>' +
+      '<div><span>进度</span><strong>' + esc(visibleTasks.length + " / " + totalTasks) + '</strong></div></div>';
     const header = '<div class="agent-task-columns" aria-hidden="true"><span>序号</span><span>任务 / 执行者</span><span>通道</span><span>耗时</span><span>Token</span><span>状态</span></div>';
-    return section("多智能体协同任务账本", runtime + '<div class="agent-task-ledger">' + header + cards + "</div>", (state.bundle.trace?.span_count || spans.length) + " 个运行跨度 · " + workerCount + " 个执行者", "♟");
+    const meta = visibleTasks.length + " / " + totalTasks + " 轮任务 · " + workerCount + " 个执行者 · 第 " + (state.stepIndex + 1) + " 步";
+    const note = '<p class="boundary-note"><span class="tab-icon">♟</span>静态回放仅展示截至“' + esc(currentTitle) + '”的 AgentTeams Worker 任务；工具与 Skill 明细保留在“执行与审计”页。</p>';
+    return section("多智能体协同任务账本", runtime + '<div class="agent-task-ledger">' + header + cards + "</div>" + note, meta, "♟");
   }
 
   function renderAuditTrail() {
@@ -422,11 +547,47 @@
 
   function renderObservability() {
     const p = state.bundle.provenance || {};
+    const trace = replayTraceWindow();
+    const run = state.bundle.case.team_run || {};
+    const agentTasks = trace.visibleAgentTasks;
+    const totalTasks = Number(run.total_tasks || trace.agentTasks.length || 0);
+    const errorCount = trace.visible.filter((span) => span.status && span.status !== "OK").length;
+    const elapsed = trace.final ? state.bundle.run?.wall_duration_ms : agentTasks.reduce((sum, task) => sum + Number(task.duration_ms || 0), 0);
+    const currentTitle = trace.current?.title || "—";
+    const currentSubtitle = trace.current?.subtitle || "静态快照";
+    const stageEntries = Object.entries(REPLAY_STAGE_ORDER).filter(([, order]) => order <= trace.currentOrder);
+    const stageCounts = stageEntries.map(([stage]) => [stage, agentTasks.filter((task) => task.replayStage === stage).length]);
+    const maxStageCount = Math.max(1, ...stageCounts.map(([, count]) => count));
+    const stageBars = stageCounts.map(([stage, count]) =>
+      '<div class="grafana-bar-row ' + (stage === trace.currentStage ? "is-current" : "") + '"><span>' + esc(REPLAY_STAGE_LABELS[stage]) + '</span><i><b style="width:' + Math.max(count ? 8 : 2, Math.round(count / maxStageCount * 100)) + '%"></b></i><strong>' + count + '</strong></div>'
+    ).join("");
+    const maxDuration = Math.max(1, ...agentTasks.map((task) => Number(task.duration_ms || 0)));
+    const traceRows = agentTasks.slice().sort((left, right) => right.taskNumber - left.taskNumber).slice(0, 8).map((task) =>
+      '<div class="grafana-trace-row ' + (task.replayStage === trace.currentStage ? "is-current" : "") + '"><span>' + esc(TASK_LABELS[task.skillName] || task.skillName) + '</span><i><b style="width:' + Math.max(10, Math.round(Number(task.duration_ms || 0) / maxDuration * 100)) + '%"></b></i><strong>' + esc(duration(task.duration_ms)) + '</strong></div>'
+    ).join("") || '<div class="grafana-empty">当前步骤尚无 AgentTeams Worker 记录</div>';
+    const eventRows = trace.visible.slice().reverse().slice(0, 9).map((span) => {
+      const stage = trace.stageFor(span);
+      const status = span.status || "OK";
+      return '<div class="grafana-event-row"><span class="grafana-kind">' + esc(span.kind || "TRACE") + '</span><div><strong>' + esc(span.label || span.name) + '</strong><small>' + esc(span.actor || REPLAY_STAGE_LABELS[stage] || "runtime") + '</small></div><b class="' + (status === "OK" ? "is-ok" : "is-error") + '">' + esc(status) + '</b></div>';
+    }).join("") || '<div class="grafana-empty">当前步骤尚无运行事件</div>';
+    const status = trace.final ? (run.status || "COMPLETED") : "RUNNING";
+    const statusLabel = trace.final ? (status === "COMPLETED" ? "已完成" : status) : "回放中";
+    const stat = (label, value, note, tone) => '<article class="grafana-stat ' + (tone || "") + '"><span>' + label + '</span><strong>' + value + '</strong><small>' + note + '</small></article>';
     return '<section class="observability-screen">' +
-      '<div class="observability-toolbar"><div class="observability-heading"><span class="tab-icon">⌁</span><div><h2>可观测运行回放</h2><p>保留驾驶舱中的可观测位置，但静态托管页不加载 Grafana。</p></div></div>' +
+      '<div class="observability-toolbar"><div class="observability-heading"><span class="grafana-mark">▥</span><div><h2>可观测运行回放</h2><p>Grafana 风格静态快照 · 指标来自本次运行记录，不连接任何后端。</p></div></div>' +
       '<div class="observability-actions"><span class="observability-mode">STATIC · READ ONLY</span><span class="health-pill">快照版本 ' + esc(p.source_release || "—") + '</span></div></div>' +
-      '<p class="observability-notice">下方展示记录中的运行元数据，避免从托管页面再次探测任何系统接口。</p>' +
-      '<div class="observability-frame-wrap"><div class="observability-placeholder"><span class="tab-icon">⌁</span><strong>Grafana 画布在静态回放中保持关闭</strong><p>本次运行：' + esc(state.bundle.case.recording_id || state.bundle.case.case_id) + ' · ' + esc(state.bundle.trace?.span_count || "—") + ' spans · ' + esc(state.bundle.audit?.count || "—") + ' audit events</p><code>' + shortId(p.snapshot_sha256, 64) + '</code></div></div></section>';
+      '<div class="grafana-dashboard"><div class="grafana-dashboard-bar"><strong>RevGuard / runtime-replay</strong><span>' + esc(state.bundle.case.case_id) + ' · ' + esc(currentTitle) + '</span><span>' + esc(currentSubtitle) + '</span><code>' + shortId(p.snapshot_sha256, 22) + '</code></div>' +
+      '<div class="grafana-stat-grid">' +
+        stat("运行状态", esc(statusLabel), trace.final ? "CAPTURED_FROM_RUNTIME" : "按当前步骤截取", trace.final ? "is-green" : "is-orange") +
+        stat("AgentTeams 任务", esc(agentTasks.length + " / " + totalTasks), "截至当前回放阶段", "is-cyan") +
+        stat("Trace 活动", esc(trace.visible.length), "Agent / Skill / Tool", "is-cyan") +
+        stat("异常事件", esc(errorCount), errorCount ? "需要关注" : "当前窗口无异常", errorCount ? "is-red" : "is-green") +
+        stat("运行耗时", esc(duration(elapsed)), "静态记录累计", "is-orange") +
+      '</div><div class="grafana-panel-grid">' +
+        '<section class="grafana-panel grafana-panel-wide"><div class="grafana-panel-heading"><strong>AgentTeams 执行时序</strong><span>最近 ' + Math.min(8, agentTasks.length) + ' 个 Worker · 当前阶段高亮</span></div><div class="grafana-trace-list">' + traceRows + '</div></section>' +
+        '<section class="grafana-panel"><div class="grafana-panel-heading"><strong>阶段任务分布</strong><span>' + esc(REPLAY_STAGE_LABELS[trace.currentStage] || "—") + '</span></div><div class="grafana-bar-list">' + stageBars + '</div></section>' +
+        '<section class="grafana-panel"><div class="grafana-panel-heading"><strong>运行事件流</strong><span>按序号倒序</span></div><div class="grafana-event-list">' + eventRows + '</div></section>' +
+      '</div><div class="grafana-disclosure"><span class="tab-icon">!</span>这是与线上 Grafana 面板同口径的静态可视化：只显示已导出的 Agent / Skill / Tool 记录；业务数据为合成样本，页面接口调用数为 0。</div></div></section>';
   }
 
   function renderContent() {
