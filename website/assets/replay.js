@@ -126,6 +126,8 @@
     timer: null,
     valueMonthlyCases: null,
     valueHourlyCost: null,
+    approvalDemo: null,
+    approvalDialogOpen: false,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -231,6 +233,16 @@
     const total = diffs.reduce((sum, item) => sum + num(item.delta), 0);
     return approval ? (total ? number(total) + " " + currency() : approval.subtitle || "—") : "待审批";
   };
+  const createApprovalDemo = () => ({
+    username: "finance.lead",
+    password: "demo-only-2026",
+    comment: "证据完整，政策与金额复算一致，同意在当前风险边界内处理。",
+    decision: "APPROVED",
+    verified: false,
+    committed: null,
+    message: "",
+  });
+  const approvalActionLabel = (decision) => decision === "REJECTED" ? "驳回" : "批准";
   const table = (headers, rows) => {
     if (!rows.length) return '<div class="empty-state">暂无已记录数据。</div>';
     return '<div class="table-wrap"><table><thead><tr>' +
@@ -351,6 +363,12 @@
     const recovery = latest("recovery");
     const finalOk = state.bundle.case.status === "CLOSED" ? "正常闭环" : state.bundle.case.status === "ROLLED_BACK" ? "已恢复至安全基线" : "等待终态";
     const verifiedAmount = verification?.checks?.reduce((sum, item) => sum + num(item.actual), 0);
+    const approvalInteraction = current?.stage === "approval"
+      ? '<button type="button" class="primary-action evidence-action approval-demo-trigger" data-open-approval>演示人工审批 · ' + esc(approvalAmount()) + '</button>' +
+        (state.approvalDemo?.committed ? '<div class="approval-replay-status ' + (state.approvalDemo.committed === "REJECTED" ? "is-rejected" : "") + '">本地动作：' + esc(approvalActionLabel(state.approvalDemo.committed)) + ' · 正式记录仍为 ' + esc(latest("approval")?.subtitle || "APPROVED") + '</div>' : '<small class="approval-replay-hint">账号与密码已预填；点击按钮打开 WebUI 同款审批交互。</small>')
+      : latest("approval")
+        ? '<button type="button" class="recording-again approval-jump" data-jump-stage="approval">回到人工审批步骤</button>'
+        : "";
     $("pipeline-details").innerHTML =
       '<div class="pipeline-note calculation-note"><span>政策选择</span>' +
         '<strong>' + esc(policy ? ((policy.policy?.["排除版本"] || []).length ? "历史版本已排除" : "无冲突版本") : "等待政策匹配") + "</strong>" +
@@ -358,6 +376,7 @@
       '<div class="pipeline-note capability-note"><span>能力边界</span>' +
         '<div>总额度上限：' + money(latest("risk") ? "50,000.00 " + currency() : "待确定") + "</div>" +
         '<div>本次金额：' + money(approvalAmount()) + "</div>" +
+        approvalInteraction +
         "<small>静态回放 · 审批、执行与验证均为记录快照</small></div>" +
       '<div class="pipeline-note execution-note"><span>模拟记账（入账）</span>' +
         (execution?.executions?.length ? execution.executions.map((item) => "<strong>" + esc(item.component) + "：+" + esc(item.amount) + "</strong>").join("") + "<div>合计：" + money(execution.executions.reduce((sum, item) => sum + num(item.amount), 0).toFixed(2) + " " + currency()) + "</div>" : "<strong>等待受限执行器写入</strong>") + "</div>" +
@@ -745,6 +764,36 @@
     $("tab-content").innerHTML = content;
   }
 
+  function renderApprovalDialog() {
+    const overlay = $("replay-overlay");
+    const approval = latest("approval") || {};
+    if (!overlay || !state.approvalDialogOpen || state.tab !== "decision" || currentStep()?.stage !== "approval") {
+      if (overlay) overlay.innerHTML = "";
+      return;
+    }
+    const demo = state.approvalDemo || createApprovalDemo();
+    state.approvalDemo = demo;
+    const action = demo.decision || "APPROVED";
+    const actionLabel = approvalActionLabel(action);
+    const approvalId = approval.approval_id || (approval.bullets || [])
+      .map((item) => String(item).match(/审批单\s+([^，。\s]+)/)?.[1])
+      .find(Boolean) || "录制审批单";
+    const recordedDecision = approval.subtitle || "APPROVED";
+    const error = demo.message ? '<div class="human-dialog-error"><span aria-hidden="true">!</span>' + esc(demo.message) + "</div>" : "";
+    const body = demo.committed
+      ? '<div class="human-proof-panel"><div class="human-proof-success"><span class="approval-proof-icon" aria-hidden="true">✓</span><div><strong>静态审批动作已记录</strong><small>' + esc(demo.username || "finance.lead") + ' · 本地回放身份验证通过</small></div><span>只读演示</span></div>' +
+        '<div class="human-proof-binding"><div><span>绑定案件</span><code>' + esc(state.bundle.case?.case_id) + '</code></div><div><span>绑定审批单</span><code>' + esc(approvalId) + '</code></div><div><span>绑定动作</span><strong>' + esc(approvalActionLabel(demo.committed)) + '</strong></div></div>' +
+        '<div class="approval-static-disclosure">本次选择不会调用 202 API，也不会改写正式运行记录；录制快照中的正式结果仍为 <strong>' + esc(recordedDecision) + ' · ' + esc(state.bundle.case?.status || "CLOSED") + '</strong>。</div>' +
+        '<div class="human-modal-actions"><button type="button" class="human-secondary" data-reset-approval>重新选择</button><button type="button" class="human-secondary" data-close-approval>返回回放</button></div></div>'
+      : '<div class="decision-switch" aria-label="选择审批结论"><button type="button" class="' + (action === "APPROVED" ? "active approve" : "") + '" data-approval-decision="APPROVED">批准</button><button type="button" class="' + (action === "REJECTED" ? "active reject" : "") + '" data-approval-decision="REJECTED">驳回</button></div>' +
+        '<div class="human-login-form"><label><span>AgentTeams 审批账号</span><input data-approval-input="username" value="' + esc(demo.username) + '" autocomplete="username" aria-label="AgentTeams 审批账号"></label>' +
+        '<label><span>密码（静态演示）</span><input type="password" data-approval-input="password" value="' + esc(demo.password) + '" autocomplete="current-password" aria-label="静态演示密码"></label>' +
+        '<label class="human-comment"><span>审批意见</span><textarea data-approval-input="comment" rows="3" maxlength="500">' + esc(demo.comment) + '</textarea></label>' +
+        '<div class="approval-static-hint">合成演示账号已预填。点击下方任一动作，即完成本地身份验证与“' + esc(actionLabel) + '”动作记录，不会发送网络请求。</div>' + error +
+        '<div class="human-modal-actions approval-choice-actions"><button type="button" class="human-primary" data-approval-submit="APPROVED">同意并记录</button><button type="button" class="human-primary danger" data-approval-submit="REJECTED">驳回并记录</button></div></div>';
+    overlay.innerHTML = '<div class="human-modal-backdrop" role="presentation"><section class="human-modal" role="dialog" aria-modal="true" aria-labelledby="replay-human-action-title"><div class="human-modal-header"><div><span>人工控制边界 · 静态回放</span><h2 id="replay-human-action-title">AgentTeams 审批人身份验证</h2></div><button type="button" data-close-approval aria-label="关闭">×</button></div><div class="human-binding-strip">' + iconSvg("approval", "approval-dialog-icon") + '<div><strong>证明只绑定本案与本次“' + esc(actionLabel) + '”动作</strong><small>页面只读取已录制的脱敏数据；账号和密码是合成演示值，不会发往 202，也不会写入案件、日志或 Trace。</small></div></div>' + body + '</section></div>';
+  }
+
   function renderRail() {
     const c = state.bundle.case || {};
     const verification = verificationStep();
@@ -765,6 +814,7 @@
     renderTabs();
     renderContent();
     renderRail();
+    renderApprovalDialog();
   }
 
   function stopPlaying() {
@@ -1094,6 +1144,8 @@
       });
       bundle.__file = file;
       state.bundle = bundle;
+      state.approvalDemo = createApprovalDemo();
+      state.approvalDialogOpen = false;
       const requestedStep = requestedStepParam == null || requestedStepParam === "" ? null : Number(requestedStepParam);
       state.stepIndex = Number.isFinite(requestedStep) ? Math.max(0, Math.min(bundle.steps.length - 1, requestedStep)) : bundle.steps.length - 1;
       render();
@@ -1110,6 +1162,7 @@
   document.addEventListener("click", (event) => {
     const tabButton = event.target.closest("#tabs button");
     if (tabButton) {
+      state.approvalDialogOpen = false;
       state.tab = tabButton.dataset.tab;
       renderTabs();
       renderHeader();
@@ -1117,6 +1170,59 @@
       renderSummary();
       renderPipeline();
       renderRail();
+      renderApprovalDialog();
+      return;
+    }
+    const approvalDecision = event.target.closest("[data-approval-decision]");
+    if (approvalDecision) {
+      state.approvalDemo = state.approvalDemo || createApprovalDemo();
+      state.approvalDemo.decision = approvalDecision.dataset.approvalDecision;
+      state.approvalDemo.message = "";
+      renderApprovalDialog();
+      return;
+    }
+    const approvalSubmit = event.target.closest("[data-approval-submit]");
+    if (approvalSubmit) {
+      state.approvalDemo = state.approvalDemo || createApprovalDemo();
+      const demo = state.approvalDemo;
+      const decision = approvalSubmit.dataset.approvalSubmit;
+      demo.decision = decision;
+      if (!demo.username.trim() || !demo.password) {
+        demo.message = "请填写审批账号和静态演示密码。";
+        renderApprovalDialog();
+        return;
+      }
+      demo.verified = true;
+      demo.committed = decision;
+      demo.message = "";
+      render();
+      return;
+    }
+    if (event.target.closest("[data-open-approval]")) {
+      state.approvalDialogOpen = true;
+      render();
+      return;
+    }
+    if (event.target.closest("[data-close-approval]")) {
+      state.approvalDialogOpen = false;
+      render();
+      return;
+    }
+    if (event.target.closest("[data-reset-approval]")) {
+      state.approvalDemo = createApprovalDemo();
+      state.approvalDialogOpen = true;
+      render();
+      return;
+    }
+    const jumpStage = event.target.closest("[data-jump-stage]");
+    if (jumpStage) {
+      const index = (state.bundle?.steps || []).findIndex((step) => step.stage === jumpStage.dataset.jumpStage);
+      if (index >= 0) {
+        stopPlaying();
+        state.approvalDialogOpen = false;
+        state.stepIndex = index;
+        render();
+      }
       return;
     }
     const valuePreset = event.target.closest("[data-value-preset]");
@@ -1152,6 +1258,12 @@
       state.valueHourlyCost = Math.max(0, Number(event.target.value) || 0);
       renderContent();
     }
+  });
+  document.addEventListener("input", (event) => {
+    const field = event.target.closest("[data-approval-input]");
+    if (!field) return;
+    state.approvalDemo = state.approvalDemo || createApprovalDemo();
+    state.approvalDemo[field.dataset.approvalInput] = field.value;
   });
   window.addEventListener("beforeunload", stopPlaying);
 
