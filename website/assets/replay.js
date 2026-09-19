@@ -254,9 +254,36 @@
   const section = (title, body, meta, glyph) =>
     '<section class="detail-section"><div class="section-title"><span class="tab-icon">' + (glyph || "◈") +
     "</span><strong>" + esc(title) + "</strong>" + (meta ? "<span>" + meta + "</span>" : "") + "</div>" + body + "</section>";
+  const replayStatus = () => {
+    const actual = state.bundle?.case?.status || "—";
+    const stage = currentStep()?.stage;
+    if (!stage) return "—";
+    if (stage === "approval") {
+      if (state.approvalDemo?.committed === "APPROVED") return "APPROVED";
+      if (state.approvalDemo?.committed === "REJECTED") return "REJECTED";
+      return "WAITING_FOR_APPROVAL";
+    }
+    if (stage === "closing") return actual;
+    if (stage === "recovery" && actual === "ROLLED_BACK") return "ROLLED_BACK";
+    return "RUNNING";
+  };
+  const replayStatusNote = () => {
+    const status = replayStatus();
+    if (status === "WAITING_FOR_APPROVAL") return "等待人工审批动作";
+    if (status === "APPROVED") return "本地审批动作已记录";
+    if (status === "REJECTED") return "本地驳回动作已记录";
+    if (status === "RUNNING") return "按当前步骤回放";
+    if (status === "CLOSED") return "闭环完成";
+    if (status === "ROLLED_BACK") return "已完成冲销恢复";
+    if (status === "FAILED") return "运行失败";
+    return "等待终态";
+  };
   const statusTone = () => {
-    if (isRollback()) return "warning";
-    return state.bundle?.case?.status === "CLOSED" ? "success" : "neutral";
+    const status = replayStatus();
+    if (["WAITING_FOR_APPROVAL", "ROLLED_BACK"].includes(status)) return "warning";
+    if (["CLOSED", "APPROVED"].includes(status)) return "success";
+    if (["FAILED", "REJECTED"].includes(status)) return "danger";
+    return "neutral";
   };
   const stageState = (index) => {
     const current = currentStageIndex();
@@ -295,7 +322,7 @@
     const bundle = state.bundle;
     const c = bundle.case || {};
     const risk = latest("risk")?.subtitle || "L2";
-    const status = c.status || "—";
+    const status = replayStatus();
     const globalView = ["public-data", "observability"].includes(state.tab);
     const publicMode = state.tab === "public-data";
     const topbar = $("topbar");
@@ -309,16 +336,17 @@
     const brandEnd = globalView
       ? '<span class="approval-label">' + (publicMode ? "公开数据实验" : "全局运行总览") + "</span>"
       : '<select id="case-select" class="case-select" aria-label="选择回放案件">' +
-        state.cases.map((item) => '<option value="' + esc(item.file) + '"' + (item.file === bundle.__file ? " selected" : "") + ">" + esc(item.case_id + " · " + (item.status || item.title || "运行记录")) + "</option>").join("") +
+        state.cases.map((item) => '<option value="' + esc(item.file) + '"' + (item.file === bundle.__file ? " selected" : "") + ">" + esc(item.case_id + " · " + (item.file === bundle.__file ? replayStatus() : (item.status || item.title || "运行记录"))) + "</option>").join("") +
         '</select><span class="risk-pill">' + esc(risk) + "</span>" +
         (c.execution_mode === "MCP_TEAM" ? '<span class="mcp-pill">MCP 参考链路</span>' : "") +
         '<span class="mcp-pill matrix-pill"><span></span>AgentTeams · Matrix</span><span class="approval-label">人工审批</span>';
     const topActions = globalView
       ? '<span class="observability-mode">' + (publicMode ? "三真一合成 · 可复算" : "实时观测 · 只读展示") + "</span>"
       : '<span class="health-pill"><i class="health-dot"></i>静态回放 · 只读</span><span class="status-mini outcome-' + statusTone() + '">' + esc(status) + "</span>";
+    const disclosure = globalView ? '<div class="disclosure">' + (publicMode ? "公开真实交易 · 合成结算与异常" : "合成业务数据 · 真实运行链路") + "</div>" : "";
     topbar.innerHTML =
       '<div class="brand-group"><svg class="brand-mark" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M216,56v56c0,96-88,120-88,120S40,208,40,112V56a8,8,0,0,1,8-8H208A8,8,0,0,1,216,56Z" opacity="0.2"></path><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"></path></svg><span class="brand-name">RevGuard</span><span class="top-divider"></span>' + brandEnd + '</div>' +
-      '<div class="disclosure">' + (publicMode ? "公开真实交易 · 合成结算与异常" : "合成业务数据 · 真实运行链路") + (globalView ? "" : ' <span>· 静态回放（不连接后端）</span>') + "</div>" +
+      disclosure +
       '<div class="top-actions">' + (globalView ? topActions : '<span class="health-pill">审批与写后验证约束</span><button class="icon-button" type="button" disabled aria-label="静态回放不允许重置"><span aria-hidden="true">↻</span><span>重置全部</span></button>' + topActions) + "</div>";
     document.title = globalView ? "RevGuard · " + (publicMode ? "公开数据实验" : "全局运行总览") : "RevGuard · " + (c.case_id || "运行") + " 运行回放";
     $("case-select")?.addEventListener("change", (event) => loadCase(event.target.value));
@@ -328,7 +356,7 @@
     const c = state.bundle.case || {};
     const intake = state.bundle.steps.find((step) => step.stage === "intake");
     const verification = verificationStep();
-    const status = c.status || "—";
+    const status = replayStatus();
     const variance = state.bundle.headline?.variance || "—";
     const items = [
       ["代理商", c.partner_name, c.partner_id || "按名称解析", ""],
@@ -337,7 +365,7 @@
       ["已入账金额", state.bundle.headline?.posted, "模拟佣金台账", ""],
       ["预期佣金（正确）", headlineExpected(), "确定性规则内核", ""],
       ["本次审批金额", approvalAmount(), latest("approval")?.subtitle || "PENDING", ""],
-      ["当前状态", status, status === "CLOSED" ? "闭环完成" : status === "ROLLED_BACK" ? "已完成冲销恢复" : "等待终态", status === "CLOSED" ? "success" : status === "ROLLED_BACK" ? "warning" : "neutral"],
+      ["当前状态", status, replayStatusNote(), statusTone()],
       ["回滚后状态", isRollback() ? (recoveryStep() ? "已通过" : "待核实") : (verification?.subtitle === "PASSED" ? "不适用" : "—"), isRollback() ? "恢复安全基线" : "验证通过，无需回滚", isRollback() ? "success" : "neutral"],
     ];
     $("summary-strip").innerHTML = items.map((item, index) =>
@@ -798,7 +826,7 @@
     const c = state.bundle.case || {};
     const verification = verificationStep();
     const passed = verification?.subtitle === "PASSED" || Boolean(recoveryStep());
-    const safetyStatus = isRollback() ? "ROLLED_BACK" : c.status || "—";
+    const safetyStatus = replayStatus();
     const note = isRollback() ? "已执行冲销并完成恢复复核" : passed ? "独立验证通过，未触发冲销" : "等待独立验证";
     $("safety-rail").innerHTML =
       '<section class="rail-section"><span class="rail-label">当前安全状态</span><strong class="rail-state ' + (isRollback() ? "rollback-state" : "") + '">' + esc(safetyStatus) + '</strong><span class="rail-label">独立复核</span><strong class="rail-state ' + (passed ? "passed-state" : "") + '">' + (passed ? "PASSED" : "PENDING") + '</strong><span class="rail-label">最终差额</span><b>' + money(state.bundle.headline?.variance || "—") + "</b><small>" + esc(note) + "</small></section>" +
