@@ -98,7 +98,13 @@ const COMPONENT_LABELS = {
 };
 
 function sourceSystemLabel(sourceSystem) {
-  return String(sourceSystem || "待识别").replace(/_MOCK$/, "");
+  const value = String(sourceSystem || "待识别");
+  const labels = {
+    erpnext: "ERPNext",
+    "revguard-ledger": "RevGuard 台账",
+    "revguard-policy": "RevGuard 政策",
+  };
+  return labels[value.toLowerCase()] || value.replace(/_MOCK$/, "");
 }
 
 const SKILL_STAGE = {
@@ -433,10 +439,10 @@ function EvidenceTable({ snapshot }) {
   const orderRef = c.order_id || "等待订单解析";
   const partnerRef = c.partner_id || c.partner_name || "等待主体解析";
   const fallback = [
-    ["ORDER", "CRM", orderRef], ["TIER_HISTORY", "CRM", partnerRef],
-    ["CONTRACT", "CONTRACT", partnerRef], ["PAYMENT_RECORD", "FINANCE", orderRef],
-    ["REFUND_RECORD", "FINANCE", orderRef], ["INVOICE", "FINANCE", orderRef],
-    ["COMMISSION_LEDGER", "FINANCE", orderRef], ["POLICY_VERSIONS", "CONTRACT", c.case_type || "待匹配"],
+    ["ORDER", "erpnext", orderRef], ["TIER_HISTORY", "erpnext", partnerRef],
+    ["CONTRACT", "erpnext", partnerRef], ["PAYMENT_RECORD", "erpnext", orderRef],
+    ["REFUND_RECORD", "erpnext", orderRef], ["INVOICE", "erpnext", orderRef],
+    ["COMMISSION_LEDGER", "revguard-ledger", orderRef], ["POLICY_VERSIONS", "revguard-policy", c.case_type || "待匹配"],
   ].map(([type, source_system, source_ref]) => ({ type, source_system, source_ref, strength: "PENDING" }));
   const rows = evidence.length ? evidence : fallback;
   return (
