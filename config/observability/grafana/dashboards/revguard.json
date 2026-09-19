@@ -3,7 +3,7 @@
   "title": "RevGuard · 运行与资金恢复",
   "description": "全部合成演示案件的实时运行指标。15 秒刷新；数据库探针不是主备/PITR 验收；空值表示未采集或所选窗口内无请求。",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "editable": false,
   "refresh": "15s",
   "timezone": "Asia/Shanghai",
@@ -953,7 +953,7 @@
     },
     {
       "id": 17,
-      "title": "PostgreSQL 副本健康",
+      "title": "PolarDB 副本健康",
       "type": "stat",
       "datasource": {
         "type": "prometheus",
@@ -1065,7 +1065,7 @@
     },
     {
       "id": 19,
-      "title": "PostgreSQL 复制延迟",
+      "title": "PolarDB 复制延迟",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
