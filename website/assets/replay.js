@@ -88,6 +88,17 @@
     PostRollbackVerifySkill: "复核回滚结果",
     CaseToDatasetSkill: "归档案件经验",
   };
+  const TASK_STATUS_LABELS = {
+    PENDING: "待处理",
+    RUNNING: "执行中",
+    SUCCEEDED: "已成功",
+    RESULT_UNKNOWN: "资金结果待核对",
+    RECOVERY_REQUIRED: "等待对账恢复",
+    FAILED_RETRYABLE: "失败待重试",
+    FAILED_FINAL: "最终失败",
+    CANCELLED: "已取消",
+    ACKNOWLEDGED: "已确认",
+  };
   const TABS = [
     ["decision", "◈", "决策依据"],
     ["audit", "↯", "执行与审计"],
@@ -161,6 +172,26 @@
     const ms = Number(value);
     if (!Number.isFinite(ms)) return "—";
     return ms < 1000 ? ms + " ms" : (ms / 1000).toFixed(2) + " s";
+  };
+  const tokens = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed.toLocaleString("en-US") : "未采集";
+  };
+  const taskStatus = (value) => TASK_STATUS_LABELS[value] || value || "—";
+  const taskTransport = (task) => {
+    if (task.skill_transport === "higress-mcp") return "MCP 网关";
+    if (task.transport === "agentteams-matrix") return "Matrix";
+    if (task.transport === "mcp") return "MCP 参考链路";
+    return task.transport || "—";
+  };
+  const prettyJson = (value, fallback = {}) => JSON.stringify(value == null ? fallback : value, null, 2);
+  const taskReceipt = (task) => {
+    if (task.result != null) return { label: "任务输出", value: task.result };
+    if (task.error != null) return { label: "任务错误", value: task.error };
+    if (task.handoff != null) {
+      return { label: "任务回执（未返回 result 字段）", value: { status: task.status, handoff: task.handoff, telemetry: task.telemetry } };
+    }
+    return { label: "任务回执", value: { status: task.status } };
   };
   const iconSvg = (name, className = "stage-icon") => {
     const icons = {
@@ -453,12 +484,35 @@
       const stage = stageFor(span);
       return stageOrderFor(stage) >= 0 && stageOrderFor(stage) <= currentOrder;
     });
-    const agentTasks = spans.filter((span) => span.kind === "AGENT" && span.name !== "AgentTeams.OrchestratorHandshake").map((span, index) => {
-      const skillName = String(span.name || "").replace(/^AgentTeams\./, "");
-      return { ...span, skillName, replayStage: stageFor(span), taskNumber: index + 1 };
-    });
+    const persistedTasks = Array.isArray(state.bundle.agent_tasks) ? state.bundle.agent_tasks : [];
+    const agentTasks = persistedTasks.length
+      ? persistedTasks.map((task, index) => {
+        const skillName = task.skill_name || "";
+        const span = spans.find((candidate) => candidate.agent_task_id === task.task_id);
+        return {
+          ...task,
+          skillName,
+          replayStage: TASK_STAGE_BY_SKILL[skillName] || "closing",
+          taskNumber: index + 1,
+          span,
+        };
+      })
+      : spans.filter((span) => span.kind === "AGENT" && span.name !== "AgentTeams.OrchestratorHandshake").map((span, index) => {
+        const skillName = String(span.name || "").replace(/^AgentTeams\./, "");
+        return {
+          ...span,
+          skillName,
+          skill_name: skillName,
+          assigned_actor: span.actor,
+          status: span.status === "OK" ? "SUCCEEDED" : span.status,
+          replayStage: stageFor(span),
+          taskNumber: index + 1,
+          span,
+        };
+      });
     const visibleAgentTasks = agentTasks.filter((task) => stageOrderFor(task.replayStage) <= currentOrder);
-    return { spans, visible, agentTasks, visibleAgentTasks, current, currentStage, currentOrder, final, stageFor };
+    const orchestrator = state.bundle.case?.team_run?.orchestrator || null;
+    return { spans, visible, agentTasks, visibleAgentTasks, orchestrator, current, currentStage, currentOrder, final, stageFor };
   }
 
   function renderAgentMatrix() {
@@ -467,33 +521,45 @@
     const totalTasks = Number(run.total_tasks || trace.agentTasks.length || 0);
     const visibleTasks = trace.visibleAgentTasks.slice().sort((left, right) => right.taskNumber - left.taskNumber);
     const focusTask = trace.visibleAgentTasks.slice().reverse().find((task) => task.replayStage === trace.currentStage);
-    const currentActor = focusTask?.actor || (trace.currentStage === "approval" ? "finance.lead" : "revguard-orchestrator");
-    const workerCount = new Set(trace.visibleAgentTasks.map((task) => task.actor).filter(Boolean)).size;
+    const currentActor = (trace.final ? run.current_actor : focusTask?.assigned_actor) || focusTask?.assigned_actor || "revguard-orchestrator";
+    const workerCount = Number(run.workers?.length || new Set(trace.agentTasks.map((task) => task.assigned_actor).filter(Boolean)).size);
     const status = trace.final ? (run.status || "COMPLETED") : "RUNNING";
-    const statusLabel = trace.final ? (status === "COMPLETED" ? "已完成" : status) : "回放中";
+    const statusLabel = trace.final ? taskStatus(status) : "运行中";
+    const runtimeStage = trace.final ? (run.current_stage ? (TASK_LABELS[run.current_stage] || run.current_stage) : "等待下一状态") : (REPLAY_STAGE_LABELS[trace.currentStage] || trace.current?.title || "等待下一状态");
+    const orchestratorVisible = Boolean(trace.orchestrator && trace.currentOrder >= 0);
+    const orchestratorSpan = trace.spans.find((span) => span.name === "AgentTeams.OrchestratorHandshake");
+    const orchestratorUsage = trace.orchestrator?.token_usage || {};
+    const orchestratorCard = orchestratorVisible
+      ? '<details class="agent-task-card orchestrator-card" open><summary><span class="task-seq">编排</span><div><strong title="OrchestratorHandshake">协同任务编排</strong><code>revguard-orchestrator</code></div><span class="transport-cell">Matrix</span><span class="task-metric-cell">' + esc(duration(orchestratorSpan?.duration_ms)) + '</span><span class="task-metric-cell">' + esc(tokens(orchestratorUsage.total_tokens)) + '</span><span class="task-status task-acknowledged">已确认</span></summary>' +
+        '<div class="task-evidence-grid"><div><span>控制输入</span><pre>' + esc(prettyJson(trace.orchestrator.input)) + '</pre></div><div><span>控制输出</span><pre>' + esc(prettyJson(trace.orchestrator.output, { status: "WAITING" })) + '</pre></div></div>' +
+        '<div class="correlation-strip"><code>dispatch ' + shortId(trace.orchestrator.dispatch_event_id, 30) + '</code><code>trigger ' + shortId(trace.orchestrator.trigger_event_id, 30) + '</code><code>response ' + shortId(trace.orchestrator.response_event_id, 30) + '</code></div></details>'
+      : "";
     const cards = visibleTasks.length ? visibleTasks.map((task, index) => {
       const focused = !trace.final && task.replayStage === trace.currentStage;
-      const displayStatus = focused ? "RUNNING" : task.status || "OK";
-      const statusClass = displayStatus === "RUNNING" ? "task-running" : displayStatus === "OK" ? "task-succeeded" : "task-failed_final";
-      const statusText = displayStatus === "RUNNING" ? "执行中" : displayStatus === "OK" ? "已成功" : "异常";
+      const displayStatus = focused ? "RUNNING" : task.status || "PENDING";
+      const statusClass = displayStatus === "RUNNING" ? "task-running" : displayStatus === "SUCCEEDED" ? "task-succeeded" : displayStatus === "ACKNOWLEDGED" ? "task-acknowledged" : "task-failed_final";
+      const statusText = taskStatus(displayStatus) + " · 第 " + esc(task.attempt || 1) + " 次";
       const label = TASK_LABELS[task.skillName] || task.label || task.skillName;
-      return '<details class="agent-task-card ' + (focused || index === 0 ? "orchestrator-card" : "") + '"' + (focused || index === 0 ? " open" : "") + "><summary>" +
-        '<span class="task-seq">' + esc(String(task.taskNumber).padStart(2, "0")) + "</span><div><strong title=\"" + esc(task.name) + "\">" + esc(label) + '</strong><code>' + esc(task.actor || "AgentTeams worker") + "</code></div>" +
-        '<span class="transport-cell">Matrix</span><span class="task-metric-cell">' + esc(duration(task.duration_ms)) + '</span><span class="task-metric-cell metric-unavailable">—</span><span class="task-status ' + statusClass + '">' + statusText + "</span></summary>" +
-        '<div class="task-evidence-grid"><div><span>控制输入</span><pre>' + esc(JSON.stringify({ stage: REPLAY_STAGE_LABELS[task.replayStage] || task.replayStage, actor: task.actor || "—", sequence: task.sequence }, null, 2)) + '</pre></div><div><span>控制输出</span><pre>' + esc(JSON.stringify({ status: displayStatus, label, duration: duration(task.duration_ms) }, null, 2)) + "</pre></div></div>" +
-        '<div class="correlation-strip"><code>span ' + shortId(task.name, 28) + "</code><code>seq " + esc(task.sequence) + "</code><code>阶段 " + esc(REPLAY_STAGE_LABELS[task.replayStage] || task.replayStage) + "</code></div></details>";
+      const span = task.span || {};
+      const receipt = taskReceipt(task);
+      const open = focused || index === 0;
+      return '<details class="agent-task-card ' + (focused ? "focused-task-card" : "") + '"' + (open ? " open" : "") + "><summary>" +
+        '<span class="task-seq">' + esc(String(task.taskNumber).padStart(2, "0")) + "</span><div><strong title=\"" + esc(task.skill_name) + "\">" + esc(label) + '</strong><code>' + esc(task.assigned_actor || "AgentTeams worker") + "</code></div>" +
+        '<span class="transport-cell">' + esc(taskTransport(task)) + '</span><span class="task-metric-cell ' + (span.duration_ms == null ? "metric-unavailable" : "") + '">' + esc(duration(span.duration_ms)) + '</span><span class="task-metric-cell ' + (task.token_usage?.total_tokens == null ? "metric-unavailable" : "") + '">' + esc(tokens(task.token_usage?.total_tokens)) + '</span><span class="task-status ' + statusClass + '">' + statusText + "</span></summary>" +
+        '<div class="task-evidence-grid"><div><span>任务输入</span><pre>' + esc(prettyJson(task.input)) + '</pre></div><div><span>' + esc(receipt.label) + '</span><pre>' + esc(prettyJson(receipt.value)) + "</pre></div></div>" +
+        '<div class="correlation-strip"><code>任务 ' + shortId(task.task_id, 28) + '</code><code>请求 ' + shortId(task.request_id, 28) + '</code><code>房间 ' + shortId(task.matrix_room_id, 28) + '</code><code>消息 ' + shortId(task.agentteams_message_id, 28) + '</code><code>回执 ' + shortId(task.skill_receipt, 28) + '</code><code>追踪 ' + shortId(span.span_id, 28) + '</code>' + (task.skill_transport === "higress-mcp" ? '<code>技能入口 Higress MCP</code>' : "") + '</div></details>';
     }).join("") : '<div class="empty-state">当前回放步骤尚未产生 AgentTeams 任务。</div>';
     const currentTitle = trace.current?.title || "—";
     const currentSubtitle = trace.current?.subtitle || "静态快照";
     const runtime = '<div class="team-runtime team-runtime-' + status.toLowerCase() + '">' +
       '<div><span class="runtime-live-dot"></span><strong>' + esc(statusLabel) + '</strong><small>' + (trace.final ? "运行已结束" : "按当前步骤回放") + '</small></div>' +
       '<div><span>当前执行者</span><strong title="' + esc(currentActor) + '">' + esc(currentActor) + '</strong></div>' +
-      '<div><span>当前阶段</span><strong title="' + esc(currentTitle) + '">' + esc(REPLAY_STAGE_LABELS[trace.currentStage] || currentTitle) + '</strong><small>' + esc(currentSubtitle) + '</small></div>' +
+      '<div><span>当前阶段</span><strong title="' + esc(runtimeStage) + '">' + esc(runtimeStage) + '</strong><small>' + esc(trace.final ? (run.status || "COMPLETED") : currentSubtitle) + '</small></div>' +
       '<div><span>进度</span><strong>' + esc(visibleTasks.length + " / " + totalTasks) + '</strong></div></div>';
     const header = '<div class="agent-task-columns" aria-hidden="true"><span>序号</span><span>任务 / 执行者</span><span>通道</span><span>耗时</span><span>Token</span><span>状态</span></div>';
     const meta = visibleTasks.length + " / " + totalTasks + " 轮任务 · " + workerCount + " 个执行者 · 第 " + (state.stepIndex + 1) + " 步";
-    const note = '<p class="boundary-note"><span class="tab-icon">♟</span>静态回放仅展示截至“' + esc(currentTitle) + '”的 AgentTeams Worker 任务；工具与 Skill 明细保留在“执行与审计”页。</p>';
-    return section("多智能体协同任务账本", runtime + '<div class="agent-task-ledger">' + header + cards + "</div>" + note, meta, "♟");
+    const note = '<p class="boundary-note"><span class="tab-icon">♟</span>输入、实际输出或原始任务回执、耗时、Token、请求、Matrix 消息、MCP 回执与追踪标识均来自本次真实 AgentTeams 运行快照；工具与 Skill 明细保留在“执行与审计”页。</p>';
+    return section("多智能体协同任务账本", runtime + '<div class="agent-task-ledger">' + header + orchestratorCard + cards + "</div>" + note, meta, "♟");
   }
 
   function renderAuditTrail() {
@@ -535,8 +601,9 @@
     const evidence = latest("evidence")?.evidence || [];
     const ledger = [
       ["捕获类型", provenance.capture_kind || "CAPTURED_FROM_RUNTIME", "真实运行记录导出"],
-      ["运行版本", provenance.source_release || "—", "记录来源"],
-      ["数据后端", provenance.backend || "postgresql-polardb", "只作为溯源字段展示"],
+      ["回放包版本", state.bundle.release || "0.6.0", "正式托管包"],
+      ["真实运行来源", provenance.source_release || "—", "202 捕获时服务版本"],
+      ["数据后端", provenance.backend || "polardb", "只作为溯源字段展示"],
       ["台账性质", state.bundle.disclosure?.ledger || "simulated", "回放不写入"],
     ];
     const evidenceBody = '<div class="evidence-ledger">' + ledger.map((item) =>
@@ -611,6 +678,8 @@
   function renderObservability() {
     const p = state.bundle.provenance || {};
     const chart = (title, legend, path, fill, tone) => '<section class="grafana-chart-panel"><h3>' + title + '</h3><svg class="grafana-chart" viewBox="0 0 720 230" role="img" aria-label="' + title + '"><g class="chart-grid"><path d="M52 28H700M52 77H700M52 126H700M52 175H700" /><path d="M104 18V187M210 18V187M316 18V187M422 18V187M528 18V187M634 18V187" /></g><g class="chart-axis"><text x="10" y="33">' + (title.includes("速率") ? "0.2 req/s" : "1") + '</text><text x="22" y="82">' + (title.includes("速率") ? "0.1" : "0.8") + '</text><text x="28" y="131">' + (title.includes("速率") ? "0.05" : "0.4") + '</text><text x="35" y="180">0</text><text x="82" y="211">12:25</text><text x="188" y="211">12:30</text><text x="294" y="211">12:35</text><text x="400" y="211">12:40</text><text x="506" y="211">12:45</text><text x="612" y="211">12:50</text></g><path class="chart-area ' + tone + '" d="' + fill + '"/><path class="chart-line ' + tone + '" d="' + path + '"/></svg><div class="chart-legend">' + legend + '</div></section>';
+    const stat = (label, value, tone = "is-green") => '<article class="grafana-extra-stat ' + tone + '"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></article>';
+    const barPanel = (title, subtitle, rows, tone = "cyan") => '<section class="grafana-extra-panel grafana-bar-panel"><div class="grafana-extra-heading"><strong>' + esc(title) + '</strong><span>' + esc(subtitle) + '</span></div><div class="grafana-bars">' + rows.map(([label, value]) => '<div class="grafana-bar-row"><span>' + esc(label) + '</span><i><b class="' + tone + '" style="width:' + Math.max(2, Math.min(100, Number(value) || 0)) + '%"></b></i><strong>' + esc(value) + '</strong></div>').join("") + '</div></section>';
     const stats = [
       ["API 指标采集", "正常", "is-green"],
       ["数据库就绪", "正常", "is-green"],
@@ -626,14 +695,41 @@
     const flatPath = "M52 187L150 187L250 187L350 187L450 187L550 187L700 187";
     const availabilityPath = "M52 28L150 28L250 28L350 28L450 28L550 28L700 28";
     const availabilityFill = "M52 28L150 28L250 28L350 28L450 28L550 28L700 28V187H52Z";
+    const yellowFlat = "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z";
+    const greenLow = "M52 176L150 176L250 170L350 176L450 166L550 172L700 168";
+    const greenLowFill = greenLow + "L700 187H52Z";
+    const extraCharts = [
+      chart("ERPNext API 调用 · 结果", '<i class="legend-dot green"></i>200 <i class="legend-dot yellow"></i>4xx', greenLow, greenLowFill, "green"),
+      chart("ERPNext API 平均延迟", '<i class="legend-dot green"></i>平均延迟', yellowFlat, yellowFlat, "yellow"),
+      chart("Agent 模型调用与 Token", '<i class="legend-dot green"></i>调用/s <i class="legend-dot yellow"></i>输入 Token/s <i class="legend-dot cyan"></i>输出 Token/s', greenLow, greenLowFill, "green"),
+      chart("PolarDB 复制延迟", '<i class="legend-dot green"></i>秒 <i class="legend-dot yellow"></i>字节', yellowFlat, yellowFlat, "yellow"),
+      chart("数据库连接与锁等待", '<i class="legend-dot green"></i>连接 <i class="legend-dot yellow"></i>锁等待', greenLow, greenLowFill, "green"),
+      chart("审计事件增长 / Evidence Gap", '<i class="legend-dot green"></i>审计事件/s <i class="legend-dot yellow"></i>Evidence Gap/15m', greenLow, greenLowFill, "green"),
+      chart("冲销与恢复", '<i class="legend-dot green"></i>恢复成功 <i class="legend-dot yellow"></i>冲销分录', yellowFlat, yellowFlat, "yellow"),
+    ].join("");
+    const statusPanels =
+      '<div class="grafana-extra-grid">' +
+        barPanel("全部案件 · 当前状态分布", "当前录制的全局状态快照", [["CLOSED", 30], ["CREATED", 30], ["FAILED", 10], ["ROLLED_BACK", 10], ["WAITING_FOR_APPROVAL", 30]], "orange") +
+        '<section class="grafana-extra-panel grafana-status-panel"><div class="grafana-extra-heading"><strong>Agent 任务 · 当前状态分布</strong><span>全局录制快照</span></div><div class="grafana-status-value"><span>PENDING</span><strong>1</strong><span>SUCCEEDED</span><strong>68</strong></div></section>' +
+      '</div>';
+    const databaseStats =
+      '<div class="grafana-extra-stat-grid">' +
+        stat("模型超时累计", "0") +
+        stat("PolarDB 副本健康", "正常") +
+        stat("副本降级到主库", "0") +
+      '</div>';
+    const moneyPanel = '<div class="grafana-extra-grid">' +
+      barPanel("资金操作状态", "当前录制快照", [["POSTED", 75], ["REVERSED", 50], ["DRAFT", 5]], "green") +
+      '<section class="grafana-extra-panel grafana-disclosure-panel"><div class="grafana-extra-heading"><strong>静态回放边界</strong><span>只读</span></div><p>以下面板按真实 Grafana dashboard 的 provision 顺序保留；图表数据为本次线上运行录制快照，不会重新连接 Prometheus、PolarDB 或 ERPNext。</p><code>PolarDB · ERPNext · AgentTeams · Grafana</code></section>' +
+    '</div>';
     return '<section class="observability-screen">' +
       '<div class="observability-toolbar"><div class="observability-heading"><span class="grafana-mark">▥</span><div><h2>运行与资金恢复</h2><p>全部案件 · 静态运行指标 · 合成业务数据 · 录制快照</p></div></div><div class="observability-actions"><span class="observability-mode">Grafana · 只读</span><span class="health-pill">STATIC · READ ONLY</span></div></div>' +
-      '<div class="grafana-live-dashboard"><div class="grafana-live-header"><strong>RevGuard · 运行与资金恢复</strong><span>STATIC REPLAY · ' + esc(p.source_release || "0.6.0") + '</span></div><div class="grafana-live-stat-grid">' + stats + '</div><div class="grafana-chart-grid">' +
+      '<div class="grafana-live-dashboard"><div class="grafana-live-header"><strong>RevGuard · 运行与资金恢复</strong><div class="grafana-time-controls"><span>◀</span><b>◷ Last 30 minutes</b><em>CST</em><span>▶</span><span>⌕</span><b>Refresh</b><em>15s</em></div></div><div class="grafana-live-stat-grid">' + stats + '</div><div class="grafana-chart-grid">' +
         chart("API 请求速率 · 按响应类别", twoX + fourX, apiPath, apiFill, "green") +
         chart("业务 API 响应延迟 · P95", '<i class="legend-dot green"></i>业务 API P95', flatPath, "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z", "green") +
         chart("资金结果恢复 · 待对账 / 冻结通道", '<i class="legend-dot yellow"></i>待对账资金操作', flatPath, "M52 187L150 187L250 187L350 187L450 187L550 187L700 187V187H52Z", "yellow") +
         chart("服务与数据库可用性", '<i class="legend-dot yellow"></i>服务与数据库', availabilityPath, availabilityFill, "yellow") +
-      '</div><div class="grafana-powered">Powered by <strong><span>◉</span> Grafana</strong></div></div></section>';
+      '</div>' + statusPanels + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(0, 2) + '</div>' + databaseStats + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(2, 5) + '</div>' + moneyPanel + '<div class="grafana-extra-grid grafana-secondary-grid">' + extraCharts.slice(5) + '</div><div class="grafana-powered">Powered by <strong><span>◉</span> Grafana</strong></div></div></section>';
   }
 
   function renderContent() {

@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA = "revguard.replay/v1"
+PUBLIC_RELEASE = "0.6.0"
 
 # 回放页标签按案件终态生成：正常闭环与偏差恢复用不同配色，避免两条记录混在一起。
 DISPLAY_BY_STATUS: dict[str, dict[str, str]] = {
@@ -52,7 +53,15 @@ HOST_RE = re.compile(
 IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 MATRIX_ID_RE = re.compile(r"@[A-Za-z0-9._=+/-]+:[A-Za-z0-9.\-:]+")
 MATRIX_ROOM_RE = re.compile(r"![A-Za-z0-9._=+/-]+:[A-Za-z0-9.\-:]+")
-SECRET_KEY_RE = re.compile(r"(token|secret|password|cookie|api[_-]?key|credential)", re.IGNORECASE)
+# Keep numeric AgentTeams token counters for the static ledger, while removing
+# credential-bearing token values.  A token counter is evidence metadata, not a
+# credential; the old broad ``token`` match erased the numbers shown by WebUI.
+SECRET_KEY_RE = re.compile(r"(secret|password|cookie|api[_-]?key|credential)", re.IGNORECASE)
+TOKEN_VALUE_KEY_RE = re.compile(
+    r"(?:^|_)(?:approval|access|refresh|idempotency|auth|bearer)?token(?:$|_)",
+    re.IGNORECASE,
+)
+TOKEN_METRIC_KEYS = {"call_count", "input_tokens", "output_tokens", "total_tokens"}
 
 # 回放页使用的阶段定义；与 demo-ui 的治理流水线保持同一套命名。
 STAGES: list[dict[str, Any]] = [
@@ -131,14 +140,24 @@ JOB_LABELS = {
 }
 
 
-def sanitize(value: Any, *, key: str = "") -> Any:
+def sanitize(value: Any, *, key: str = "", token_metrics: bool = False) -> Any:
     """递归脱敏：凭据字段整体丢弃，字符串按规则替换内部标识。"""
-    if SECRET_KEY_RE.search(key):
+    if key == "token_usage" and isinstance(value, dict):
+        return {
+            item_key: sanitize(item, key=item_key, token_metrics=True)
+            for item_key, item in value.items()
+        }
+    if token_metrics and key in TOKEN_METRIC_KEYS:
+        return value
+    if SECRET_KEY_RE.search(key) or TOKEN_VALUE_KEY_RE.search(key):
         return "<已脱敏>"
     if isinstance(value, dict):
-        return {item_key: sanitize(item, key=item_key) for item_key, item in value.items()}
+        return {
+            item_key: sanitize(item, key=item_key, token_metrics=token_metrics)
+            for item_key, item in value.items()
+        }
     if isinstance(value, list):
-        return [sanitize(item, key=key) for item in value]
+        return [sanitize(item, key=key, token_metrics=token_metrics) for item in value]
     if isinstance(value, str):
         text = URL_RE.sub("<内部地址已脱敏>", value)
         text = MATRIX_ID_RE.sub("<matrix-user>", text)
@@ -519,6 +538,7 @@ def build_bundle(case_id: str, payload: dict[str, Any], health: dict[str, Any]) 
         if stage is None and span.get("kind") == "AGENT":
             stage = "approval" if "Human" in str(name) else None
         spans.append({
+            "span_id": span.get("span_id"),
             "sequence": span.get("trace_sequence"),
             "kind": span.get("kind"),
             "name": name,
@@ -528,6 +548,8 @@ def build_bundle(case_id: str, payload: dict[str, Any], health: dict[str, Any]) 
             "duration_ms": span.get("duration_ms"),
             "started_at": iso(span.get("started_at")),
             "stage": stage,
+            "agent_task_id": ((span.get("inputs") or {}).get("correlation") or {}).get("agent_task_id")
+            or (span.get("outputs") or {}).get("agent_task_id"),
         })
 
     workers = sorted({JOB_LABELS.get(task.get("assigned_actor"), task.get("assigned_actor")) for task in tasks})
@@ -535,7 +557,10 @@ def build_bundle(case_id: str, payload: dict[str, Any], health: dict[str, Any]) 
     return {
         "schema": SCHEMA,
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        "release": health.get("release"),
+        # The hosted artifact is the formal v0.6.0 package.  Keep the actual
+        # runtime build in provenance.source_release below instead of exposing
+        # a candidate label as the public package version.
+        "release": PUBLIC_RELEASE,
         "case": {
             "case_id": case.get("case_id"),
             "type": case.get("case_type"),
@@ -553,8 +578,17 @@ def build_bundle(case_id: str, payload: dict[str, Any], health: dict[str, Any]) 
             "team_run": {
                 "status": team_run.get("status"),
                 "phase": team_run.get("phase"),
+                "run_id": team_run.get("run_id"),
+                "queued_at": iso(team_run.get("queued_at")),
+                "started_at": iso(team_run.get("started_at")),
+                "updated_at": iso(team_run.get("updated_at")),
                 "total_tasks": team_run.get("total_tasks"),
                 "completed_tasks": team_run.get("completed_tasks"),
+                "current_actor": team_run.get("current_actor"),
+                "current_stage": team_run.get("current_stage"),
+                "current_task_id": team_run.get("current_task_id"),
+                "planned_total_tasks": team_run.get("planned_total_tasks"),
+                "orchestrator": team_run.get("orchestrator"),
                 "workers": [worker for worker in workers if worker],
             },
         },
@@ -574,6 +608,10 @@ def build_bundle(case_id: str, payload: dict[str, Any], health: dict[str, Any]) 
             "span_count": trace.get("span_count"),
         },
         "steps": build_steps(payload, window),
+        # The live WebUI renders this persisted task ledger.  Keep the actual
+        # input/result pairs in the replay bundle instead of reconstructing
+        # synthetic placeholders from trace spans in the browser.
+        "agent_tasks": tasks,
         "trace": {
             "span_count": trace.get("span_count"),
             "wall_duration_ms": trace.get("wall_duration_ms"),
@@ -653,7 +691,7 @@ def main(argv: list[str] | None = None) -> int:
     index = args.output_dir / "index.json"
     index.write_text(json.dumps({
         "schema": SCHEMA,
-        "release": health.get("release"),
+        "release": PUBLIC_RELEASE,
         "capture": {
             "kind": "CAPTURED_FROM_RUNTIME",
             "source_release": health.get("release"),
